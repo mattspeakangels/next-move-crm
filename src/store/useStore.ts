@@ -1,71 +1,68 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { StoreState } from './types';
+import { Contact, Deal, Activity, Target, AppProfile } from '../types';
 
-const initialState = {
-  contacts: {},
-  deals: {},
-  activities: {},
-  targets: {},
-  profile: null,
-  theme: 'light' as const,
-};
+interface AppState {
+  contacts: Record<string, Contact>;
+  deals: Record<string, Deal>;
+  activities: Record<string, Activity>;
+  targets: Record<string, Target>;
+  profile: AppProfile | null;
+  theme: 'light' | 'dark';
+  
+  // Azioni
+  setProfile: (profile: AppProfile) => void;
+  updateProfile: (updates: Partial<AppProfile>) => void;
+  addContact: (contact: Contact) => void;
+  addContactsBatch: (contacts: Contact[]) => void;
+  addDeal: (deal: Deal) => void;
+  updateDeal: (id: string, updates: Partial<Deal>) => void;
+  deleteDeal: (id: string) => void;
+  addActivity: (activity: Activity) => void;
+  updateTarget: (id: string, target: Target) => void;
+  toggleTheme: () => void;
+  addCustomProduct: (product: string) => void;
+  resetAll: () => void;
+}
 
-export const useStore = create<StoreState>()(
+export const useStore = create<AppState>()(
   persist(
     (set) => ({
-      ...initialState,
+      contacts: {},
+      deals: {},
+      activities: {},
+      targets: {},
+      profile: null,
+      theme: 'light',
+
+      setProfile: (profile) => set({ profile }),
       
-      addContact: (contact) => set((state) => ({ 
-        contacts: { ...state.contacts, [contact.id]: contact } 
+      updateProfile: (updates) => set((state) => ({
+        profile: state.profile ? { ...state.profile, ...updates } : null
       })),
-      
-      updateContact: (id, updates) => set((state) => ({
-        contacts: { ...state.contacts, [id]: { ...state.contacts[id], ...updates } }
+
+      addContact: (contact) => set((state) => ({
+        contacts: { ...state.contacts, [contact.id]: contact }
       })),
-      
+
       addContactsBatch: (newContacts) => set((state) => {
-        const updated = { ...state.contacts };
-        newContacts.forEach(c => { updated[c.id] = c; });
-        return { contacts: updated };
+        const updatedContacts = { ...state.contacts };
+        newContacts.forEach(c => {
+          updatedContacts[c.id] = c;
+        });
+        return { contacts: updatedContacts };
       }),
 
-      addDeal: (deal) => set((state) => ({ 
-        deals: { ...state.deals, [deal.id]: deal } 
+      addDeal: (deal) => set((state) => ({
+        deals: { ...state.deals, [deal.id]: deal }
       })),
 
-      updateDeal: (id, updates) => set((state) => {
-        const oldDeal = state.deals[id];
-        if (!oldDeal) return state;
-
-        const newDeals = { ...state.deals, [id]: { ...oldDeal, ...updates } };
-        let newTargets = { ...state.targets };
-
-        if (updates.stage !== undefined && updates.stage !== oldDeal.stage) {
-          const now = new Date();
-          const targetId = `${now.getFullYear()}-${now.getMonth()}`;
-          let currentTarget = newTargets[targetId] || {
-            id: targetId,
-            month: now.getMonth(),
-            year: now.getFullYear(),
-            targetValue: state.profile?.defaultMonthlyTarget || 0,
-            closedValue: 0
-          };
-
-          let newClosedValue = currentTarget.closedValue;
-          const dealValue = updates.value !== undefined ? updates.value : oldDeal.value;
-
-          if (updates.stage === 'chiuso-vinto') {
-            newClosedValue += dealValue;
-          } else if (oldDeal.stage === 'chiuso-vinto') {
-            newClosedValue -= dealValue;
-          }
-
-          newTargets[targetId] = { ...currentTarget, closedValue: newClosedValue };
+      updateDeal: (id, updates) => set((state) => ({
+        deals: {
+          ...state.deals,
+          [id]: { ...state.deals[id], ...updates }
         }
-
-        return { deals: newDeals, targets: newTargets };
-      }),
+      })),
 
       deleteDeal: (id) => set((state) => {
         const newDeals = { ...state.deals };
@@ -77,41 +74,35 @@ export const useStore = create<StoreState>()(
         activities: { ...state.activities, [activity.id]: activity }
       })),
 
-      updateTarget: (id, updates) => set((state) => ({
-        targets: { ...state.targets, [id]: { ...state.targets[id], ...updates } }
+      updateTarget: (id, target) => set((state) => ({
+        targets: { ...state.targets, [id]: target }
       })),
 
-      updateProfile: (updates) => set((state) => ({
-        profile: state.profile ? { ...state.profile, ...updates } : updates as any
+      toggleTheme: () => set((state) => ({
+        theme: state.theme === 'light' ? 'dark' : 'light'
       })),
 
-      addCustomProduct: (product) => set((state) => {
-        if (!state.profile || state.profile.customProducts.includes(product)) return state;
-        return {
-          profile: {
-            ...state.profile,
-            customProducts: [...state.profile.customProducts, product]
-          }
-        };
-      }),
-
-      toggleTheme: () => set((state) => {
-        const newTheme = state.theme === 'light' ? 'dark' : 'light';
-        if (newTheme === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-        return { theme: newTheme };
-      }),
-
-      importState: (newState) => set((state) => ({
-        ...state,
-        ...newState,
+      addCustomProduct: (product) => set((state) => ({
+        profile: state.profile 
+          ? { ...state.profile, customProducts: [...state.profile.customProducts, product] }
+          : null
       })),
 
-      resetAll: () => set(() => ({ ...initialState }))
+      resetAll: () => {
+        localStorage.clear();
+        set({
+          contacts: {},
+          deals: {},
+          activities: {},
+          targets: {},
+          profile: null,
+          theme: 'light'
+        });
+      },
     }),
     {
-      name: 'next-move-crm-storage',
-      storage: createJSONStorage(() => localStorage),
+      name: 'next-move-crm-storage', // Nome della chiave nel localStorage
+      storage: createJSONStorage(() => localStorage), // Usa il browser storage
     }
   )
 );
