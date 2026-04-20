@@ -1,5 +1,5 @@
-export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso' | 'standby';
-export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota' | 'altro';
+export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
+export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
 
 export interface Contact {
   id: string;
@@ -19,7 +19,7 @@ export interface Deal {
   contactId: string;
   value: number;
   probability: number;
-  products: string[]; 
+  products: string[];
   stage: DealStage;
   nextAction: string;
   nextActionDeadline: number;
@@ -36,10 +36,9 @@ export interface Activity {
   date: number;
   outcome: string;
   notes: string;
-  createdAt: number;
 }
 
-export interface MonthlyTarget {
+export interface Target {
   id: string;
   month: number;
   year: number;
@@ -47,7 +46,7 @@ export interface MonthlyTarget {
   closedValue: number;
 }
 
-export interface UserProfile {
+export interface AppProfile {
   name: string;
   role: string;
   company: string;
