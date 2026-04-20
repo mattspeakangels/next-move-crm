@@ -1,7 +1,7 @@
-import { useEffect, useState, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
-import { AppShell } from './components/layouts/AppShell'; // CORRETTO: layouts con la S
+import { AppShell } from './components/layouts/AppShell';
 import { ToastProvider } from './components/ui/ToastContext';
 import { OnboardingView } from './views/OnboardingView';
 
@@ -15,20 +15,21 @@ import { DealDetailView } from './views/DealDetailView';
 
 const LoadingSkeleton = () => (
   <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
-    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-sm font-bold text-indigo-600 animate-pulse">Caricamento CRM...</p>
+    </div>
   </div>
 );
 
 export default function App() {
-  const [isHydrated, setIsHydrated] = useState(false);
   const profile = useStore(state => state.profile);
+  const hasHydrated = useStore(state => state._hasHydrated); // Controlla il semaforo
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  // Se la memoria non è ancora pronta, non decidere nulla, mostra il caricamento
+  if (!hasHydrated) return <LoadingSkeleton />;
 
-  if (!isHydrated) return <LoadingSkeleton />;
-
+  // Ora che la memoria è pronta, se il profilo manca vai all'onboarding
   if (!profile) {
     return (
       <ToastProvider>
@@ -40,6 +41,7 @@ export default function App() {
     );
   }
 
+  // Se il profilo c'è, entra nell'app
   return (
     <ToastProvider>
       <Suspense fallback={<LoadingSkeleton />}>
