@@ -1,7 +1,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
-import { AppShell } from './components/layout/AppShell';
+import { AppShell } from './components/layouts/AppShell'; // CORRETTO: layouts con la S
 import { ToastProvider } from './components/ui/ToastContext';
 import { OnboardingView } from './views/OnboardingView';
 
