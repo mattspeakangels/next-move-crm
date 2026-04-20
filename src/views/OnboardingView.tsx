@@ -54,9 +54,9 @@ export const OnboardingView: React.FC = () => {
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-center dark:text-white">Benvenuto</h2>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tuo Nome" className="w-full border rounded-xl px-4 py-3 bg-transparent dark:text-white" />
-            <input type="text" value={role} onChange={e => setRole(e.target.value)} placeholder="Tuo Ruolo" className="w-full border rounded-xl px-4 py-3 bg-transparent dark:text-white" />
-            <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Tua Azienda" className="w-full border rounded-xl px-4 py-3 bg-transparent dark:text-white" />
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tuo Nome" className="w-full border rounded-xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
+            <input type="text" value={role} onChange={e => setRole(e.target.value)} placeholder="Tuo Ruolo" className="w-full border rounded-xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
+            <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Tua Azienda" className="w-full border rounded-xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
             <button disabled={!name || !company} onClick={() => setStep(2)} className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl disabled:opacity-50">Continua</button>
           </div>
         )}
@@ -65,12 +65,12 @@ export const OnboardingView: React.FC = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-center dark:text-white">Cosa vendi?</h2>
             <div className="flex gap-2">
-              <input type="text" value={newProduct} onChange={e => setNewProduct(e.target.value)} placeholder="Prodotto..." className="flex-1 border rounded-xl px-4 py-3 bg-transparent dark:text-white" />
+              <input type="text" value={newProduct} onChange={e => setNewProduct(e.target.value)} placeholder="Prodotto..." className="flex-1 border rounded-xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
               <button onClick={handleAddProduct} className="p-3 bg-indigo-600 text-white rounded-xl"><Plus size={24}/></button>
             </div>
-            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
               {products.map(p => (
-                <span key={p} className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-xs font-bold">
+                <span key={p} className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-full text-xs font-bold">
                   {p} <X size={14} className="cursor-pointer" onClick={() => setProducts(products.filter(item => item !== p))}/>
                 </span>
               ))}
@@ -82,15 +82,15 @@ export const OnboardingView: React.FC = () => {
         {step === 3 && (
           <div className="space-y-4 text-center">
             <h2 className="text-xl font-bold dark:text-white">Obiettivo Mensile</h2>
-            <div className="py-4"><span className="text-3xl font-extrabold text-indigo-600">€ {parseInt(target).toLocaleString('it-IT')}</span></div>
+            <div className="py-4">
+              <span className="text-3xl font-extrabold text-indigo-600">€ {parseInt(target).toLocaleString('it-IT')}</span>
+            </div>
             <input type="range" min="10000" max="1000000" step="10000" value={target} onChange={e => setTarget(e.target.value)} className="w-full accent-indigo-600" />
-            <button onClick={handleComplete} className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl mt-4">Inizia Ora</button>
+            <div className="flex gap-3 mt-8">
+              <button onClick={() => setStep(2)} className="px-4 py-3 text-gray-500 font-bold">Indietro</button>
+              <button onClick={handleComplete} className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg">Inizia ad usare l'App</button>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
         )}
       </div>
     </div>
