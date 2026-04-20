@@ -11,58 +11,67 @@ interface ActivityFormModalProps {
 }
 
 export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ dealId, type, onClose }) => {
-  const addActivity = useStore(state => state.addActivity);
+  const { addActivity, updateDeal } = useStore();
   const { showToast } = useToast();
   const [outcome, setOutcome] = useState('');
   const [notes, setNotes] = useState('');
+  const [nextAction, setNextAction] = useState('');
+  const [nextDeadline, setNextDeadline] = useState(new Date().toISOString().split('T')[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!outcome) return;
+
+    const activityId = `act_${Date.now()}`;
     addActivity({
-      id: `a_${Date.now()}`,
+      id: activityId,
       dealId,
       type,
       date: Date.now(),
       outcome,
       notes,
-      createdAt: Date.now()
     });
-    showToast('Attività salvata con successo', 'success');
+
+    if (nextAction) {
+      updateDeal(dealId, {
+        nextAction,
+        nextActionDeadline: new Date(nextDeadline).getTime(),
+        updatedAt: Date.now(),
+      });
+    }
+
+    showToast('Attività registrata', 'success');
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 dark:bg-black/60 z-50 flex items-end md:items-center justify-center animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 w-full md:w-[400px] rounded-t-2xl md:rounded-2xl p-5 pb-safe border border-transparent dark:border-gray-700 shadow-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white capitalize">Nuova {type}</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><X size={20}/></button>
+    <div className="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl p-6 shadow-xl">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold dark:text-white capitalize">Registra {type}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
         </div>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Esito dell'attività</label>
-            <input 
-              autoFocus 
-              type="text" 
-              value={outcome} 
-              onChange={e => setOutcome(e.target.value)} 
-              placeholder="Es: Molto interessati, mandare preventivo"
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 bg-transparent dark:text-white outline-none focus:border-indigo-500" 
-            />
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Esito</label>
+            <input type="text" value={outcome} onChange={e => setOutcome(e.target.value)} placeholder="Com'è andata?" required
+              className="w-full border rounded-xl px-4 py-2 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Note aggiuntive</label>
-            <textarea 
-              value={notes} 
-              onChange={e => setNotes(e.target.value)} 
-              rows={3}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 bg-transparent dark:text-white outline-none focus:border-indigo-500" 
-            />
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Note (opzionale)</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
+              className="w-full border rounded-xl px-4 py-2 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
           </div>
-          <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all">
-            Salva Attività
-          </button>
+          <hr className="dark:border-gray-700" />
+          <p className="text-xs font-bold text-indigo-600 uppercase">Pianifica Prossimo Step</p>
+          <div>
+            <input type="text" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Cosa devi fare ora?"
+              className="w-full border rounded-xl px-4 py-2 bg-transparent dark:text-white outline-none focus:border-indigo-500 mb-2" />
+            <input type="date" value={nextDeadline} onChange={e => setNextDeadline(e.target.value)}
+              className="w-full border rounded-xl px-4 py-2 bg-transparent dark:text-white outline-none focus:border-indigo-500" />
+          </div>
+          <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl mt-4">Salva Attività</button>
         </form>
       </div>
     </div>
