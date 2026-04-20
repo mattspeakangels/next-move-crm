@@ -14,8 +14,8 @@ import { SettingsView } from './views/SettingsView';
 import { DealDetailView } from './views/DealDetailView';
 
 const LoadingSkeleton = () => (
-  <div className="animate-pulse p-4 h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center">
-    <div className="h-12 w-12 bg-indigo-200 dark:bg-indigo-900 rounded-full mb-4"></div>
+  <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
