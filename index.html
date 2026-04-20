@@ -1,12 +1,56 @@
-<!DOCTYPE html>
-<html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Next Move</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso' | 'standby';
+export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota' | 'altro';
+
+export interface Contact {
+  id: string;
+  company: string;
+  contactName: string;
+  role: string;
+  email: string;
+  phone: string;
+  region: string;
+  sector: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Deal {
+  id: string;
+  contactId: string;
+  value: number;
+  probability: number;
+  products: string[]; // Rinominato da material
+  stage: DealStage;
+  nextAction: string;
+  nextActionDeadline: number;
+  notes: string;
+  createdAt: number;
+  updatedAt: number;
+  closedAt?: number;
+}
+
+export interface Activity {
+  id: string;
+  dealId: string;
+  type: ActivityType;
+  date: number;
+  outcome: string;
+  notes: string;
+  createdAt: number;
+}
+
+export interface MonthlyTarget {
+  id: string;
+  month: number;
+  year: number;
+  targetValue: number;
+  closedValue: number;
+}
+
+export interface UserProfile {
+  name: string;
+  role: string;
+  company: string;
+  defaultMonthlyTarget: number;
+  customProducts: string[]; // Nuova lista prodotti personalizzata
+}
