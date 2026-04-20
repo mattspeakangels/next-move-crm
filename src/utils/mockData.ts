@@ -1,4 +1,4 @@
-import { Contact, Deal, Activity } from '../types';
+import { Contact, Deal } from '../types';
 
 export const generateMockData = () => {
   const now = new Date();
