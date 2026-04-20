@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Settings as SettingsIcon, ArrowRight } from 'lucide-react';
+import { Star, ArrowRight } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { generateCoachSuggestions } from '../../utils/coachLogic';
 
