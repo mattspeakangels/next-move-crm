@@ -1,5 +1,6 @@
 export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
 export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
+export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 
 export interface Contact {
   id: string;
@@ -27,6 +28,11 @@ export interface Deal {
   createdAt: number;
   updatedAt: number;
   closedAt?: number;
+  // Nuovi campi per Offerte e Analisi
+  offerRef?: string;       // Numero offerta / preventivo
+  lostReason?: LostReason; // Perché è stata persa
+  competitor?: string;     // Chi l'ha presa?
+  lostDetails?: string;    // Note extra sulla perdita
 }
 
 export interface Activity {
@@ -36,7 +42,7 @@ export interface Activity {
   date: number;
   outcome: string;
   notes: string;
-  createdAt?: number; // Aggiunto per compatibilità
+  createdAt?: number;
 }
 
 export interface Target {
