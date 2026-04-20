@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { DealStage } from '../types';
-import { ArrowRight, ArrowLeft, Filter } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const STAGES: { id: DealStage; name: string; color: string }[] = [
