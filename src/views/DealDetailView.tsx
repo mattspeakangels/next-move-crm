@@ -24,7 +24,6 @@ export const DealDetailView: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header Info */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -33,7 +32,12 @@ export const DealDetailView: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowEdit(true)} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300"><Edit3 size={18}/></button>
-            <button onClick={() => window.confirm('Eliminare?') && (deleteDeal(deal.id) || navigate('/'))} className="p-2 bg-red-50 text-red-500 rounded-full"><Trash2 size={18}/></button>
+            <button 
+              onClick={() => { if(window.confirm('Eliminare?')) { deleteDeal(deal.id); navigate('/'); } }} 
+              className="p-2 bg-red-50 text-red-500 rounded-full"
+            >
+              <Trash2 size={18}/>
+            </button>
           </div>
         </div>
 
@@ -49,7 +53,6 @@ export const DealDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="flex gap-3 overflow-x-auto no-scrollbar">
         {[
           { type: 'chiamata' as ActivityType, icon: Phone, label: 'Chiamata' },
@@ -63,7 +66,6 @@ export const DealDetailView: React.FC = () => {
         ))}
       </div>
 
-      {/* Timeline */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
         <h3 className="font-bold mb-6 flex items-center gap-2"><Calendar size={18} className="text-indigo-600"/> Storia Attività</h3>
         <div className="space-y-6">
