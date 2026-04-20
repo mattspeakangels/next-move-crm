@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { Search, UserPlus, Building2, MapPin, Phone, Upload, FileText } from 'lucide-react';
+import { Search, UserPlus, MapPin, Phone, Upload, FileText } from 'lucide-react';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useToast } from '../components/ui/ToastContext';
 import { Contact } from '../types';
