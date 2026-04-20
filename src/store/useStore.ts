@@ -9,9 +9,7 @@ export interface StoreState {
   targets: Record<string, Target>;
   profile: AppProfile | null;
   theme: 'light' | 'dark';
-  _hasHydrated: boolean; // Il nostro semaforo
   
-  setHasHydrated: (state: boolean) => void;
   setProfile: (profile: AppProfile) => void;
   updateProfile: (updates: Partial<AppProfile>) => void;
   addContact: (contact: Contact) => void;
@@ -37,9 +35,7 @@ export const useStore = create<StoreState>()(
       targets: {},
       profile: null,
       theme: 'light',
-      _hasHydrated: false,
 
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
         profile: state.profile ? { ...state.profile, ...updates } : null
@@ -82,14 +78,12 @@ export const useStore = create<StoreState>()(
       resetAll: () => {
         localStorage.clear();
         set({ contacts: {}, deals: {}, activities: {}, targets: {}, profile: null, theme: 'light' });
+        window.location.reload();
       },
     }),
     {
       name: 'next-move-crm-storage',
       storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true); // Quando ha finito di caricare, accendi il verde
-      },
     }
   )
 );
