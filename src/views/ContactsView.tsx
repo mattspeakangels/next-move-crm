@@ -79,7 +79,7 @@ export const ContactsView: React.FC = () => {
 
       {showAddDeal && (
         <AddDealModal 
-          contactId={showAddDeal} 
+          initialContactId={showAddDeal} 
           onClose={() => setShowAddDeal(null)} 
         />
       )}
