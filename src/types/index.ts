@@ -36,6 +36,7 @@ export interface Activity {
   date: number;
   outcome: string;
   notes: string;
+  createdAt?: number; // Aggiunto per compatibilità
 }
 
 export interface Target {
