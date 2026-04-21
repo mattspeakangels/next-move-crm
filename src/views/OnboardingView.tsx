@@ -53,6 +53,7 @@ export const OnboardingView: React.FC = () => {
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-center text-gray-900">Benvenuto</h2>
             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tuo Nome" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-600" />
+            <input type="text" value={role} onChange={e => setRole(e.target.value)} placeholder="Tuo Ruolo (es. Venditore)" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-600" />
             <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Tua Azienda" className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 outline-none focus:border-indigo-600" />
             <button disabled={!name || !company} onClick={() => setStep(2)} className="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg disabled:opacity-50">Continua</button>
           </div>
