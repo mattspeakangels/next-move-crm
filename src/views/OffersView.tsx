@@ -47,7 +47,7 @@ export const OffersView: React.FC = () => {
 
   const saveOffer = () => {
     if (!selectedContact || items.length === 0) {
-      showToast('Seleziona un cliente e aggiungi almeno un prodotto', 'error');
+      showToast('Seleziona un cliente e almeno un prodotto', 'error');
       return;
     }
 
@@ -63,7 +63,7 @@ export const OffersView: React.FC = () => {
     };
 
     addOffer(newOffer);
-    showToast('Offerta salvata!', 'success');
+    showToast('Offerta salvata con successo!', 'success');
     setShowModal(false);
     setItems([]);
     setSelectedContact('');
@@ -71,16 +71,21 @@ export const OffersView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20">
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte</h1>
-          <p className="text-gray-400 text-sm font-bold">Preventivi e Follow-up</p>
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Preventivi e Follow-up</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200">
-          <Plus size={20} /> Nuova
+        <button 
+          onClick={() => setShowModal(true)} 
+          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200"
+        >
+          <Plus size={20} /> Nuova Offerta
         </button>
       </div>
 
+      {/* LISTA OFFERTE */}
       <div className="grid gap-4">
         {Object.values(offers).length > 0 ? (
           Object.values(offers).sort((a, b) => b.date - a.date).map(offer => {
@@ -95,7 +100,7 @@ export const OffersView: React.FC = () => {
                       {offer.offerNumber}
                     </span>
                     <h3 className="text-xl font-black mt-3 dark:text-white uppercase tracking-tight">
-                      {contact?.company || 'Cliente'}
+                      {contact?.company || 'Azienda non trovata'}
                     </h3>
                   </div>
                   <div className="text-right">
@@ -125,4 +130,34 @@ export const OffersView: React.FC = () => {
                     }`}
                   >
                     Inviata
-                  </
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
+             <FileText size={48} className="mx-auto mb-4 text-gray-200" />
+             <h3 className="text-lg font-bold text-gray-400 uppercase tracking-widest">Nessuna offerta registrata</h3>
+          </div>
+        )}
+      </div>
+
+      {/* MODALE NUOVA OFFERTA */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black uppercase tracking-tighter dark:text-white">Nuovo Preventivo</h2>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={24} className="text-gray-400"/>
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Seleziona Cliente</label>
+                <select 
+                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none focus:border-indigo-500 transition-all"
+                  value={selectedContact}
+                  onChange={e => setSelectedContact(
