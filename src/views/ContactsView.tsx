@@ -5,32 +5,73 @@ import { Contact, ContactStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
 export const ContactsView: React.FC = () => {
-  const { contacts, addContact, addContactsBatch } = useStore();
+  const { contacts, addContact, updateContact, addContactsBatch } = useStore();
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  
+  // Stati del Modal
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null); // Se c'è un ID, stiamo modificando
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
+  const initialForm = {
     company: '', contactName: '', role: '', email: '', phone: '', website: '', 
     vatNumber: '', address: '', city: '', zipCode: '', province: '', 
     country: 'Italia', status: 'potenziale' as ContactStatus, classification: 'B', 
     sector: '', notes: ''
-  });
+  };
+  const [formData, setFormData] = useState(initialForm);
 
-  const handleAdd = (e: React.FormEvent) => {
+  const openNewModal = () => {
+    setEditingId(null);
+    setFormData(initialForm);
+    setShowModal(true);
+  };
+
+  const openEditModal = (contact: Contact) => {
+    setEditingId(contact.id);
+    setFormData({
+      company: contact.company || '',
+      contactName: contact.contactName || '',
+      role: contact.role || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      website: contact.website || '',
+      vatNumber: contact.vatNumber || '',
+      address: contact.address || '',
+      city: contact.city || '',
+      zipCode: contact.zipCode || '',
+      province: contact.province || '',
+      country: contact.country || 'Italia',
+      status: contact.status || 'potenziale',
+      classification: contact.classification || 'B',
+      sector: contact.sector || '',
+      notes: contact.notes || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    const newContact: Contact = {
-      ...formData,
-      id: `c_${Date.now()}`,
-      region: formData.province,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    addContact(newContact);
-    setShowAddModal(false);
-    showToast('Azienda aggiunta con successo', 'success');
-    setFormData({ company: '', contactName: '', role: '', email: '', phone: '', website: '', vatNumber: '', address: '', city: '', zipCode: '', province: '', country: 'Italia', status: 'potenziale', classification: 'B', sector: '', notes: '' });
+    
+    if (editingId) {
+      // Modifica esistente
+      updateContact(editingId, { ...formData, updatedAt: Date.now() });
+      showToast('Azienda aggiornata', 'success');
+    } else {
+      // Nuovo inserimento
+      const newContact: Contact = {
+        ...formData,
+        id: `c_${Date.now()}`,
+        region: formData.province,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      addContact(newContact);
+      showToast('Azienda creata', 'success');
+    }
+    
+    setShowModal(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,12 +84,10 @@ export const ContactsView: React.FC = () => {
       const lines = text.split('\n');
       const newContacts: Contact[] = [];
 
-      // Salta l'intestazione e leggi le righe
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         
-        // Supporta CSV separati da virgola o punto e virgola
         const values = line.split(/[;,]/); 
         if (values.length >= 2 && values[0]) {
           newContacts.push({
@@ -74,7 +113,7 @@ export const ContactsView: React.FC = () => {
         addContactsBatch(newContacts);
         showToast(`${newContacts.length} aziende importate!`, 'success');
       } else {
-        showToast('Nessun dato valido trovato nel CSV', 'error');
+        showToast('Nessun dato valido', 'error');
       }
     };
     reader.readAsText(file);
@@ -91,19 +130,17 @@ export const ContactsView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-black dark:text-white">Aziende</h1>
         <div className="flex gap-2">
-          {/* Input file nascosto */}
           <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
           
           <button 
             onClick={() => fileInputRef.current?.click()}
             className="bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-gray-700 px-4 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all"
-            title="Importa CSV"
           >
             <Upload size={20} /> <span className="hidden md:inline">Importa</span>
           </button>
           
           <button 
-            onClick={() => setShowAddModal(true)}
+            onClick={openNewModal}
             className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none"
           >
             <UserPlus size={20} /> Aggiungi Azienda
@@ -124,9 +161,13 @@ export const ContactsView: React.FC = () => {
 
       <div className="grid gap-4">
         {filteredContacts.map(contact => (
-          <div key={contact.id} className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-700 flex items-center justify-between group hover:border-indigo-300 transition-all">
+          <div 
+            key={contact.id} 
+            onClick={() => openEditModal(contact)}
+            className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-700 flex items-center justify-between group hover:border-indigo-300 transition-all cursor-pointer"
+          >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 font-bold text-xl">
+              <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 font-bold text-xl uppercase">
                 {contact.company[0]}
               </div>
               <div>
@@ -147,20 +188,22 @@ export const ContactsView: React.FC = () => {
           </div>
         ))}
         {filteredContacts.length === 0 && (
-          <div className="text-center py-10 text-gray-400">Nessuna azienda trovata. Importa un CSV o creane una nuova!</div>
+          <div className="text-center py-10 text-gray-400">Nessuna azienda trovata.</div>
         )}
       </div>
 
-      {/* MODAL AGGIUNGI (Stesso di prima) */}
-      {showAddModal && (
+      {showModal && (
         <div className="fixed inset-0 bg-gray-900/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-              <h2 className="text-xl font-black dark:text-white">Nuova Scheda Azienda</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"><X size={24} className="text-gray-400"/></button>
+              <h2 className="text-xl font-black dark:text-white">
+                {editingId ? 'Modifica Azienda' : 'Nuova Azienda'}
+              </h2>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"><X size={24} className="text-gray-400"/></button>
             </div>
             
-            <form onSubmit={handleAdd} className="flex-1 overflow-y-auto p-6 space-y-8">
+            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Le sezioni del form rimangono identiche */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                     <Building2 size={18} className="text-indigo-600"/>
@@ -206,8 +249,8 @@ export const ContactsView: React.FC = () => {
               </section>
               
               <div className="pt-4">
-                <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all">
-                  SALVA AZIENDA
+                <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all uppercase">
+                  {editingId ? 'Salva Modifiche' : 'Salva Azienda'}
                 </button>
               </div>
             </form>
