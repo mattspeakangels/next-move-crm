@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, CheckCircle, Clock, X, ChevronRight } from 'lucide-react';
+import { Plus, FileText, Trash2, CheckCircle, Clock, X } from 'lucide-react';
 import { Offer, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
@@ -59,11 +59,11 @@ export const OffersView: React.FC = () => {
       items: items,
       status: 'bozza' as OfferStatus,
       totalAmount: calculateTotal(),
-      followUpDate: Date.now() + (7 * 24 * 60 * 60 * 1000) // Richiamo automatico +7gg
+      followUpDate: Date.now() + (7 * 24 * 60 * 60 * 1000)
     };
 
     addOffer(newOffer);
-    showToast('Offerta salvata con follow-up a 7 giorni!', 'success');
+    showToast('Offerta salvata!', 'success');
     setShowModal(false);
     setItems([]);
     setSelectedContact('');
@@ -74,7 +74,7 @@ export const OffersView: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte</h1>
-          <p className="text-gray-400 text-sm font-bold">Gestione preventivi e follow-up</p>
+          <p className="text-gray-400 text-sm font-bold">Preventivi e Follow-up</p>
         </div>
         <button onClick={() => setShowModal(true)} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200">
           <Plus size={20} /> Nuova
@@ -88,14 +88,14 @@ export const OffersView: React.FC = () => {
             const isOverdue = Date.now() > offer.followUpDate && offer.status !== 'accettata';
             
             return (
-              <div key={offer.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-sm border border-gray-50 dark:border-gray-700 transition-all hover:shadow-md">
+              <div key={offer.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-sm border border-gray-50 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
                       {offer.offerNumber}
                     </span>
                     <h3 className="text-xl font-black mt-3 dark:text-white uppercase tracking-tight">
-                      {contact?.company || 'Cliente eliminato'}
+                      {contact?.company || 'Cliente'}
                     </h3>
                   </div>
                   <div className="text-right">
@@ -103,7 +103,7 @@ export const OffersView: React.FC = () => {
                     <div className={`flex items-center gap-1 justify-end mt-1 ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>
                       <Clock size={12} />
                       <span className="text-[10px] font-black uppercase tracking-widest">
-                        {isOverdue ? 'Follow-up Scaduto' : `Follow-up: ${new Date(offer.followUpDate).toLocaleDateString('it-IT')}`}
+                        {isOverdue ? 'Scaduta' : `Follow-up: ${new Date(offer.followUpDate).toLocaleDateString('it-IT')}`}
                       </span>
                     </div>
                   </div>
@@ -133,7 +133,7 @@ export const OffersView: React.FC = () => {
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
              <FileText size={48} className="mx-auto mb-4 text-gray-200" />
-             <h3 className="text-lg font-bold text-gray-400 uppercase tracking-widest">Nessuna offerta attiva</h3>
+             <h3 className="text-lg font-bold text-gray-400 uppercase tracking-widest">Nessuna offerta</h3>
           </div>
         )}
       </div>
@@ -143,4 +143,64 @@ export const OffersView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black uppercase tracking-tighter">Nuovo Preventivo</h2>
-              <button onClick={() => setShowModal(false)} className
+              <button onClick={() => setShowModal(false)}><X size={24} className="text-gray-400"/></button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
+                <select 
+                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
+                  value={selectedContact}
+                  onChange={e => setSelectedContact(e.target.value)}
+                >
+                  <option value="">Seleziona...</option>
+                  {Object.values(contacts).map(c => <option key={c.id} value={c.id}>{c.company}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Righe Offerta</label>
+                  <button onClick={addLineItem} className="text-indigo-600 font-black text-xs uppercase">+ Riga</button>
+                </div>
+                {items.map(item => (
+                  <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-900 p-3 rounded-2xl">
+                    <div className="col-span-7">
+                      <select 
+                        className="w-full bg-transparent font-bold outline-none text-sm dark:text-white"
+                        onChange={e => handleProductSelect(item.id, e.target.value)}
+                      >
+                        <option value="">Catalogo...</option>
+                        {Object.values(products).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <input 
+                        type="number" 
+                        className="w-full bg-transparent text-center font-bold outline-none dark:text-white"
+                        value={item.quantity}
+                        onChange={e => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div className="col-span-2 text-right">
+                      <p className="font-bold text-sm text-indigo-600">€{item.price}</p>
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="text-red-400"><Trash2 size={16}/></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-6 border-t dark:border-gray-700 flex justify-between items-center">
+                <span className="text-2xl font-black dark:text-white">€ {calculateTotal().toLocaleString()}</span>
+                <button onClick={saveOffer} className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest">Salva</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
