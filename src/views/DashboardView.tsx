@@ -114,8 +114,7 @@ export const DashboardView: React.FC = () => {
 
         <div className="space-y-3">
           todayActivities.map(activity => {
-              const deal = deals[activity.dealId];
-              const contact = deal ? contacts[deal.contactId] : null;
+              const contact = contacts[activity.contactId];
               const actDate = new Date(activity.date);
               
               return (
