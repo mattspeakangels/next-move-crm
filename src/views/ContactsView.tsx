@@ -1,33 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { Search, UserPlus, MapPin, Phone, Building2, X, ChevronRight } from 'lucide-react';
+import { Search, UserPlus, MapPin, Phone, Building2, X, ChevronRight, Upload } from 'lucide-react';
 import { Contact, ContactStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
 export const ContactsView: React.FC = () => {
-  const { contacts, addContact } = useStore();
+  const { contacts, addContact, addContactsBatch } = useStore();
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Stato per il nuovo contatto (profilazione avanzata)
   const [formData, setFormData] = useState({
-    company: '',
-    contactName: '',
-    role: '',
-    email: '',
-    phone: '',
-    website: '',
-    vatNumber: '',
-    address: '',
-    city: '',
-    zipCode: '',
-    province: '',
-    country: 'Italia',
-    status: 'potenziale' as ContactStatus,
-    classification: 'B',
-    sector: '',
-    notes: ''
+    company: '', contactName: '', role: '', email: '', phone: '', website: '', 
+    vatNumber: '', address: '', city: '', zipCode: '', province: '', 
+    country: 'Italia', status: 'potenziale' as ContactStatus, classification: 'B', 
+    sector: '', notes: ''
   });
 
   const handleAdd = (e: React.FormEvent) => {
@@ -35,7 +23,7 @@ export const ContactsView: React.FC = () => {
     const newContact: Contact = {
       ...formData,
       id: `c_${Date.now()}`,
-      region: formData.province, // Usiamo la provincia come regione per ora
+      region: formData.province,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -43,6 +31,54 @@ export const ContactsView: React.FC = () => {
     setShowAddModal(false);
     showToast('Azienda aggiunta con successo', 'success');
     setFormData({ company: '', contactName: '', role: '', email: '', phone: '', website: '', vatNumber: '', address: '', city: '', zipCode: '', province: '', country: 'Italia', status: 'potenziale', classification: 'B', sector: '', notes: '' });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      const newContacts: Contact[] = [];
+
+      // Salta l'intestazione e leggi le righe
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Supporta CSV separati da virgola o punto e virgola
+        const values = line.split(/[;,]/); 
+        if (values.length >= 2 && values[0]) {
+          newContacts.push({
+            id: `c_${Date.now()}_${i}`,
+            company: values[0]?.trim() || '',
+            contactName: values[1]?.trim() || '',
+            role: values[2]?.trim() || '',
+            email: values[3]?.trim() || '',
+            phone: values[4]?.trim() || '',
+            region: values[5]?.trim() || '',
+            province: values[5]?.trim() || '',
+            sector: values[6]?.trim() || '',
+            status: 'potenziale',
+            classification: 'B',
+            country: 'Italia',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          });
+        }
+      }
+
+      if (newContacts.length > 0) {
+        addContactsBatch(newContacts);
+        showToast(`${newContacts.length} aziende importate!`, 'success');
+      } else {
+        showToast('Nessun dato valido trovato nel CSV', 'error');
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = ''; 
   };
 
   const filteredContacts = Object.values(contacts).filter(c => 
@@ -53,13 +89,26 @@ export const ContactsView: React.FC = () => {
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-black dark:text-white">Anagrafica Aziende</h1>
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none"
-        >
-          <UserPlus size={20} /> Aggiungi Azienda
-        </button>
+        <h1 className="text-2xl font-black dark:text-white">Aziende</h1>
+        <div className="flex gap-2">
+          {/* Input file nascosto */}
+          <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+          
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-gray-700 px-4 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all"
+            title="Importa CSV"
+          >
+            <Upload size={20} /> <span className="hidden md:inline">Importa</span>
+          </button>
+          
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none"
+          >
+            <UserPlus size={20} /> Aggiungi Azienda
+          </button>
+        </div>
       </div>
 
       <div className="relative">
@@ -90,15 +139,19 @@ export const ContactsView: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-400">
                   <span className="flex items-center gap-1"><UserPlus size={14}/> {contact.contactName}</span>
-                  {contact.city && <span className="flex items-center gap-1"><MapPin size={14}/> {contact.city} ({contact.province})</span>}
+                  {contact.province && <span className="flex items-center gap-1"><MapPin size={14}/> {contact.province}</span>}
                 </div>
               </div>
             </div>
             <ChevronRight className="text-gray-300 group-hover:text-indigo-600 transition-colors" />
           </div>
         ))}
+        {filteredContacts.length === 0 && (
+          <div className="text-center py-10 text-gray-400">Nessuna azienda trovata. Importa un CSV o creane una nuova!</div>
+        )}
       </div>
 
+      {/* MODAL AGGIUNGI (Stesso di prima) */}
       {showAddModal && (
         <div className="fixed inset-0 bg-gray-900/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
@@ -108,7 +161,6 @@ export const ContactsView: React.FC = () => {
             </div>
             
             <form onSubmit={handleAdd} className="flex-1 overflow-y-auto p-6 space-y-8">
-              {/* Sezione 1: Informazioni Generali */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                     <Building2 size={18} className="text-indigo-600"/>
@@ -129,7 +181,6 @@ export const ContactsView: React.FC = () => {
                 </div>
               </section>
 
-              {/* Sezione 2: Contatto */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                     <Phone size={18} className="text-indigo-600"/>
@@ -140,26 +191,17 @@ export const ContactsView: React.FC = () => {
                   <input placeholder="Ruolo" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
                   <input placeholder="Email" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
                   <input placeholder="Telefono" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
-                  <div className="md:col-span-2">
-                    <input placeholder="Sito Web (es: www.azienda.it)" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
-                  </div>
                 </div>
               </section>
 
-              {/* Sezione 3: Indirizzo */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                     <MapPin size={18} className="text-indigo-600"/>
                     <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Localizzazione</h3>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <input placeholder="Indirizzo (Via e numero)" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
-                  </div>
                   <input placeholder="Città" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
-                  <input placeholder="CAP" value={formData.zipCode} onChange={e => setFormData({...formData, zipCode: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
                   <input placeholder="Provincia (es: MI)" value={formData.province} onChange={e => setFormData({...formData, province: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
-                  <input placeholder="Paese" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white focus:border-indigo-500 outline-none" />
                 </div>
               </section>
               
