@@ -7,7 +7,7 @@ const navItems = [
   { path: '/', label: 'Oggi', icon: Zap },
   { path: '/agenda', label: 'Agenda', icon: Calendar },
   { path: '/pipeline', label: 'Pipeline', icon: Columns },
-  { path: '/contacts', label: 'Contatti', icon: Users },
+  { path: '/contacts', label: 'Aziende', icon: Users },
   { path: '/kpi', label: 'KPI', icon: LineChart },
 ];
 
