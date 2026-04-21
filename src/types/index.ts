@@ -56,7 +56,8 @@ export interface Deal {
 
 export interface Activity {
   id: string;
-  dealId: string;
+  contactId: string; // <-- ORA È LEGATO ALL'AZIENDA
+  dealId?: string;   // <-- Resta opzionale per il futuro
   type: ActivityType;
   date: number;
   outcome: string;
