@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Contact, Activity, Deal, Product, AppProfile, Target, Theme } from '../types';
+import { Contact, Activity, Deal, Product, AppProfile, Target, Theme, Offer } from '../types';
 
 interface StoreState {
   profile: AppProfile | null;
@@ -8,11 +8,12 @@ interface StoreState {
   activities: Record<string, Activity>;
   deals: Record<string, Deal>;
   products: Record<string, Product>;
+  offers: Record<string, Offer>;
   targets: Record<string, Target>;
   theme: Theme;
   setProfile: (profile: AppProfile) => void;
   updateProfile: (updates: Partial<AppProfile>) => void;
-  addCustomProduct: (product: string) => void; // <--- Mancava questo
+  addCustomProduct: (product: string) => void;
   toggleTheme: () => void;
   addContact: (contact: Contact) => void;
   updateContact: (id: string, contact: Partial<Contact>) => void;
@@ -24,7 +25,9 @@ interface StoreState {
   updateTarget: (id: string, target: Partial<Target>) => void;
   addProduct: (product: Product) => void;
   addProductsBatch: (products: Product[]) => void;
-  importState: (state: any) => void; // <--- Mancava questo
+  addOffer: (offer: Offer) => void;
+  updateOffer: (id: string, offer: Partial<Offer>) => void;
+  importState: (state: any) => void;
   resetAll: () => void;
 }
 
@@ -36,6 +39,7 @@ export const useStore = create<StoreState>()(
       activities: {},
       deals: {},
       products: {},
+      offers: {},
       targets: {},
       theme: 'light',
       setProfile: (profile) => set({ profile }),
@@ -84,8 +88,14 @@ export const useStore = create<StoreState>()(
         newProducts.forEach(p => { updatedProducts[p.id] = p; });
         return { products: updatedProducts };
       }),
+      addOffer: (offer) => set((state) => ({
+        offers: { ...state.offers, [offer.id]: offer }
+      })),
+      updateOffer: (id, offer) => set((state) => ({
+        offers: { ...state.offers, [id]: { ...state.offers[id], ...offer } }
+      })),
       importState: (newState) => set(() => ({ ...newState })),
-      resetAll: () => set({ profile: null, contacts: {}, activities: {}, deals: {}, products: {}, targets: {} }),
+      resetAll: () => set({ profile: null, contacts: {}, activities: {}, deals: {}, products: {}, offers: {}, targets: {} }),
     }),
     { name: 'next-move-storage' }
   )
