@@ -5,6 +5,9 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
+// Tipo unico per la navigazione
+export type NavView = 'dashboard' | 'contacts' | 'offers' | 'agenda' | 'products' | 'settings';
+
 export interface Product {
   id: string;
   code: string;
@@ -111,4 +114,3 @@ export interface AppProfile {
   defaultMonthlyTarget: number;
   customProducts: string[];
 }
-export type NavView = 'dashboard' | 'contacts' | 'offers' | 'agenda' | 'products' | 'settings';
