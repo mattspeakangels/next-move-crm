@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout } from './components/Layout';
+import { Layout } from './components/layouts'; // <--- Aggiunta la 's' di layouts
 import { DashboardView } from './views/DashboardView';
 import { ContactsView } from './views/ContactsView';
 import { DealsView } from './views/DealsView';
