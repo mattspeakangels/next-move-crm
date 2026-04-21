@@ -63,7 +63,7 @@ export const OffersView: React.FC = () => {
     };
 
     addOffer(newOffer);
-    showToast('Offerta salvata con successo!', 'success');
+    showToast('Offerta salvata!', 'success');
     setShowModal(false);
     setItems([]);
     setSelectedContact('');
@@ -75,36 +75,35 @@ export const OffersView: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte</h1>
-          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Preventivi e Follow-up</p>
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Gestione Preventivi</p>
         </div>
         <button 
           onClick={() => setShowModal(true)} 
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg"
         >
-          <Plus size={20} /> Nuova Offerta
+          <Plus size={20} /> Nuova
         </button>
       </div>
 
-      {/* LISTA OFFERTE */}
+      {/* LISTA */}
       <div className="grid gap-4">
         {Object.values(offers).length > 0 ? (
           Object.values(offers).sort((a, b) => b.date - a.date).map(offer => {
             const contact = contacts[offer.contactId];
             const isOverdue = Date.now() > offer.followUpDate && offer.status !== 'accettata';
-            
             return (
-              <div key={offer.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-sm border border-gray-50 dark:border-gray-700">
+              <div key={offer.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">
                       {offer.offerNumber}
                     </span>
-                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase tracking-tight">
-                      {contact?.company || 'Azienda non trovata'}
+                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">
+                      {contact?.company || 'Azienda'}
                     </h3>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-black dark:text-white tracking-tighter">€ {offer.totalAmount.toLocaleString('it-IT')}</p>
+                    <p className="text-2xl font-black dark:text-white">€ {offer.totalAmount.toLocaleString('it-IT')}</p>
                     <div className={`flex items-center gap-1 justify-end mt-1 ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>
                       <Clock size={12} />
                       <span className="text-[10px] font-black uppercase tracking-widest">
@@ -113,51 +112,12 @@ export const OffersView: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
                 <div className="flex gap-3">
-                  <button 
-                    onClick={() => updateOffer(offer.id, { status: 'accettata' })}
-                    className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
-                      offer.status === 'accettata' ? 'bg-green-500 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-green-50 hover:text-green-600'
-                    }`}
-                  >
-                    Vinta
-                  </button>
-                  <button 
-                    onClick={() => updateOffer(offer.id, { status: 'inviata' })}
-                    className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
-                      offer.status === 'inviata' ? 'bg-indigo-600 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'
-                    }`}
-                  >
-                    Inviata
-                  </button>
+                  <button onClick={() => updateOffer(offer.id, { status: 'accettata' })} className="flex-1 py-3 rounded-2xl font-black text-xs uppercase bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-green-500 hover:text-white transition-all">Vinta</button>
+                  <button onClick={() => updateOffer(offer.id, { status: 'inviata' })} className="flex-1 py-3 rounded-2xl font-black text-xs uppercase bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-indigo-600 hover:text-white transition-all">Inviata</button>
                 </div>
               </div>
             );
           })
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
-             <FileText size={48} className="mx-auto mb-4 text-gray-200" />
-             <h3 className="text-lg font-bold text-gray-400 uppercase tracking-widest">Nessuna offerta registrata</h3>
-          </div>
-        )}
-      </div>
-
-      {/* MODALE NUOVA OFFERTA */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black uppercase tracking-tighter dark:text-white">Nuovo Preventivo</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={24} className="text-gray-400"/>
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Seleziona Cliente</label>
-                <select 
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none focus:border-indigo-500 transition-all"
-                  value={selectedContact}
-                  onChange={e => setSelectedContact(
+          <div className="bg
