@@ -1,7 +1,16 @@
 export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
 export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
-export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';
+export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
+
+export interface Product {
+  id: string;
+  code: string;       // Codice articolo
+  name: string;       // Nome prodotto
+  category: string;   // Linea di prodotto/Categoria
+  price: number;      // Prezzo di listino
+  description?: string;
+}
 
 export interface CompanyIntelligence {
   products: string;
@@ -19,64 +28,41 @@ export interface Contact {
   role: string;
   email: string;
   phone: string;
-  website?: string;
-  vatNumber?: string;
-  address?: string;
-  city?: string;
-  zipCode?: string;
-  province?: string;
-  country?: string;
   status: ContactStatus;
-  classification?: string;
-  sector: string;
-  region: string;
-  notes?: string;
+  province?: string;
   intelligence?: CompanyIntelligence; 
   createdAt: number;
-  updatedAt: number;
 }
 
-export interface Deal {
+export interface OfferItem {
+  id: string;
+  productId?: string; // Se collegato a catalogo
+  description: string;
+  quantity: number;
+  price: number;
+  discount: number;
+}
+
+export interface Offer {
   id: string;
   contactId: string;
-  value: number;
-  probability: number;
-  products: string[];
-  stage: DealStage;
-  nextAction: string;
-  nextActionDeadline: number;
-  notes: string;
-  createdAt: number;
-  updatedAt: number;
-  closedAt?: number;
-  offerRef?: string;
-  lostReason?: LostReason;
-  competitor?: string;
+  offerNumber: string;
+  date: number;
+  items: OfferItem[];
+  status: OfferStatus;
+  totalAmount: number;
+  followUpDate: number; // La data del richiamo tra 7gg
 }
 
 export interface Activity {
   id: string;
-  contactId: string; // <-- ORA È LEGATO ALL'AZIENDA
-  dealId?: string;   // <-- Resta opzionale per il futuro
+  contactId: string;
   type: ActivityType;
   date: number;
-  outcome: string;
   notes: string;
-  createdAt?: number;
-}
-
-export interface Target {
-  id: string;
-  month: number;
-  year: number;
-  targetValue: number;
-  closedValue: number;
 }
 
 export interface AppProfile {
   name: string;
-  role: string;
   company: string;
-  defaultMonthlyTarget: number;
-  customProducts: string[];
 }
