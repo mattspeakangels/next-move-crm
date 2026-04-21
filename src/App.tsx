@@ -5,11 +5,13 @@ import { ContactsView } from './views/ContactsView';
 import { AgendaView } from './views/AgendaView';
 import { ProductsView } from './views/ProductsView';
 import { SettingsView } from './views/SettingsView';
+import { OffersView } from './views/OffersView'; // <--- VERIFICATO: Import aggiunto
 import { Onboarding } from './components/Onboarding'; 
 import { useStore } from './store/useStore';
 import { ToastProvider } from './components/ui/ToastContext';
 
-type View = 'dashboard' | 'contacts' | 'agenda' | 'products' | 'settings';
+// Tipo aggiornato con 'offers'
+type View = 'dashboard' | 'contacts' | 'agenda' | 'products' | 'settings' | 'offers';
 
 function App() {
   const { profile } = useStore();
@@ -31,6 +33,7 @@ function App() {
         {currentView === 'agenda' && <AgendaView />}
         {currentView === 'products' && <ProductsView />}
         {currentView === 'settings' && <SettingsView />}
+        {currentView === 'offers' && <OffersView />} {/* <--- VERIFICATO: Rotta aggiunta */}
       </Layout>
     </ToastProvider>
   );
