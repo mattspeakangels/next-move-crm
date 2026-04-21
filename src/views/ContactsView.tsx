@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { Search, UserPlus, MapPin, Phone, Building2, X, ChevronRight, Upload, ShieldCheck, Target, CreditCard, Truck, Zap } from 'lucide-react';
+import { Search, UserPlus, MapPin, Building2, X, ChevronRight, Upload, ShieldCheck, Target, CreditCard, Truck, Zap } from 'lucide-react';
 import { Contact, ContactStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
