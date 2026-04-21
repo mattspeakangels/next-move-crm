@@ -111,4 +111,3 @@ export interface AppProfile {
   defaultMonthlyTarget: number;
   customProducts: string[];
 }
-}
