@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { ArrowLeft, Calendar, Target, Package, CheckCircle2, XCircle, Trophy, Ghost } from 'lucide-react';
+import { ArrowLeft, Target, Package, XCircle, Trophy, Ghost } from 'lucide-react';
 import { LostReason } from '../types';
 
 export const DealDetailView: React.FC = () => {
