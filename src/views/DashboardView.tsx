@@ -48,7 +48,6 @@ export const DashboardView: React.FC = () => {
         <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-8 text-center">Pipeline delle Opportunità</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Cerchio 1: Nuove (Arancione) */}
           <div className="flex flex-col items-center justify-center">
             <h3 className="text-gray-500 font-bold mb-4">Nuove</h3>
             <div className="w-40 h-40 rounded-full bg-[#f39c12] flex flex-col items-center justify-center text-white shadow-lg shadow-orange-200 dark:shadow-none hover:scale-105 transition-transform">
@@ -57,7 +56,6 @@ export const DashboardView: React.FC = () => {
             </div>
           </div>
 
-          {/* Cerchio 2: Vinte (Verde) */}
           <div className="flex flex-col items-center justify-center">
             <h3 className="text-gray-500 font-bold mb-4">Vinte</h3>
             <div className="w-40 h-40 rounded-full bg-[#7cb342] flex flex-col items-center justify-center text-white shadow-lg shadow-green-200 dark:shadow-none hover:scale-105 transition-transform">
@@ -66,7 +64,6 @@ export const DashboardView: React.FC = () => {
             </div>
           </div>
 
-          {/* Cerchio 3: Perse (Rosso) */}
           <div className="flex flex-col items-center justify-center">
             <h3 className="text-gray-500 font-bold mb-4">Perse</h3>
             <div className="w-40 h-40 rounded-full bg-[#e74c3c] flex flex-col items-center justify-center text-white shadow-lg shadow-red-200 dark:shadow-none hover:scale-105 transition-transform">
@@ -113,14 +110,15 @@ export const DashboardView: React.FC = () => {
         </div>
 
         <div className="space-y-3">
-          todayActivities.map(activity => {
+          {todayActivities.length > 0 ? (
+            todayActivities.map(activity => {
               const contact = contacts[activity.contactId];
               const actDate = new Date(activity.date);
               
               return (
                 <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl">
                   <div>
-                    <p className="font-bold dark:text-white text-sm">{contact?.company || 'Trattativa'}</p>
+                    <p className="font-bold dark:text-white text-sm">{contact?.company || 'Azienda non trovata'}</p>
                     <p className="text-xs text-gray-500 capitalize">{activity.type} • {actDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})}</p>
                   </div>
                   <ArrowRight size={16} className="text-gray-300" />
