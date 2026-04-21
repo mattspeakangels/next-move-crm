@@ -111,3 +111,4 @@ export interface AppProfile {
   defaultMonthlyTarget: number;
   customProducts: string[];
 }
+export type NavView = 'dashboard' | 'contacts' | 'offers' | 'agenda' | 'products' | 'settings';
