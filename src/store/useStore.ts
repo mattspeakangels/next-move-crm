@@ -12,6 +12,7 @@ interface StoreState {
   theme: Theme;
   setProfile: (profile: AppProfile) => void;
   updateProfile: (updates: Partial<AppProfile>) => void;
+  addCustomProduct: (product: string) => void; // <--- Mancava questo
   toggleTheme: () => void;
   addContact: (contact: Contact) => void;
   updateContact: (id: string, contact: Partial<Contact>) => void;
@@ -23,6 +24,7 @@ interface StoreState {
   updateTarget: (id: string, target: Partial<Target>) => void;
   addProduct: (product: Product) => void;
   addProductsBatch: (products: Product[]) => void;
+  importState: (state: any) => void; // <--- Mancava questo
   resetAll: () => void;
 }
 
@@ -39,6 +41,11 @@ export const useStore = create<StoreState>()(
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
         profile: state.profile ? { ...state.profile, ...updates } : null
+      })),
+      addCustomProduct: (product) => set((state) => ({
+        profile: state.profile 
+          ? { ...state.profile, customProducts: [...state.profile.customProducts, product] }
+          : null
       })),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       addContact: (contact) => set((state) => ({
@@ -77,6 +84,7 @@ export const useStore = create<StoreState>()(
         newProducts.forEach(p => { updatedProducts[p.id] = p; });
         return { products: updatedProducts };
       }),
+      importState: (newState) => set(() => ({ ...newState })),
       resetAll: () => set({ profile: null, contacts: {}, activities: {}, deals: {}, products: {}, targets: {} }),
     }),
     { name: 'next-move-storage' }
