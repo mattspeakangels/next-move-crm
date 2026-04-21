@@ -3,6 +3,7 @@ export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
 export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
+export type Theme = 'light' | 'dark';
 
 export interface Product {
   id: string;
@@ -39,11 +40,11 @@ export interface Contact {
   status: ContactStatus;
   classification?: string;
   sector: string;
-  region: string; // <--- Ripristinato
+  region: string;
   notes?: string;
   intelligence?: CompanyIntelligence; 
   createdAt: number;
-  updatedAt: number; // <--- Ripristinato
+  updatedAt: number;
 }
 
 export interface OfferItem {
@@ -95,10 +96,19 @@ export interface Activity {
   createdAt?: number;
 }
 
+export interface Target {
+  id: string;
+  month: number;
+  year: number;
+  targetValue: number;
+  closedValue: number;
+}
+
 export interface AppProfile {
   name: string;
-  role: string; // <--- Ripristinato
+  role: string;
   company: string;
-  defaultMonthlyTarget: number; // <--- Ripristinato
-  customProducts: string[]; // <--- Ripristinato
+  defaultMonthlyTarget: number;
+  customProducts: string[];
+}
 }
