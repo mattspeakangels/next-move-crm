@@ -5,13 +5,12 @@ import { Activity, ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
 export const AgendaView: React.FC = () => {
-  const { activities, addActivity, deals, contacts } = useStore();
+  const { activities, addActivity, contacts } = useStore();
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
 
-  // Stato per la nuova attività
   const [formData, setFormData] = useState({
-    dealId: '',
+    contactId: '',
     type: 'visita' as ActivityType,
     date: '',
     time: '09:00',
@@ -20,8 +19,8 @@ export const AgendaView: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.dealId) {
-      showToast('Seleziona un deal/cliente a cui associare l\'attività', 'error');
+    if (!formData.contactId) {
+      showToast('Seleziona un\'azienda per l\'attività', 'error');
       return;
     }
 
@@ -29,7 +28,7 @@ export const AgendaView: React.FC = () => {
 
     const newActivity: Activity = {
       id: `act_${Date.now()}`,
-      dealId: formData.dealId,
+      contactId: formData.contactId,
       type: formData.type,
       date: dateTime,
       outcome: 'da-fare',
@@ -40,18 +39,14 @@ export const AgendaView: React.FC = () => {
     addActivity(newActivity);
     showToast('Attività aggiunta in agenda!', 'success');
     setShowModal(false);
-    setFormData({ dealId: '', type: 'visita', date: '', time: '09:00', notes: '' });
+    setFormData({ contactId: '', type: 'visita', date: '', time: '09:00', notes: '' });
   };
 
-  // Funzione Magica: Esporta in Google Calendar
   const handleExportToGoogle = (activity: Activity) => {
-    const deal = deals[activity.dealId];
-    const contact = deal ? contacts[deal.contactId] : null;
-    
+    const contact = contacts[activity.contactId];
     const companyName = contact ? contact.company : 'Cliente Ignoto';
     const title = encodeURIComponent(`${activity.type.toUpperCase()} - ${companyName}`);
     
-    // Calcoliamo la data di inizio e fine (ipotizziamo 1 ora di durata)
     const startDate = new Date(activity.date);
     const endDate = new Date(activity.date + 60 * 60 * 1000); 
     
@@ -72,7 +67,6 @@ export const AgendaView: React.FC = () => {
     window.open(url, '_blank');
   };
 
-  // Icone dinamiche
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {
       case 'chiamata': return <Phone size={18} />;
@@ -82,25 +76,20 @@ export const AgendaView: React.FC = () => {
     }
   };
 
-  // Ordina attività dalla più recente/imminente
   const sortedActivities = Object.values(activities).sort((a, b) => a.date - b.date);
 
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-black dark:text-white">La tua Agenda</h1>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none"
-        >
+        <button onClick={() => setShowModal(true)} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none">
           <Plus size={20} /> Nuova Attività
         </button>
       </div>
 
       <div className="space-y-4">
         {sortedActivities.map(activity => {
-          const deal = deals[activity.dealId];
-          const contact = deal ? contacts[deal.contactId] : null;
+          const contact = contacts[activity.contactId];
           const actDate = new Date(activity.date);
 
           return (
@@ -115,7 +104,7 @@ export const AgendaView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black dark:text-white text-lg">
-                    {contact?.company || 'Trattativa senza azienda'}
+                    {contact?.company || 'Azienda Eliminata'}
                   </h3>
                   <div className="flex flex-wrap gap-3 mt-1 text-sm font-bold text-gray-500">
                     <span className="text-indigo-600">
@@ -130,11 +119,7 @@ export const AgendaView: React.FC = () => {
               </div>
               
               <div className="flex gap-2 w-full md:w-auto">
-                <button 
-                  onClick={() => handleExportToGoogle(activity)}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-200 hover:border-indigo-600 hover:text-indigo-600 transition-all"
-                  title="Aggiungi a Google Calendar"
-                >
+                <button onClick={() => handleExportToGoogle(activity)} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-200 hover:border-indigo-600 hover:text-indigo-600 transition-all">
                   <ExternalLink size={16} /> G.Calendar
                 </button>
               </div>
@@ -153,7 +138,6 @@ export const AgendaView: React.FC = () => {
         )}
       </div>
 
-      {/* MODAL NUOVA ATTIVITÀ */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
@@ -164,18 +148,16 @@ export const AgendaView: React.FC = () => {
             
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase">A quale Trattativa (Deal) è legata?</label>
+                <label className="text-xs font-bold text-gray-400 uppercase">Scegli Azienda</label>
                 <select 
                   required
-                  value={formData.dealId} 
-                  onChange={e => setFormData({...formData, dealId: e.target.value})}
+                  value={formData.contactId} 
+                  onChange={e => setFormData({...formData, contactId: e.target.value})}
                   className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none focus:border-indigo-500"
                 >
-                  <option value="">Seleziona...</option>
-                  {Object.values(deals).map(d => (
-                    <option key={d.id} value={d.id}>
-                      {contacts[d.contactId]?.company} - €{d.value}
-                    </option>
+                  <option value="">Seleziona un'azienda...</option>
+                  {Object.values(contacts).map(c => (
+                    <option key={c.id} value={c.id}>{c.company}</option>
                   ))}
                 </select>
               </div>
@@ -183,48 +165,24 @@ export const AgendaView: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase">Tipo</label>
-                  <select 
-                    value={formData.type} 
-                    onChange={e => setFormData({...formData, type: e.target.value as ActivityType})}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none"
-                  >
-                    <option value="visita">Visita</option>
-                    <option value="chiamata">Chiamata</option>
-                    <option value="email">Email</option>
+                  <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as ActivityType})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none">
+                    <option value="visita">Visita</option><option value="chiamata">Chiamata</option><option value="email">Email</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase">Data</label>
-                  <input 
-                    type="date" 
-                    required
-                    value={formData.date} 
-                    onChange={e => setFormData({...formData, date: e.target.value})}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none"
-                  />
+                  <input type="date" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none"/>
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase">Ora</label>
-                <input 
-                  type="time" 
-                  required
-                  value={formData.time} 
-                  onChange={e => setFormData({...formData, time: e.target.value})}
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none"
-                />
+                <input type="time" required value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none"/>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase">Note / Argomento</label>
-                <textarea 
-                  rows={3}
-                  placeholder="Es: Presentazione nuovo listino prezzi..."
-                  value={formData.notes} 
-                  onChange={e => setFormData({...formData, notes: e.target.value})}
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none resize-none focus:border-indigo-500"
-                />
+                <textarea rows={3} placeholder="Es: Presentazione listino..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-transparent dark:text-white mt-1 outline-none resize-none focus:border-indigo-500" />
               </div>
 
               <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-indigo-700 transition-all uppercase mt-4">
