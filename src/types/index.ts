@@ -3,6 +3,15 @@ export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
 export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';
 
+export interface CompanyIntelligence {
+  products: string;
+  competitors: string;
+  prices: string;
+  paymentTerms: string;
+  service: string;
+  delivery: string;
+}
+
 export interface Contact {
   id: string;
   company: string;
@@ -12,18 +21,17 @@ export interface Contact {
   phone: string;
   website?: string;
   vatNumber?: string;
-  // Indirizzo
   address?: string;
   city?: string;
   zipCode?: string;
   province?: string;
   country?: string;
-  // Profilazione
   status: ContactStatus;
-  classification?: string; // Es: A1, B2, C
+  classification?: string;
   sector: string;
   region: string;
   notes?: string;
+  intelligence?: CompanyIntelligence; 
   createdAt: number;
   updatedAt: number;
 }
