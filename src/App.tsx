@@ -1,24 +1,20 @@
 import { useState } from 'react';
-// Importiamo Layout dalla cartella 'layouts' (con la s)
 import { Layout } from './components/layouts'; 
 import { DashboardView } from './views/DashboardView';
 import { ContactsView } from './views/ContactsView';
 import { AgendaView } from './views/AgendaView';
 import { ProductsView } from './views/ProductsView';
 import { SettingsView } from './views/SettingsView';
-// Importiamo Onboarding dalla cartella Onboarding
-import { Onboarding } from './components/Onboarding/Onboarding'; 
+import { Onboarding } from './components/Onboarding'; 
 import { useStore } from './store/useStore';
 import { ToastProvider } from './components/ui/ToastContext';
 
-// Definiamo le viste disponibili (senza DealsView che ora non serve)
 type View = 'dashboard' | 'contacts' | 'agenda' | 'products' | 'settings';
 
 function App() {
   const { profile } = useStore();
   const [currentView, setCurrentView] = useState<View>('dashboard');
 
-  // Se l'utente non ha un profilo, mostra l'onboarding
   if (!profile) {
     return (
       <ToastProvider>
