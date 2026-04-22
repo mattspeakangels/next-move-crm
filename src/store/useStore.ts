@@ -19,7 +19,7 @@ export const useStore = create<StoreState>()(
       updateProfile: (updates) => set((state) => ({
         profile: state.profile ? { ...state.profile, ...updates } : (updates as any)
       })),
-      setProfile: (profile, ...args) => set({ profile }),
+      setProfile: (profile) => set({ profile }),
       resetAll: () => set({
         profile: null,
         contacts: {},
@@ -80,15 +80,4 @@ export const useStore = create<StoreState>()(
       })),
 
       addActivity: (activity) => set((state) => ({ 
-        activities: { ...state.activities, [activity.id]: activity } 
-      })),
-
-      updateTarget: (target) => set((state) => ({ 
-        targets: { ...state.targets, [target.id]: target } 
-      })),
-    }),
-    {
-      name: 'next-move-crm-storage',
-    }
-  )
-);
+        activities: { ...state.activities, [activity
