@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, X, Edit2, Truck, Mail, Printer } from 'lucide-react';
+import { Plus, FileText, Trash2, X, Edit2, Mail, Printer } from 'lucide-react';
 import { Offer, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
