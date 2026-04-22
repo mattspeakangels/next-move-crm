@@ -10,10 +10,11 @@ export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' |
 export interface Product {
   id: string;
   code: string;
-  name: string;
+  description: string; // Ex 'name'
   category: string;
   price: number;
-  description?: string;
+  sizes?: string;      // Aggiunto
+  discount: number;    // Aggiunto
 }
 
 export interface CompanyIntelligence {
