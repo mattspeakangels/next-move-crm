@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, Clock, X, Edit2, Truck } from 'lucide-react';
+import { Plus, FileText, Trash2, Clock, X, Edit2, Truck, Mail, Printer } from 'lucide-react';
 import { Offer, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
 export const OffersView: React.FC = () => {
-  const { contacts, products, offers, addOffer, updateOffer, removeOffer } = useStore();
+  const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile } = useStore();
   const { showToast } = useToast();
   
   const [showModal, setShowModal] = useState(false);
@@ -100,6 +100,29 @@ export const OffersView: React.FC = () => {
     setShowModal(false);
   };
 
+  // FUNZIONE PER INVIO EMAIL
+  const handleSendEmail = (offer: Offer) => {
+    const contact = contacts[offer.contactId];
+    if (!contact) return;
+
+    const subject = encodeURIComponent(`Preventivo ${offer.offerNumber} - ${profile?.company || 'Nostra Azienda'}`);
+    
+    let bodyText = `Spett.le ${contact.company},\n\nin allegato inviamo il preventivo ${offer.offerNumber} relativo alla vostra richiesta.\n\n`;
+    bodyText += `DETTAGLIO:\n`;
+    offer.items.forEach(item => {
+      bodyText += `- ${item.description} (Taglie: ${item.sizes || 'N/D'}) x ${item.quantity}: €${item.price.toLocaleString()}\n`;
+    });
+    
+    if (offer.shippingCost) bodyText += `Trasporto: €${offer.shippingCost}\n`;
+    if (offer.deliveryTime) bodyText += `Tempi Consegna: ${offer.deliveryTime}\n`;
+    
+    bodyText += `\nTOTALE: €${offer.totalAmount.toLocaleString()}\n\n`;
+    bodyText += `Restiamo a disposizione per ogni chiarimento.\n\nCordiali saluti,\n${profile?.name || ''}\n${profile?.company || ''}`;
+
+    const mailtoLink = `mailto:${contact.email}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+    window.location.href = mailtoLink;
+  };
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
@@ -143,12 +166,17 @@ export const OffersView: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-50 dark:border-gray-700">
                   <div className="flex gap-2">
                     <button onClick={() => updateOffer(offer.id, { status: 'accettata' })} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-gray-50 dark:bg-gray-700 text-gray-500 hover:bg-green-500 hover:text-white transition-all">Vinta</button>
-                    <button onClick={() => updateOffer(offer.id, { status: 'inviata' })} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-gray-50 dark:bg-gray-700 text-gray-500 hover:bg-indigo-600 hover:text-white transition-all">Inviata</button>
+                    <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2">
+                      <Mail size={12}/> Invia Email
+                    </button>
                   </div>
                   <div className="flex gap-2">
+                    <button onClick={() => window.print()} className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors" title="Stampa PDF">
+                      <Printer size={16} />
+                    </button>
                     <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Modifica">
                       <Edit2 size={16} />
                     </button>
