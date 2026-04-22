@@ -32,7 +32,7 @@ export const OffersView: React.FC = () => {
     if (product) {
       updateItem(id, { 
         productId: product.id, 
-        description: product.name, 
+        description: product.description, // <-- Aggiornato qui
         price: product.price 
       });
     }
@@ -76,10 +76,7 @@ export const OffersView: React.FC = () => {
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte</h1>
           <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Gestione Preventivi</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)} 
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg"
-        >
+        <button onClick={() => setShowModal(true)} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg">
           <Plus size={20} /> Nuova
         </button>
       </div>
@@ -93,12 +90,8 @@ export const OffersView: React.FC = () => {
               <div key={offer.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">
-                      {offer.offerNumber}
-                    </span>
-                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">
-                      {contact?.company || 'Azienda'}
-                    </h3>
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">{offer.offerNumber}</span>
+                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-black dark:text-white tracking-tighter">€ {offer.totalAmount.toLocaleString('it-IT')}</p>
@@ -135,11 +128,9 @@ export const OffersView: React.FC = () => {
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
-                <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none focus:border-indigo-500" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
+                <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
                   <option value="">Seleziona...</option>
-                  {Object.values(contacts).map((c) => (
-                    <option key={c.id} value={c.id}>{c.company}</option>
-                  ))}
+                  {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
                 </select>
               </div>
               <div className="space-y-4">
@@ -150,31 +141,19 @@ export const OffersView: React.FC = () => {
                 {items.map((item) => (
                   <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-900 p-3 rounded-2xl">
                     <div className="col-span-7">
-                      <select 
-                        className="w-full bg-transparent font-bold outline-none text-sm dark:text-white" 
-                        onChange={(e) => handleProductSelect(item.id, e.target.value)}
-                      >
+                      <select className="w-full bg-transparent font-bold outline-none text-sm dark:text-white" onChange={(e) => handleProductSelect(item.id, e.target.value)}>
                         <option value="">Catalogo...</option>
                         {Object.values(products).map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
+                          <option key={p.id} value={p.id}>{p.description}</option> // <-- Aggiornato qui
                         ))}
                       </select>
                     </div>
                     <div className="col-span-2">
-                      <input 
-                        type="number" 
-                        className="w-full bg-transparent text-center font-bold outline-none dark:text-white" 
-                        value={item.quantity} 
-                        onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })} 
-                      />
+                      <input type="number" className="w-full bg-transparent text-center font-bold outline-none dark:text-white" value={item.quantity} onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })} />
                     </div>
-                    <div className="col-span-2 text-right">
-                      <p className="font-bold text-sm text-indigo-600">€{item.price}</p>
-                    </div>
+                    <div className="col-span-2 text-right"><p className="font-bold text-sm text-indigo-600">€{item.price}</p></div>
                     <div className="col-span-1 text-right">
-                      <button onClick={() => setItems(items.filter((i) => i.id !== item.id))} className="text-red-400">
-                        <Trash2 size={16}/>
-                      </button>
+                      <button onClick={() => setItems(items.filter((i) => i.id !== item.id))} className="text-red-400"><Trash2 size={16}/></button>
                     </div>
                   </div>
                 ))}
