@@ -5,7 +5,8 @@ import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
 export const ProductsView: React.FC = () => {
-  const { products, addProduct, removeProduct } = useStore();
+  // Nota: assicurati che removeProduct sia nel tuo store
+  const { products, addProduct, removeProduct } = useStore() as any;
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
@@ -76,12 +77,14 @@ export const ProductsView: React.FC = () => {
                   <p className="text-lg font-black dark:text-white">€ {product.price.toLocaleString()}</p>
                   <p className="text-[10px] font-bold text-gray-400 uppercase">{product.category}</p>
                 </div>
-                <button 
-                  onClick={() => removeProduct(product.id)}
-                  className="text-red-400 hover:text-red-600 p-2 transition-colors"
-                >
-                  <Trash2 size={20} />
-                </button>
+                {removeProduct && (
+                  <button 
+                    onClick={() => removeProduct(product.id)}
+                    className="text-red-400 hover:text-red-600 p-2 transition-colors"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
               </div>
             </div>
           ))
