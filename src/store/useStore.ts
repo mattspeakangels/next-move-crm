@@ -5,7 +5,6 @@ import { StoreState } from './types';
 export const useStore = create<StoreState>()(
   persist(
     (set) => ({
-      // Stato Iniziale
       theme: 'light',
       profile: null,
       contacts: {},
@@ -15,13 +14,12 @@ export const useStore = create<StoreState>()(
       activities: {},
       targets: {},
 
-      // Azioni Impostazioni
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       updateProfile: (updates) => set((state) => ({
         profile: state.profile ? { ...state.profile, ...updates } : (updates as any)
       })),
-      setProfile: (profile) => set({ profile }),
+      setProfile: (profile, ...args) => set({ profile }),
       resetAll: () => set({
         profile: null,
         contacts: {},
@@ -32,7 +30,6 @@ export const useStore = create<StoreState>()(
         targets: {}
       }),
 
-      // Azioni Aziende
       addContact: (contact) => set((state) => ({ 
         contacts: { ...state.contacts, [contact.id]: contact } 
       })),
@@ -45,7 +42,6 @@ export const useStore = create<StoreState>()(
         return { contacts: contactsMap };
       }),
 
-      // Azioni Catalogo
       addProduct: (product) => set((state) => ({ 
         products: { ...state.products, [product.id]: product } 
       })),
@@ -64,15 +60,18 @@ export const useStore = create<StoreState>()(
         } : null
       })),
 
-      // Azioni Offerte
       addOffer: (offer) => set((state) => ({ 
         offers: { ...state.offers, [offer.id]: offer } 
       })),
       updateOffer: (id, updates) => set((state) => ({
         offers: { ...state.offers, [id]: { ...state.offers[id], ...updates } }
       })),
+      removeOffer: (id) => set((state) => {
+        const newOffers = { ...state.offers };
+        delete newOffers[id];
+        return { offers: newOffers };
+      }),
 
-      // Azioni Pipeline
       addDeal: (deal) => set((state) => ({ 
         deals: { ...state.deals, [deal.id]: deal } 
       })),
@@ -80,12 +79,10 @@ export const useStore = create<StoreState>()(
         deals: { ...state.deals, [id]: { ...state.deals[id], ...updates } }
       })),
 
-      // Azioni Attività
       addActivity: (activity) => set((state) => ({ 
         activities: { ...state.activities, [activity.id]: activity } 
       })),
 
-      // Azioni Obiettivi
       updateTarget: (target) => set((state) => ({ 
         targets: { ...state.targets, [target.id]: target } 
       })),
