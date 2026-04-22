@@ -5,7 +5,6 @@ import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
 export const ProductsView: React.FC = () => {
-  // Nota: assicurati che removeProduct sia nel tuo store
   const { products, addProduct, removeProduct } = useStore() as any;
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
@@ -38,6 +37,9 @@ export const ProductsView: React.FC = () => {
     showToast('Articolo aggiunto', 'success');
   };
 
+  // Dichiariamo esplicitamente il tipo per evitare l'errore TS18046 (unknown)
+  const productsList = Object.values(products || {}) as Product[];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -54,8 +56,8 @@ export const ProductsView: React.FC = () => {
       </div>
 
       <div className="grid gap-4">
-        {Object.values(products).length > 0 ? (
-          Object.values(products).map((product) => (
+        {productsList.length > 0 ? (
+          productsList.map((product) => (
             <div key={product.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700 flex justify-between items-center">
               <div className="flex gap-4 items-center">
                 <div className="w-12 h-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-indigo-600">
@@ -108,59 +110,4 @@ export const ProductsView: React.FC = () => {
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Codice</label>
                 <input 
                   type="text"
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-                  value={newProduct.code}
-                  onChange={e => setNewProduct({...newProduct, code: e.target.value.toUpperCase()})}
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Descrizione</label>
-                <input 
-                  type="text"
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-                  value={newProduct.description}
-                  onChange={e => setNewProduct({...newProduct, description: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Prezzo (€)</label>
-                  <input 
-                    type="number"
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-                    value={newProduct.price}
-                    onChange={e => setNewProduct({...newProduct, price: Number(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Sconto (%)</label>
-                  <input 
-                    type="number"
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-                    value={newProduct.discount}
-                    onChange={e => setNewProduct({...newProduct, discount: Number(e.target.value)})}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Taglie (es: S, M, L, XL)</label>
-                <input 
-                  type="text"
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-                  value={newProduct.sizes}
-                  onChange={e => setNewProduct({...newProduct, sizes: e.target.value})}
-                />
-              </div>
-              <button 
-                onClick={handleSave}
-                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl mt-4"
-              >
-                Salva nel Catalogo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+                  className="
