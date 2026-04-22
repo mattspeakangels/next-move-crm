@@ -7,16 +7,6 @@ export type Theme = 'light' | 'dark';
 
 export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings';
 
-export interface Product {
-  id: string;
-  code: string;
-  description: string; // Ex 'name'
-  category: string;
-  price: number;
-  sizes?: string;      // Aggiunto
-  discount: number;    // Aggiunto
-}
-
 export interface CompanyIntelligence {
   products: string;
   competitors: string;
@@ -63,11 +53,21 @@ export interface Offer {
   id: string;
   contactId: string;
   offerNumber: string;
-  date: number;
+  date: number; 
   items: OfferItem[];
   status: OfferStatus;
   totalAmount: number;
   followUpDate: number;
+}
+
+export interface Product {
+  id: string;
+  code: string;
+  description: string;
+  category: string;
+  price: number;
+  sizes?: string;
+  discount: number;
 }
 
 export interface Deal {
@@ -75,10 +75,17 @@ export interface Deal {
   contactId: string;
   value: number;
   probability: number;
+  products: string[];      // Reintegrato per DealCard
   stage: DealStage;
+  nextAction: string;      // Reintegrato per DealCard
   nextActionDeadline: number;
-  lostReason?: LostReason;
+  notes: string;           // Reintegrato
   createdAt: number;
+  updatedAt: number;       // Reintegrato
+  closedAt?: number;
+  offerRef?: string;
+  lostReason?: LostReason;
+  competitor?: string;
 }
 
 export interface Activity {
