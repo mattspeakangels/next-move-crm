@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Package, Trash2, X, Tag } from 'lucide-react';
+import { Plus, Package, Trash2, X } from 'lucide-react';
 import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
