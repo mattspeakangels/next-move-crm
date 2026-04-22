@@ -10,34 +10,6 @@ import {
 } from '../types';
 
 export interface StoreState {
-  // Impostazioni
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
-  profile: AppProfile | null;
-  updateProfile: (profile: Partial<AppProfile>) => void;
-  
-  // LA CHIAVE È QUI: Diciamo a TypeScript di accettare qualsiasi argomento extra (il ...args)
-  // che OnboardingView sta cercando di passargli senza bloccare la build.
-  setProfile: (profile: any, ...args: any[]) => void; 
-  
-  resetAll: () => void;
-
-  // Aziende
-  contacts: Record<string, Contact>;
-  addContact: (contact: Contact) => void;
-  updateContact: import { 
-  Contact, 
-  Offer, 
-  Product, 
-  Deal, 
-  Activity, 
-  Target, 
-  AppProfile, 
-  Theme 
-} from '../types';
-
-export interface StoreState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
@@ -60,7 +32,7 @@ export interface StoreState {
   offers: Record<string, Offer>;
   addOffer: (offer: Offer) => void;
   updateOffer: (id: string, offer: Partial<Offer>) => void;
-  removeOffer: (id: string) => void; 
+  removeOffer: (id: string) => void;
 
   deals: Record<string, Deal>;
   addDeal: (deal: Deal) => void;
