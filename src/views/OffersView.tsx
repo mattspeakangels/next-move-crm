@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, Clock, X, Edit2, Truck, Mail, Printer } from 'lucide-react';
+import { Plus, FileText, Trash2, X, Edit2, Truck, Mail, Printer } from 'lucide-react';
 import { Offer, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
@@ -116,11 +116,9 @@ export const OffersView: React.FC = () => {
     window.location.href = `mailto:${contact.email}?subject=${subject}&body=${encodeURIComponent(body)}`;
   };
 
-  // --- STAMPA PROFESSIONALE TRAMITE IFRAME NASCOSTO ---
   const handlePrint = (offer: Offer) => {
     const contact = contacts[offer.contactId];
     
-    // Creiamo il contenuto HTML
     const itemsHtml = offer.items.map(item => {
       const subtotal = (item.price * item.quantity) * (1 - item.discount / 100);
       return `
@@ -180,7 +178,6 @@ export const OffersView: React.FC = () => {
       </html>
     `;
 
-    // Creazione iframe nascosto
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -196,7 +193,6 @@ export const OffersView: React.FC = () => {
       doc.write(htmlContent);
       doc.close();
 
-      // Lanciamo la stampa dopo un breve delay per caricare gli stili
       setTimeout(() => {
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
