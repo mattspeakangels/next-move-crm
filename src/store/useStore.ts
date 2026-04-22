@@ -80,4 +80,15 @@ export const useStore = create<StoreState>()(
       })),
 
       addActivity: (activity) => set((state) => ({ 
-        activities: { ...state.activities, [activity
+        activities: { ...state.activities, [activity.id]: activity } 
+      })),
+
+      updateTarget: (target) => set((state) => ({ 
+        targets: { ...state.targets, [target.id]: target } 
+      })),
+    }),
+    {
+      name: 'next-move-crm-storage',
+    }
+  )
+);
