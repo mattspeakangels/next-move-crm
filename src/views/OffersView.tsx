@@ -100,27 +100,111 @@ export const OffersView: React.FC = () => {
     setShowModal(false);
   };
 
-  // FUNZIONE PER INVIO EMAIL
+  // --- LOGICA DI INVIO EMAIL DETTAGLIATA ---
   const handleSendEmail = (offer: Offer) => {
     const contact = contacts[offer.contactId];
     if (!contact) return;
 
-    const subject = encodeURIComponent(`Preventivo ${offer.offerNumber} - ${profile?.company || 'Nostra Azienda'}`);
+    const subject = encodeURIComponent(`Preventivo ${offer.offerNumber} - ${profile?.company || 'CRM'}`);
     
-    let bodyText = `Spett.le ${contact.company},\n\nin allegato inviamo il preventivo ${offer.offerNumber} relativo alla vostra richiesta.\n\n`;
-    bodyText += `DETTAGLIO:\n`;
+    let body = `Spett.le ${contact.company},\n\nin riferimento ai vostri contatti, vi inviamo il dettaglio del preventivo richiesto.\n\n`;
+    body += `RIEPILOGO OFFERTA ${offer.offerNumber}\n`;
+    body += `--------------------------------------------------\n`;
+    
     offer.items.forEach(item => {
-      bodyText += `- ${item.description} (Taglie: ${item.sizes || 'N/D'}) x ${item.quantity}: €${item.price.toLocaleString()}\n`;
+      const lineTotal = (item.price * item.quantity) * (1 - item.discount / 100);
+      body += `Articolo: ${item.description}\n`;
+      if (item.sizes) body += `Taglia/Dim: ${item.sizes}\n`;
+      body += `Quantità: ${item.quantity} | Prezzo: €${item.price.toFixed(2)} | Sconto: ${item.discount}%\n`;
+      body += `Totale Riga: €${lineTotal.toFixed(2)}\n`;
+      body += `--------------------------------------------------\n`;
     });
     
-    if (offer.shippingCost) bodyText += `Trasporto: €${offer.shippingCost}\n`;
-    if (offer.deliveryTime) bodyText += `Tempi Consegna: ${offer.deliveryTime}\n`;
+    if (offer.shippingCost) body += `Spese di Trasporto: €${offer.shippingCost.toFixed(2)}\n`;
+    if (offer.deliveryTime) body += `Tempi di Consegna: ${offer.deliveryTime}\n`;
     
-    bodyText += `\nTOTALE: €${offer.totalAmount.toLocaleString()}\n\n`;
-    bodyText += `Restiamo a disposizione per ogni chiarimento.\n\nCordiali saluti,\n${profile?.name || ''}\n${profile?.company || ''}`;
+    body += `\nTOTALE COMPLESSIVO: €${offer.totalAmount.toFixed(2)}\n\n`;
+    body += `Restiamo in attesa di un vostro gentile riscontro.\n\nCordiali saluti,\n${profile?.name || ''}\n${profile?.company || ''}`;
 
-    const mailtoLink = `mailto:${contact.email}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
-    window.location.href = mailtoLink;
+    window.location.href = `mailto:${contact.email}?subject=${subject}&body=${encodeURIComponent(body)}`;
+  };
+
+  // --- LOGICA DI STAMPA PROFESSIONALE (PDF) ---
+  const handlePrint = (offer: Offer) => {
+    const contact = contacts[offer.contactId];
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const itemsHtml = offer.items.map(item => {
+      const total = (item.price * item.quantity) * (1 - item.discount / 100);
+      return `
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.description}<br/><small>${item.sizes || ''}</small></td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${item.price.toFixed(2)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.discount}%</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">€${total.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Preventivo ${offer.offerNumber}</title>
+          <style>
+            body { font-family: sans-serif; color: #333; padding: 40px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 50px; }
+            .company-info h1 { margin: 0; color: #4f46e5; }
+            .details { margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f9fafb; padding: 10px; text-align: left; border-bottom: 2px solid #eee; }
+            .totals { text-align: right; margin-top: 30px; }
+            .totals p { margin: 5px 0; }
+            .grand-total { font-size: 24px; font-weight: bold; color: #4f46e5; }
+            .footer { margin-top: 50px; font-size: 12px; color: #999; border-top: 1px solid #eee; pt: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-info">
+              <h1>${profile?.company || 'PREVENTIVO'}</h1>
+              <p>${profile?.name || ''}</p>
+            </div>
+            <div style="text-align: right">
+              <h2>N° ${offer.offerNumber}</h2>
+              <p>Data: ${new Date(offer.date).toLocaleDateString('it-IT')}</p>
+            </div>
+          </div>
+          <div class="details">
+            <p><strong>Destinatario:</strong></p>
+            <p>${contact?.company}<br/>${contact?.address || ''}<br/>${contact?.city || ''}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Descrizione</th>
+                <th style="text-align: center">Q.tà</th>
+                <th style="text-align: right">Prezzo U.</th>
+                <th style="text-align: center">Sconto</th>
+                <th style="text-align: right">Totale</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+          <div class="totals">
+            ${offer.shippingCost ? `<p>Trasporto: €${offer.shippingCost.toFixed(2)}</p>` : ''}
+            ${offer.deliveryTime ? `<p>Tempi di consegna: ${offer.deliveryTime}</p>` : ''}
+            <p class="grand-total">Totale Finale: €${offer.totalAmount.toFixed(2)}</p>
+          </div>
+          <div class="footer">
+            <p>Documento generato dal sistema CRM. Offerta valida per 30 giorni.</p>
+          </div>
+          <script>window.onload = function() { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -174,7 +258,7 @@ export const OffersView: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => window.print()} className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors" title="Stampa PDF">
+                    <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors" title="Stampa Professionale">
                       <Printer size={16} />
                     </button>
                     <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Modifica">
