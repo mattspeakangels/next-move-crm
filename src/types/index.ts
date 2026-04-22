@@ -11,18 +11,106 @@ export interface CompanyIntelligence {
   products: string;
   competitors: string;
   prices: string;
-  paymentTerms: str110 packages are looking for funding
-  run `npm fund` for details
-> next-move-crm@1.0.0 build
-> tsc && vite build
-src/components/deals/ActivityFormModal.tsx(25,7): error TS2353: Object literal may only specify known properties, and 'dealId' does not exist in type 'Activity'.
-src/store/types.ts(1,35): error TS2305: Module '"../types"' has no exported member 'Target'.
-src/store/useStore.ts(3,56): error TS2305: Module '"../types"' has no exported member 'Target'.
-src/utils/coachLogic.ts(27,53): error TS2339: Property 'dealId' does not exist on type 'Activity'.
-src/views/AgendaView.tsx(35,7): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'Activity'.
-src/views/OffersView.tsx(35,30): error TS2339: Property 'name' does not exist on type 'Product'.
-src/views/OffersView.tsx(159,62): error TS2339: Property 'name' does not exist on type 'Product'.
-src/views/ProductsView.tsx(3,36): error TS6133: 'Tag' is declared but its value is never read.
-src/views/ProductsView.tsx(8,33): error TS2339: Property 'removeProduct' does not exist on type 'StoreState'.
-Error: Command "npm run build" exited with 2
+  paymentTerms: string;
+  service: string;
+  delivery: string;
+}
 
+export interface Contact {
+  id: string;
+  company: string;
+  contactName: string;
+  role: string;
+  email: string;
+  phone: string;
+  website?: string;
+  vatNumber?: string;
+  address?: string;
+  city?: string;
+  zipCode?: string;
+  province?: string;
+  country?: string;
+  status: ContactStatus;
+  classification?: string;
+  sector: string;
+  region: string;
+  notes?: string;
+  intelligence?: CompanyIntelligence; 
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface OfferItem {
+  id: string;
+  productId?: string;
+  description: string;
+  quantity: number;
+  price: number;
+  discount: number;
+}
+
+export interface Offer {
+  id: string;
+  contactId: string;
+  offerNumber: string;
+  date: number; 
+  items: OfferItem[];
+  status: OfferStatus;
+  totalAmount: number;
+  followUpDate: number;
+}
+
+export interface Product {
+  id: string;
+  code: string;
+  description: string;
+  category: string;
+  price: number;
+  sizes?: string;
+  discount: number;
+}
+
+export interface Deal {
+  id: string;
+  contactId: string;
+  value: number;
+  probability: number;
+  products: string[];
+  stage: DealStage;
+  nextAction: string;
+  nextActionDeadline: number;
+  notes: string;
+  createdAt: number;
+  updatedAt: number;
+  closedAt?: number;
+  offerRef?: string;
+  lostReason?: LostReason;
+  competitor?: string;
+}
+
+export interface Activity {
+  id: string;
+  contactId: string;
+  dealId?: string;
+  type: ActivityType;
+  date: number;
+  outcome: string;
+  notes: string;
+  createdAt?: number;
+}
+
+export interface Target {
+  id: string;
+  month: number;
+  year: number;
+  targetValue: number;
+  closedValue: number;
+}
+
+export interface AppProfile {
+  name: string;
+  role: string;
+  company: string;
+  defaultMonthlyTarget: number;
+  customProducts: string[];
+}
