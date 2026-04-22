@@ -1,24 +1,47 @@
-import { Contact, Deal, Activity, Target, AppProfile } from '../types';
+import { 
+  Contact, 
+  Offer, 
+  Product, 
+  Deal, 
+  Activity, 
+  Target, 
+  AppProfile, 
+  Theme 
+} from '../types';
 
 export interface StoreState {
-  contacts: Record<string, Contact>;
-  deals: Record<string, Deal>;
-  activities: Record<string, Activity>;
-  targets: Record<string, Target>;
+  // Impostazioni
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
   profile: AppProfile | null;
-  theme: 'light' | 'dark';
-  setProfile: (profile: AppProfile) => void;
-  updateProfile: (updates: Partial<AppProfile>) => void;
+  updateProfile: (profile: Partial<AppProfile>) => void;
+
+  // Aziende
+  contacts: Record<string, Contact>;
   addContact: (contact: Contact) => void;
-  updateContact: (id: string, updates: Partial<Contact>) => void;
-  addContactsBatch: (contacts: Contact[]) => void;
+  updateContact: (id: string, contact: Partial<Contact>) => void;
+
+  // Catalogo Prodotti
+  products: Record<string, Product>;
+  addProduct: (product: Product) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
+  removeProduct: (id: string) => void; // <--- Aggiunto per il Catalogo
+
+  // Offerte (Preventivi)
+  offers: Record<string, Offer>;
+  addOffer: (offer: Offer) => void;
+  updateOffer: (id: string, offer: Partial<Offer>) => void;
+
+  // Pipeline (Trattative)
+  deals: Record<string, Deal>;
   addDeal: (deal: Deal) => void;
-  updateDeal: (id: string, updates: Partial<Deal>) => void;
-  deleteDeal: (id: string) => void;
+  updateDeal: (id: string, deal: Partial<Deal>) => void;
+
+  // Attività (Agenda/Log)
+  activities: Record<string, Activity>;
   addActivity: (activity: Activity) => void;
-  updateTarget: (id: string, target: Target) => void;
-  toggleTheme: () => void;
-  addCustomProduct: (product: string) => void;
-  importState: (newState: Partial<StoreState>) => void;
-  resetAll: () => void;
+
+  // Obiettivi
+  targets: Record<string, Target>;
+  updateTarget: (target: Target) => void;
 }
