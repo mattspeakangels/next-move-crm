@@ -44,6 +44,7 @@ export interface OfferItem {
   id: string;
   productId?: string;
   description: string;
+  sizes?: string; 
   quantity: number;
   price: number;
   discount: number;
@@ -58,6 +59,8 @@ export interface Offer {
   status: OfferStatus;
   totalAmount: number;
   followUpDate: number;
+  deliveryTime?: string; 
+  shippingCost?: number; 
 }
 
 export interface Product {
