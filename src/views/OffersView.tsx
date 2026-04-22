@@ -100,110 +100,165 @@ export const OffersView: React.FC = () => {
     setShowModal(false);
   };
 
-  // --- LOGICA DI INVIO EMAIL DETTAGLIATA ---
   const handleSendEmail = (offer: Offer) => {
     const contact = contacts[offer.contactId];
     if (!contact) return;
 
     const subject = encodeURIComponent(`Preventivo ${offer.offerNumber} - ${profile?.company || 'CRM'}`);
     
-    let body = `Spett.le ${contact.company},\n\nin riferimento ai vostri contatti, vi inviamo il dettaglio del preventivo richiesto.\n\n`;
-    body += `RIEPILOGO OFFERTA ${offer.offerNumber}\n`;
-    body += `--------------------------------------------------\n`;
+    let body = `Spett.le ${contact.company},\n\nIn allegato i dettagli del preventivo richiesto.\n\n`;
+    body += `OFFERTA N° ${offer.offerNumber}\n`;
+    body += `==================================================\n`;
     
     offer.items.forEach(item => {
       const lineTotal = (item.price * item.quantity) * (1 - item.discount / 100);
-      body += `Articolo: ${item.description}\n`;
-      if (item.sizes) body += `Taglia/Dim: ${item.sizes}\n`;
-      body += `Quantità: ${item.quantity} | Prezzo: €${item.price.toFixed(2)} | Sconto: ${item.discount}%\n`;
-      body += `Totale Riga: €${lineTotal.toFixed(2)}\n`;
+      body += `• ${item.description.toUpperCase()}\n`;
+      if (item.sizes) body += `  Taglie: ${item.sizes}\n`;
+      body += `  Q.tà: ${item.quantity} | Prezzo: €${item.price.toFixed(2)} | Sconto: ${item.discount}%\n`;
+      body += `  Subtotale: €${lineTotal.toFixed(2)}\n`;
       body += `--------------------------------------------------\n`;
     });
     
     if (offer.shippingCost) body += `Spese di Trasporto: €${offer.shippingCost.toFixed(2)}\n`;
     if (offer.deliveryTime) body += `Tempi di Consegna: ${offer.deliveryTime}\n`;
     
-    body += `\nTOTALE COMPLESSIVO: €${offer.totalAmount.toFixed(2)}\n\n`;
-    body += `Restiamo in attesa di un vostro gentile riscontro.\n\nCordiali saluti,\n${profile?.name || ''}\n${profile?.company || ''}`;
+    body += `\nTOTALE FINALE: €${offer.totalAmount.toFixed(2)}\n\n`;
+    body += `Restiamo a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${profile?.name || ''}\n${profile?.company || ''}`;
 
     window.location.href = `mailto:${contact.email}?subject=${subject}&body=${encodeURIComponent(body)}`;
   };
 
-  // --- LOGICA DI STAMPA PROFESSIONALE (PDF) ---
+  // --- FUNZIONE STAMPA MIGLIORATA E COMPLETA ---
   const handlePrint = (offer: Offer) => {
     const contact = contacts[offer.contactId];
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    const printWindow = window.open('', '_blank', 'width=900,height=900');
+    if (!printWindow) {
+      showToast('Pop-up bloccato! Abilita i pop-up per stampare.', 'error');
+      return;
+    }
 
     const itemsHtml = offer.items.map(item => {
-      const total = (item.price * item.quantity) * (1 - item.discount / 100);
+      const subtotal = (item.price * item.quantity) * (1 - item.discount / 100);
       return `
         <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.description}<br/><small>${item.sizes || ''}</small></td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${item.price.toFixed(2)}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.discount}%</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">€${total.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee;">
+            <strong>${item.description.toUpperCase()}</strong><br/>
+            <span style="font-size: 11px; color: #666;">${item.sizes ? 'Taglie: ' + item.sizes : ''}</span>
+          </td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">€ ${item.price.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.discount}%</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">€ ${subtotal.toFixed(2)}</td>
         </tr>
       `;
     }).join('');
 
-    printWindow.document.write(`
+    const htmlContent = `
+      <!DOCTYPE html>
       <html>
         <head>
           <title>Preventivo ${offer.offerNumber}</title>
           <style>
-            body { font-family: sans-serif; color: #333; padding: 40px; }
-            .header { display: flex; justify-content: space-between; margin-bottom: 50px; }
-            .company-info h1 { margin: 0; color: #4f46e5; }
-            .details { margin-bottom: 30px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f9fafb; padding: 10px; text-align: left; border-bottom: 2px solid #eee; }
-            .totals { text-align: right; margin-top: 30px; }
-            .totals p { margin: 5px 0; }
-            .grand-total { font-size: 24px; font-weight: bold; color: #4f46e5; }
-            .footer { margin-top: 50px; font-size: 12px; color: #999; border-top: 1px solid #eee; pt: 20px; }
+            body { font-family: 'Helvetica', 'Arial', sans-serif; color: #1a1a1a; margin: 0; padding: 40px; line-height: 1.5; }
+            .container { max-width: 800px; margin: auto; }
+            .header { display: flex; justify-content: space-between; border-bottom: 4px solid #4f46e5; padding-bottom: 20px; margin-bottom: 40px; }
+            .logo-area h1 { margin: 0; color: #4f46e5; font-size: 28px; text-transform: uppercase; letter-spacing: -1px; }
+            .info-area { text-align: right; }
+            .info-area h2 { margin: 0; font-size: 18px; color: #4f46e5; }
+            .info-area p { margin: 4px 0; font-size: 12px; font-weight: bold; }
+            .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+            .address-box h3 { font-size: 10px; text-transform: uppercase; color: #999; margin-bottom: 8px; letter-spacing: 1px; }
+            .address-box p { margin: 0; font-size: 14px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { background: #f8fafc; text-align: left; padding: 12px; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+            .totals-area { margin-left: auto; width: 300px; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+            .grand-total { font-size: 20px; font-weight: 900; color: #4f46e5; border-bottom: 0; padding-top: 15px; }
+            .footer { margin-top: 80px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; }
+            @media print {
+              body { padding: 20px; }
+              .container { max-width: 100%; }
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="company-info">
-              <h1>${profile?.company || 'PREVENTIVO'}</h1>
-              <p>${profile?.name || ''}</p>
+          <div class="container">
+            <div class="header">
+              <div class="logo-area">
+                <h1>${profile?.company || 'Preventivo'}</h1>
+                <p style="margin:0; font-size: 12px; color: #666;">Emesso da: ${profile?.name || ''}</p>
+              </div>
+              <div class="info-area">
+                <h2>DOCUMENTO N° ${offer.offerNumber}</h2>
+                <p>DATA: ${new Date(offer.date).toLocaleDateString('it-IT')}</p>
+              </div>
             </div>
-            <div style="text-align: right">
-              <h2>N° ${offer.offerNumber}</h2>
-              <p>Data: ${new Date(offer.date).toLocaleDateString('it-IT')}</p>
+
+            <div class="addresses">
+              <div class="address-box">
+                <h3>Mittente</h3>
+                <p>${profile?.company}</p>
+                <p style="font-weight: normal; font-size: 12px;">${profile?.role || ''}</p>
+              </div>
+              <div class="address-box">
+                <h3>Destinatario</h3>
+                <p>${contact?.company}</p>
+                <p style="font-weight: normal; font-size: 12px;">All'attenzione di: ${contact?.contactName || 'Ufficio Acquisti'}</p>
+                <p style="font-weight: normal; font-size: 12px;">${contact?.address || ''} ${contact?.city || ''}</p>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Descrizione Articolo</th>
+                  <th style="text-align: center">Q.tà</th>
+                  <th style="text-align: right">Prezzo Unit.</th>
+                  <th style="text-align: center">Sconto</th>
+                  <th style="text-align: right">Totale</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="totals-area">
+              ${offer.shippingCost ? `
+                <div class="total-row">
+                  <span>Spese di Trasporto</span>
+                  <span>€ ${offer.shippingCost.toFixed(2)}</span>
+                </div>
+              ` : ''}
+              <div class="total-row grand-total">
+                <span>TOTALE FINALE</span>
+                <span>€ ${offer.totalAmount.toFixed(2)}</span>
+              </div>
+              ${offer.deliveryTime ? `
+                <p style="font-size: 11px; color: #64748b; margin-top: 15px; text-align: right;">
+                  <strong>Tempi di consegna stimati:</strong> ${offer.deliveryTime}
+                </p>
+              ` : ''}
+            </div>
+
+            <div class="footer">
+              <p>Il presente preventivo ha validità di 30 giorni dalla data di emissione. <br/> Documento generato digitalmente tramite NextMove CRM.</p>
             </div>
           </div>
-          <div class="details">
-            <p><strong>Destinatario:</strong></p>
-            <p>${contact?.company}<br/>${contact?.address || ''}<br/>${contact?.city || ''}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Descrizione</th>
-                <th style="text-align: center">Q.tà</th>
-                <th style="text-align: right">Prezzo U.</th>
-                <th style="text-align: center">Sconto</th>
-                <th style="text-align: right">Totale</th>
-              </tr>
-            </thead>
-            <tbody>${itemsHtml}</tbody>
-          </table>
-          <div class="totals">
-            ${offer.shippingCost ? `<p>Trasporto: €${offer.shippingCost.toFixed(2)}</p>` : ''}
-            ${offer.deliveryTime ? `<p>Tempi di consegna: ${offer.deliveryTime}</p>` : ''}
-            <p class="grand-total">Totale Finale: €${offer.totalAmount.toFixed(2)}</p>
-          </div>
-          <div class="footer">
-            <p>Documento generato dal sistema CRM. Offerta valida per 30 giorni.</p>
-          </div>
-          <script>window.onload = function() { window.print(); window.close(); }</script>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                // Rimosso window.close() automatico per permettere all'utente di vedere l'anteprima se fallisce
+              }, 500);
+            };
+          </script>
         </body>
       </html>
-    `);
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
   };
 
