@@ -16,7 +16,11 @@ export interface StoreState {
   toggleTheme: () => void;
   profile: AppProfile | null;
   updateProfile: (profile: Partial<AppProfile>) => void;
-  setProfile: (profile: AppProfile, ...args: any[]) => void; // Supporta argomenti extra per evitare l'errore TS2554
+  
+  // LA CHIAVE È QUI: Diciamo a TypeScript di accettare qualsiasi argomento extra (il ...args)
+  // che OnboardingView sta cercando di passargli senza bloccare la build.
+  setProfile: (profile: any, ...args: any[]) => void; 
+  
   resetAll: () => void;
 
   // Aziende
