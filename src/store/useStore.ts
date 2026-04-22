@@ -17,9 +17,20 @@ export const useStore = create<StoreState>()(
 
       // Azioni Impostazioni
       setTheme: (theme) => set({ theme }),
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       updateProfile: (updates) => set((state) => ({
         profile: state.profile ? { ...state.profile, ...updates } : (updates as any)
       })),
+      setProfile: (profile) => set({ profile }),
+      resetAll: () => set({
+        profile: null,
+        contacts: {},
+        products: {},
+        offers: {},
+        deals: {},
+        activities: {},
+        targets: {}
+      }),
 
       // Azioni Aziende
       addContact: (contact) => set((state) => ({ 
@@ -28,6 +39,11 @@ export const useStore = create<StoreState>()(
       updateContact: (id, updates) => set((state) => ({
         contacts: { ...state.contacts, [id]: { ...state.contacts[id], ...updates } }
       })),
+      addContactsBatch: (newContacts) => set((state) => {
+        const contactsMap = { ...state.contacts };
+        newContacts.forEach(c => { contactsMap[c.id] = c; });
+        return { contacts: contactsMap };
+      }),
 
       // Azioni Catalogo
       addProduct: (product) => set((state) => ({ 
@@ -40,7 +56,13 @@ export const useStore = create<StoreState>()(
         const newProducts = { ...state.products };
         delete newProducts[id];
         return { products: newProducts };
-      }), // <--- La logica di eliminazione che mancava
+      }),
+      addCustomProduct: (productName) => set((state) => ({
+        profile: state.profile ? {
+          ...state.profile,
+          customProducts: [...(state.profile.customProducts || []), productName]
+        } : null
+      })),
 
       // Azioni Offerte
       addOffer: (offer) => set((state) => ({ 
@@ -69,7 +91,7 @@ export const useStore = create<StoreState>()(
       })),
     }),
     {
-      name: 'next-move-crm-storage', // Nome per il LocalStorage
+      name: 'next-move-crm-storage',
     }
   )
 );
