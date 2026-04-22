@@ -32,7 +32,7 @@ export const OffersView: React.FC = () => {
     if (product) {
       updateItem(id, { 
         productId: product.id, 
-        description: product.description, // <-- Aggiornato qui
+        description: product.description,
         price: product.price 
       });
     }
@@ -144,7 +144,7 @@ export const OffersView: React.FC = () => {
                       <select className="w-full bg-transparent font-bold outline-none text-sm dark:text-white" onChange={(e) => handleProductSelect(item.id, e.target.value)}>
                         <option value="">Catalogo...</option>
                         {Object.values(products).map((p) => (
-                          <option key={p.id} value={p.id}>{p.description}</option> // <-- Aggiornato qui
+                          <option key={p.id} value={p.id}>{p.description}</option>
                         ))}
                       </select>
                     </div>
