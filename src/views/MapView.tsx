@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import { useStore } from '../store/useStore';
-import { MapPin, Navigation, Phone, Info } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix icone Leaflet usando direttamente i link CDN per evitare errori TypeScript con i file .png
 const DefaultIcon = L.icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -20,16 +19,22 @@ const ChangeView = ({ center }: { center: [number, number] }) => {
   return null;
 };
 
-export const MapView: React.FC = () => {
+// Qui aggiungiamo la funzione (opzionale) per navigare
+interface MapViewProps {
+  onNavigate?: (companyName: string) => void;
+}
+
+export const MapView: React.FC<MapViewProps> = ({ onNavigate }) => {
   const { contacts, updateContact } = useStore();
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
-  const [radius, setRadius] = useState(20);
+  const [radius, setRadius] = useState(50);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [debugMsg, setDebugMsg] = useState('');
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      () => console.error("Impossibile ottenere la posizione.")
+      (err) => setDebugMsg("Attenzione: GPS non autorizzato dal browser.")
     );
   }, []);
 
@@ -37,109 +42,109 @@ export const MapView: React.FC = () => {
     const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; 
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
   };
 
   const geocodeContacts = async () => {
     setIsGeocoding(true);
-    for (const contact of Object.values(contacts)) {
+    setDebugMsg('Ricerca coordinate in corso...');
+    let successCount = 0;
+    let failCount = 0;
+
+    const contactsArray = Object.values(contacts);
+
+    for (const contact of contactsArray) {
       if (!contact.lat && contact.address && contact.city) {
         try {
-          const query = encodeURIComponent(`${contact.address}, ${contact.city}, ${contact.province || ''}, Italy`);
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
-          const data = await response.json();
-          if (data && data[0]) {
-            updateContact(contact.id, { 
-              lat: parseFloat(data[0].lat), 
-              lng: parseFloat(data[0].lon) 
-            });
+          const q = encodeURIComponent(`${contact.address}, ${contact.city}, Italy`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
+            headers: { 'Accept-Language': 'it' }
+          });
+          const data = await res.json();
+          
+          if (data && data.length > 0) {
+            updateContact(contact.id, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+            successCount++;
+          } else {
+            failCount++;
           }
-          await new Promise(r => setTimeout(r, 1000));
-        } catch (error) {
-          console.error("Errore geocodifica:", contact.company);
+          await new Promise(r => setTimeout(r, 1500));
+        } catch (e) {
+          failCount++;
         }
       }
     }
     setIsGeocoding(false);
+    setDebugMsg(`Ricerca finita. Trovate: ${successCount}, Non trovate: ${failCount}`);
   };
 
-  const nearbyContacts = Object.values(contacts).filter(c => {
-    if (!c.lat || !c.lng || !userPos) return false;
-    const dist = calculateDistance(userPos[0], userPos[1], c.lat, c.lng);
-    return dist <= radius;
+  const allContactsArray = Object.values(contacts);
+  const mappedContacts = allContactsArray.filter(c => c.lat && c.lng);
+  
+  const nearbyContacts = mappedContacts.filter(c => {
+    if (!userPos) return false;
+    return calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius;
   });
 
   return (
-    <div className="h-[calc(100vh-120px)] space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
+    <div className="h-[calc(100vh-120px)] space-y-4 flex flex-col">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-sm border border-gray-50 dark:border-gray-700">
         <div>
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter flex items-center gap-2">
             <Navigation className="text-indigo-600" /> Radar Aziende
           </h1>
-          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Clienti nel raggio di {radius}km</p>
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+            Raggio: {radius}km | 
+            <span className={mappedContacts.length > 0 ? 'text-green-500' : 'text-orange-500'}>
+              Mappate {mappedContacts.length} su {allContactsArray.length}
+            </span>
+          </p>
         </div>
         
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <select 
-            className="flex-1 md:w-40 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none"
-            value={radius}
-            onChange={(e) => setRadius(Number(e.target.value))}
-          >
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          {debugMsg && (
+            <div className="bg-orange-50 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+              <AlertTriangle size={14}/> {debugMsg}
+            </div>
+          )}
+          <select className="border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={radius} onChange={(e) => setRadius(Number(e.target.value))}>
             <option value={10}>10 km</option>
             <option value={20}>20 km</option>
             <option value={50}>50 km</option>
             <option value={100}>100 km</option>
+            <option value={500}>500 km</option>
           </select>
-          <button 
-            onClick={geocodeContacts}
-            disabled={isGeocoding}
-            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg ${
-              isGeocoding ? 'bg-gray-200 text-gray-400' : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`}
-          >
-            {isGeocoding ? 'Mappatura...' : 'Aggiorna Coordinate'}
+          <button onClick={geocodeContacts} disabled={isGeocoding} className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isGeocoding ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg'}`}>
+            {isGeocoding ? 'Ricerca in corso...' : 'Trova Coordinate'}
           </button>
         </div>
       </div>
 
-      <div className="rounded-[2.5rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-800 h-full relative z-0">
+      <div className="rounded-[2.5rem] overflow-hidden shadow-xl flex-1 relative z-0 border-4 border-white dark:border-gray-800">
         {userPos ? (
-          <MapContainer center={userPos} zoom={12} style={{ height: '100%', width: '100%' }}>
+          <MapContainer center={userPos} zoom={10} style={{ height: '100%', width: '100%' }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <ChangeView center={userPos} />
+            <Marker position={userPos}><Popup>Tu sei qui</Popup></Marker>
+            <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.1 }} />
             
-            <Marker position={userPos}>
-              <Popup>
-                <div className="text-center font-black uppercase text-xs">Tu sei qui</div>
-              </Popup>
-            </Marker>
+            {nearbyContacts.map(c => (
+              <Marker key={c.id} position={[c.lat!, c.lng!]}>
+                <Popup>
+                  <div className="p-2">
+                    <h4 className="font-black uppercase text-indigo-600 text-sm">{c.company}</h4>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase"><MapPin size={10} className="inline"/> {c.address}, {c.city}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-3"><Phone size={10} className="inline"/> {c.phone}</p>
+                    
+                    {/* ECCO IL NUOVO TASTO */}
+                    <button 
+                      onClick={() => onNavigate && onNavigate(c.company)}
+                      className="w-full mt-2 bg-indigo-600 text-white py-2 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+                    >
+                      Vedi Scheda <ExternalLink size={12} />
+                    </button>
 
-            <Circle 
-              center={userPos} 
-              radius={radius * 1000} 
-              pathOptions={{ fillColor: '#4f46e5', fillOpacity: 0.1, color: '#4f46e5', weight: 1 }} 
-            />
-
-            {nearbyContacts.map(contact => (
-              <Marker key={contact.id} position={[contact.lat!, contact.lng!]}>
-                <Popup className="custom-popup">
-                  <div className="p-2 min-w-[200px]">
-                    <h4 className="font-black uppercase text-indigo-600 text-sm mb-2">{contact.company}</h4>
-                    <div className="space-y-1">
-                      <p className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase">
-                        <MapPin size={12}/> {contact.city}
-                      </p>
-                      <p className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase">
-                        <Phone size={12}/> {contact.phone}
-                      </p>
-                      <p className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase mt-2 pt-2 border-t">
-                        <Info size={12}/> {contact.customerType === 'dealer' ? 'Dealer' : 'End User'}
-                      </p>
-                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -149,7 +154,7 @@ export const MapView: React.FC = () => {
           <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
             <div className="text-center">
               <Navigation className="w-12 h-12 text-indigo-600 animate-pulse mx-auto mb-4" />
-              <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Acquisizione segnale GPS...</p>
+              <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">In attesa del GPS...</p>
             </div>
           </div>
         )}
