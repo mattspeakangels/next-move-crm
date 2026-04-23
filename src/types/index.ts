@@ -5,7 +5,7 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
-// Aggiunto 'map'
+// AGGIUNTO 'map' ALLA NAVIGAZIONE
 export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map';
 
 export type CustomerType = 'dealer' | 'end-user';
@@ -41,9 +41,11 @@ export interface Contact {
   zipCode?: string;
   province?: string;
   country?: string;
+  
   // NUOVI CAMPI PER LA MAPPA
   lat?: number;
   lng?: number;
+  
   status: ContactStatus;
   classification?: string;
   sector: string;
