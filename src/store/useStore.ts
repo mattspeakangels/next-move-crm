@@ -1,94 +1,48 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { StoreState } from './types';
+import { Contact, Deal, Offer, Product, AppProfile } from '../types';
+
+interface StoreState {
+  contacts: Record<string, Contact>;
+  deals: Record<string, Deal>;
+  offers: Record<string, Offer>;
+  products: Record<string, Product>;
+  profile: AppProfile | null;
+  theme: 'light' | 'dark';
+  addContact: (contact: Contact) => void;
+  updateContact: (id: string, updates: Partial<Contact>) => void;
+  deleteContact: (id: string) => void; // Eccola qui!
+  setProfile: (profile: AppProfile) => void;
+  toggleTheme: () => void;
+}
 
 export const useStore = create<StoreState>()(
   persist(
     (set) => ({
-      theme: 'light',
-      profile: null,
       contacts: {},
-      products: {},
-      offers: {},
       deals: {},
-      activities: {},
-      targets: {},
-
-      setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      updateProfile: (updates) => set((state) => ({
-        profile: state.profile ? { ...state.profile, ...updates } : (updates as any)
-      })),
-      setProfile: (profile) => set({ profile }),
-      resetAll: () => set({
-        profile: null,
-        contacts: {},
-        products: {},
-        offers: {},
-        deals: {},
-        activities: {},
-        targets: {}
-      }),
-
-      addContact: (contact) => set((state) => ({ 
-        contacts: { ...state.contacts, [contact.id]: contact } 
+      offers: {},
+      products: {},
+      profile: null,
+      theme: 'light',
+      addContact: (contact) => set((state) => ({
+        contacts: { ...state.contacts, [contact.id]: contact }
       })),
       updateContact: (id, updates) => set((state) => ({
-        contacts: { ...state.contacts, [id]: { ...state.contacts[id], ...updates } }
+        contacts: {
+          ...state.contacts,
+          [id]: { ...state.contacts[id], ...updates, updatedAt: Date.now() }
+        }
       })),
-      addContactsBatch: (newContacts) => set((state) => {
-        const contactsMap = { ...state.contacts };
-        newContacts.forEach(c => { contactsMap[c.id] = c; });
-        return { contacts: contactsMap };
+      deleteContact: (id) => set((state) => {
+        const newContacts = { ...state.contacts };
+        delete newContacts[id];
+        return { contacts: newContacts };
       }),
-
-      addProduct: (product) => set((state) => ({ 
-        products: { ...state.products, [product.id]: product } 
-      })),
-      updateProduct: (id, updates) => set((state) => ({
-        products: { ...state.products, [id]: { ...state.products[id], ...updates } }
-      })),
-      removeProduct: (id) => set((state) => {
-        const newProducts = { ...state.products };
-        delete newProducts[id];
-        return { products: newProducts };
-      }),
-      addCustomProduct: (productName) => set((state) => ({
-        profile: state.profile ? {
-          ...state.profile,
-          customProducts: [...(state.profile.customProducts || []), productName]
-        } : null
-      })),
-
-      addOffer: (offer) => set((state) => ({ 
-        offers: { ...state.offers, [offer.id]: offer } 
-      })),
-      updateOffer: (id, updates) => set((state) => ({
-        offers: { ...state.offers, [id]: { ...state.offers[id], ...updates } }
-      })),
-      removeOffer: (id) => set((state) => {
-        const newOffers = { ...state.offers };
-        delete newOffers[id];
-        return { offers: newOffers };
-      }),
-
-      addDeal: (deal) => set((state) => ({ 
-        deals: { ...state.deals, [deal.id]: deal } 
-      })),
-      updateDeal: (id, updates) => set((state) => ({
-        deals: { ...state.deals, [id]: { ...state.deals[id], ...updates } }
-      })),
-
-      addActivity: (activity) => set((state) => ({ 
-        activities: { ...state.activities, [activity.id]: activity } 
-      })),
-
-      updateTarget: (target) => set((state) => ({ 
-        targets: { ...state.targets, [target.id]: target } 
-      })),
+      setProfile: (profile) => set({ profile }),
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
     }),
-    {
-      name: 'next-move-crm-storage',
-    }
+    { name: 'next-move-storage' }
   )
 );
