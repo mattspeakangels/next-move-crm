@@ -39,7 +39,7 @@ interface StoreState {
 
   // Attività e Target
   addActivity: (activity: Activity) => void;
-  updateTarget: (target: any) => void; // Corretto per accettare un solo argomento
+  updateTarget: (target: any) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -116,7 +116,7 @@ export const useStore = create<StoreState>()(
         activities: { ...state.activities, [activity.id]: activity }
       })),
       updateTarget: (target) => set((state) => ({
-        targets: { ...state.targets, [target.id]: target } // Corretto per l'argomento singolo
+        targets: { ...state.targets, [target.id]: target }
       })),
     }),
     { name: 'next-move-storage' }
