@@ -5,7 +5,8 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings';
+// Aggiunto 'map'
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map';
 
 export type CustomerType = 'dealer' | 'end-user';
 export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
@@ -19,8 +20,8 @@ export interface Stakeholder {
 }
 
 export interface CompanyIntelligence {
-  products: string[]; // Modificato in Array per i Tag
-  competitors: string[]; // Modificato in Array per i Tag
+  products: string[];
+  competitors: string[];
   pricesAndPayments: string;
   logisticsAndService: string;
 }
@@ -29,8 +30,8 @@ export interface Contact {
   id: string;
   company: string;
   customerType?: CustomerType;
-  contactName: string; // Mantenuto per compatibilità legacy
-  role: string; // Mantenuto per compatibilità legacy
+  contactName: string;
+  role: string;
   email: string;
   phone: string;
   website?: string;
@@ -40,6 +41,9 @@ export interface Contact {
   zipCode?: string;
   province?: string;
   country?: string;
+  // NUOVI CAMPI PER LA MAPPA
+  lat?: number;
+  lng?: number;
   status: ContactStatus;
   classification?: string;
   sector: string;
