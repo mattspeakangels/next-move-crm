@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { Search, Plus, Phone, MapPin, Trash2, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Phone, MapPin, Trash2, Building2, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
-export const ContactsView: React.FC = () => {
+export const ContactsView: React.FC<{ initialSearch?: string, onClearFilter?: () => void }> = ({ initialSearch = '', onClearFilter }) => {
   const { contacts, deleteContact } = useStore();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+
+  useEffect(() => {
+    if (initialSearch) setSearchTerm(initialSearch);
+  }, [initialSearch]);
 
   const filteredContacts = Object.values(contacts).filter(contact =>
-    contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (contact.city || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (contact.company && contact.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (contact.city && contact.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (contact.contactName && contact.contactName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -17,11 +21,17 @@ export const ContactsView: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
           <h1 className="text-3xl font-black dark:text-white uppercase tracking-tighter">Aziende</h1>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Gestione anagrafiche</p>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Anagrafica Clienti</p>
+          
+          {searchTerm && initialSearch && (
+            <button 
+              onClick={() => { setSearchTerm(''); onClearFilter?.(); }}
+              className="mt-2 flex items-center gap-1 text-indigo-600 font-black uppercase text-[10px] tracking-widest bg-indigo-50 px-2 py-1 rounded-md hover:bg-indigo-100 transition-colors"
+            >
+              Filtro Mappa: {searchTerm} <X size={12} />
+            </button>
+          )}
         </div>
-        <button className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg">
-          Nuova Azienda
-        </button>
       </div>
 
       <div className="relative">
@@ -57,6 +67,7 @@ export const ContactsView: React.FC = () => {
                   }
                 }}
                 className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                title="Elimina Azienda"
               >
                 <Trash2 size={18} />
               </button>
