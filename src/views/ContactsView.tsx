@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Phone, MapPin, Trash2, Building2, X } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Trash2, Building2, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 export const ContactsView: React.FC<{ initialSearch?: string, onClearFilter?: () => void }> = ({ initialSearch = '', onClearFilter }) => {
@@ -18,7 +18,7 @@ export const ContactsView: React.FC<{ initialSearch?: string, onClearFilter?: ()
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black dark:text-white uppercase tracking-tighter">Aziende</h1>
           <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Anagrafica Clienti</p>
@@ -32,6 +32,11 @@ export const ContactsView: React.FC<{ initialSearch?: string, onClearFilter?: ()
             </button>
           )}
         </div>
+
+        {/* Tasto Nuova Azienda che utilizza l'icona "Plus" risolvendo l'errore */}
+        <button className="bg-indigo-600 text-white px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg">
+          <Plus size={18} strokeWidth={3} /> Nuova Azienda
+        </button>
       </div>
 
       <div className="relative">
