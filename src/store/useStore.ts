@@ -1,17 +1,17 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Contact, Deal, Offer, Product, AppProfile } from '../types';
 
-// Definizione per le attività (richiesta da AgendaView e CoachCard)
+// Definizione completa Activity per Agenda e CoachCard
 export interface Activity {
   id: string;
-  type: 'call' | 'meeting' | 'email' | 'task';
+  type: 'call' | 'meeting' | 'email' | 'task' | 'visita';
   title: string;
-  contactId?: string;
+  contactId: string;
   date: number;
   completed: boolean;
   notes?: string;
+  outcome?: string;
 }
 
 interface StoreState {
@@ -19,10 +19,11 @@ interface StoreState {
   deals: Record<string, Deal>;
   offers: Record<string, Offer>;
   products: Record<string, Product>;
-  activities: Activity[]; // Aggiunto per CoachCard e Agenda
+  activities: Activity[];
   profile: AppProfile | null;
   theme: 'light' | 'dark';
-  
+  targets: any;
+
   // Azioni Profilo e Sistema
   setProfile: (profile: AppProfile) => void;
   updateProfile: (updates: Partial<AppProfile>) => void;
@@ -30,13 +31,13 @@ interface StoreState {
   toggleTheme: () => void;
   resetAll: () => void;
 
-  // Azioni Aziende
+  // Azioni Aziende (Incluso il fix per il Radar e l'Elimina)
   addContact: (contact: Contact) => void;
   addContactsBatch: (contacts: Contact[]) => void;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
 
-  // Azioni Trattative (Deals)
+  // Azioni Trattative
   addDeal: (deal: Deal) => void;
   updateDeal: (id: string, updates: Partial<Deal>) => void;
   removeDeal: (id: string) => void;
@@ -48,7 +49,13 @@ interface StoreState {
 
   // Azioni Prodotti
   addProduct: (product: Product) => void;
+  updateProduct: (id: string, updates: Partial<Product>) => void;
   removeProduct: (id: string) => void;
+  addCustomProduct: (product: string) => void;
+
+  // Azioni Attività e Target
+  addActivity: (activity: Activity) => void;
+  updateTarget: (id: string, updates: any) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -59,6 +66,7 @@ export const useStore = create<StoreState>()(
       offers: {},
       products: {},
       activities: [],
+      targets: {},
       profile: null,
       theme: 'light',
 
@@ -68,14 +76,14 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: [] }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: [], targets: {} }),
 
       addContact: (contact) => set((state) => ({
         contacts: { ...state.contacts, [contact.id]: contact }
       })),
-      addContactsBatch: (newContacts) => set((state) => {
+      addContactsBatch: (batch) => set((state) => {
         const updated = { ...state.contacts };
-        newContacts.forEach(c => updated[c.id] = c);
+        batch.forEach(c => updated[c.id] = c);
         return { contacts: updated };
       }),
       updateContact: (id, updates) => set((state) => ({
@@ -108,11 +116,22 @@ export const useStore = create<StoreState>()(
       }),
 
       addProduct: (product) => set((state) => ({ products: { ...state.products, [product.id]: product } })),
+      updateProduct: (id, updates) => set((state) => ({
+        products: { ...state.products, [id]: { ...state.products[id], ...updates } }
+      })),
       removeProduct: (id) => set((state) => {
         const newProducts = { ...state.products };
         delete newProducts[id];
         return { products: newProducts };
       }),
+      addCustomProduct: (name) => set((state) => ({
+        profile: state.profile ? { ...state.profile, customProducts: [...(state.profile.customProducts || []), name] } : null
+      })),
+
+      addActivity: (activity) => set((state) => ({ activities: [...state.activities, activity] })),
+      updateTarget: (id, updates) => set((state) => ({
+        targets: { ...state.targets, [id]: { ...state.targets[id], ...updates } }
+      })),
     }),
     { name: 'next-move-storage' }
   )
