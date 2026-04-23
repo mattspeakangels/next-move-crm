@@ -7,20 +7,30 @@ export type Theme = 'light' | 'dark';
 
 export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings';
 
+export type CustomerType = 'dealer' | 'end-user';
+export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
+
+export interface Stakeholder {
+  id: string;
+  name: string;
+  role: StakeholderRole;
+  email: string;
+  phone: string;
+}
+
 export interface CompanyIntelligence {
-  products: string;
-  competitors: string;
-  prices: string;
-  paymentTerms: string;
-  service: string;
-  delivery: string;
+  products: string[]; // Modificato in Array per i Tag
+  competitors: string[]; // Modificato in Array per i Tag
+  pricesAndPayments: string;
+  logisticsAndService: string;
 }
 
 export interface Contact {
   id: string;
   company: string;
-  contactName: string;
-  role: string;
+  customerType?: CustomerType;
+  contactName: string; // Mantenuto per compatibilità legacy
+  role: string; // Mantenuto per compatibilità legacy
   email: string;
   phone: string;
   website?: string;
@@ -36,6 +46,7 @@ export interface Contact {
   region: string;
   notes?: string;
   intelligence?: CompanyIntelligence; 
+  stakeholders?: Stakeholder[];
   createdAt: number;
   updatedAt: number;
 }
