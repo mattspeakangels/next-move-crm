@@ -7,7 +7,7 @@ interface StoreState {
   deals: Record<string, Deal>;
   offers: Record<string, Offer>;
   products: Record<string, Product>;
-  activities: Record<string, Activity>; // Corretto in Record per KPIView
+  activities: Record<string, Activity>;
   profile: AppProfile | null;
   theme: 'light' | 'dark';
   targets: Record<string, any>;
@@ -39,7 +39,7 @@ interface StoreState {
 
   // Attività e Target
   addActivity: (activity: Activity) => void;
-  updateTarget: (id: string, updates: any) => void;
+  updateTarget: (target: any) => void; // Corretto per accettare un solo argomento
 }
 
 export const useStore = create<StoreState>()(
@@ -49,7 +49,7 @@ export const useStore = create<StoreState>()(
       deals: {},
       offers: {},
       products: {},
-      activities: {}, // Inizializzato come oggetto vuoto per Record
+      activities: {},
       targets: {},
       profile: null,
       theme: 'light',
@@ -115,8 +115,8 @@ export const useStore = create<StoreState>()(
       addActivity: (activity) => set((state) => ({
         activities: { ...state.activities, [activity.id]: activity }
       })),
-      updateTarget: (id, updates) => set((state) => ({
-        targets: { ...state.targets, [id]: { ...state.targets[id], ...updates } }
+      updateTarget: (target) => set((state) => ({
+        targets: { ...state.targets, [target.id]: target } // Corretto per l'argomento singolo
       })),
     }),
     { name: 'next-move-storage' }
