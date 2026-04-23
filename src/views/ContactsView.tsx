@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Edit2, Users, UserPlus, Mail, Target, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Plus, Phone, MapPin, Building2, X, Edit2, Users, UserPlus, Mail, Target, Trash2, Upload } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact } from '../types';
 
@@ -11,8 +11,9 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, addContactsBatch } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Stati per il Modal originale
   const [showModal, setShowModal] = useState(false);
@@ -51,6 +52,46 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       onClearSelectedContact?.();
     }
   }, [selectedContactId]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      const newContacts: Contact[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const values = line.split(/[;,]/);
+        if (values.length >= 2 && values[0]) {
+          newContacts.push({
+            id: `c_${Date.now()}_${i}`,
+            company: values[0]?.trim() || '',
+            contactName: values[1]?.trim() || '',
+            role: values[2]?.trim() || '',
+            email: values[3]?.trim() || '',
+            phone: values[4]?.trim() || '',
+            address: values[5]?.trim() || '',
+            city: values[6]?.trim() || '',
+            province: values[7]?.trim() || '',
+            region: values[7]?.trim() || '',
+            sector: values[8]?.trim() || '',
+            status: 'potenziale',
+            country: 'Italia',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          });
+        }
+      }
+      if (newContacts.length > 0) {
+        addContactsBatch(newContacts);
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
+  };
 
   const handleSave = () => {
     if (!editingContact?.company) return alert('Inserisci la ragione sociale');
@@ -134,6 +175,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+        <button onClick={() => fileInputRef.current?.click()} className="bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-gray-700 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-50 dark:hover:bg-gray-700 transition-all">
+          <Upload size={20} /> <span className="hidden md:inline">Importa CSV</span>
+        </button>
         <button onClick={() => openModal()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
           <Plus size={20} /> Nuova
         </button>
