@@ -1,59 +1,43 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile } from '../types';
-
-// Definizione completa Activity per Agenda e CoachCard
-export interface Activity {
-  id: string;
-  type: 'call' | 'meeting' | 'email' | 'task' | 'visita';
-  title: string;
-  contactId: string;
-  date: number;
-  completed: boolean;
-  notes?: string;
-  outcome?: string;
-}
+import { Contact, Deal, Offer, Product, AppProfile, Activity } from '../types';
 
 interface StoreState {
   contacts: Record<string, Contact>;
   deals: Record<string, Deal>;
   offers: Record<string, Offer>;
   products: Record<string, Product>;
-  activities: Activity[];
+  activities: Record<string, Activity>; // Corretto in Record per KPIView
   profile: AppProfile | null;
   theme: 'light' | 'dark';
-  targets: any;
+  targets: Record<string, any>;
 
-  // Azioni Profilo e Sistema
+  // Sistema
   setProfile: (profile: AppProfile) => void;
   updateProfile: (updates: Partial<AppProfile>) => void;
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;
   resetAll: () => void;
 
-  // Azioni Aziende (Incluso il fix per il Radar e l'Elimina)
+  // Aziende
   addContact: (contact: Contact) => void;
   addContactsBatch: (contacts: Contact[]) => void;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
 
-  // Azioni Trattative
+  // Trattative, Offerte, Prodotti
   addDeal: (deal: Deal) => void;
   updateDeal: (id: string, updates: Partial<Deal>) => void;
   removeDeal: (id: string) => void;
-
-  // Azioni Offerte
   addOffer: (offer: Offer) => void;
   updateOffer: (id: string, updates: Partial<Offer>) => void;
   removeOffer: (id: string) => void;
-
-  // Azioni Prodotti
   addProduct: (product: Product) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   removeProduct: (id: string) => void;
-  addCustomProduct: (product: string) => void;
+  addCustomProduct: (name: string) => void;
 
-  // Azioni Attività e Target
+  // Attività e Target
   addActivity: (activity: Activity) => void;
   updateTarget: (id: string, updates: any) => void;
 }
@@ -65,7 +49,7 @@ export const useStore = create<StoreState>()(
       deals: {},
       offers: {},
       products: {},
-      activities: [],
+      activities: {}, // Inizializzato come oggetto vuoto per Record
       targets: {},
       profile: null,
       theme: 'light',
@@ -76,7 +60,7 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: [], targets: {} }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {} }),
 
       addContact: (contact) => set((state) => ({
         contacts: { ...state.contacts, [contact.id]: contact }
@@ -97,7 +81,7 @@ export const useStore = create<StoreState>()(
 
       addDeal: (deal) => set((state) => ({ deals: { ...state.deals, [deal.id]: deal } })),
       updateDeal: (id, updates) => set((state) => ({
-        deals: { ...state.deals, [id]: { ...state.deals[id], ...updates, updatedAt: Date.now() } }
+        deals: { ...state.deals, [id]: { ...state.deals[id], ...updates } }
       })),
       removeDeal: (id) => set((state) => {
         const newDeals = { ...state.deals };
@@ -128,7 +112,9 @@ export const useStore = create<StoreState>()(
         profile: state.profile ? { ...state.profile, customProducts: [...(state.profile.customProducts || []), name] } : null
       })),
 
-      addActivity: (activity) => set((state) => ({ activities: [...state.activities, activity] })),
+      addActivity: (activity) => set((state) => ({
+        activities: { ...state.activities, [activity.id]: activity }
+      })),
       updateTarget: (id, updates) => set((state) => ({
         targets: { ...state.targets, [id]: { ...state.targets[id], ...updates } }
       })),
