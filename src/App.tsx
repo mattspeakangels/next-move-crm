@@ -15,7 +15,13 @@ import { NavView } from './types';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const { theme, profile } = useStore();
+
+  const navigateToContact = (contactId: string) => {
+    setSelectedContactId(contactId);
+    setCurrentView('contacts');
+  };
 
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -27,12 +33,12 @@ function AppContent() {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <Dashboard />;
-      case 'contacts': return <ContactsView />;
+      case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
       case 'deals': return <PipelineView />;
       case 'offers': return <OffersView />;
       case 'agenda': return <AgendaView />;
       case 'products': return <ProductsView />;
-      case 'map': return <MapView />;
+      case 'map': return <MapView onNavigateToContact={navigateToContact} />;
       case 'settings': return <SettingsView />;
       default: return <Dashboard />;
     }

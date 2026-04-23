@@ -6,9 +6,11 @@ import { Contact } from '../types';
 interface ContactsViewProps {
   initialSearch?: string;
   onClearFilter?: () => void;
+  selectedContactId?: string | null;
+  onClearSelectedContact?: () => void;
 }
 
-export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter }) => {
+export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
   const { contacts, addContact, updateContact, deleteContact } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
 
@@ -18,17 +20,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [tagInputProd, setTagInputProd] = useState('');
   const [tagInputComp, setTagInputComp] = useState('');
 
-  // Filtro mappa
   useEffect(() => {
     if (initialSearch) setSearchTerm(initialSearch);
   }, [initialSearch]);
 
-  const filteredContacts = Object.values(contacts).filter(c => 
+  const filteredContacts = Object.values(contacts).filter(c =>
     (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (c.city && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // --- Funzioni del tuo Modal originale ---
   const openModal = (contact?: Contact | any) => {
     if (contact) {
       setEditingContact(contact);
@@ -44,6 +44,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
     setShowModal(true);
   };
+
+  useEffect(() => {
+    if (selectedContactId && contacts[selectedContactId]) {
+      openModal(contacts[selectedContactId]);
+      onClearSelectedContact?.();
+    }
+  }, [selectedContactId]);
 
   const handleSave = () => {
     if (!editingContact?.company) return alert('Inserisci la ragione sociale');

@@ -20,10 +20,10 @@ const ChangeView = ({ center }: { center: [number, number] }) => {
 };
 
 interface MapViewProps {
-  onNavigate?: (companyName: string) => void;
+  onNavigateToContact: (contactId: string) => void;
 }
 
-export const MapView: React.FC<MapViewProps> = ({ onNavigate }) => {
+export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
   const { contacts, updateContact } = useStore();
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
   const [radius, setRadius] = useState(50);
@@ -131,18 +131,26 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigate }) => {
             {nearbyContacts.map(c => (
               <Marker key={c.id} position={[c.lat!, c.lng!]}>
                 <Popup>
-                  <div className="p-2">
-                    <h4 className="font-black uppercase text-indigo-600 text-sm">{c.company}</h4>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase"><MapPin size={10} className="inline"/> {c.address}, {c.city}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-3"><Phone size={10} className="inline"/> {c.phone}</p>
-                    
-                    <button 
-                      onClick={() => onNavigate && onNavigate(c.company)}
-                      className="w-full mt-2 bg-indigo-600 text-white py-2 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
-                    >
-                      Vedi Scheda <ExternalLink size={12} />
-                    </button>
-
+                  <div className="p-2 min-w-[200px]">
+                    <h4 className="font-black uppercase text-indigo-600 text-sm mb-2">{c.company}</h4>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase"><MapPin size={10} className="inline mr-1"/>{c.address}, {c.city}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-3"><Phone size={10} className="inline mr-1"/>{c.phone}</p>
+                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => onNavigateToContact(c.id)}
+                        className="w-full bg-indigo-600 text-white py-2 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+                      >
+                        <ExternalLink size={11}/> Apri Azienda
+                      </button>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+                      >
+                        <Navigation size={11}/> Naviga verso
+                      </a>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
