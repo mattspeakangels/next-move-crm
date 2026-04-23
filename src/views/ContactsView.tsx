@@ -3,7 +3,6 @@ import {
   Search, 
   Plus, 
   Phone, 
-  Mail, 
   MapPin, 
   Trash2, 
   ChevronRight, 
@@ -47,57 +46,42 @@ export const ContactsView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => (
-            <div key={contact.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-50 dark:border-gray-700 hover:shadow-xl transition-all relative group">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600">
-                    <Building2 size={28} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black dark:text-white uppercase tracking-tight">{contact.company}</h3>
-                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-green-100 text-green-600">
-                      {contact.status}
-                    </span>
-                  </div>
+        {filteredContacts.map((contact) => (
+          <div key={contact.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] border border-gray-50 dark:border-gray-700 hover:shadow-xl transition-all relative">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600">
+                  <Building2 size={28} />
                 </div>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Eliminare definitivamente ${contact.company}?`)) {
-                      deleteContact(contact.id);
-                    }
-                  }}
-                  className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"
-                >
-                  <Trash2 size={20} />
-                </button>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
-                  <MapPin size={16} className="text-indigo-600" /> {contact.address}, {contact.city}
-                </div>
-                <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
-                  <Phone size={16} className="text-indigo-600" /> {contact.phone}
+                <div>
+                  <h3 className="text-xl font-black dark:text-white uppercase tracking-tight">{contact.company}</h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-green-100 text-green-600">
+                    {contact.status}
+                  </span>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-700">
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Settore: {contact.sector}</div>
-                <button className="text-indigo-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
-                  Dettagli <ChevronRight size={14} />
-                </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Eliminare definitivamente ${contact.company}?`)) {
+                    deleteContact(contact.id);
+                  }
+                }}
+                className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
+                <MapPin size={16} className="text-indigo-600" /> {contact.address}, {contact.city}
+              </div>
+              <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
+                <Phone size={16} className="text-indigo-600" /> {contact.phone}
               </div>
             </div>
-          ))
-        ) : (
-          <div className="col-span-full py-20 text-center">
-            <p className="text-gray-400 font-black uppercase tracking-widest">Nessuna azienda trovata</p>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
