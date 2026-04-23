@@ -19,7 +19,6 @@ const ChangeView = ({ center }: { center: [number, number] }) => {
   return null;
 };
 
-// Qui aggiungiamo la funzione (opzionale) per navigare
 interface MapViewProps {
   onNavigate?: (companyName: string) => void;
 }
@@ -34,7 +33,7 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigate }) => {
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      (err) => setDebugMsg("Attenzione: GPS non autorizzato dal browser.")
+      () => setDebugMsg("Attenzione: GPS non autorizzato dal browser.") // <-- Corretto qui, niente più "err"
     );
   }, []);
 
@@ -137,7 +136,6 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigate }) => {
                     <p className="text-[10px] font-bold text-gray-500 uppercase"><MapPin size={10} className="inline"/> {c.address}, {c.city}</p>
                     <p className="text-[10px] font-bold text-gray-500 uppercase mb-3"><Phone size={10} className="inline"/> {c.phone}</p>
                     
-                    {/* ECCO IL NUOVO TASTO */}
                     <button 
                       onClick={() => onNavigate && onNavigate(c.company)}
                       className="w-full mt-2 bg-indigo-600 text-white py-2 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
