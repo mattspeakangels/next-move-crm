@@ -39,6 +39,8 @@ interface StoreState {
 
   // Attività e Target
   addActivity: (activity: Activity) => void;
+  updateActivity: (id: string, updates: Partial<Activity>) => void;
+  deleteActivity: (id: string) => void;
   updateTarget: (target: any) => void;
 }
 
@@ -115,6 +117,14 @@ export const useStore = create<StoreState>()(
       addActivity: (activity) => set((state) => ({
         activities: { ...state.activities, [activity.id]: activity }
       })),
+      updateActivity: (id, updates) => set((state) => ({
+        activities: { ...state.activities, [id]: { ...state.activities[id], ...updates } }
+      })),
+      deleteActivity: (id) => set((state) => {
+        const newActivities = { ...state.activities };
+        delete newActivities[id];
+        return { activities: newActivities };
+      }),
       updateTarget: (target) => set((state) => ({
         targets: { ...state.targets, [target.id]: target }
       })),
