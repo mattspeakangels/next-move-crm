@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map } from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity } from 'lucide-react';
 import { Dashboard } from './views/DashboardView';
 import { ContactsView } from './views/ContactsView';
 import { PipelineView } from './views/PipelineView';
@@ -9,6 +9,7 @@ import { SettingsView } from './views/SettingsView';
 import { OnboardingView } from './views/OnboardingView';
 import { ProductsView } from './views/ProductsView';
 import { MapView } from './views/MapView';
+import { ActivityLogView } from './views/ActivityLogView';
 import { ToastProvider } from './components/ui/ToastContext';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
@@ -39,6 +40,7 @@ function AppContent() {
       case 'agenda': return <AgendaView />;
       case 'products': return <ProductsView />;
       case 'map': return <MapView onNavigateToContact={navigateToContact} />;
+      case 'attivita': return <ActivityLogView />;
       case 'settings': return <SettingsView />;
       default: return <Dashboard />;
     }
@@ -52,6 +54,7 @@ function AppContent() {
     { id: 'offers' as NavView, icon: FileText, label: 'Offerte' },
     { id: 'products' as NavView, icon: Package, label: 'Prodotti' },
     { id: 'agenda' as NavView, icon: Calendar, label: 'Agenda' },
+    { id: 'attivita' as NavView, icon: Activity, label: 'Attività' },
     { id: 'settings' as NavView, icon: Settings, label: 'Impostazioni' },
   ];
 
