@@ -5,7 +5,7 @@ export const Onboarding: React.FC = () => {
   const { setProfile } = useStore();
   const handleStart = () => {
     setProfile({
-      name: 'Matteo',
+      name: 'Mattia',
       role: 'Admin',
       company: 'Next Move',
       defaultMonthlyTarget: 50000,
