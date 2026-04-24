@@ -34,7 +34,7 @@ function AppContent() {
     switch (currentView) {
       case 'dashboard': return <Dashboard />;
       case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
-      case 'deals': return <PipelineView />;
+      case 'deals': return <PipelineView onNavigateToContact={navigateToContact} />;
       case 'offers': return <OffersView />;
       case 'agenda': return <AgendaView />;
       case 'products': return <ProductsView />;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
-import { ArrowRight, ArrowLeft, Plus } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, X } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { AddDealModal } from '../components/deals/AddDealModal';
 
@@ -23,8 +23,12 @@ function formatDeadline(ts: number): string {
   return new Date(ts).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
 }
 
-export const PipelineView: React.FC = () => {
-  const { deals, contacts, updateDeal } = useStore();
+interface PipelineViewProps {
+  onNavigateToContact: (contactId: string) => void;
+}
+
+export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact }) => {
+  const { deals, contacts, offers, updateDeal } = useStore();
   const [filterProduct, setFilterProduct] = useState<string | null>(null);
 
   const [addDealOpen, setAddDealOpen] = useState(false);
@@ -185,7 +189,10 @@ export const PipelineView: React.FC = () => {
                       }`}
                     >
                       {/* Company name */}
-                      <div className="font-bold text-sm mb-1 truncate dark:text-white">
+                      <div
+                        className="font-bold text-sm mb-1 truncate dark:text-white cursor-pointer hover:text-indigo-600 transition-colors"
+                        onClick={() => onNavigateToContact(deal.contactId)}
+                      >
                         {contacts[deal.contactId]?.company ?? '—'}
                       </div>
 
@@ -219,6 +226,45 @@ export const PipelineView: React.FC = () => {
                           </span>
                         ) : null}
                       </div>
+
+                      {/* Offer selector */}
+                      {(() => {
+                        const contactOffers = Object.values(offers).filter(o => o.contactId === deal.contactId);
+                        const linkedOffer = deal.offerRef ? offers[deal.offerRef] : null;
+                        if (linkedOffer) {
+                          return (
+                            <div className="flex items-center gap-1 mb-2">
+                              <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 flex-1 min-w-0">
+                                <span className="truncate">{linkedOffer.offerNumber} · €{linkedOffer.totalAmount.toLocaleString('it-IT')}</span>
+                              </span>
+                              <button
+                                onClick={() => updateDeal(deal.id, { offerRef: undefined })}
+                                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                title="Scollega offerta"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          );
+                        }
+                        if (contactOffers.length > 0) {
+                          return (
+                            <div className="mb-2">
+                              <select
+                                className="text-[10px] font-bold text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1 border-0 outline-none w-full"
+                                value=""
+                                onChange={e => { if (e.target.value) updateDeal(deal.id, { offerRef: e.target.value }); }}
+                              >
+                                <option value="">Collega offerta...</option>
+                                {contactOffers.map(o => (
+                                  <option key={o.id} value={o.id}>{o.offerNumber} · €{o.totalAmount.toLocaleString('it-IT')}</option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
 
                       {/* Footer */}
                       <div className="flex justify-between items-center">

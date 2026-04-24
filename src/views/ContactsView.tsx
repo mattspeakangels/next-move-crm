@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Edit2, Users, UserPlus, Mail, Target, Trash2, Upload } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Edit2, Users, UserPlus, Mail, Target, Trash2, Upload, FileText } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact } from '../types';
+import { AddDealModal } from '../components/deals/AddDealModal';
 
 interface ContactsViewProps {
   initialSearch?: string;
@@ -11,7 +12,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, addContactsBatch } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, addContactsBatch, deals, offers } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -20,6 +21,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [editingContact, setEditingContact] = useState<any>(null);
   const [tagInputProd, setTagInputProd] = useState('');
   const [tagInputComp, setTagInputComp] = useState('');
+  const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialSearch) setSearchTerm(initialSearch);
@@ -241,6 +243,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         ))}
       </div>
 
+      {/* AddDeal Modal da sezione 5 */}
+      {addDealForContact && (
+        <AddDealModal
+          initialContactId={addDealForContact}
+          onClose={() => setAddDealForContact(null)}
+        />
+      )}
+
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
@@ -428,13 +438,92 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               {/* SEZIONE 4 */}
               <section>
                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">4. Note Generali</h3>
-                <textarea 
-                  placeholder="Informazioni aggiuntive..." 
+                <textarea
+                  placeholder="Informazioni aggiuntive..."
                   className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none resize-none min-h-[100px]"
-                  value={editingContact?.notes || ''} 
-                  onChange={e => setEditingContact({...editingContact, notes: e.target.value})} 
+                  value={editingContact?.notes || ''}
+                  onChange={e => setEditingContact({...editingContact, notes: e.target.value})}
                 />
               </section>
+
+              {/* SEZIONE 5 - Deal & Offerte (solo in modifica) */}
+              {editingContact?.id && contacts[editingContact.id] && (() => {
+                const contactDeals = Object.values(deals).filter(
+                  d => d.contactId === editingContact.id && !['chiuso-vinto', 'chiuso-perso'].includes(d.stage)
+                );
+                const contactOffers = Object.values(offers).filter(
+                  o => o.contactId === editingContact.id
+                );
+                const stageBadge: Record<string, string> = {
+                  lead: 'bg-blue-100 text-blue-600',
+                  qualificato: 'bg-purple-100 text-purple-600',
+                  proposta: 'bg-orange-100 text-orange-600',
+                  negoziazione: 'bg-indigo-100 text-indigo-600',
+                };
+                const offerBadge: Record<string, string> = {
+                  bozza: 'bg-gray-100 text-gray-600',
+                  inviata: 'bg-blue-100 text-blue-600',
+                  accettata: 'bg-green-100 text-green-600',
+                  rifiutata: 'bg-red-100 text-red-600',
+                };
+                return (
+                  <section>
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <FileText size={16}/> 5. Deal & Offerte
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Deal aperti */}
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deal Aperti</span>
+                          <button
+                            onClick={() => setAddDealForContact(editingContact.id)}
+                            className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                          >
+                            <Plus size={10}/> Aggiungi
+                          </button>
+                        </div>
+                        {contactDeals.length === 0 ? (
+                          <p className="text-xs text-gray-400 font-bold italic">Nessun deal aperto</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {contactDeals.map(deal => (
+                              <div key={deal.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-2">
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${stageBadge[deal.stage] || 'bg-gray-100 text-gray-600'}`}>
+                                  {deal.stage}
+                                </span>
+                                <span className="font-bold text-xs text-indigo-600">€{(deal.value / 1000).toFixed(0)}k</span>
+                                {deal.nextAction && (
+                                  <span className="text-[10px] text-gray-500 truncate flex-1">{deal.nextAction}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {/* Offerte */}
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-4">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Offerte</span>
+                        {contactOffers.length === 0 ? (
+                          <p className="text-xs text-gray-400 font-bold italic">Nessuna offerta</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {contactOffers.map(offer => (
+                              <div key={offer.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-2">
+                                <span className="text-[10px] font-black text-gray-600 dark:text-gray-300">{offer.offerNumber}</span>
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${offerBadge[offer.status] || 'bg-gray-100 text-gray-600'}`}>
+                                  {offer.status}
+                                </span>
+                                <span className="font-bold text-xs text-indigo-600 ml-auto">€{offer.totalAmount.toLocaleString('it-IT')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                );
+              })()}
 
             </div>
 
