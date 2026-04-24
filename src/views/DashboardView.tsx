@@ -14,9 +14,210 @@ import {
   Calendar,
   MoreHorizontal,
   ChevronRight,
+  ChevronLeft,
 } from 'lucide-react';
 import { Deal, NextActionType } from '../types';
 import { NextActionModal } from '../components/deals/NextActionModal';
+
+// ─── DealCalendar ─────────────────────────────────────────────────────────────
+
+const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+const MONTHS_IT = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+function startOfWeek(d: Date): Date {
+  const date = new Date(d);
+  const day = date.getDay();
+  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+interface DealCalendarProps {
+  deals: Deal[];
+  contacts: Record<string, { company: string }>;
+}
+
+const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // ── Week ──
+  const weekStart = startOfWeek(new Date());
+  weekStart.setDate(weekStart.getDate() + weekOffset * 7);
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+
+  // ── Month ──
+  const monthAnchor = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const monthDays = (() => {
+    const days: Date[] = [];
+    const start = startOfWeek(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1));
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  })();
+
+  const dealsForDay = (day: Date) =>
+    deals.filter(d => d.nextActionDeadline && isSameDay(new Date(d.nextActionDeadline), day));
+
+  const selectedDeals = selectedDay ? dealsForDay(selectedDay) : [];
+
+  const stageDot: Record<string, string> = {
+    lead: 'bg-blue-400',
+    qualificato: 'bg-purple-400',
+    proposta: 'bg-orange-400',
+    negoziazione: 'bg-indigo-400',
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-700 overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-50 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          <Calendar size={14} className="text-indigo-500" />
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Scadenze Deal</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => viewMode === 'week' ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
+          ><ChevronLeft size={16} /></button>
+          <span className="text-xs font-black dark:text-white min-w-[120px] text-center">
+            {viewMode === 'week'
+              ? `${weekDays[0].getDate()} ${MONTHS_IT[weekDays[0].getMonth()]} – ${weekDays[6].getDate()} ${MONTHS_IT[weekDays[6].getMonth()]}`
+              : `${MONTHS_IT[monthAnchor.getMonth()]} ${monthAnchor.getFullYear()}`
+            }
+          </span>
+          <button
+            onClick={() => viewMode === 'week' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
+          ><ChevronRight size={16} /></button>
+          <button
+            onClick={() => { setWeekOffset(0); setMonthOffset(0); setSelectedDay(null); }}
+            className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-full uppercase"
+          >Oggi</button>
+          {/* View toggle */}
+          <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg ml-1">
+            {(['week', 'month'] as const).map(m => (
+              <button key={m} onClick={() => { setViewMode(m); setSelectedDay(null); }}
+                className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all ${viewMode === m ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-400'}`}>
+                {m === 'week' ? 'Sett.' : 'Mese'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Week view */}
+      {viewMode === 'week' && (
+        <div className="grid grid-cols-7 gap-1 p-3">
+          {weekDays.map((day, i) => {
+            const dayDeals = dealsForDay(day);
+            const isToday = isSameDay(day, today);
+            const isSel = selectedDay && isSameDay(day, selectedDay);
+            return (
+              <button key={i} onClick={() => setSelectedDay(isSel ? null : day)}
+                className={`flex flex-col items-center py-2.5 rounded-xl transition-all ${isSel ? 'bg-indigo-600' : isToday ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-wide mb-1 ${isSel ? 'text-indigo-200' : 'text-gray-400'}`}>{DAYS_IT[i]}</span>
+                <span className={`text-base font-black ${isSel ? 'text-white' : isToday ? 'text-indigo-600' : 'text-gray-700 dark:text-gray-200'}`}>{day.getDate()}</span>
+                <div className="flex gap-0.5 mt-1.5 flex-wrap justify-center max-w-[36px]">
+                  {dayDeals.slice(0, 3).map((d, j) => (
+                    <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white/70' : stageDot[d.stage] ?? 'bg-gray-400'}`} />
+                  ))}
+                  {dayDeals.length > 3 && <span className={`text-[8px] font-black ${isSel ? 'text-white/70' : 'text-gray-400'}`}>+{dayDeals.length - 3}</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Month view */}
+      {viewMode === 'month' && (
+        <div className="p-3">
+          <div className="grid grid-cols-7 mb-1">
+            {DAYS_IT.map(d => <div key={d} className="text-center text-[9px] font-black text-gray-400 uppercase py-1">{d}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-0.5">
+            {monthDays.map((day, i) => {
+              const dayDeals = dealsForDay(day);
+              const inMonth = day.getMonth() === monthAnchor.getMonth();
+              const isToday = isSameDay(day, today);
+              const isSel = selectedDay && isSameDay(day, selectedDay);
+              return (
+                <button key={i} onClick={() => setSelectedDay(isSel ? null : day)}
+                  className={`flex flex-col items-center py-1.5 rounded-lg transition-all min-h-[40px] ${isSel ? 'bg-indigo-600' : isToday ? 'bg-indigo-50 dark:bg-indigo-900/30' : inMonth ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}>
+                  <span className={`text-[11px] font-black ${isSel ? 'text-white' : isToday ? 'text-indigo-600' : inMonth ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>{day.getDate()}</span>
+                  <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[30px]">
+                    {dayDeals.slice(0, 2).map((d, j) => (
+                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white/70' : stageDot[d.stage] ?? 'bg-gray-400'}`} />
+                    ))}
+                    {dayDeals.length > 2 && <span className={`text-[8px] font-black ${isSel ? 'text-white/70' : 'text-gray-400'}`}>+{dayDeals.length - 2}</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Selected day deals */}
+      {selectedDay && (
+        <div className="border-t border-gray-50 dark:border-gray-700 px-4 py-3 space-y-2">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            {selectedDay.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+          {selectedDeals.length === 0 && (
+            <p className="text-xs text-gray-400 font-bold">Nessun deal in scadenza</p>
+          )}
+          {selectedDeals.map(deal => {
+            const diff = Math.floor((deal.nextActionDeadline - Date.now()) / 86400000);
+            return (
+              <div key={deal.id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900 rounded-xl px-3 py-2">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stageDot[deal.stage] ?? 'bg-gray-400'}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black dark:text-white truncate">{contacts[deal.contactId]?.company ?? '—'}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{deal.nextAction || 'Nessuna azione'}</p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-xs font-black text-indigo-600">€{(deal.value / 1000).toFixed(0)}k</p>
+                  <p className={`text-[9px] font-black ${diff < 0 ? 'text-red-500' : diff <= 3 ? 'text-yellow-500' : 'text-gray-400'}`}>
+                    {diff < 0 ? `${Math.abs(diff)}gg fa` : diff === 0 ? 'oggi' : `+${diff}gg`}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="flex gap-3 px-5 pb-3 pt-1 flex-wrap border-t border-gray-50 dark:border-gray-700">
+        {Object.entries({ lead: 'Lead', qualificato: 'Qualificato', proposta: 'Proposta', negoziazione: 'Trattativa' }).map(([k, v]) => (
+          <div key={k} className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full ${stageDot[k]}`} />
+            <span className="text-[9px] font-bold text-gray-400">{v}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -251,6 +452,9 @@ export const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* ── Calendario Deal ── */}
+      <DealCalendar deals={activeDeals} contacts={contacts} />
 
       {/* ── KPI cards ── */}
       <div>
