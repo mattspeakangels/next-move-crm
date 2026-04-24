@@ -271,38 +271,116 @@ export const OffersView: React.FC = () => {
                 </select>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Articoli</label>
-                  <button onClick={addLineItem} className="text-indigo-600 font-black text-xs uppercase bg-indigo-50 px-3 py-1 rounded-full">+ Aggiungi Riga</button>
+                  <button onClick={addLineItem} className="text-indigo-600 font-black text-xs uppercase bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors">+ Aggiungi Riga</button>
                 </div>
-                
-                {items.map((item) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-3 items-end bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl">
-                    <div className="col-span-12 md:col-span-4">
-                      <select className="w-full bg-transparent font-bold outline-none text-sm dark:text-white border-b mb-2" onChange={(e) => handleProductSelect(item.id, e.target.value)}>
-                        <option value="">Catalogo...</option>
-                        {Object.values(products).map((p) => <option key={p.id} value={p.id}>{p.code} - {p.description}</option>)}
-                      </select>
-                      <input type="text" placeholder="Descrizione personalizzata" className="w-full bg-transparent font-bold outline-none text-xs text-gray-500" value={item.description} onChange={(e) => updateItem(item.id, { description: e.target.value })} />
-                    </div>
-                    <div className="col-span-4 md:col-span-2">
-                      <input type="text" placeholder="Taglie" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white border-b" value={item.sizes || ''} onChange={(e) => updateItem(item.id, { sizes: e.target.value })} />
-                    </div>
-                    <div className="col-span-4 md:col-span-1">
-                      <input type="number" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white border-b text-center" value={item.quantity} onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })} />
-                    </div>
-                    <div className="col-span-4 md:col-span-2">
-                      <input type="number" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white border-b text-center" value={item.discount} onChange={(e) => updateItem(item.id, { discount: parseFloat(e.target.value) || 0 })} />
-                    </div>
-                    <div className="col-span-10 md:col-span-2 text-right">
-                      <input type="number" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white border-b text-indigo-600" value={item.price} onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })} />
-                    </div>
-                    <div className="col-span-2 md:col-span-1 flex justify-end">
-                      <button onClick={() => setItems(items.filter((i) => i.id !== item.id))} className="text-red-400"><Trash2 size={16}/></button>
-                    </div>
+
+                {items.length === 0 && (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-2xl">
+                    <p className="text-gray-400 text-xs font-bold">Premi "+ Aggiungi Riga" per inserire un articolo</p>
                   </div>
-                ))}
+                )}
+
+                {items.map((item, idx) => {
+                  const lineTotal = item.price * item.quantity * (1 - item.discount / 100);
+                  return (
+                    <div key={item.id} className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4 space-y-3">
+                      {/* Row header */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Articolo {idx + 1}</span>
+                        <button
+                          onClick={() => setItems(items.filter(i => i.id !== item.id))}
+                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      {/* Catalog selector */}
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Da catalogo</label>
+                        <select
+                          className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 transition-colors"
+                          onChange={e => handleProductSelect(item.id, e.target.value)}
+                          defaultValue=""
+                        >
+                          <option value="">Seleziona dal catalogo (opzionale)...</option>
+                          {Object.values(products).map(p => (
+                            <option key={p.id} value={p.id}>{p.code} — {p.description}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Description + Sizes */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Descrizione *</label>
+                          <input
+                            type="text"
+                            placeholder="Es. Giubbotto invernale"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 transition-colors"
+                            value={item.description}
+                            onChange={e => updateItem(item.id, { description: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Taglie / Mis.</label>
+                          <input
+                            type="text"
+                            placeholder="Es. S/M/L/XL"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 transition-colors"
+                            value={item.sizes || ''}
+                            onChange={e => updateItem(item.id, { sizes: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Qty + Price + Discount + Total */}
+                      <div className="grid grid-cols-4 gap-3 items-end">
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Q.tà</label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-indigo-400 transition-colors"
+                            value={item.quantity}
+                            onChange={e => updateItem(item.id, { quantity: parseInt(e.target.value) || 1 })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Prezzo €</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-indigo-400 transition-colors"
+                            value={item.price || ''}
+                            onChange={e => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Sconto %</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="0"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-indigo-400 transition-colors"
+                            value={item.discount || ''}
+                            onChange={e => updateItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div className="bg-indigo-600 rounded-xl px-3 py-2.5 text-center">
+                          <p className="text-[9px] font-black text-indigo-300 uppercase tracking-wide">Totale riga</p>
+                          <p className="font-black text-white text-sm">€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-indigo-50 dark:border-gray-700">
