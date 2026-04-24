@@ -219,28 +219,78 @@ export const OffersView: React.FC = () => {
         {Object.values(offers).length > 0 ? (
           Object.values(offers).sort((a, b) => b.date - a.date).map((offer) => {
             const contact = contacts[offer.contactId];
+
+            const STATUS_CONFIG: Record<OfferStatus, { label: string; bg: string; text: string; activeBg: string; activeText: string }> = {
+              bozza:     { label: 'Bozza',     bg: 'bg-gray-100 dark:bg-gray-700',   text: 'text-gray-500 dark:text-gray-300', activeBg: 'bg-gray-500',   activeText: 'text-white' },
+              inviata:   { label: 'Inviata',   bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-500',   activeBg: 'bg-blue-500',   activeText: 'text-white' },
+              accettata: { label: 'Accettata', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600', activeBg: 'bg-green-500', activeText: 'text-white' },
+              rifiutata: { label: 'Rifiutata', bg: 'bg-red-50 dark:bg-red-900/20',   text: 'text-red-500',    activeBg: 'bg-red-500',    activeText: 'text-white' },
+            };
+
+            const currentCfg = STATUS_CONFIG[offer.status];
+
             return (
-              <div key={offer.id} className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
+              <div
+                key={offer.id}
+                className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-colors ${
+                  offer.status === 'accettata' ? 'border-green-200 dark:border-green-800' :
+                  offer.status === 'rifiutata' ? 'border-red-200 dark:border-red-800' :
+                  offer.status === 'inviata'   ? 'border-blue-200 dark:border-blue-800' :
+                  'border-gray-100 dark:border-gray-700'
+                }`}
+              >
+                {/* Top row */}
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">{offer.offerNumber}</span>
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                      {offer.offerNumber}
+                    </span>
                     <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
+                    <p className="text-xs text-gray-400 font-bold mt-0.5">
+                      {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-black dark:text-white tracking-tighter">€ {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{offer.status}</span>
+                    <p className="text-2xl font-black dark:text-white tracking-tighter">
+                      € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
                 </div>
-                
-                <div className="flex justify-between items-center pt-4 border-t border-gray-50 dark:border-gray-700">
-                  <div className="flex gap-2">
-                    <button onClick={() => updateOffer(offer.id, { status: 'accettata' })} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all">Vinta</button>
-                    <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"><Mail size={12}/> Email</button>
+
+                {/* Status selector */}
+                <div className="mb-4">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stato offerta</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(Object.keys(STATUS_CONFIG) as OfferStatus[]).map(s => {
+                      const cfg = STATUS_CONFIG[s];
+                      const isActive = offer.status === s;
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => updateOffer(offer.id, { status: s })}
+                          className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-wide transition-all ${
+                            isActive ? `${cfg.activeBg} ${cfg.activeText} shadow-sm` : `${cfg.bg} ${cfg.text} hover:opacity-80`
+                          }`}
+                        >
+                          {cfg.label}
+                        </button>
+                      );
+                    })}
                   </div>
+                </div>
+
+                {/* Bottom actions */}
+                <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <button
+                    onClick={() => handleSendEmail(offer)}
+                    className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    <Mail size={12} /> Email
+                  </button>
                   <div className="flex gap-2">
-                    <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100"><Printer size={18} /></button>
-                    <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100"><Edit2 size={18} /></button>
-                    <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-xl bg-red-50 text-red-400 hover:bg-red-100"><Trash2 size={18} /></button>
+                    <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors"><Printer size={18} /></button>
+                    <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 transition-colors"><Edit2 size={18} /></button>
+                    <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 transition-colors"><Trash2 size={18} /></button>
                   </div>
                 </div>
               </div>
