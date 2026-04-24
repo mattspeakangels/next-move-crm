@@ -227,8 +227,6 @@ export const OffersView: React.FC = () => {
               rifiutata: { label: 'Rifiutata', bg: 'bg-red-50 dark:bg-red-900/20',   text: 'text-red-500',    activeBg: 'bg-red-500',    activeText: 'text-white' },
             };
 
-            const currentCfg = STATUS_CONFIG[offer.status];
-
             return (
               <div
                 key={offer.id}
