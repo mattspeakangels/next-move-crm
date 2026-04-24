@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
 import { ArrowRight, ArrowLeft, Plus } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
+import { AddDealModal } from '../components/deals/AddDealModal';
 
 const STAGES: { id: DealStage; name: string; color: string }[] = [
   { id: 'lead', name: 'Lead', color: 'bg-blue-500' },
@@ -26,6 +27,7 @@ export const PipelineView: React.FC = () => {
   const { deals, contacts, updateDeal } = useStore();
   const [filterProduct, setFilterProduct] = useState<string | null>(null);
 
+  const [addDealOpen, setAddDealOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<{ dealId: string; newStage: DealStage } | null>(null);
   const [activeDealForModal, setActiveDealForModal] = useState<Deal | null>(null);
@@ -98,6 +100,17 @@ export const PipelineView: React.FC = () => {
 
   return (
     <div className="pb-8">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Pipeline</h1>
+        <button
+          onClick={() => setAddDealOpen(true)}
+          className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-colors text-sm"
+        >
+          <Plus size={16} /> Nuovo Deal
+        </button>
+      </div>
+
       {/* Product filter chips */}
       <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
         <button
@@ -258,6 +271,8 @@ export const PipelineView: React.FC = () => {
         onSave={handleModalSave}
         companyName={activeDealForModal ? contacts[activeDealForModal.contactId]?.company : undefined}
       />
+
+      {addDealOpen && <AddDealModal onClose={() => setAddDealOpen(false)} />}
     </div>
   );
 };
