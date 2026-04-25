@@ -172,7 +172,7 @@ export default async function handler(req: { method: string; body: unknown }, re
     if (!response.ok) {
       const errBody = await response.text();
       console.error('Anthropic error:', response.status, errBody);
-      res.status(500).json({ error: `Errore Anthropic: ${response.status}` });
+      res.status(500).json({ error: `Anthropic ${response.status}: ${errBody}` });
       return;
     }
 
