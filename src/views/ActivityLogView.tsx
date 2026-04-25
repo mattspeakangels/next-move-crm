@@ -159,8 +159,12 @@ export const ActivityLogView: React.FC = () => {
 
   // Calendar state
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = toDayKey(today.getTime());
+
   const [calendarMonth, setCalendarMonth] = useState(today.getMonth());
   const [calendarYear, setCalendarYear] = useState(today.getFullYear());
+  const [selectedDay, setSelectedDay] = useState<string | null>(todayKey);
 
   // ── Costruisce la lista di eventi da tutte le sorgenti ──
 
@@ -233,9 +237,8 @@ export const ActivityLogView: React.FC = () => {
   const filtered = allEvents.filter(e => {
     if (filterType !== 'all' && e.kind !== filterType) return false;
     if (filterContact && e.contactId !== filterContact) return false;
-    // Filter by calendar month/year
-    const d = new Date(e.ts);
-    if (d.getFullYear() !== calendarYear || d.getMonth() !== calendarMonth) return false;
+    // Filter by selected day
+    if (selectedDay && e.dayKey !== selectedDay) return false;
     return true;
   });
 
@@ -368,7 +371,7 @@ export const ActivityLogView: React.FC = () => {
         </div>
 
         {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 mb-4">
           {/* Empty cells before first day */}
           {Array.from({ length: firstDay }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
@@ -377,19 +380,25 @@ export const ActivityLogView: React.FC = () => {
           {/* Day cells */}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
+            const dayKey = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const hasEvents = calendarDaysWithEvents.has(day);
             const isToday = day === today.getDate() && calendarMonth === today.getMonth() && calendarYear === today.getFullYear();
+            const isSelected = selectedDay === dayKey;
 
             return (
               <button
                 key={day}
-                className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition-all ${
-                  hasEvents
-                    ? isToday
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 font-black'
+                onClick={() => {
+                  setSelectedDay(dayKey);
+                  setExpandedDays(prev => new Set(prev).add(dayKey));
+                }}
+                className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : hasEvents
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 font-black hover:bg-indigo-200 dark:hover:bg-indigo-900/60'
                     : isToday
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
                     : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
@@ -398,6 +407,19 @@ export const ActivityLogView: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Reset button */}
+        {selectedDay !== todayKey && (
+          <button
+            onClick={() => {
+              setSelectedDay(todayKey);
+              setExpandedDays(prev => new Set(prev).add(todayKey));
+            }}
+            className="w-full py-2 text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+          >
+            ← Torna a oggi
+          </button>
+        )}
       </div>
 
       {/* KPI settimana */}
