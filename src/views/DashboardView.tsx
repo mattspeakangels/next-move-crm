@@ -16,8 +16,9 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react';
-import { Deal, NextActionType } from '../types';
+import { Deal, NextActionType, ActivityOutcome } from '../types';
 import { NextActionModal } from '../components/deals/NextActionModal';
+import { OutcomeModal } from '../components/deals/OutcomeModal';
 
 // ─── DealCalendar ─────────────────────────────────────────────────────────────
 
@@ -264,7 +265,7 @@ function getCoachSuggestion(
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const Dashboard = () => {
-  const { contacts, deals, offers, updateDeal, profile } = useStore();
+  const { contacts, deals, offers, updateDeal, profile, addActivity } = useStore();
 
   const now = Date.now();
   const allDeals = Object.values(deals);
@@ -290,16 +291,51 @@ export const Dashboard = () => {
   // NextActionModal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDeal, setModalDeal] = useState<Deal | null>(null);
+  const [activeDealForModal, setActiveDealForModal] = useState<Deal | null>(null);
+
+  // OutcomeModal state
+  const [outcomeDealId, setOutcomeDealId] = useState<string | null>(null);
 
   const handleDone = (deal: Deal) => {
-    // Mark as done: open modal to set next action
-    setModalDeal(deal);
-    setModalOpen(true);
+    // Mark as done: open OutcomeModal first
+    setActiveDealForModal(deal);
+    setOutcomeDealId(deal.id);
   };
 
   const handleSnooze = (deal: Deal, days: number) => {
     const newDeadline = now + days * 24 * 60 * 60 * 1000;
     updateDeal(deal.id, { nextActionDeadline: newDeadline });
+  };
+
+  const handleOutcomeSave = (outcome: { outcomeType: ActivityOutcome; results: string }) => {
+    if (!activeDealForModal) return;
+
+    // 1. Create Activity record
+    const activityType = activeDealForModal.nextActionType === 'chiama'
+      ? 'chiamata'
+      : activeDealForModal.nextActionType === 'email'
+      ? 'email'
+      : activeDealForModal.nextActionType === 'fissa-visita'
+      ? 'visita'
+      : 'nota';
+
+    addActivity({
+      id: `act_${Date.now()}`,
+      contactId: activeDealForModal.contactId,
+      dealId: activeDealForModal.id,
+      type: activityType as any,
+      date: now,
+      outcome: 'completata',
+      outcomeType: outcome.outcomeType,
+      results: outcome.results,
+      notes: outcome.results,
+      createdAt: now,
+    });
+
+    // 2. Close outcome modal, open next action modal
+    setOutcomeDealId(null);
+    setModalDeal(activeDealForModal);
+    setModalOpen(true);
   };
 
   const handleModalSave = (data: {
@@ -492,6 +528,22 @@ export const Dashboard = () => {
           </div>
           <ChevronRight size={18} className="text-gray-300" />
         </div>
+      )}
+
+      {/* OutcomeModal (when marking done) */}
+      {outcomeDealId && activeDealForModal && (
+        <OutcomeModal
+          isOpen={!!outcomeDealId}
+          onClose={() => setOutcomeDealId(null)}
+          onSave={handleOutcomeSave}
+          onSkip={() => {
+            setOutcomeDealId(null);
+            setModalDeal(activeDealForModal);
+            setModalOpen(true);
+          }}
+          companyName={contacts[activeDealForModal.contactId]?.company}
+          previousAction={activeDealForModal.nextAction}
+        />
       )}
 
       {/* NextActionModal (after marking done) */}

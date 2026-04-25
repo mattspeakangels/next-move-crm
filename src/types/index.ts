@@ -2,6 +2,7 @@ export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | '
 export type NextActionType = 'chiama' | 'email' | 'invia-offerta' | 'fissa-visita' | 'altro';
 export type NextActionPriority = 'alta' | 'media' | 'bassa';
 export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
+export type ActivityOutcome = 'riuscita' | 'parziale' | 'nessun-contatto' | 'promessa-callback' | 'rifiuto' | 'nota';
 export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
@@ -127,6 +128,8 @@ export interface Activity {
   date: number;
   outcome: string;
   notes: string;
+  outcomeType?: ActivityOutcome;
+  results?: string;
   createdAt?: number;
 }
 
