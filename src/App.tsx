@@ -39,7 +39,7 @@ function AppContent() {
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard': return <Dashboard />;
+      case 'dashboard': return <Dashboard onNavigate={goTo} />;
       case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
       case 'deals': return <PipelineView onNavigateToContact={navigateToContact} />;
       case 'offers': return <OffersView />;
@@ -48,7 +48,7 @@ function AppContent() {
       case 'map': return <MapView onNavigateToContact={navigateToContact} />;
       case 'attivita': return <ActivityLogView />;
       case 'settings': return <SettingsView />;
-      default: return <Dashboard />;
+      default: return <Dashboard onNavigate={goTo} />;
     }
   };
 

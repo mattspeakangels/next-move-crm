@@ -265,7 +265,11 @@ function getCoachSuggestion(
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export const Dashboard = () => {
+interface DashboardProps {
+  onNavigate?: (view: import('../types').NavView) => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const { contacts, deals, offers, updateDeal, profile, addActivity } = useStore();
 
   const now = Date.now();
@@ -342,9 +346,10 @@ export const Dashboard = () => {
   };
 
   const handleCloseActivity = () => {
-    // Close action choice, close all modals, return to dashboard
+    // Close action choice, close all modals, navigate to Attività view
     setActionChoiceOpen(false);
     setActiveDealForModal(null);
+    onNavigate?.('attivita');
   };
 
   const handleSetNextAction = () => {
