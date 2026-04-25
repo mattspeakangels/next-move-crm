@@ -54,13 +54,13 @@ function AppContent() {
 
   const navItems = [
     { id: 'dashboard' as NavView, icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'contacts' as NavView, icon: Users, label: 'Aziende' },
-    { id: 'map' as NavView, icon: Map, label: 'Mappa' },
     { id: 'deals' as NavView, icon: Target, label: 'Pipeline' },
+    { id: 'contacts' as NavView, icon: Users, label: 'Aziende' },
     { id: 'offers' as NavView, icon: FileText, label: 'Offerte' },
     { id: 'products' as NavView, icon: Package, label: 'Prodotti' },
     { id: 'agenda' as NavView, icon: Calendar, label: 'Agenda' },
     { id: 'attivita' as NavView, icon: Activity, label: 'Attività' },
+    { id: 'map' as NavView, icon: Map, label: 'Mappa' },
     { id: 'settings' as NavView, icon: Settings, label: 'Impostazioni' },
   ];
 
