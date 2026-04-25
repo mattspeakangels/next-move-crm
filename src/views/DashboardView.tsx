@@ -19,6 +19,7 @@ import {
 import { Deal, NextActionType, ActivityOutcome } from '../types';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { OutcomeModal } from '../components/deals/OutcomeModal';
+import { ActionChoiceModal } from '../components/deals/ActionChoiceModal';
 
 // ─── DealCalendar ─────────────────────────────────────────────────────────────
 
@@ -296,6 +297,9 @@ export const Dashboard = () => {
   // OutcomeModal state
   const [outcomeDealId, setOutcomeDealId] = useState<string | null>(null);
 
+  // ActionChoiceModal state
+  const [actionChoiceOpen, setActionChoiceOpen] = useState(false);
+
   const handleDone = (deal: Deal) => {
     // Mark as done: open OutcomeModal first
     setActiveDealForModal(deal);
@@ -332,10 +336,24 @@ export const Dashboard = () => {
       createdAt: now,
     });
 
-    // 2. Close outcome modal, open next action modal
+    // 2. Close outcome modal, open action choice modal
     setOutcomeDealId(null);
-    setModalDeal(activeDealForModal);
-    setModalOpen(true);
+    setActionChoiceOpen(true);
+  };
+
+  const handleCloseActivity = () => {
+    // Close action choice, close all modals, return to dashboard
+    setActionChoiceOpen(false);
+    setActiveDealForModal(null);
+  };
+
+  const handleSetNextAction = () => {
+    // Close action choice, open next action modal
+    setActionChoiceOpen(false);
+    if (activeDealForModal) {
+      setModalDeal(activeDealForModal);
+      setModalOpen(true);
+    }
   };
 
   const handleModalSave = (data: {
@@ -538,15 +556,26 @@ export const Dashboard = () => {
           onSave={handleOutcomeSave}
           onSkip={() => {
             setOutcomeDealId(null);
-            setModalDeal(activeDealForModal);
-            setModalOpen(true);
+            setActionChoiceOpen(true);
           }}
           companyName={contacts[activeDealForModal.contactId]?.company}
           previousAction={activeDealForModal.nextAction}
         />
       )}
 
-      {/* NextActionModal (after marking done) */}
+      {/* ActionChoiceModal (after outcome is saved) */}
+      <ActionChoiceModal
+        isOpen={actionChoiceOpen}
+        onClose={() => {
+          setActionChoiceOpen(false);
+          setActiveDealForModal(null);
+        }}
+        onCloseActivity={handleCloseActivity}
+        onSetNextAction={handleSetNextAction}
+        companyName={activeDealForModal ? contacts[activeDealForModal.contactId]?.company : undefined}
+      />
+
+      {/* NextActionModal (if user chooses to set next action) */}
       <NextActionModal
         isOpen={modalOpen}
         onClose={() => { setModalDeal(null); setModalOpen(false); }}
