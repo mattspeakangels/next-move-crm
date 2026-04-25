@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
-import { ArrowRight, ArrowLeft, Plus, X } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, X, Sparkles } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { AddDealModal } from '../components/deals/AddDealModal';
+import { useClaudeAI } from '../hooks/useClaudeAI';
+import { AiPanel } from '../components/ai/AiPanel';
 
 const STAGES: { id: DealStage; name: string; color: string }[] = [
   { id: 'lead', name: 'Lead', color: 'bg-blue-500' },
@@ -35,6 +37,28 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<{ dealId: string; newStage: DealStage } | null>(null);
   const [activeDealForModal, setActiveDealForModal] = useState<Deal | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
+
+  const runPipelineAnalysis = () => {
+    const now = Date.now();
+    const dealsData = filteredDeals.map(d => ({
+      id: d.id,
+      company: contacts[d.contactId]?.company ?? 'Sconosciuto',
+      stage: d.stage,
+      value: d.value,
+      probability: d.probability,
+      daysOpen: Math.floor((now - d.createdAt) / 86400000),
+      nextActionDeadline: d.nextActionDeadline ? new Date(d.nextActionDeadline).toLocaleDateString('it-IT') : '—',
+      deadlinePassed: d.nextActionDeadline ? d.nextActionDeadline < now : false,
+      nextAction: d.nextAction || '—',
+      notes: d.notes || '',
+    }));
+    const totalValue = dealsData.reduce((s, d) => s + d.value, 0);
+    const weightedValue = filteredDeals.reduce((s, d) => s + d.value * d.probability / 100, 0);
+    setShowAiPanel(true);
+    aiRun('analizza-pipeline', { deals: dealsData, totalValue, weightedValue });
+  };
 
   const allDeals = Object.values(deals);
   const activeProducts = Array.from(
@@ -107,12 +131,20 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Pipeline</h1>
-        <button
-          onClick={() => setAddDealOpen(true)}
-          className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-colors text-sm"
-        >
-          <Plus size={16} /> Nuovo Deal
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={runPipelineAnalysis}
+            className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
+          >
+            <Sparkles size={14} /> <span className="hidden sm:inline">Analizza</span>
+          </button>
+          <button
+            onClick={() => setAddDealOpen(true)}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-colors text-sm"
+          >
+            <Plus size={16} /> Nuovo Deal
+          </button>
+        </div>
       </div>
 
       {/* Product filter chips */}
@@ -319,6 +351,18 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
       />
 
       {addDealOpen && <AddDealModal onClose={() => setAddDealOpen(false)} />}
+
+      {showAiPanel && (
+        <AiPanel
+          title="Analizza Pipeline"
+          subtitle={`${filteredDeals.length} opportunità attive`}
+          loading={aiLoading}
+          result={aiResult}
+          error={aiError}
+          onClose={() => { setShowAiPanel(false); aiReset(); }}
+          onRetry={runPipelineAnalysis}
+        />
+      )}
     </div>
   );
 };

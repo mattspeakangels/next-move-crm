@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
+import { useClaudeAI } from '../hooks/useClaudeAI';
+import { AiPanel } from '../components/ai/AiPanel';
 
 interface ContactsViewProps {
   initialSearch?: string;
@@ -21,6 +23,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [tagInputProd, setTagInputProd] = useState('');
   const [tagInputComp, setTagInputComp] = useState('');
   const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
   useEffect(() => {
     if (initialSearch) setSearchTerm(initialSearch);
@@ -171,12 +175,53 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Scheda Azienda</p>
               </div>
             </div>
-            <button
-              onClick={handleSave}
-              className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
-            >
-              Salva
-            </button>
+            <div className="flex items-center gap-2">
+              {editingContact?.id && contacts[editingContact.id] && (
+                <button
+                  onClick={() => {
+                    const contactDeals = Object.values(deals)
+                      .filter(d => d.contactId === editingContact.id && !['chiuso-vinto','chiuso-perso'].includes(d.stage))
+                      .map(d => ({
+                        stage: d.stage,
+                        value: d.value,
+                        nextAction: d.nextAction,
+                        notes: d.notes,
+                      }));
+                    const { activities } = useStore.getState();
+                    const recentActivities = Object.values(activities)
+                      .filter(a => a.contactId === editingContact.id)
+                      .sort((a, b) => b.date - a.date)
+                      .slice(0, 5)
+                      .map(a => ({
+                        type: a.type,
+                        date: new Date(a.date).toLocaleDateString('it-IT'),
+                        outcome: a.outcome,
+                        notes: a.notes,
+                      }));
+                    setShowAiPanel(true);
+                    aiRun('prepara-visita', {
+                      company: editingContact.company,
+                      sector: editingContact.sector || '',
+                      customerType: editingContact.customerType,
+                      region: editingContact.region,
+                      intelligence: editingContact.intelligence,
+                      stakeholders: editingContact.stakeholders,
+                      openDeals: contactDeals,
+                      recentActivities,
+                    });
+                  }}
+                  className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
+                >
+                  <Sparkles size={14} /> <span className="hidden sm:inline">Prepara Visita</span>
+                </button>
+              )}
+              <button
+                onClick={handleSave}
+                className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
+              >
+                Salva
+              </button>
+            </div>
           </div>
 
           {/* Content */}
@@ -536,11 +581,38 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         </>
       )}
 
-      {/* AddDeal Modal — sempre presente fuori dal detail view */}
+      {/* AddDeal Modal */}
       {addDealForContact && (
         <AddDealModal
           initialContactId={addDealForContact}
           onClose={() => setAddDealForContact(null)}
+        />
+      )}
+
+      {/* AI Panel — Prepara Visita */}
+      {showAiPanel && (
+        <AiPanel
+          title="Prepara Visita"
+          subtitle={editingContact?.company}
+          loading={aiLoading}
+          result={aiResult}
+          error={aiError}
+          onClose={() => { setShowAiPanel(false); aiReset(); }}
+          onRetry={() => {
+            const contactDeals = Object.values(deals)
+              .filter(d => d.contactId === editingContact?.id && !['chiuso-vinto','chiuso-perso'].includes(d.stage))
+              .map(d => ({ stage: d.stage, value: d.value, nextAction: d.nextAction, notes: d.notes }));
+            aiRun('prepara-visita', {
+              company: editingContact?.company,
+              sector: editingContact?.sector || '',
+              customerType: editingContact?.customerType,
+              region: editingContact?.region,
+              intelligence: editingContact?.intelligence,
+              stakeholders: editingContact?.stakeholders,
+              openDeals: contactDeals,
+              recentActivities: [],
+            });
+          }}
         />
       )}
 

@@ -1,14 +1,41 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, X, Edit2, Mail, Printer } from 'lucide-react';
+import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles } from 'lucide-react';
 import { Offer, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
+import { useClaudeAI } from '../hooks/useClaudeAI';
+import { AiPanel } from '../components/ai/AiPanel';
 
 export const OffersView: React.FC = () => {
   const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile } = useStore();
   const { showToast } = useToast();
   
   const [showModal, setShowModal] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiTargetOffer, setAiTargetOffer] = useState<Offer | null>(null);
+  const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
+
+  const handleWriteEmail = (offer: Offer) => {
+    const contact = contacts[offer.contactId];
+    setAiTargetOffer(offer);
+    setShowAiPanel(true);
+    aiRun('email-offerta', {
+      offerNumber: offer.offerNumber,
+      company: contact?.company ?? '',
+      contactName: contact?.contactName,
+      contactRole: contact?.role,
+      customerType: contact?.customerType,
+      sector: contact?.sector,
+      items: offer.items.map(it => ({
+        description: it.description,
+        quantity: it.quantity,
+        price: it.price,
+        discount: it.discount,
+      })),
+      totalAmount: offer.totalAmount,
+      deliveryTime: offer.deliveryTime,
+    });
+  };
   const [editingId, setEditingId] = useState<string | null>(null);
   
   const [selectedContact, setSelectedContact] = useState('');
@@ -279,12 +306,21 @@ export const OffersView: React.FC = () => {
 
                 {/* Bottom actions */}
                 <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
-                  <button
-                    onClick={() => handleSendEmail(offer)}
-                    className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
-                  >
-                    <Mail size={12} /> Email
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleSendEmail(offer)}
+                      className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
+                    >
+                      <Mail size={12} /> Email
+                    </button>
+                    <button
+                      onClick={() => handleWriteEmail(offer)}
+                      className="px-3 py-2 rounded-xl font-black text-[10px] uppercase bg-purple-50 dark:bg-purple-900/30 text-purple-600 hover:bg-purple-600 hover:text-white transition-all flex items-center gap-1.5"
+                      title="Scrivi email con Claude AI"
+                    >
+                      <Sparkles size={12} /> AI
+                    </button>
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors"><Printer size={18} /></button>
                     <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 transition-colors"><Edit2 size={18} /></button>
@@ -449,6 +485,18 @@ export const OffersView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showAiPanel && (
+        <AiPanel
+          title="Scrivi Email Offerta"
+          subtitle={aiTargetOffer?.offerNumber}
+          loading={aiLoading}
+          result={aiResult}
+          error={aiError}
+          onClose={() => { setShowAiPanel(false); setAiTargetOffer(null); aiReset(); }}
+          onRetry={() => aiTargetOffer && handleWriteEmail(aiTargetOffer)}
+        />
       )}
     </div>
   );
