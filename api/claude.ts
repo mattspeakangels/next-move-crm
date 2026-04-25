@@ -1,5 +1,5 @@
-// Vercel Node.js serverless function (no Edge runtime)
-// Uses raw fetch to Anthropic API to avoid SDK/Edge incompatibilities
+// Vercel Node.js serverless function
+// Uses raw fetch to Anthropic API with fallback to cheapest models
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
@@ -155,32 +155,47 @@ export default async function handler(req: { method: string; body: unknown }, re
         return;
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-6',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
+    // Try models in order of cost (cheapest first)
+    const models = ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-6'];
+    let lastError = '';
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      console.error('Anthropic error:', response.status, errBody);
-      res.status(500).json({ error: `Anthropic ${response.status}: ${errBody}` });
-      return;
+    for (const model of models) {
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        });
+
+        if (!response.ok) {
+          const errBody = await response.text();
+          lastError = `${model}: ${response.status}`;
+          continue;
+        }
+
+        const json = await response.json() as {
+          content: Array<{ type: string; text?: string }>;
+        };
+        const text = json.content.find(b => b.type === 'text')?.text ?? '';
+        res.json({ result: text });
+        return;
+
+      } catch (err) {
+        lastError = `${model}: ${err instanceof Error ? err.message : 'error'}`;
+        continue;
+      }
     }
 
-    const json = await response.json() as {
-      content: Array<{ type: string; text?: string }>;
-    };
-    const text = json.content.find(b => b.type === 'text')?.text ?? '';
-    res.json({ result: text });
+    // All models failed
+    res.status(500).json({ error: `Nessun modello disponibile (${lastError})` });
 
   } catch (err) {
     console.error('Handler error:', err);
