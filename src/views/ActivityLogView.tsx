@@ -162,9 +162,7 @@ export const ActivityLogView: React.FC = () => {
   today.setHours(0, 0, 0, 0);
   const todayKey = toDayKey(today.getTime());
 
-  const [calendarMonth, setCalendarMonth] = useState(today.getMonth());
-  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
-  const [selectedDay, setSelectedDay] = useState<string | null>(todayKey);
+  const [selectedDay, setSelectedDay] = useState<string>(todayKey);
 
   // ── Costruisce la lista di eventi da tutte le sorgenti ──
 
@@ -208,37 +206,13 @@ export const ActivityLogView: React.FC = () => {
     });
   });
 
-  // ── Calendar helpers ──
-
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (month: number, year: number) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const calendarDaysWithEvents = new Set(
-    allEvents
-      .filter(e => {
-        const d = new Date(e.ts);
-        return d.getFullYear() === calendarYear && d.getMonth() === calendarMonth;
-      })
-      .map(e => parseInt(toDayKey(e.ts).split('-')[2]))
-  );
-
-  const daysInMonth = getDaysInMonth(calendarMonth, calendarYear);
-  const firstDay = (getFirstDayOfMonth(calendarMonth, calendarYear) + 6) % 7; // Convert Sun=0 to Mon=0
-
-  const monthName = new Date(calendarYear, calendarMonth, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
-
   // ── Filtri ──
 
   const filtered = allEvents.filter(e => {
     if (filterType !== 'all' && e.kind !== filterType) return false;
     if (filterContact && e.contactId !== filterContact) return false;
     // Filter by selected day
-    if (selectedDay && e.dayKey !== selectedDay) return false;
+    if (e.dayKey !== selectedDay) return false;
     return true;
   });
 
