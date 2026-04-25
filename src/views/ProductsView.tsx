@@ -544,6 +544,103 @@ const AddProductModal: React.FC<{ onClose: () => void; onSave: (p: Omit<Product,
   );
 };
 
+// ─── ADD TO OFFER MODAL ───────────────────────────────────────────────────────
+const AddToOfferModal: React.FC<{
+  selectedProducts: Product[];
+  onClose: () => void;
+}> = ({ selectedProducts, onClose }) => {
+  const { offers, contacts, updateOffer } = useStore();
+  const { showToast } = useToast();
+
+  const offerList = useMemo(() =>
+    Object.values(offers)
+      .filter(o => o.status === 'bozza' || o.status === 'inviata')
+      .sort((a, b) => b.date - a.date),
+    [offers]
+  );
+
+  const handlePick = (offerId: string) => {
+    const offer = offers[offerId];
+    if (!offer) return;
+    const newItems = selectedProducts.map(p => ({
+      id: `item_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      productId: p.id,
+      description: pName(p),
+      sizes: p.sizes || '',
+      quantity: 1,
+      price: p.price,
+      discount: p.discount || 0,
+    }));
+    const updatedItems = [...offer.items, ...newItems];
+    const total = updatedItems.reduce((sum, it) => {
+      const net = it.price * it.quantity * (1 - it.discount / 100);
+      return sum + net;
+    }, 0);
+    updateOffer(offerId, { items: updatedItems, totalAmount: total });
+    showToast(`${selectedProducts.length} articoli aggiunti all'offerta ${offer.offerNumber}`, 'success');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-800 w-full md:max-w-md rounded-t-3xl md:rounded-2xl shadow-2xl p-6 pb-10 md:pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-black text-gray-900 dark:text-white text-base">Aggiungi a offerta</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{selectedProducts.length} articoli selezionati</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600">
+            <X size={18} />
+          </button>
+        </div>
+
+        {offerList.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <ShoppingBag size={32} className="mx-auto mb-2 opacity-40" />
+            <p className="text-sm">Nessuna offerta in bozza o inviata</p>
+            <p className="text-xs mt-1">Crea prima un'offerta dalla sezione Offerte</p>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {offerList.map(o => {
+              const contact = contacts[o.contactId];
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => handlePick(o.id)}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-700 transition-all text-left group"
+                >
+                  <div className="min-w-0">
+                    <div className="font-bold text-sm text-gray-900 dark:text-white">
+                      {o.offerNumber}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {contact?.company || 'Azienda sconosciuta'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                      o.status === 'bozza'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                        : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600'
+                    }`}>
+                      {o.status}
+                    </span>
+                    <span className="text-xs text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                      Aggiungi →
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── MAIN VIEW ────────────────────────────────────────────────────────────────
 export const ProductsView: React.FC = () => {
   const { products, addProduct, removeProduct } = useStore();
@@ -557,6 +654,7 @@ export const ProductsView: React.FC = () => {
   const [catFilter, setCatFilter] = useState<string>('all');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
 
   const changeLayout = (v: LayoutVariant) => {
     setLayout(v);
@@ -606,8 +704,8 @@ export const ProductsView: React.FC = () => {
   };
 
   const handleAddToOffer = () => {
-    showToast(`${selected.size} articoli selezionati per l'offerta`, 'success');
-    clearSelect();
+    if (selected.size === 0) return;
+    setShowOfferModal(true);
   };
 
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -750,8 +848,16 @@ export const ProductsView: React.FC = () => {
         </div>
       )}
 
-      {/* ── Modal ── */}
+      {/* ── Add Product Modal ── */}
       {showModal && <AddProductModal onClose={() => setShowModal(false)} onSave={handleSaveProduct} />}
+
+      {/* ── Add to Offer Modal ── */}
+      {showOfferModal && (
+        <AddToOfferModal
+          selectedProducts={productList.filter(p => selected.has(p.id))}
+          onClose={() => { setShowOfferModal(false); clearSelect(); }}
+        />
+      )}
     </div>
   );
 };
