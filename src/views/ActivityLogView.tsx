@@ -329,98 +329,23 @@ export const ActivityLogView: React.FC = () => {
         <QuickAdd contacts={contacts} onSave={handleQuickAdd} onClose={() => setShowQuickAdd(false)} />
       )}
 
-      {/* Calendar */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => {
-              if (calendarMonth === 0) {
-                setCalendarMonth(11);
-                setCalendarYear(calendarYear - 1);
-              } else {
-                setCalendarMonth(calendarMonth - 1);
-              }
-            }}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <ChevronLeft size={16} className="text-gray-400" />
-          </button>
-          <h3 className="text-sm font-black dark:text-white capitalize text-center flex-1">{monthName}</h3>
-          <button
-            onClick={() => {
-              if (calendarMonth === 11) {
-                setCalendarMonth(0);
-                setCalendarYear(calendarYear + 1);
-              } else {
-                setCalendarMonth(calendarMonth + 1);
-              }
-            }}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <ChevronRight size={16} className="text-gray-400" />
-          </button>
-        </div>
-
-        {/* Days header */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map(day => (
-            <div key={day} className="text-center text-[9px] font-black text-gray-400 py-1">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {/* Empty cells before first day */}
-          {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`empty-${i}`} className="aspect-square" />
-          ))}
-
-          {/* Day cells */}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1;
-            const dayKey = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const hasEvents = calendarDaysWithEvents.has(day);
-            const isToday = day === today.getDate() && calendarMonth === today.getMonth() && calendarYear === today.getFullYear();
-            const isSelected = selectedDay === dayKey;
-
-            return (
-              <button
-                key={day}
-                onClick={() => {
-                  setSelectedDay(dayKey);
-                  setExpandedDays(prev => new Set(prev).add(dayKey));
-                }}
-                className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : hasEvents
-                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 font-black hover:bg-indigo-200 dark:hover:bg-indigo-900/60'
-                    : isToday
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
-                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                {day}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Reset button */}
-        {selectedDay !== todayKey && (
+      {/* Mini date picker */}
+      {selectedDay !== todayKey && (
+        <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl px-4 py-2.5 border border-indigo-200 dark:border-indigo-800">
+          <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">
+            {new Date(selectedDay + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+          </span>
           <button
             onClick={() => {
               setSelectedDay(todayKey);
               setExpandedDays(prev => new Set(prev).add(todayKey));
             }}
-            className="w-full py-2 text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+            className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
           >
             ← Torna a oggi
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* KPI settimana */}
       <div className="grid grid-cols-4 gap-3">
@@ -448,6 +373,41 @@ export const ActivityLogView: React.FC = () => {
             </button>
           ))}
         </div>
+
+        <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-2xl p-1 shadow-sm border border-gray-100 dark:border-gray-700">
+          <button
+            onClick={() => {
+              const d = new Date(selectedDay + 'T12:00:00');
+              d.setDate(d.getDate() - 1);
+              setSelectedDay(toDayKey(d.getTime()));
+              setExpandedDays(prev => new Set(prev).add(toDayKey(d.getTime())));
+            }}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <input
+            type="date"
+            value={selectedDay}
+            onChange={e => {
+              setSelectedDay(e.target.value);
+              setExpandedDays(prev => new Set(prev).add(e.target.value));
+            }}
+            className="text-xs font-bold px-2 py-1 bg-transparent dark:text-white outline-none cursor-pointer"
+          />
+          <button
+            onClick={() => {
+              const d = new Date(selectedDay + 'T12:00:00');
+              d.setDate(d.getDate() + 1);
+              setSelectedDay(toDayKey(d.getTime()));
+              setExpandedDays(prev => new Set(prev).add(toDayKey(d.getTime())));
+            }}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
         <select
           value={filterContact}
           onChange={e => setFilterContact(e.target.value)}
