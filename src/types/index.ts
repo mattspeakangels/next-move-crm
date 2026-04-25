@@ -82,14 +82,21 @@ export interface Offer {
   shippingCost?: number; 
 }
 
+export type ProductCategory = 'giacche' | 'felpe' | 'pantaloni' | 'hivis' | 'tshirt' | 'accessori';
+export type ProductLine = 'X1900' | 'X1500' | 'X1600' | 'X1800' | 'X1700' | 'X1100' | 'HiVis' | 'Softshell' | 'Knitwear';
+
 export interface Product {
   id: string;
   code: string;
-  description: string;
+  description: string;   // backward compat
+  name?: string;         // display name (fallback → description)
   category: string;
   price: number;
   sizes?: string;
   discount: number;
+  colors?: string[];     // es. ['nero', 'blu', 'grigio']
+  stock?: number;        // 0 = esaurito, undefined = non gestito
+  line?: ProductLine;    // linea di prodotto Blåkläder
 }
 
 export interface Deal {
