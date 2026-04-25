@@ -346,7 +346,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   };
 
   const handleCloseActivity = () => {
-    // Close action choice, close all modals, navigate to Attività view
+    // Close action choice, clear next action deadline from deal, navigate to Attività view
+    if (activeDealForModal) {
+      updateDeal(activeDealForModal.id, { nextActionDeadline: 0 });
+    }
     setActionChoiceOpen(false);
     setActiveDealForModal(null);
     onNavigate?.('attivita');
