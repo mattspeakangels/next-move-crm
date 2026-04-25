@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import {
   Phone, MapPin, Mail, FileText, Target, Plus, X,
-  ChevronDown, ChevronUp, TrendingUp, Activity,
+  ChevronDown, ChevronUp, TrendingUp, Activity, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
@@ -157,6 +157,11 @@ export const ActivityLogView: React.FC = () => {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set([toDayKey(Date.now())]));
 
+  // Calendar state
+  const today = new Date();
+  const [calendarMonth, setCalendarMonth] = useState(today.getMonth());
+  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
+
   // ── Costruisce la lista di eventi da tutte le sorgenti ──
 
   const allEvents: LogEvent[] = [];
@@ -199,11 +204,38 @@ export const ActivityLogView: React.FC = () => {
     });
   });
 
+  // ── Calendar helpers ──
+
+  const getDaysInMonth = (month: number, year: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (month: number, year: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const calendarDaysWithEvents = new Set(
+    allEvents
+      .filter(e => {
+        const d = new Date(e.ts);
+        return d.getFullYear() === calendarYear && d.getMonth() === calendarMonth;
+      })
+      .map(e => parseInt(toDayKey(e.ts).split('-')[2]))
+  );
+
+  const daysInMonth = getDaysInMonth(calendarMonth, calendarYear);
+  const firstDay = (getFirstDayOfMonth(calendarMonth, calendarYear) + 6) % 7; // Convert Sun=0 to Mon=0
+
+  const monthName = new Date(calendarYear, calendarMonth, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+
   // ── Filtri ──
 
   const filtered = allEvents.filter(e => {
     if (filterType !== 'all' && e.kind !== filterType) return false;
     if (filterContact && e.contactId !== filterContact) return false;
+    // Filter by calendar month/year
+    const d = new Date(e.ts);
+    if (d.getFullYear() !== calendarYear || d.getMonth() !== calendarMonth) return false;
     return true;
   });
 
@@ -293,6 +325,80 @@ export const ActivityLogView: React.FC = () => {
       {showQuickAdd && (
         <QuickAdd contacts={contacts} onSave={handleQuickAdd} onClose={() => setShowQuickAdd(false)} />
       )}
+
+      {/* Calendar */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => {
+              if (calendarMonth === 0) {
+                setCalendarMonth(11);
+                setCalendarYear(calendarYear - 1);
+              } else {
+                setCalendarMonth(calendarMonth - 1);
+              }
+            }}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <ChevronLeft size={16} className="text-gray-400" />
+          </button>
+          <h3 className="text-sm font-black dark:text-white capitalize text-center flex-1">{monthName}</h3>
+          <button
+            onClick={() => {
+              if (calendarMonth === 11) {
+                setCalendarMonth(0);
+                setCalendarYear(calendarYear + 1);
+              } else {
+                setCalendarMonth(calendarMonth + 1);
+              }
+            }}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <ChevronRight size={16} className="text-gray-400" />
+          </button>
+        </div>
+
+        {/* Days header */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map(day => (
+            <div key={day} className="text-center text-[9px] font-black text-gray-400 py-1">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Days grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {/* Empty cells before first day */}
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="aspect-square" />
+          ))}
+
+          {/* Day cells */}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const hasEvents = calendarDaysWithEvents.has(day);
+            const isToday = day === today.getDate() && calendarMonth === today.getMonth() && calendarYear === today.getFullYear();
+
+            return (
+              <button
+                key={day}
+                className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition-all ${
+                  hasEvents
+                    ? isToday
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 font-black'
+                    : isToday
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* KPI settimana */}
       <div className="grid grid-cols-4 gap-3">
