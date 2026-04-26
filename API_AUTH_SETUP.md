@@ -3,7 +3,7 @@
 ## 🔐 Il Tuo Token (SEGRETO!)
 
 ```
-sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
+sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 **⚠️ IMPORTANTE**: 
@@ -18,7 +18,7 @@ sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
 ### `.env.local` (Local Development)
 ```env
 ANTHROPIC_API_KEY=sk-ant-v3-...
-ADMIN_API_TOKEN=sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
+ADMIN_API_TOKEN=sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 NODE_ENV=production
 ```
@@ -29,7 +29,7 @@ Vai su: https://vercel.com → Settings → Environment Variables
 Aggiungi:
 ```
 ANTHROPIC_API_KEY = sk-ant-v3-...
-ADMIN_API_TOKEN = sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
+ADMIN_API_TOKEN = sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 NEXT_PUBLIC_APP_URL = https://your-production-domain.com
 ```
 
@@ -39,7 +39,7 @@ NEXT_PUBLIC_APP_URL = https://your-production-domain.com
 
 ### Header Richiesto
 ```bash
-Authorization: Bearer sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
+Authorization: Bearer sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### Esempio cURL
@@ -47,7 +47,7 @@ Authorization: Bearer sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d
 #### ✅ VALIDO (con token)
 ```bash
 curl -X POST http://localhost:3000/api/claude \
-  -H "Authorization: Bearer sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8" \
+  -H "Authorization: Bearer sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
   -H "Content-Type: application/json" \
   -d '{
     "type": "prepara-visita",
@@ -145,7 +145,7 @@ const res = await fetch('/api/claude', {
 
 Poi in `.env.local`:
 ```
-REACT_APP_API_TOKEN=sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
+REACT_APP_API_TOKEN=sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ---
@@ -188,7 +188,7 @@ Se scopri che il token è stato compromesso:
 ```bash
 # Verifica:
 echo $ADMIN_API_TOKEN
-# Deve mostrare: sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8
+# Deve mostrare: sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 **Problema**: Rate limit raggiunto
@@ -214,5 +214,5 @@ echo $ADMIN_API_TOKEN
 ---
 
 **Generato**: 2026-04-26  
-**Token**: `sk_live_0db859cfed6877308cd0e722b3602d52aca073990e0b7e8f3d77ec7539203dd8`  
+**Token**: `sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`  
 **Versione**: 1.0
