@@ -1,6 +1,17 @@
 // Vercel Node.js serverless function
 // Uses raw fetch to Anthropic API with fallback to cheapest models
 
+// ─── Security utilities ──────────────────────────────────────────────────────
+
+function sanitizeInput(input: string): string {
+  if (!input) return '';
+  return input
+    .replace(/[\n\r]/g, ' ')  // Remove newlines (prevent injection)
+    .replace(/"/g, '\\"')      // Escape quotes
+    .replace(/'/g, "\\'")      // Escape single quotes
+    .substring(0, 500);        // Max 500 chars
+}
+
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
 function buildVisitaPrompt(data: {
@@ -19,21 +30,44 @@ function buildVisitaPrompt(data: {
   stakeholders?: Array<{ name: string; role: string }>;
 }): string {
   const { company, sector, customerType, region, intelligence, recentActivities, openDeals, stakeholders } = data;
+
+  // Sanitize all inputs
+  const safeCompany = sanitizeInput(company);
+  const safeSector = sanitizeInput(sector);
+  const safeRegion = sanitizeInput(region || '');
+  const safeStakeholders = stakeholders?.map(s => ({ name: sanitizeInput(s.name), role: sanitizeInput(s.role) })) || [];
+  const safeCompetitors = intelligence?.competitors?.map(c => sanitizeInput(c)) || [];
+  const safeProducts = intelligence?.products?.map(p => sanitizeInput(p)) || [];
+  const safePrices = sanitizeInput(intelligence?.pricesAndPayments || '');
+  const safeLogistics = sanitizeInput(intelligence?.logisticsAndService || '');
+  const safeActivities = recentActivities?.slice(0, 3).map(a => ({
+    type: sanitizeInput(a.type),
+    date: sanitizeInput(a.date),
+    outcome: sanitizeInput(a.outcome),
+    notes: sanitizeInput(a.notes || '')
+  })) || [];
+  const safeDeals = openDeals?.map(d => ({
+    stage: sanitizeInput(d.stage),
+    value: d.value,
+    nextAction: sanitizeInput(d.nextAction),
+    notes: sanitizeInput(d.notes || '')
+  })) || [];
+
   return `Sei un assistente commerciale esperto nel settore dell'abbigliamento da lavoro professionale (workwear), in particolare per il marchio Blåkläder.
 
 Devo preparare una visita commerciale presso:
-- **Azienda**: ${company}
-- **Settore**: ${sector}
+- **Azienda**: ${safeCompany}
+- **Settore**: ${safeSector}
 - **Tipo cliente**: ${customerType === 'dealer' ? 'Rivenditore/Dealer' : customerType === 'end-user' ? 'Utilizzatore finale' : 'Non specificato'}
-- **Regione**: ${region || 'Non specificata'}
+- **Regione**: ${safeRegion || 'Non specificata'}
 
-${stakeholders?.length ? `**Interlocutori**:\n${stakeholders.map((s: { name: string; role: string }) => `- ${s.name} (${s.role})`).join('\n')}` : ''}
-${intelligence?.competitors?.length ? `**Competitor attivi**: ${intelligence.competitors.join(', ')}` : ''}
-${intelligence?.products?.length ? `**Prodotti attualmente usati**: ${intelligence.products.join(', ')}` : ''}
-${intelligence?.pricesAndPayments ? `**Note su prezzi/pagamenti**: ${intelligence.pricesAndPayments}` : ''}
-${intelligence?.logisticsAndService ? `**Logistica/Servizio**: ${intelligence.logisticsAndService}` : ''}
-${recentActivities?.length ? `**Ultime attività**:\n${recentActivities.slice(0, 3).map((a: { type: string; date: string; outcome: string; notes: string }) => `- ${a.type} (${a.date}): ${a.outcome}${a.notes ? ` — ${a.notes}` : ''}`).join('\n')}` : ''}
-${openDeals?.length ? `**Opportunità aperte**:\n${openDeals.map((d: { stage: string; value: number; nextAction: string; notes: string }) => `- Stage: ${d.stage}, Valore: €${d.value}, Prossima azione: ${d.nextAction}`).join('\n')}` : ''}
+${safeStakeholders?.length ? `**Interlocutori**:\n${safeStakeholders.map((s) => `- ${s.name} (${s.role})`).join('\n')}` : ''}
+${safeCompetitors?.length ? `**Competitor attivi**: ${safeCompetitors.join(', ')}` : ''}
+${safeProducts?.length ? `**Prodotti attualmente usati**: ${safeProducts.join(', ')}` : ''}
+${safePrices ? `**Note su prezzi/pagamenti**: ${safePrices}` : ''}
+${safeLogistics ? `**Logistica/Servizio**: ${safeLogistics}` : ''}
+${safeActivities?.length ? `**Ultime attività**:\n${safeActivities.map((a) => `- ${a.type} (${a.date}): ${a.outcome}${a.notes ? ` — ${a.notes}` : ''}`).join('\n')}` : ''}
+${safeDeals?.length ? `**Opportunità aperte**:\n${safeDeals.map((d) => `- Stage: ${d.stage}, Valore: €${d.value}, Prossima azione: ${d.nextAction}`).join('\n')}` : ''}
 
 Prepara una briefing per la visita in italiano:
 1. **Obiettivo visita** (1-2 frasi)
@@ -56,14 +90,25 @@ function buildPipelinePrompt(data: {
 }): string {
   const { deals, totalValue, weightedValue } = data;
   const overdue = deals.filter(d => d.deadlinePassed);
+
+  // Sanitize deals
+  const safeDeals = deals.map(d => ({
+    ...d,
+    company: sanitizeInput(d.company),
+    stage: sanitizeInput(d.stage),
+    nextAction: sanitizeInput(d.nextAction)
+  }));
+
+  const safeOverdue = overdue.map(d => sanitizeInput(d.company));
+
   return `Sei un coach commerciale esperto. Analizza questa pipeline di un agente Blåkläder (workwear professionale).
 
-**PIPELINE**: ${deals.length} opportunità | Totale €${totalValue.toLocaleString('it')} | Pesato €${weightedValue.toLocaleString('it')}
+**PIPELINE**: ${safeDeals.length} opportunità | Totale €${totalValue.toLocaleString('it')} | Pesato €${weightedValue.toLocaleString('it')}
 
 **Deal**:
-${deals.map(d => `- ${d.company} | ${d.stage} | €${d.value.toLocaleString('it')} | ${d.probability}% | ${d.daysOpen}gg | ${d.nextAction}${d.deadlinePassed ? ' ⚠️ SCADUTO' : ''}`).join('\n')}
+${safeDeals.map(d => `- ${d.company} | ${d.stage} | €${d.value.toLocaleString('it')} | ${d.probability}% | ${d.daysOpen}gg | ${d.nextAction}${d.deadlinePassed ? ' ⚠️ SCADUTO' : ''}`).join('\n')}
 
-${overdue.length > 0 ? `**SCADUTI**: ${overdue.map(d => d.company).join(', ')}` : ''}
+${safeOverdue.length > 0 ? `**SCADUTI**: ${safeOverdue.join(', ')}` : ''}
 
 Analisi in italiano:
 1. **Stato generale** (2-3 frasi)
@@ -81,19 +126,27 @@ function buildEmailOffertaPrompt(data: {
   totalAmount: number; deliveryTime?: string; customerType?: string; sector?: string;
 }): string {
   const { offerNumber, company, contactName, contactRole, items, totalAmount, deliveryTime, customerType } = data;
+
+  // Sanitize inputs
+  const safeOfferNumber = sanitizeInput(offerNumber);
+  const safeCompany = sanitizeInput(company);
+  const safeContactName = sanitizeInput(contactName || '');
+  const safeContactRole = sanitizeInput(contactRole || '');
+  const safeDeliveryTime = sanitizeInput(deliveryTime || '');
+
   const itemLines = items.map(it => {
     const net = it.price * it.quantity * (1 - it.discount / 100);
-    return `- ${it.description}: ${it.quantity} pz × €${it.price}${it.discount > 0 ? ` (-${it.discount}%)` : ''} = €${net.toFixed(2)}`;
+    return `- ${sanitizeInput(it.description)}: ${it.quantity} pz × €${it.price}${it.discount > 0 ? ` (-${it.discount}%)` : ''} = €${net.toFixed(2)}`;
   }).join('\n');
 
   return `Sei un agente commerciale Blåkläder. Scrivi una email di accompagnamento per questa offerta.
 
-**Offerta**: ${offerNumber} | Cliente: ${company}${contactName ? ` — ${contactName}${contactRole ? ` (${contactRole})` : ''}` : ''}
+**Offerta**: ${safeOfferNumber} | Cliente: ${safeCompany}${safeContactName ? ` — ${safeContactName}${safeContactRole ? ` (${safeContactRole})` : ''}` : ''}
 **Tipo**: ${customerType === 'dealer' ? 'Rivenditore' : 'Utilizzatore finale'}
 
 **Articoli**:
 ${itemLines}
-**Totale**: €${totalAmount.toFixed(2)}${deliveryTime ? ` | Consegna: ${deliveryTime}` : ''}
+**Totale**: €${totalAmount.toFixed(2)}${safeDeliveryTime ? ` | Consegna: ${safeDeliveryTime}` : ''}
 
 Scrivi email professionale in italiano:
 - Oggetto con numero offerta
