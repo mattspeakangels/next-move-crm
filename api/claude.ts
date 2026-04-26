@@ -248,6 +248,38 @@ const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_APP_URL,
 ].filter(Boolean) as string[];
 
+// In-memory daily rate limit tracker (5 requests per day)
+// For production, use Redis (Upstash)
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const rateLimitMap = new Map<string, RateLimitEntry>();
+const DAILY_LIMIT = 5;
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+function checkRateLimit(token: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(token);
+
+  if (!entry || now > entry.resetTime) {
+    // Reset or first request
+    rateLimitMap.set(token, {
+      count: 1,
+      resetTime: now + DAY_IN_MS,
+    });
+    return true;
+  }
+
+  if (entry.count >= DAILY_LIMIT) {
+    return false; // Rate limited
+  }
+
+  entry.count++;
+  return true;
+}
+
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
   status: (code: number) => { json: (data: unknown) => void };
   setHeader: (name: string, value: string) => void;
@@ -261,7 +293,7 @@ export default async function handler(req: { method: string; body: unknown; head
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.status(200).json({});
@@ -270,6 +302,26 @@ export default async function handler(req: { method: string; body: unknown; head
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // ─── Authentication & Rate Limiting ──────────────────────────────────────
+
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+  const validToken = process.env.ADMIN_API_TOKEN;
+
+  if (!token || token !== validToken) {
+    res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
+    return;
+  }
+
+  // Check rate limit (5 requests per day max)
+  if (!checkRateLimit(token)) {
+    res.status(429).json({
+      error: 'Rate limited: Max 5 requests per day',
+      resetTime: new Date(Date.now() + DAY_IN_MS).toISOString(),
+    });
     return;
   }
 
