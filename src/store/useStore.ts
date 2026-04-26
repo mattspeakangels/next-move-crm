@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction } from '../types';
 
 interface StoreState {
   contacts: Record<string, Contact>;
@@ -8,6 +8,7 @@ interface StoreState {
   offers: Record<string, Offer>;
   products: Record<string, Product>;
   activities: Record<string, Activity>;
+  salesTransactions: Record<string, SalesTransaction>;
   profile: AppProfile | null;
   theme: 'light' | 'dark';
   targets: Record<string, any>;
@@ -42,6 +43,10 @@ interface StoreState {
   updateActivity: (id: string, updates: Partial<Activity>) => void;
   deleteActivity: (id: string) => void;
   updateTarget: (target: any) => void;
+
+  // Business Intelligence
+  addSalesTransaction: (transaction: SalesTransaction) => void;
+  deleteSalesTransaction: (id: string) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -52,6 +57,7 @@ export const useStore = create<StoreState>()(
       offers: {},
       products: {},
       activities: {},
+      salesTransactions: {},
       targets: {},
       profile: null,
       theme: 'light',
@@ -128,6 +134,15 @@ export const useStore = create<StoreState>()(
       updateTarget: (target) => set((state) => ({
         targets: { ...state.targets, [target.id]: target }
       })),
+
+      addSalesTransaction: (transaction) => set((state) => ({
+        salesTransactions: { ...state.salesTransactions, [transaction.id]: transaction }
+      })),
+      deleteSalesTransaction: (id) => set((state) => {
+        const newTransactions = { ...state.salesTransactions };
+        delete newTransactions[id];
+        return { salesTransactions: newTransactions };
+      }),
     }),
     { name: 'next-move-storage' }
   )

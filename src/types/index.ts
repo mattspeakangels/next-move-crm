@@ -9,7 +9,7 @@ export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
 // AGGIUNTO 'map' ALLA NAVIGAZIONE
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics';
 
 export type CustomerType = 'dealer' | 'end-user';
 export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
@@ -147,4 +147,31 @@ export interface AppProfile {
   company: string;
   defaultMonthlyTarget: number;
   customProducts: string[];
+}
+
+export interface SalesTransaction {
+  id: string;
+  date: number;              // timestamp of sale
+  contactId: string;         // customer (match to Contact)
+  productName: string;       // product description
+  quantity: number;          // units sold
+  unitPrice: number;         // price per unit (€)
+  totalAmount: number;       // quantity × unitPrice
+  stage: DealStage;         // 'chiuso-vinto', 'chiuso-perso', etc
+  notes?: string;
+  createdAt: number;        // when imported
+}
+
+export interface BISalesPeriod {
+  label: string;           // "Apr 2024"
+  month: string;           // "2024-04" for sorting
+  revenue: number;
+  avgDealValue: number;
+}
+
+export interface BITopItem {
+  name: string;           // customer/product name
+  value: number;          // revenue or quantity
+  count: number;          // transaction count
+  percentage: string;     // "15.3" (string, calculated in selector)
 }
