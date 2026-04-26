@@ -164,12 +164,26 @@ Formato:
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
-export default async function handler(req: { method: string; body: unknown }, res: {
+const ALLOWED_ORIGINS = [
+  'https://your-domain.com',
+  'https://www.your-domain.com',
+  process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : null,
+  process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null,
+  process.env.NEXT_PUBLIC_APP_URL,
+].filter(Boolean) as string[];
+
+export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
   status: (code: number) => { json: (data: unknown) => void };
   setHeader: (name: string, value: string) => void;
   json: (data: unknown) => void;
 }) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || req.headers.referer;
+
+  // Only set CORS headers if origin is in whitelist
+  if (origin && ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed || ''))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
