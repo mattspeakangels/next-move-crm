@@ -1,7 +1,83 @@
 // Vercel Node.js serverless function
 // Uses raw fetch to Anthropic API with fallback to cheapest models
 
-// ─── Security utilities ──────────────────────────────────────────────────────
+import { z } from 'zod';
+
+// ─── Validation Schemas ───────────────────────────────────────────────────────
+
+const StakeholderSchema = z.object({
+  name: z.string().min(1).max(200),
+  role: z.string().min(1).max(200),
+});
+
+const IntelligenceSchema = z.object({
+  products: z.array(z.string().max(200)).optional(),
+  competitors: z.array(z.string().max(200)).optional(),
+  pricesAndPayments: z.string().max(500).optional(),
+  logisticsAndService: z.string().max(500).optional(),
+}).optional();
+
+const ActivitySchema = z.object({
+  type: z.string().max(100),
+  date: z.string().max(20),
+  outcome: z.string().max(300),
+  notes: z.string().max(300).optional(),
+});
+
+const DealSchema = z.object({
+  company: z.string().min(1).max(200),
+  stage: z.string().max(100),
+  value: z.number().positive(),
+  probability: z.number().min(0).max(100).optional(),
+  nextAction: z.string().max(300),
+  notes: z.string().max(300).optional(),
+  daysOpen: z.number().optional(),
+  nextActionDeadline: z.string().optional(),
+  deadlinePassed: z.boolean().optional(),
+});
+
+const VisitaDataSchema = z.object({
+  company: z.string().min(1).max(200),
+  sector: z.string().min(1).max(200),
+  customerType: z.enum(['dealer', 'end-user']).optional(),
+  region: z.string().max(200).optional(),
+  intelligence: IntelligenceSchema,
+  recentActivities: z.array(ActivitySchema).max(10).optional(),
+  openDeals: z.array(DealSchema).max(20).optional(),
+  stakeholders: z.array(StakeholderSchema).max(10).optional(),
+});
+
+const PipelineDataSchema = z.object({
+  deals: z.array(DealSchema).min(1).max(100),
+  totalValue: z.number().nonnegative(),
+  weightedValue: z.number().nonnegative(),
+});
+
+const ItemSchema = z.object({
+  description: z.string().min(1).max(300),
+  quantity: z.number().positive(),
+  price: z.number().positive(),
+  discount: z.number().min(0).max(100),
+});
+
+const EmailOffertaDataSchema = z.object({
+  offerNumber: z.string().min(1).max(50),
+  company: z.string().min(1).max(200),
+  contactName: z.string().max(200).optional(),
+  contactRole: z.string().max(200).optional(),
+  items: z.array(ItemSchema).min(1).max(100),
+  totalAmount: z.number().positive(),
+  deliveryTime: z.string().max(200).optional(),
+  customerType: z.enum(['dealer', 'end-user']).optional(),
+  sector: z.string().max(200).optional(),
+});
+
+const RequestSchema = z.object({
+  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta']),
+  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema]),
+});
+
+// ─── Security utilities ───────────────────────────────────────────────────────
 
 function sanitizeInput(input: string): string {
   if (!input) return '';
@@ -204,7 +280,9 @@ export default async function handler(req: { method: string; body: unknown; head
   }
 
   try {
-    const { type, data } = req.body as { type: string; data: unknown };
+    // Validate request body against schema
+    const validated = RequestSchema.parse(req.body);
+    const { type, data } = validated;
 
     let prompt: string;
     switch (type) {
@@ -218,7 +296,7 @@ export default async function handler(req: { method: string; body: unknown; head
         prompt = buildEmailOffertaPrompt(data as Parameters<typeof buildEmailOffertaPrompt>[0]);
         break;
       default:
-        res.status(400).json({ error: 'Tipo non valido' });
+        res.status(400).json({ error: 'Invalid request type' });
         return;
     }
 
@@ -265,7 +343,15 @@ export default async function handler(req: { method: string; body: unknown; head
     res.status(500).json({ error: `Nessun modello disponibile (${lastError})` });
 
   } catch (err) {
+    // Handle Zod validation errors
+    if (err instanceof z.ZodError) {
+      const issues = err.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`);
+      console.error('Validation error:', issues);
+      res.status(400).json({ error: 'Invalid request data', details: issues });
+      return;
+    }
+
     console.error('Handler error:', err);
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Errore interno' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
