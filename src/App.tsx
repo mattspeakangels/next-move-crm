@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Archive } from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp } from 'lucide-react';
 import { Dashboard } from './views/DashboardView';
 import { ContactsView } from './views/ContactsView';
 import { PipelineView } from './views/PipelineView';
@@ -12,7 +12,6 @@ import { MapView } from './views/MapView';
 import { ActivityLogView } from './views/ActivityLogView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { StoricoView } from './views/StoricoView';
-import { AssetsView } from './views/AssetsView';
 import { ToastProvider } from './components/ui/ToastContext';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
@@ -53,7 +52,6 @@ function AppContent() {
       case 'attivita': return <ActivityLogView />;
       case 'analytics': return <AnalyticsView />;
       case 'storico': return <StoricoView />;
-      case 'assets': return <AssetsView />;
       case 'settings': return <SettingsView />;
       default: return <Dashboard onNavigate={goTo} />;
     }
@@ -70,7 +68,6 @@ function AppContent() {
     { id: 'map' as NavView, icon: Map, label: 'Mappa' },
     { id: 'analytics' as NavView, icon: BarChart3, label: 'Analytics' },
     { id: 'storico' as NavView, icon: TrendingUp, label: 'Storico' },
-    { id: 'assets' as NavView, icon: Archive, label: 'Parco' },
     { id: 'settings' as NavView, icon: Settings, label: 'Impostazioni' },
   ];
 
