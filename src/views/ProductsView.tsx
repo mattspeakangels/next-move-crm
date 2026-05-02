@@ -107,7 +107,7 @@ const StockBadge: React.FC<{ p: Product; tiny?: boolean }> = ({ p, tiny }) => {
 };
 
 // ─── DotMenu (⋯ dropdown) ─────────────────────────────────────────────────────
-const DotMenu: React.FC<{ onDelete: () => void; onDuplicate: () => void }> = ({ onDelete, onDuplicate }) => {
+const DotMenu: React.FC<{ onDelete: () => void; onDuplicate: () => void; onEdit: () => void }> = ({ onDelete, onDuplicate, onEdit }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -131,7 +131,7 @@ const DotMenu: React.FC<{ onDelete: () => void; onDuplicate: () => void }> = ({ 
           <button onClick={() => { onDuplicate(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Copy size={13} /> Duplica
           </button>
-          <button onClick={() => { }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Pencil size={13} /> Modifica
           </button>
           <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
@@ -151,7 +151,8 @@ const CompactList: React.FC<{
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
-}> = ({ products, selected, onToggle, onDelete, onDuplicate }) => {
+  onEdit: (p: Product) => void;
+}> = ({ products, selected, onToggle, onDelete, onDuplicate, onEdit }) => {
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
@@ -211,7 +212,7 @@ const CompactList: React.FC<{
                 <div className="dark:text-white font-bold" style={{ fontSize: 14 }}>{fPrice(p)}</div>
                 {p.line && <div className="text-gray-400 font-mono" style={{ fontSize: 9 }}>{p.line}</div>}
               </div>
-              <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} />
+              <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
               <div
                 className={`w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                   sel
@@ -240,7 +241,8 @@ const VisualList: React.FC<{
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
-}> = ({ products, selected, onToggle, onDelete, onDuplicate }) => {
+  onEdit: (p: Product) => void;
+}> = ({ products, selected, onToggle, onDelete, onDuplicate, onEdit }) => {
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
@@ -321,7 +323,7 @@ const VisualList: React.FC<{
                 <div className="dark:text-white font-bold" style={{ fontSize: 16 }}>{fPrice(p)}</div>
               </div>
               <div className="flex items-center gap-1">
-                <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} />
+                <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
                 <div
                   className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all ${
                     sel ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 dark:border-gray-600'
@@ -349,7 +351,8 @@ const GridList: React.FC<{
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
-}> = ({ products, selected, onToggle, onDelete, onDuplicate }) => {
+  onEdit: (p: Product) => void;
+}> = ({ products, selected, onToggle, onDelete, onDuplicate, onEdit }) => {
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
     return CATEGORIES.find(x => x.id === c)?.label ?? p.category;
@@ -426,7 +429,7 @@ const GridList: React.FC<{
               <div className="flex items-center justify-between">
                 <ColorDots colors={p.colors} size={12} />
                 <div className="flex items-center gap-1">
-                  <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} />
+                  <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
                   <span className="dark:text-white font-bold text-xs">{fPrice(p)}</span>
                 </div>
               </div>
@@ -439,10 +442,16 @@ const GridList: React.FC<{
 };
 
 // ─── ADD PRODUCT MODAL ────────────────────────────────────────────────────────
-const AddProductModal: React.FC<{ onClose: () => void; onSave: (p: Omit<Product, 'id'>) => void }> = ({ onClose, onSave }) => {
-  const [form, setForm] = useState<Partial<Product>>({
-    code: '', description: '', name: '', category: '', price: 0, sizes: '', discount: 0, colors: [], stock: undefined, line: undefined
-  });
+const AddProductModal: React.FC<{
+  onClose: () => void;
+  onSave: (p: Omit<Product, 'id'>) => void;
+  editProduct?: Product;
+}> = ({ onClose, onSave, editProduct }) => {
+  const [form, setForm] = useState<Partial<Product>>(
+    editProduct
+      ? { ...editProduct }
+      : { code: '', description: '', name: '', category: '', price: 0, sizes: '', discount: 0, colors: [], stock: undefined, line: undefined }
+  );
   const [colorInput, setColorInput] = useState('');
   const set = (k: keyof Product, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
@@ -471,7 +480,7 @@ const AddProductModal: React.FC<{ onClose: () => void; onSave: (p: Omit<Product,
     <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
       <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-t-[2rem] md:rounded-[2rem] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black uppercase tracking-tighter dark:text-white">Nuovo Articolo</h2>
+          <h2 className="text-xl font-black uppercase tracking-tighter dark:text-white">{editProduct ? 'Modifica Articolo' : 'Nuovo Articolo'}</h2>
           <button onClick={onClose}><X size={22} className="text-gray-400" /></button>
         </div>
         <div className="space-y-4">
@@ -536,7 +545,7 @@ const AddProductModal: React.FC<{ onClose: () => void; onSave: (p: Omit<Product,
             )}
           </div>
           <button onClick={handleSave} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-indigo-700 transition-all mt-2">
-            Salva nel Catalogo
+            {editProduct ? 'Salva Modifiche' : 'Salva nel Catalogo'}
           </button>
         </div>
       </div>
@@ -643,7 +652,7 @@ const AddToOfferModal: React.FC<{
 
 // ─── MAIN VIEW ────────────────────────────────────────────────────────────────
 export const ProductsView: React.FC = () => {
-  const { products, addProduct, removeProduct } = useStore();
+  const { products, addProduct, updateProduct, removeProduct } = useStore();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -655,6 +664,7 @@ export const ProductsView: React.FC = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const changeLayout = (v: LayoutVariant) => {
     setLayout(v);
@@ -699,8 +709,14 @@ export const ProductsView: React.FC = () => {
   };
 
   const handleSaveProduct = (data: Omit<Product, 'id'>) => {
-    addProduct({ ...data, id: `prod_${Date.now()}` });
-    showToast('Articolo aggiunto', 'success');
+    if (editingProduct) {
+      updateProduct(editingProduct.id, data);
+      showToast('Articolo aggiornato', 'success');
+      setEditingProduct(null);
+    } else {
+      addProduct({ ...data, id: `prod_${Date.now()}` });
+      showToast('Articolo aggiunto', 'success');
+    }
   };
 
   const handleAddToOffer = () => {
@@ -742,7 +758,7 @@ export const ProductsView: React.FC = () => {
     { id: 'grid'    as LayoutVariant, icon: <LayoutGrid size={15} />,  label: 'Griglia'  },
   ];
 
-  const listProps = { products: filtered, selected, onToggle: toggleSelect, onDelete: handleDelete, onDuplicate: handleDuplicate };
+  const listProps = { products: filtered, selected, onToggle: toggleSelect, onDelete: handleDelete, onDuplicate: handleDuplicate, onEdit: setEditingProduct };
 
   return (
     <div className="space-y-4 pb-6">
@@ -848,8 +864,14 @@ export const ProductsView: React.FC = () => {
         </div>
       )}
 
-      {/* ── Add Product Modal ── */}
-      {showModal && <AddProductModal onClose={() => setShowModal(false)} onSave={handleSaveProduct} />}
+      {/* ── Add / Edit Product Modal ── */}
+      {(showModal || editingProduct) && (
+        <AddProductModal
+          onClose={() => { setShowModal(false); setEditingProduct(null); }}
+          onSave={handleSaveProduct}
+          editProduct={editingProduct ?? undefined}
+        />
+      )}
 
       {/* ── Add to Offer Modal ── */}
       {showOfferModal && (
