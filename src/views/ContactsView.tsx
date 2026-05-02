@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Package, Activity } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Package, Activity, History } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact, AssetStatus } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
+import { ContactHistoryView } from './ContactHistoryView';
 
 const ASSET_STATUS_CONFIG: Record<AssetStatus, { label: string; color: string; bg: string }> = {
   attivo:          { label: 'Attivo',        color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/30' },
@@ -151,6 +152,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [tagInputComp, setTagInputComp] = useState('');
   const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
   const fileInputRefProspect = useRef<HTMLInputElement>(null);
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
@@ -359,6 +361,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   };
 
   const defaultIntelligence = { products: [], competitors: [], pricesAndPayments: '', logisticsAndService: '' };
+
+  // ── Storico Clienti sub-page ──
+  if (historyContact) {
+    return (
+      <ContactHistoryView
+        contact={historyContact}
+        onBack={() => setHistoryContact(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">
@@ -897,20 +909,28 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                         )}
                       </div>
 
-                      {/* Converti in Cliente — solo per prospect */}
-                      {isProspect && (
+                      {/* Azioni footer card */}
+                      <div className="mt-4 flex gap-2">
                         <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            if (window.confirm(`Converti "${contact.company}" in Cliente?`)) {
-                              updateContact(contact.id, { status: 'cliente' });
-                            }
-                          }}
-                          className="mt-4 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 text-xs font-black uppercase tracking-wide hover:bg-indigo-600 hover:text-white transition-all"
+                          onClick={e => { e.stopPropagation(); setHistoryContact(contact); }}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs font-black uppercase tracking-wide hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 transition-all"
                         >
-                          <Users size={13} /> Converti in Cliente
+                          <History size={13} /> Storico
                         </button>
-                      )}
+                        {isProspect && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (window.confirm(`Converti "${contact.company}" in Cliente?`)) {
+                                updateContact(contact.id, { status: 'cliente' });
+                              }
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 text-xs font-black uppercase tracking-wide hover:bg-indigo-600 hover:text-white transition-all"
+                          >
+                            <Users size={13} /> Converti
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
