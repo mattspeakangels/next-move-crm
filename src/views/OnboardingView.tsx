@@ -58,17 +58,6 @@ export const OnboardingView: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Target Mensile (€)</label>
-            <input 
-              type="number" 
-              required
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-              value={formData.defaultMonthlyTarget}
-              onChange={e => setFormData({...formData, defaultMonthlyTarget: Number(e.target.value)})}
-            />
-          </div>
-
           <button 
             type="submit"
             className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl mt-8 transition-all hover:bg-indigo-700"
