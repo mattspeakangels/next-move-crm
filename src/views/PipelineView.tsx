@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
-import { ArrowRight, ArrowLeft, Plus, X, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, X, Sparkles, Trash2, Edit2 } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
@@ -30,10 +30,10 @@ interface PipelineViewProps {
 }
 
 export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact }) => {
-  const { deals, contacts, offers, updateDeal } = useStore();
-  const [filterProduct, setFilterProduct] = useState<string | null>(null);
+  const { deals, contacts, offers, updateDeal, removeDeal } = useStore();
 
   const [addDealOpen, setAddDealOpen] = useState(false);
+  const [editDealId, setEditDealId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<{ dealId: string; newStage: DealStage } | null>(null);
   const [activeDealForModal, setActiveDealForModal] = useState<Deal | null>(null);
@@ -61,15 +61,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
   };
 
   const allDeals = Object.values(deals);
-  const activeProducts = Array.from(
-    new Set(allDeals.flatMap(d => d.products ?? []))
-  ).filter(Boolean).sort();
 
-  const filteredDeals = allDeals.filter(d => {
-    const isActive = !['chiuso-vinto', 'chiuso-perso'].includes(d.stage);
-    const matchesProduct = !filterProduct || (d.products ?? []).includes(filterProduct);
-    return isActive && matchesProduct;
-  });
+  const filteredDeals = allDeals.filter(d => !['chiuso-vinto', 'chiuso-perso'].includes(d.stage));
 
   const handleMove = (dealId: string, newStage: DealStage) => {
     const deal = deals[dealId];
@@ -145,29 +138,6 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
             <Plus size={16} /> Nuovo Deal
           </button>
         </div>
-      </div>
-
-      {/* Product filter chips */}
-      <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-        <button
-          onClick={() => setFilterProduct(null)}
-          className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-            !filterProduct ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-500'
-          }`}
-        >
-          Tutti i prodotti
-        </button>
-        {activeProducts.map(p => (
-          <button
-            key={p}
-            onClick={() => setFilterProduct(p)}
-            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-              filterProduct === p ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-500'
-            }`}
-          >
-            {p}
-          </button>
-        ))}
       </div>
 
       {/* Empty state */}
@@ -323,6 +293,20 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                             <Plus size={14} />
                           </button>
                           <button
+                            onClick={() => setEditDealId(deal.id)}
+                            className="p-1 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors"
+                            title="Modifica deal"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => { if (window.confirm(`Eliminare il deal di ${contacts[deal.contactId]?.company ?? ''}?`)) removeDeal(deal.id); }}
+                            className="p-1 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                            title="Elimina deal"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button
                             onClick={() => {
                               const idx = STAGES.findIndex(s => s.id === stage.id);
                               if (idx > 0) handleMove(deal.id, STAGES[idx - 1].id);
@@ -362,6 +346,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
       />
 
       {addDealOpen && <AddDealModal onClose={() => setAddDealOpen(false)} />}
+      {editDealId && <AddDealModal dealToEdit={editDealId} onClose={() => setEditDealId(null)} />}
 
       {showAiPanel && (
         <AiPanel
