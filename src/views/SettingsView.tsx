@@ -141,7 +141,12 @@ export const SettingsView: React.FC = () => {
       {/* Azioni Pericolose */}
       <div className="p-6">
         <button
-          onClick={() => window.confirm('Sei sicuro? Perderai tutti i dati salvati.') && resetAll()}
+          onClick={() => {
+            if (window.confirm('Sei sicuro? Verranno eliminati TUTTI i dati (clienti, deal, offerte, attività). Questa azione non è reversibile.')) {
+              localStorage.removeItem('next-move-storage');
+              window.location.reload();
+            }
+          }}
           className="flex items-center gap-2 text-red-500 text-sm font-bold opacity-70 hover:opacity-100 transition-opacity"
         >
           <Trash2 size={16} /> Resetta tutti i dati dell'App
