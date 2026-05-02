@@ -114,6 +114,7 @@ export interface Deal {
   notes: string;
   createdAt: number;
   updatedAt: number;
+  closingDate?: number;
   closedAt?: number;
   offerRef?: string;
   lostReason?: LostReason;

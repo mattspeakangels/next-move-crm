@@ -235,6 +235,17 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                         </div>
                       )}
 
+                      {deal.closingDate && (() => {
+                        const isPast = deal.closingDate < Date.now();
+                        const daysLeft = Math.ceil((deal.closingDate - Date.now()) / (1000 * 60 * 60 * 24));
+                        return (
+                          <div className={`text-[10px] font-bold mb-2 flex items-center gap-1 ${isPast ? 'text-red-500' : daysLeft <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
+                            <span>⏱</span>
+                            <span>{isPast ? `Scaduto ${Math.abs(daysLeft)}gg fa` : `Chiusura: ${new Date(deal.closingDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}`}</span>
+                          </div>
+                        );
+                      })()}
+
                       {/* Next action row */}
                       <div className="flex items-center gap-2 mb-3">
                         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dot}`} />

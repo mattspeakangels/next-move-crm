@@ -23,6 +23,7 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
   const [stage, setStage] = useState<DealStage>(editModeDeal?.stage || 'lead');
   const [nextAction, setNextAction] = useState(editModeDeal?.nextAction || '');
   const [deadline, setDeadline] = useState(editModeDeal?.nextActionDeadline ? new Date(editModeDeal.nextActionDeadline).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+  const [closingDate, setClosingDate] = useState(editModeDeal?.closingDate ? new Date(editModeDeal.closingDate).toISOString().split('T')[0] : '');
 
   const toggleProduct = (p: string) => {
     setSelectedProducts(prev => prev.includes(p) ? prev.filter(i => i !== p) : [...prev, p]);
@@ -48,6 +49,7 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
       stage,
       nextAction,
       nextActionDeadline: new Date(deadline).getTime(),
+      closingDate: closingDate ? new Date(closingDate).getTime() : undefined,
       updatedAt: Date.now(),
     };
 
@@ -83,6 +85,15 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
           </select>
           <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full border rounded-xl p-3 bg-transparent dark:text-white" />
           <input type="text" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Prossima azione" className="w-full border rounded-xl p-3 bg-transparent dark:text-white" />
+          <div>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Data chiusura prevista</label>
+            <input
+              type="date"
+              value={closingDate}
+              onChange={e => setClosingDate(e.target.value)}
+              className="w-full border rounded-xl p-3 bg-transparent dark:text-white"
+            />
+          </div>
           <div className="p-2 border rounded-xl">
             <div className="flex flex-wrap gap-1 mb-2">
               {profile?.customProducts.map(p => (

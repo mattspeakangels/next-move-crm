@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
@@ -105,6 +105,184 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
   );
 };
 
+const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
+  const { offers, products, deals, addOffer, updateOffer, updateDeal } = useStore();
+  const [showForm, setShowForm] = useState(false);
+  const [formItems, setFormItems] = useState<Array<{ id: string; productId: string; description: string; quantity: number; price: number; discount: number }>>([]);
+  const [formDelivery, setFormDelivery] = useState('');
+  const [formShipping, setFormShipping] = useState(0);
+  const [formDealId, setFormDealId] = useState('');
+
+  const contactOffers = Object.values(offers).filter(o => o.contactId === contactId).sort((a, b) => b.date - a.date);
+  const openDeals = Object.values(deals).filter(d => d.contactId === contactId && !['chiuso-vinto', 'chiuso-perso'].includes(d.stage));
+  const catalogProducts = Object.values(products);
+
+  const addFormItem = () => {
+    setFormItems(prev => [...prev, { id: `fi_${Date.now()}`, productId: '', description: '', quantity: 1, price: 0, discount: 0 }]);
+  };
+
+  const updateFormItem = (id: string, field: string, value: any) => {
+    setFormItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
+  };
+
+  const selectProduct = (itemId: string, productId: string) => {
+    const p = products[productId];
+    if (!p) return;
+    setFormItems(prev => prev.map(i => i.id === itemId ? { ...i, productId: p.id, description: p.description, price: p.price, discount: p.discount || 0 } : i));
+  };
+
+  const removeFormItem = (id: string) => setFormItems(prev => prev.filter(i => i.id !== id));
+
+  const calcTotal = () => {
+    const sum = formItems.reduce((acc, i) => acc + i.price * i.quantity * (1 - i.discount / 100), 0);
+    return sum + Number(formShipping);
+  };
+
+  const handleSave = () => {
+    if (formItems.length === 0) return;
+    const newOffer = {
+      id: `off_${Date.now()}`,
+      contactId,
+      offerNumber: `OFF-${Object.keys(offers).length + 101}`,
+      date: Date.now(),
+      items: formItems.map(i => ({ id: i.id, productId: i.productId || undefined, description: i.description, quantity: i.quantity, price: i.price, discount: i.discount })),
+      status: 'bozza' as const,
+      totalAmount: calcTotal(),
+      followUpDate: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      deliveryTime: formDelivery,
+      shippingCost: Number(formShipping),
+    };
+    addOffer(newOffer);
+    if (formDealId) updateDeal(formDealId, { offerRef: newOffer.id });
+    setFormItems([]); setFormDelivery(''); setFormShipping(0); setFormDealId('');
+    setShowForm(false);
+  };
+
+  const STATUS_BADGE: Record<string, string> = {
+    bozza: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300',
+    inviata: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    accettata: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    rifiutata: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  };
+
+  const STATUS_LABELS: Record<string, string> = { bozza: 'Bozza', inviata: 'Inviata', accettata: 'Accettata', rifiutata: 'Rifiutata' };
+
+  return (
+    <section>
+      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <FileText size={16} /> 7. Offerte
+        <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactOffers.length}</span>
+      </h3>
+
+      {contactOffers.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {contactOffers.map(offer => (
+            <div key={offer.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-black text-xs dark:text-white">{offer.offerNumber}</p>
+                  <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${STATUS_BADGE[offer.status] ?? STATUS_BADGE['bozza']}`}>
+                    {STATUS_LABELS[offer.status] ?? offer.status}
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 font-bold mt-0.5">{new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articoli</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-sm text-indigo-600">€{offer.totalAmount.toLocaleString('it-IT')}</span>
+                <select
+                  value={offer.status}
+                  onChange={e => updateOffer(offer.id, { status: e.target.value as any })}
+                  className="text-[9px] font-black border border-gray-200 dark:border-gray-600 rounded-lg px-1.5 py-1 bg-white dark:bg-gray-700 dark:text-white outline-none"
+                >
+                  <option value="bozza">Bozza</option>
+                  <option value="inviata">Inviata</option>
+                  <option value="accettata">Accettata</option>
+                  <option value="rifiutata">Rifiutata</option>
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {contactOffers.length === 0 && !showForm && (
+        <p className="text-xs text-gray-400 font-bold italic mb-3">Nessuna offerta per questo cliente</p>
+      )}
+
+      {showForm && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-indigo-200 dark:border-indigo-700 mb-3 space-y-3">
+          {openDeals.length > 0 && (
+            <select value={formDealId} onChange={e => setFormDealId(e.target.value)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-indigo-400">
+              <option value="">Collega a un deal (opzionale)</option>
+              {openDeals.map(d => <option key={d.id} value={d.id}>{d.stage} · €{d.value.toLocaleString('it-IT')}</option>)}
+            </select>
+          )}
+
+          <div className="space-y-2">
+            {formItems.map(item => (
+              <div key={item.id} className="grid grid-cols-12 gap-1.5 items-center">
+                <div className="col-span-12 sm:col-span-5">
+                  <select value={item.productId} onChange={e => selectProduct(item.id, e.target.value)}
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-white dark:bg-gray-700 dark:text-white text-xs font-bold outline-none focus:border-indigo-400">
+                    <option value="">Seleziona prodotto...</option>
+                    {catalogProducts.map(p => <option key={p.id} value={p.id}>{p.description}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-4 sm:col-span-2">
+                  <input type="number" min="1" value={item.quantity} onChange={e => updateFormItem(item.id, 'quantity', Number(e.target.value))}
+                    placeholder="Qtà" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+                </div>
+                <div className="col-span-4 sm:col-span-2">
+                  <input type="number" min="0" value={item.price} onChange={e => updateFormItem(item.id, 'price', Number(e.target.value))}
+                    placeholder="€ prezzo" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+                </div>
+                <div className="col-span-3 sm:col-span-2">
+                  <input type="number" min="0" max="100" value={item.discount} onChange={e => updateFormItem(item.id, 'discount', Number(e.target.value))}
+                    placeholder="Sc%" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+                </div>
+                <div className="col-span-1">
+                  <button onClick={() => removeFormItem(item.id)} className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors"><Trash2 size={12} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={addFormItem}
+            className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors">
+            <Plus size={12} /> Aggiungi prodotto
+          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <input type="text" placeholder="Tempi consegna (es. 2 settimane)" value={formDelivery} onChange={e => setFormDelivery(e.target.value)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+            <input type="number" min="0" placeholder="Spese spedizione €" value={formShipping || ''} onChange={e => setFormShipping(Number(e.target.value))}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+          </div>
+
+          {formItems.length > 0 && (
+            <p className="text-xs font-black text-indigo-600">Totale: €{calcTotal().toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          )}
+
+          <div className="flex gap-2">
+            <button onClick={handleSave} disabled={formItems.length === 0}
+              className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase disabled:opacity-40">Salva Offerta</button>
+            <button onClick={() => { setShowForm(false); setFormItems([]); }}
+              className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
+          </div>
+        </div>
+      )}
+
+      {!showForm && (
+        <button onClick={() => { setShowForm(true); setFormItems([]); }}
+          className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors">
+          <Plus size={12} /> Nuova Offerta
+        </button>
+      )}
+    </section>
+  );
+};
+
 interface ContactsViewProps {
   initialSearch?: string;
   onClearFilter?: () => void;
@@ -113,7 +291,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, offers, activities } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, activities } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -647,84 +825,69 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               );
             })()}
 
-            {/* SEZIONE 5 - Deal & Offerte (solo in modifica) */}
+            {/* SEZIONE 6 - Deal Aperti (solo in modifica) */}
             {editingContact?.id && contacts[editingContact.id] && (() => {
               const contactDeals = Object.values(deals).filter(
                 d => d.contactId === editingContact.id && !['chiuso-vinto', 'chiuso-perso'].includes(d.stage)
               );
-              const contactOffers = Object.values(offers).filter(
-                o => o.contactId === editingContact.id
-              );
               const stageBadge: Record<string, string> = {
-                lead: 'bg-blue-100 text-blue-600',
-                qualificato: 'bg-purple-100 text-purple-600',
-                proposta: 'bg-orange-100 text-orange-600',
-                negoziazione: 'bg-indigo-100 text-indigo-600',
+                lead: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300',
+                qualificato: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300',
+                proposta: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300',
+                negoziazione: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
               };
-              const offerBadge: Record<string, string> = {
-                bozza: 'bg-gray-100 text-gray-600',
-                inviata: 'bg-blue-100 text-blue-600',
-                accettata: 'bg-green-100 text-green-600',
-                rifiutata: 'bg-red-100 text-red-600',
-              };
+              const stageLabels: Record<string, string> = { lead: 'Lead', qualificato: 'Qualificato', proposta: 'Proposta', negoziazione: 'Trattativa' };
               return (
                 <section>
                   <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <FileText size={16}/> 6. Deal & Offerte
+                    <TrendingUp size={16}/> 6. Deal Aperti
+                    <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactDeals.length}</span>
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Deal aperti */}
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm">
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deal Aperti</span>
-                        <button
-                          onClick={() => setAddDealForContact(editingContact.id)}
-                          className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-indigo-100 transition-colors"
-                        >
-                          <Plus size={10}/> Aggiungi
-                        </button>
-                      </div>
-                      {contactDeals.length === 0 ? (
-                        <p className="text-xs text-gray-400 font-bold italic">Nessun deal aperto</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {contactDeals.map(deal => (
-                            <div key={deal.id} className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-3 flex items-center gap-2">
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${stageBadge[deal.stage] || 'bg-gray-100 text-gray-600'}`}>
-                                {deal.stage}
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Opportunità aperte</span>
+                      <button
+                        onClick={() => setAddDealForContact(editingContact.id)}
+                        className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                      >
+                        <Plus size={10}/> Aggiungi
+                      </button>
+                    </div>
+                    {contactDeals.length === 0 ? (
+                      <p className="text-xs text-gray-400 font-bold italic">Nessun deal aperto</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {contactDeals.map(deal => {
+                          const isPastClosing = deal.closingDate && deal.closingDate < Date.now();
+                          const daysToClose = deal.closingDate ? Math.ceil((deal.closingDate - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+                          return (
+                            <div key={deal.id} className={`rounded-2xl p-3 flex items-center gap-2 ${isPastClosing ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-900'}`}>
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex-shrink-0 ${stageBadge[deal.stage] || 'bg-gray-100 text-gray-600'}`}>
+                                {stageLabels[deal.stage] || deal.stage}
                               </span>
-                              <span className="font-bold text-xs text-indigo-600">€{(deal.value / 1000).toFixed(0)}k</span>
-                              {deal.nextAction && (
+                              <span className="font-bold text-xs text-indigo-600">€{deal.value.toLocaleString('it-IT')}</span>
+                              {deal.closingDate && (
+                                <span className={`text-[9px] font-black ml-auto flex-shrink-0 ${isPastClosing ? 'text-red-500' : daysToClose && daysToClose <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
+                                  {isPastClosing ? `Scaduto ${Math.abs(daysToClose!)}gg fa` : `Chiusura: ${new Date(deal.closingDate).toLocaleDateString('it-IT')}`}
+                                </span>
+                              )}
+                              {deal.nextAction && !deal.closingDate && (
                                 <span className="text-[10px] text-gray-500 truncate flex-1">{deal.nextAction}</span>
                               )}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {/* Offerte */}
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Offerte</span>
-                      {contactOffers.length === 0 ? (
-                        <p className="text-xs text-gray-400 font-bold italic">Nessuna offerta</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {contactOffers.map(offer => (
-                            <div key={offer.id} className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-3 flex items-center gap-2">
-                              <span className="text-[10px] font-black text-gray-600 dark:text-gray-300">{offer.offerNumber}</span>
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${offerBadge[offer.status] || 'bg-gray-100 text-gray-600'}`}>
-                                {offer.status}
-                              </span>
-                              <span className="font-bold text-xs text-indigo-600 ml-auto">€{offer.totalAmount.toLocaleString('it-IT')}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </section>
               );
             })()}
+
+            {/* SEZIONE 7 - Offerte (solo in modifica) */}
+            {editingContact?.id && contacts[editingContact.id] && (
+              <InlineOfferSection contactId={editingContact.id} />
+            )}
 
           </div>
         </div>
