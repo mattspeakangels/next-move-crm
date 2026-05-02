@@ -15,11 +15,15 @@ import {
   MoreHorizontal,
   ChevronRight,
   ChevronLeft,
+  Activity,
+  AlertTriangle,
+  Package,
 } from 'lucide-react';
 import { Deal, NextActionType, ActivityOutcome } from '../types';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { OutcomeModal } from '../components/deals/OutcomeModal';
 import { ActionChoiceModal } from '../components/deals/ActionChoiceModal';
+import { selectVitality, selectProgression, selectWinRate, selectSilentContacts } from '../store/selectors';
 
 // ─── DealCalendar ─────────────────────────────────────────────────────────────
 
@@ -270,7 +274,12 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
-  const { contacts, deals, offers, updateDeal, profile, addActivity } = useStore();
+  const storeState = useStore();
+  const { contacts, deals, offers, assets, updateDeal, profile, addActivity } = storeState;
+  const vitality = selectVitality(storeState);
+  const progression = selectProgression(storeState);
+  const winRate = selectWinRate(storeState);
+  const silentContacts = selectSilentContacts(storeState);
 
   const now = Date.now();
   const allDeals = Object.values(deals);
@@ -281,6 +290,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const activeContacts = Object.values(contacts).length;
   const pendingOffers = Object.values(offers).filter(o => o.status === 'inviata').length;
   const wonDeals = allDeals.filter(d => d.stage === 'chiuso-vinto').length;
+  const assetsDaSostituire = Object.values(assets || {}).filter(a => a.status === 'da-sostituire').length;
+  const assetsInScadenza = Object.values(assets || {}).filter(a =>
+    a.status === 'attivo' && a.expiryDate && a.expiryDate - now < 30 * 24 * 60 * 60 * 1000 && a.expiryDate > now
+  ).length;
 
   // "Da fare oggi" buckets
   const urgentDeals = activeDeals
@@ -404,6 +417,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Coach del Giorno</span>
         </div>
         <p className="font-bold text-sm leading-relaxed">{coachMessage}</p>
+      </div>
+
+      {/* ── Alert: Asset in scadenza / da sostituire ── */}
+      {(assetsDaSostituire > 0 || assetsInScadenza > 0) && (
+        <div className="space-y-2">
+          {assetsDaSostituire > 0 && (
+            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-2xl px-4 py-3 flex items-center gap-3">
+              <Package size={16} className="text-red-500 flex-shrink-0" />
+              <p className="text-sm font-bold text-red-700 dark:text-red-300 flex-1">
+                {assetsDaSostituire} asset da sostituire presso i clienti
+              </p>
+              <ChevronRight size={14} className="text-red-400" />
+            </div>
+          )}
+          {assetsInScadenza > 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-2xl px-4 py-3 flex items-center gap-3">
+              <AlertTriangle size={16} className="text-yellow-500 flex-shrink-0" />
+              <p className="text-sm font-bold text-yellow-700 dark:text-yellow-300 flex-1">
+                {assetsInScadenza} contratti in scadenza nei prossimi 30 giorni
+              </p>
+              <ChevronRight size={14} className="text-yellow-400" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Alert: Clienti silenti ── */}
+      {silentContacts.length > 0 && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-2xl px-4 py-3 flex items-start gap-3">
+          <Users size={16} className="text-orange-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-black text-orange-700 dark:text-orange-300">
+              {silentContacts.length} clienti silenti (nessuna attività da 90+ giorni)
+            </p>
+            <p className="text-[10px] text-orange-500 font-bold mt-0.5">
+              {silentContacts.slice(0, 3).map(c => c.company).join(' · ')}{silentContacts.length > 3 ? ` +${silentContacts.length - 3}` : ''}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Metriche processo (Vitality / Progression / Win Rate) ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Activity size={14} className="text-indigo-500" />
+          <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Salute Pipeline</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Vitality', value: vitality, target: 10, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20', desc: '% nuovi 30gg' },
+            { label: 'Progression', value: progression, target: 20, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', desc: '% avanzati 30gg' },
+            { label: 'Win Rate', value: winRate, target: 30, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', desc: '% vinti totali' },
+          ].map(m => (
+            <div key={m.label} className={`${m.bg} rounded-2xl p-3 text-center`}>
+              <p className={`text-xl font-black ${m.color}`}>{m.value}%</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-0.5">{m.label}</p>
+              <p className="text-[8px] text-gray-400">{m.desc}</p>
+              {m.value < m.target && (
+                <p className={`text-[8px] font-black ${m.color} mt-0.5`}>T.{m.target}%</p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── KPI chips ── */}

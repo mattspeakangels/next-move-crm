@@ -1,7 +1,7 @@
 export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
 export type NextActionType = 'chiama' | 'email' | 'invia-offerta' | 'fissa-visita' | 'altro';
 export type NextActionPriority = 'alta' | 'media' | 'bassa';
-export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota';
+export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione';
 export type ActivityOutcome = 'riuscita' | 'parziale' | 'nessun-contatto' | 'promessa-callback' | 'rifiuto' | 'nota';
 export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';
@@ -9,7 +9,7 @@ export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
 // AGGIUNTO 'map' ALLA NAVIGAZIONE
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics' | 'storico' | 'assets';
 
 export type CustomerType = 'dealer' | 'end-user';
 export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
@@ -160,6 +160,23 @@ export interface SalesTransaction {
   stage: DealStage;         // 'chiuso-vinto', 'chiuso-perso', etc
   notes?: string;
   createdAt: number;        // when imported
+}
+
+export type AssetStatus = 'attivo' | 'scaduto' | 'da-sostituire' | 'dismesso';
+
+export interface Asset {
+  id: string;
+  contactId: string;
+  productId?: string;
+  description: string;
+  serialNumber?: string;
+  installDate: number;
+  expiryDate?: number;
+  status: AssetStatus;
+  notes?: string;
+  purchaseAmount?: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface BISalesPeriod {

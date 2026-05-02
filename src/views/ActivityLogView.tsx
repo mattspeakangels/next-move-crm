@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import {
   Phone, MapPin, Mail, FileText, Target, Plus, X,
   ChevronDown, ChevronUp, TrendingUp, Activity, ChevronLeft, ChevronRight,
+  Video, MonitorPlay, Wrench, GraduationCap,
 } from 'lucide-react';
 import { ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
@@ -59,17 +60,25 @@ function startOfWeekTs(): number {
 }
 
 const ACTIVITY_ICON: Record<ActivityType, React.ReactNode> = {
-  visita:   <MapPin size={14} />,
-  chiamata: <Phone size={14} />,
-  email:    <Mail size={14} />,
-  nota:     <FileText size={14} />,
+  visita:       <MapPin size={14} />,
+  chiamata:     <Phone size={14} />,
+  email:        <Mail size={14} />,
+  nota:         <FileText size={14} />,
+  demo:         <MonitorPlay size={14} />,
+  'call-remota': <Video size={14} />,
+  sopralluogo:  <Wrench size={14} />,
+  formazione:   <GraduationCap size={14} />,
 };
 
 const ACTIVITY_COLOR: Record<ActivityType, string> = {
-  visita:   'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600',
-  chiamata: 'bg-green-100 dark:bg-green-900/40 text-green-600',
-  email:    'bg-blue-100 dark:bg-blue-900/40 text-blue-600',
-  nota:     'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600',
+  visita:       'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600',
+  chiamata:     'bg-green-100 dark:bg-green-900/40 text-green-600',
+  email:        'bg-blue-100 dark:bg-blue-900/40 text-blue-600',
+  nota:         'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600',
+  demo:         'bg-purple-100 dark:bg-purple-900/40 text-purple-600',
+  'call-remota': 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600',
+  sopralluogo:  'bg-orange-100 dark:bg-orange-900/40 text-orange-600',
+  formazione:   'bg-pink-100 dark:bg-pink-900/40 text-pink-600',
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -99,8 +108,11 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
   const [type, setType] = useState<ActivityType>('visita');
   const [notes, setNotes] = useState('');
 
-  const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota'];
-  const TYPE_LABELS: Record<ActivityType, string> = { visita: 'Visita', chiamata: 'Chiamata', email: 'Email', nota: 'Nota' };
+  const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione'];
+  const TYPE_LABELS: Record<ActivityType, string> = {
+    visita: 'Visita', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
+    demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-lg">

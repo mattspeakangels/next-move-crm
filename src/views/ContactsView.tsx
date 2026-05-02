@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Package, Activity } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { Contact } from '../types';
+import { Contact, AssetStatus } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
+
+const ASSET_STATUS_CONFIG: Record<AssetStatus, { label: string; color: string; bg: string }> = {
+  attivo:          { label: 'Attivo',        color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/30' },
+  scaduto:         { label: 'Scaduto',       color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  'da-sostituire': { label: 'Da sostituire', color: 'text-red-500',    bg: 'bg-red-100 dark:bg-red-900/30' },
+  dismesso:        { label: 'Dismesso',      color: 'text-gray-400',   bg: 'bg-gray-100 dark:bg-gray-700' },
+};
 
 interface ContactsViewProps {
   initialSearch?: string;
@@ -14,7 +21,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, addContactsBatch, deals, offers } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, offers, assets, addAsset, updateAsset, removeAsset, activities } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,16 +31,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [tagInputComp, setTagInputComp] = useState('');
   const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
+  const fileInputRefProspect = useRef<HTMLInputElement>(null);
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
   useEffect(() => {
     if (initialSearch) setSearchTerm(initialSearch);
   }, [initialSearch]);
 
-  const filteredContacts = Object.values(contacts).filter(c =>
-    (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (c.city && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   const openDetail = (contact?: Contact | any) => {
     if (contact) {
@@ -60,42 +65,100 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   }, [selectedContactId]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const parseCSVContacts = (text: string, status: 'potenziale' | 'cliente'): Contact[] => {
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+
+    // ─── Rileva il separatore (comma, semicolon, pipe, o tab) ───
+    const firstLine = lines[0];
+    let separator = ',';
+    if (firstLine.includes('|')) separator = '|';
+    else if (firstLine.includes(';') && !firstLine.includes(',')) separator = ';';
+    else if (firstLine.includes('\t')) separator = '\t';
+
+    // ─── Parse header e crea mappa colonne ───
+    const headerLine = lines[0].split(separator).map(h => h.trim().toLowerCase());
+    const columnMap: { [key: string]: number } = {};
+
+    // Mapping dei nomi colonne comuni (case-insensitive, fuzzy matching)
+    const findColumn = (keywords: string[]): number => {
+      for (let i = 0; i < headerLine.length; i++) {
+        const header = headerLine[i];
+        for (const kw of keywords) {
+          if (header.includes(kw.toLowerCase())) return i;
+        }
+      }
+      return -1;
+    };
+
+    columnMap['company'] = findColumn(['azienda', 'ragione', 'company', 'cliente', 'cliente name']);
+    columnMap['contactName'] = findColumn(['contatto', 'contact', 'nome', 'referente', 'person']);
+    columnMap['role'] = findColumn(['ruolo', 'role', 'posizione', 'qualifica']);
+    columnMap['email'] = findColumn(['email', 'e-mail', 'mail']);
+    columnMap['phone'] = findColumn(['telefono', 'phone', 'numero', 'tel']);
+    columnMap['address'] = findColumn(['indirizzo', 'address', 'via', 'strada']);
+    columnMap['city'] = findColumn(['città', 'city', 'comune']);
+    columnMap['province'] = findColumn(['provincia', 'province', 'prov', 'provincia']);
+    columnMap['sector'] = findColumn(['settore', 'sector', 'industria', 'attività']);
+
+    const result: Contact[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const values = line.split(separator).map(v => v.trim());
+
+      // Estrai valori usando la mappa colonne
+      const company = columnMap['company'] >= 0 ? values[columnMap['company']] || '' : values[0] || '';
+
+      if (!company) continue; // Salta righe senza nome azienda
+
+      result.push({
+        id: `c_${Date.now()}_${i}_${Math.random().toString(36).slice(2)}`,
+        company,
+        contactName: columnMap['contactName'] >= 0 ? values[columnMap['contactName']]?.trim() || '' : '',
+        role: columnMap['role'] >= 0 ? values[columnMap['role']]?.trim() || '' : '',
+        email: columnMap['email'] >= 0 ? values[columnMap['email']]?.trim() || '' : '',
+        phone: columnMap['phone'] >= 0 ? values[columnMap['phone']]?.trim() || '' : '',
+        address: columnMap['address'] >= 0 ? values[columnMap['address']]?.trim() || '' : '',
+        city: columnMap['city'] >= 0 ? values[columnMap['city']]?.trim() || '' : '',
+        province: columnMap['province'] >= 0 ? values[columnMap['province']]?.trim() || '' : '',
+        region: columnMap['province'] >= 0 ? values[columnMap['province']]?.trim() || '' : '',
+        sector: columnMap['sector'] >= 0 ? values[columnMap['sector']]?.trim() || '' : '',
+        status,
+        country: 'Italia',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
+    return result;
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, status: 'potenziale' | 'cliente' = 'potenziale') => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
-      const lines = text.split('\n');
-      const newContacts: Contact[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        const values = line.split(/[;,]/);
-        if (values.length >= 2 && values[0]) {
-          newContacts.push({
-            id: `c_${Date.now()}_${i}`,
-            company: values[0]?.trim() || '',
-            contactName: values[1]?.trim() || '',
-            role: values[2]?.trim() || '',
-            email: values[3]?.trim() || '',
-            phone: values[4]?.trim() || '',
-            address: values[5]?.trim() || '',
-            city: values[6]?.trim() || '',
-            province: values[7]?.trim() || '',
-            region: values[7]?.trim() || '',
-            sector: values[8]?.trim() || '',
-            status: 'potenziale',
-            country: 'Italia',
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          });
-        }
-      }
+      const newContacts = parseCSVContacts(text, status);
       if (newContacts.length > 0) {
+        // Chiedi se sostituire o aggiungere
+        const existingCount = Object.values(contacts).filter(c => c.status === status).length;
+        let shouldReplace = false;
+
+        if (existingCount > 0) {
+          shouldReplace = window.confirm(
+            `Hai ${existingCount} ${status === 'cliente' ? 'clienti' : 'prospect'} esistenti.\n\n` +
+            `"OK" = Sostituisci i vecchi\n` +
+            `"Annulla" = Aggiungi ai vecchi`
+          );
+          if (shouldReplace) deleteAllContacts();
+        }
+
         addContactsBatch(newContacts);
       }
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current)         fileInputRef.current.value = '';
+      if (fileInputRefProspect.current) fileInputRefProspect.current.value = '';
     };
     reader.readAsText(file);
   };
@@ -405,6 +468,53 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               />
             </section>
 
+            {/* SEZIONE 5B - Customer Interaction Score (solo in modifica) */}
+            {editingContact?.id && contacts[editingContact.id] && (() => {
+              const contactActivities = Object.values(activities).filter(a => a.contactId === editingContact.id);
+              const cutoff90 = Date.now() - 90 * 24 * 60 * 60 * 1000;
+              const recent90 = contactActivities.filter(a => (a.date || 0) >= cutoff90);
+              const lastActivity = contactActivities.length > 0
+                ? Math.max(...contactActivities.map(a => a.date || 0)) : null;
+              const isSilent = !lastActivity || lastActivity < cutoff90;
+              const activityTypes = recent90.reduce((acc, a) => {
+                acc[a.type] = (acc[a.type] || 0) + 1; return acc;
+              }, {} as Record<string, number>);
+              return (
+                <section className={`rounded-3xl p-4 border-2 ${isSilent ? 'border-orange-200 bg-orange-50 dark:bg-orange-900/10 dark:border-orange-800' : 'border-green-100 bg-green-50 dark:bg-green-900/10 dark:border-green-800'}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Activity size={16} className={isSilent ? 'text-orange-500' : 'text-green-500'} />
+                    <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Interaction Score</h3>
+                    {isSilent && <span className="text-[9px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">SILENTE</span>}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center">
+                      <p className="text-2xl font-black dark:text-white">{recent90.length}</p>
+                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Attività 90gg</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-black dark:text-white">{contactActivities.length}</p>
+                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Totali</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-black dark:text-white">
+                        {lastActivity ? `${Math.floor((Date.now() - lastActivity) / (24 * 60 * 60 * 1000))}gg fa` : '—'}
+                      </p>
+                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Ultima att.</p>
+                    </div>
+                  </div>
+                  {Object.keys(activityTypes).length > 0 && (
+                    <div className="flex gap-2 flex-wrap mt-3">
+                      {Object.entries(activityTypes).map(([type, count]) => (
+                        <span key={type} className="text-[9px] font-black bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-lg uppercase">
+                          {type}: {count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })()}
+
             {/* SEZIONE 5 - Deal & Offerte (solo in modifica) */}
             {editingContact?.id && contacts[editingContact.id] && (() => {
               const contactDeals = Object.values(deals).filter(
@@ -484,100 +594,323 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               );
             })()}
 
+            {/* SEZIONE 6 - Parco Installato (solo in modifica) */}
+            {editingContact?.id && contacts[editingContact.id] && (() => {
+              const contactAssets = Object.values(assets || {}).filter(a => a.contactId === editingContact.id);
+              const [showAssetForm, setShowAssetForm] = React.useState(false);
+              const [newAssetDesc, setNewAssetDesc] = React.useState('');
+              const [newAssetSerial, setNewAssetSerial] = React.useState('');
+              const [newAssetStatus, setNewAssetStatus] = React.useState<AssetStatus>('attivo');
+              const [newAssetDate, setNewAssetDate] = React.useState(new Date().toISOString().split('T')[0]);
+              const [newAssetExpiry, setNewAssetExpiry] = React.useState('');
+              return (
+                <section>
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Package size={16} /> 6. Parco Installato
+                    <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactAssets.length} asset</span>
+                  </h3>
+                  {contactAssets.length === 0 && !showAssetForm && (
+                    <p className="text-xs text-gray-400 font-bold italic mb-3">Nessun asset registrato per questo cliente</p>
+                  )}
+                  {contactAssets.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {contactAssets.map(asset => (
+                        <div key={asset.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-black text-xs dark:text-white truncate">{asset.description}</p>
+                              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${ASSET_STATUS_CONFIG[asset.status].bg} ${ASSET_STATUS_CONFIG[asset.status].color}`}>
+                                {ASSET_STATUS_CONFIG[asset.status].label}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 text-[9px] text-gray-400 font-bold mt-0.5">
+                              {asset.serialNumber && <span>SN: {asset.serialNumber}</span>}
+                              <span>{new Date(asset.installDate).toLocaleDateString('it-IT')}</span>
+                              {asset.expiryDate && (
+                                <span className={asset.expiryDate < Date.now() ? 'text-red-500' : asset.expiryDate - Date.now() < 30 * 24 * 60 * 60 * 1000 ? 'text-yellow-500' : ''}>
+                                  Scad: {new Date(asset.expiryDate).toLocaleDateString('it-IT')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            {(['attivo', 'scaduto', 'da-sostituire', 'dismesso'] as AssetStatus[]).includes(asset.status) && (
+                              <select
+                                value={asset.status}
+                                onChange={e => updateAsset(asset.id, { status: e.target.value as AssetStatus })}
+                                className="text-[9px] font-black border border-gray-200 dark:border-gray-600 rounded-lg px-1.5 py-1 bg-transparent dark:text-white outline-none"
+                              >
+                                <option value="attivo">Attivo</option>
+                                <option value="scaduto">Scaduto</option>
+                                <option value="da-sostituire">Da sostituire</option>
+                                <option value="dismesso">Dismesso</option>
+                              </select>
+                            )}
+                            <button onClick={() => removeAsset(asset.id)}
+                              className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {showAssetForm && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-indigo-200 dark:border-indigo-700 mb-3 space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Descrizione asset..."
+                        value={newAssetDesc}
+                        onChange={e => setNewAssetDesc(e.target.value)}
+                        className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Seriale (opz.)"
+                          value={newAssetSerial}
+                          onChange={e => setNewAssetSerial(e.target.value)}
+                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
+                        />
+                        <input
+                          type="date"
+                          value={newAssetDate}
+                          onChange={e => setNewAssetDate(e.target.value)}
+                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          placeholder="Scadenza contratto"
+                          value={newAssetExpiry}
+                          onChange={e => setNewAssetExpiry(e.target.value)}
+                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
+                        />
+                        <select
+                          value={newAssetStatus}
+                          onChange={e => setNewAssetStatus(e.target.value as AssetStatus)}
+                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
+                        >
+                          <option value="attivo">Attivo</option>
+                          <option value="scaduto">Scaduto</option>
+                          <option value="da-sostituire">Da sostituire</option>
+                          <option value="dismesso">Dismesso</option>
+                        </select>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            if (!newAssetDesc) return;
+                            addAsset({
+                              id: `asset_${Date.now()}`,
+                              contactId: editingContact.id,
+                              description: newAssetDesc,
+                              serialNumber: newAssetSerial || undefined,
+                              installDate: new Date(newAssetDate).getTime(),
+                              expiryDate: newAssetExpiry ? new Date(newAssetExpiry).getTime() : undefined,
+                              status: newAssetStatus,
+                              createdAt: Date.now(),
+                              updatedAt: Date.now(),
+                            });
+                            setNewAssetDesc(''); setNewAssetSerial(''); setNewAssetExpiry('');
+                            setShowAssetForm(false);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase"
+                        >Aggiungi</button>
+                        <button onClick={() => setShowAssetForm(false)}
+                          className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">
+                          Annulla
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!showAssetForm && (
+                    <button
+                      onClick={() => setShowAssetForm(true)}
+                      className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors"
+                    >
+                      <Plus size={12} /> Aggiungi asset
+                    </button>
+                  )}
+                </section>
+              );
+            })()}
+
           </div>
         </div>
       ) : (
         // LIST VIEW
         <>
-          {/* Header e Ricerca */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
-              <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Aziende</h1>
-              {searchTerm && initialSearch && (
-                <button
-                  onClick={() => { setSearchTerm(''); onClearFilter?.(); }}
-                  className="mt-2 flex items-center gap-1 text-indigo-600 font-black uppercase text-[10px] tracking-widest bg-indigo-50 px-2 py-1 rounded-md"
-                >
-                  Filtro Mappa: {searchTerm} <X size={12} />
-                </button>
-              )}
+              <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Clienti</h1>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {searchTerm && initialSearch && (
+                  <button onClick={() => { setSearchTerm(''); onClearFilter?.(); }}
+                    className="flex items-center gap-1 text-indigo-600 font-black uppercase text-[10px] tracking-widest bg-indigo-50 px-2 py-1 rounded-md hover:bg-indigo-100 transition-colors">
+                    Filtro Mappa: {searchTerm} <X size={12} />
+                  </button>
+                )}
+                {Object.values(contacts).length > 0 && (
+                  <button onClick={() => { if (window.confirm('🗑️ Elimina TUTTI i contatti dal database? Questa azione non è reversibile!')) deleteAllContacts(); }}
+                    className="flex items-center gap-1 text-red-600 font-black uppercase text-[10px] tracking-widest bg-red-50 px-2 py-1 rounded-md hover:bg-red-100 transition-colors">
+                    <Trash2 size={12} /> Pulisci DB
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Cerca azienda o città..."
-                className="w-full pl-12 pr-4 py-4 bg-white dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-2xl font-bold outline-none focus:border-indigo-600 transition-all shadow-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-            <button onClick={() => fileInputRef.current?.click()} className="bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-gray-700 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-50 dark:hover:bg-gray-700 transition-all">
-              <Upload size={20} /> <span className="hidden md:inline">Importa CSV</span>
+          {/* Tabs */}
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
+            <button onClick={() => setActiveTab('clienti')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'clienti' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              <Users size={16} />
+              Clienti
+              <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 px-2 py-0.5 rounded-full font-black">
+                {Object.values(contacts).filter(c => c.status === 'cliente').length}
+              </span>
             </button>
-            <button onClick={() => openDetail()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
-              <Plus size={20} /> Nuova
+            <button onClick={() => setActiveTab('prospect')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'prospect' ? 'bg-white dark:bg-gray-700 shadow text-amber-500' : 'text-gray-500 hover:text-gray-700'}`}>
+              <UserPlus size={16} />
+              Prospect
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded-full font-black">
+                {Object.values(contacts).filter(c => c.status === 'potenziale').length}
+              </span>
             </button>
           </div>
 
-          {/* Griglia Aziende */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContacts.map(contact => (
-              <div
-                key={contact.id}
-                onClick={() => openDetail(contact)}
-                className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700 hover:border-indigo-100 transition-colors cursor-pointer"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600">
-                      <Building2 size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-black dark:text-white uppercase leading-tight">{contact.company}</h3>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                        (contact as any).customerType === 'dealer' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
-                      }`}>
-                        {(contact as any).customerType === 'dealer' ? 'Dealer' : 'End User'}
-                      </span>
-                    </div>
+          {/* Search + actions */}
+          {(() => {
+            const isProspect = activeTab === 'prospect';
+            const statusFilter = isProspect ? 'potenziale' : 'cliente';
+            const csvRef    = isProspect ? fileInputRefProspect : fileInputRef;
+            const accentCls = isProspect ? 'text-amber-500 border-amber-100 hover:bg-amber-50' : 'text-indigo-600 border-indigo-100 hover:bg-indigo-50';
+            const btnCls    = isProspect ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700';
+
+            const list = Object.values(contacts)
+              .filter(c => c.status === statusFilter)
+              .filter(c =>
+                (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (c.city    && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
+              );
+
+            return (
+              <>
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input type="text"
+                      placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} o città…`}
+                      className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-sm"
+                      value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                   </div>
 
-                  {/* Tasto cestino */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`Sei sicuro di voler eliminare l'azienda ${contact.company}?`)) {
-                        deleteContact(contact.id);
-                      }
-                    }}
-                    className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 dark:bg-gray-700 rounded-xl transition-colors"
-                    title="Elimina"
-                  >
-                    <Trash2 size={16} />
+                  {/* CSV input — clienti */}
+                  <input type="file" accept=".csv" className="hidden" ref={fileInputRef}
+                    onChange={e => handleFileUpload(e, 'cliente')} />
+                  {/* CSV input — prospect */}
+                  <input type="file" accept=".csv" className="hidden" ref={fileInputRefProspect}
+                    onChange={e => handleFileUpload(e, 'potenziale')} />
+
+                  <button onClick={() => csvRef.current?.click()}
+                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}>
+                    <Upload size={18} /> <span className="hidden md:inline">Importa CSV</span>
+                  </button>
+                  <button onClick={() => {
+                    const newContact = {
+                      id: `c_${Date.now()}`,
+                      company: '', customerType: 'end-user',
+                      status: statusFilter,
+                      stakeholders: [],
+                      intelligence: { products: [], competitors: [], pricesAndPayments: '', logisticsAndService: '' }
+                    };
+                    setDetailContact(newContact);
+                    setEditingContact(newContact);
+                  }}
+                    className={`text-white px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all text-sm ${btnCls}`}>
+                    <Plus size={18} /> {isProspect ? 'Nuovo Prospect' : 'Nuovo Cliente'}
                   </button>
                 </div>
 
-                <div className="space-y-2 mt-6">
-                  <p className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                    <MapPin size={14} className="text-gray-400"/> {contact.city || 'Città non inserita'} {(contact as any).province ? `(${(contact as any).province})` : ''}
-                  </p>
-                  <p className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                    <Phone size={14} className="text-gray-400"/> {contact.phone || 'Nessun telefono'}
-                  </p>
-                  {(contact as any).stakeholders && (contact as any).stakeholders.length > 0 && (
-                    <p className="flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 w-max px-2 py-1 rounded-lg mt-3">
-                      <Users size={14} /> {(contact as any).stakeholders.length} Referent{(contact as any).stakeholders.length === 1 ? 'e' : 'i'}
-                    </p>
-                  )}
+                {/* Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {list.length === 0 ? (
+                    <div className="col-span-3 bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
+                      {isProspect ? <UserPlus size={44} className="mx-auto mb-4 text-amber-200" /> : <Users size={44} className="mx-auto mb-4 text-indigo-200" />}
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+                        Nessun {isProspect ? 'prospect' : 'cliente'} trovato
+                      </p>
+                      <p className="text-gray-300 text-xs mt-1">Importa un CSV o aggiungi manualmente</p>
+                    </div>
+                  ) : list.map(contact => (
+                    <div key={contact.id} onClick={() => openDetail(contact)}
+                      className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-all cursor-pointer ${
+                        isProspect
+                          ? 'border-amber-100 dark:border-amber-900/30 hover:border-amber-300'
+                          : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200'
+                      }`}>
+
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${isProspect ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-500' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600'}`}>
+                            {isProspect ? <UserPlus size={22} /> : <Building2 size={22} />}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-black dark:text-white uppercase leading-tight truncate">{contact.company}</h3>
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                              (contact as any).customerType === 'dealer' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
+                            }`}>
+                              {(contact as any).customerType === 'dealer' ? 'Dealer' : 'End User'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button onClick={e => { e.stopPropagation(); if (window.confirm(`Elimina ${contact.company}?`)) deleteContact(contact.id); }}
+                          className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors flex-shrink-0">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <p className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+                          <MapPin size={13} className="text-gray-300 flex-shrink-0" />
+                          {contact.city || 'Città non inserita'} {(contact as any).province ? `(${(contact as any).province})` : ''}
+                        </p>
+                        <p className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+                          <Phone size={13} className="text-gray-300 flex-shrink-0" />
+                          {contact.phone || 'Nessun telefono'}
+                        </p>
+                        {(contact as any).stakeholders?.length > 0 && (
+                          <p className={`flex items-center gap-1.5 text-xs font-bold w-max px-2 py-1 rounded-lg mt-2 ${isProspect ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'}`}>
+                            <Users size={13} /> {(contact as any).stakeholders.length} Referent{(contact as any).stakeholders.length === 1 ? 'e' : 'i'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Converti in Cliente — solo per prospect */}
+                      {isProspect && (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (window.confirm(`Converti "${contact.company}" in Cliente?`)) {
+                              updateContact(contact.id, { status: 'cliente' });
+                            }
+                          }}
+                          className="mt-4 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 text-xs font-black uppercase tracking-wide hover:bg-indigo-600 hover:text-white transition-all"
+                        >
+                          <Users size={13} /> Converti in Cliente
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
+              </>
+            );
+          })()}
         </>
       )}
 

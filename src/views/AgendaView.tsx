@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Search, ChevronDown } from 'lucide-react';
 import { Activity, ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
@@ -29,6 +29,10 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   email: 'Email',
   visita: 'Visita',
   nota: 'Nota',
+  demo: 'Demo',
+  'call-remota': 'Call Remota',
+  sopralluogo: 'Sopralluogo',
+  formazione: 'Formazione',
 };
 
 const TYPE_COLORS: Record<ActivityType, string> = {
@@ -36,6 +40,10 @@ const TYPE_COLORS: Record<ActivityType, string> = {
   chiamata: 'bg-green-500',
   email: 'bg-blue-500',
   nota: 'bg-yellow-400',
+  demo: 'bg-purple-500',
+  'call-remota': 'bg-teal-500',
+  sopralluogo: 'bg-orange-500',
+  formazione: 'bg-pink-500',
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
@@ -43,6 +51,10 @@ const TYPE_BG: Record<ActivityType, string> = {
   chiamata: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   email: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
   nota: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+  demo: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  'call-remota': 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300',
+  sopralluogo: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+  formazione: 'bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
 };
 
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -114,7 +126,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
       </div>
     </div>
     <div className="flex items-center gap-1 flex-shrink-0">
-      <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Google Calendar"><ExternalLink size={14} /></button>
+      <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
       <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
       <button onClick={onDelete} className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Elimina"><Trash2 size={14} /></button>
     </div>
@@ -140,8 +152,34 @@ export const AgendaView: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(defaultForm());
+  const [contactSearch, setContactSearch] = useState('');
+  const [showContactList, setShowContactList] = useState(false);
+  const contactPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showContactList) return;
+    const handler = (e: MouseEvent) => {
+      if (contactPickerRef.current && !contactPickerRef.current.contains(e.target as Node)) {
+        setShowContactList(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showContactList]);
 
   const allActivities = Object.values(activities);
+
+  // Filtered contacts for picker — computed outside JSX for reliability
+  const filteredContacts = useMemo(() => {
+    const q = contactSearch.toLowerCase().trim();
+    return Object.values(contacts)
+      .filter(c =>
+        !q ||
+        (c.company ?? '').toLowerCase().includes(q) ||
+        (c.contactName ?? '').toLowerCase().includes(q)
+      )
+      .sort((a, b) => (a.company ?? '').localeCompare(b.company ?? ''));
+  }, [contacts, contactSearch]);
 
   // Activities for a given day
   const activitiesForDay = (day: Date) =>
@@ -174,10 +212,11 @@ export const AgendaView: React.FC = () => {
       time: d.toTimeString().slice(0, 5),
       notes: activity.notes || '',
     });
+    setContactSearch(contacts[activity.contactId]?.company || '');
     setShowModal(true);
   };
 
-  const closeModal = () => { setShowModal(false); setEditingId(null); setFormData(defaultForm()); };
+  const closeModal = () => { setShowModal(false); setEditingId(null); setFormData(defaultForm()); setContactSearch(''); setShowContactList(false); };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,10 +238,85 @@ export const AgendaView: React.FC = () => {
     showToast('Attività eliminata', 'success');
   };
 
+  // ── Outlook deep-link export (single activity) ──
   const handleExport = (activity: Activity) => {
     const contact = contacts[activity.contactId];
-    const title = encodeURIComponent(`${activity.type.toUpperCase()} - ${contact?.company || 'Cliente'}`);
-    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}`, '_blank');
+    const title = encodeURIComponent(`${TYPE_LABELS[activity.type]} - ${contact?.company || 'Cliente'}`);
+    const start = new Date(activity.date);
+    const end   = new Date(activity.date + 60 * 60 * 1000); // +1h
+    // Outlook Web deep-link format: YYYY-MM-DDTHH:MM:SS (no trailing Z = local time)
+    const fmtOutlook = (d: Date) =>
+      d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0') + 'T' +
+      String(d.getHours()).padStart(2, '0') + ':' +
+      String(d.getMinutes()).padStart(2, '0') + ':00';
+    const body = encodeURIComponent(activity.notes || '');
+    window.open(
+      `https://outlook.office.com/calendar/0/deeplink/compose?subject=${title}&startdt=${encodeURIComponent(fmtOutlook(start))}&enddt=${encodeURIComponent(fmtOutlook(end))}&body=${body}`,
+      '_blank'
+    );
+  };
+
+  // ── ICS bulk export (all upcoming activities) ──
+  const handleExportICS = () => {
+    const upcoming = allActivities
+      .filter(a => a.date >= today.getTime())
+      .sort((a, b) => a.date - b.date);
+
+    if (upcoming.length === 0) { showToast('Nessun appuntamento futuro da esportare', 'error'); return; }
+
+    const fmtICS = (ms: number) => {
+      const d = new Date(ms);
+      return (
+        d.getUTCFullYear() +
+        String(d.getUTCMonth() + 1).padStart(2, '0') +
+        String(d.getUTCDate()).padStart(2, '0') + 'T' +
+        String(d.getUTCHours()).padStart(2, '0') +
+        String(d.getUTCMinutes()).padStart(2, '0') + '00Z'
+      );
+    };
+
+    const events = upcoming
+      .map(a => {
+        const contact = contacts[a.contactId];
+        const summary = `${TYPE_LABELS[a.type]} - ${contact?.company || 'Cliente'}`;
+        const location = contact?.address ? `${contact.address}, ${contact.city || ''}`.trim().replace(/,$/, '') : '';
+        const lines = [
+          'BEGIN:VEVENT',
+          `UID:${a.id}@nextmove-crm`,
+          `DTSTART:${fmtICS(a.date)}`,
+          `DTEND:${fmtICS(a.date + 60 * 60 * 1000)}`,
+          `SUMMARY:${summary.replace(/[\\;,]/g, c => '\\' + c)}`,
+          a.notes   ? `DESCRIPTION:${a.notes.replace(/\n/g, '\\n').replace(/[\\;,]/g, c => '\\' + c)}` : null,
+          location  ? `LOCATION:${location.replace(/[\\;,]/g, c => '\\' + c)}` : null,
+          'STATUS:CONFIRMED',
+          'END:VEVENT',
+        ].filter(Boolean) as string[];
+        return lines.join('\r\n');
+      })
+      .join('\r\n');
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//NextMove CRM//IT',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      events,
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'nextmove-agenda.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(`${upcoming.length} appuntamenti esportati (.ics)`, 'success');
   };
 
   // ── Navigation ──
@@ -259,12 +373,12 @@ export const AgendaView: React.FC = () => {
             return (
               <button
                 key={i}
-                onClick={() => { setSelectedDay(isSameDay(day, selectedDay ?? new Date(-1)) ? null : day); }}
+                onClick={() => { setSelectedDay(selectedDay && isSameDay(day, selectedDay) ? null : day); }}
                 className={`relative flex flex-col items-center py-2 rounded-xl transition-all text-sm font-bold min-h-[52px] ${
                   isSelected
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 ring-offset-1'
                     : isToday
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 ring-2 ring-indigo-300 ring-offset-1'
                     : isCurrentMonth
                     ? 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
                     : 'text-gray-300 dark:text-gray-600'
@@ -306,9 +420,9 @@ export const AgendaView: React.FC = () => {
               onClick={() => setSelectedDay(isSelected ? null : day)}
               className={`flex flex-col items-center py-3 rounded-2xl transition-all ${
                 isSelected
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 ring-offset-1'
                   : isToday
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 ring-2 ring-indigo-300 ring-offset-1'
                   : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
               }`}
             >
@@ -335,14 +449,23 @@ export const AgendaView: React.FC = () => {
     <div className="space-y-5 pb-20">
 
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3 flex-wrap">
         <h1 className="text-2xl font-black dark:text-white">Agenda</h1>
-        <button
-          onClick={() => openNew(selectedDay ?? undefined)}
-          className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors text-sm"
-        >
-          <Plus size={16} /> Nuova
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportICS}
+            className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm"
+            title="Esporta tutti gli appuntamenti futuri come file .ics (Outlook, Apple Calendar, ecc.)"
+          >
+            <Download size={15} /> Esporta .ics
+          </button>
+          <button
+            onClick={() => openNew(selectedDay ?? undefined)}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors text-sm"
+          >
+            <Plus size={16} /> Nuova
+          </button>
+        </div>
       </div>
 
       {/* Calendar card */}
@@ -442,12 +565,68 @@ export const AgendaView: React.FC = () => {
               <button onClick={closeModal}><X size={24} className="text-gray-400" /></button>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
+              {/* Contact picker */}
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Azienda</label>
-                <select required value={formData.contactId} onChange={e => setFormData({ ...formData, contactId: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400">
-                  <option value="">Seleziona...</option>
-                  {Object.values(contacts).sort((a, b) => a.company.localeCompare(b.company)).map(c => <option key={c.id} value={c.id}>{c.company}</option>)}
-                </select>
+                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Azienda / Cliente</label>
+                <div ref={contactPickerRef} className="relative">
+                  <div
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 flex items-center gap-2 cursor-pointer bg-white dark:bg-gray-800 focus-within:border-indigo-400 transition-colors"
+                    onClick={() => { setShowContactList(true); }}
+                  >
+                    <Search size={14} className="text-gray-400 flex-shrink-0" />
+                    <input
+                      type="text"
+                      value={contactSearch}
+                      onChange={e => { setContactSearch(e.target.value); setFormData({ ...formData, contactId: '' }); setShowContactList(true); }}
+                      onFocus={() => setShowContactList(true)}
+                      placeholder="Cerca azienda o contatto..."
+                      className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold"
+                    />
+                    {formData.contactId && <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full uppercase">Sel.</span>}
+                    <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform ${showContactList ? 'rotate-180' : ''}`} />
+                  </div>
+
+                  {showContactList && (
+                    <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                      {filteredContacts.length === 0 ? (
+                        <div className="px-4 py-6 text-center">
+                          <p className="text-xs text-gray-400 font-bold">
+                            {Object.keys(contacts).length === 0
+                              ? 'Nessun contatto in rubrica — aggiungine uno dalla sezione Clienti'
+                              : 'Nessun risultato per questa ricerca'}
+                          </p>
+                        </div>
+                      ) : filteredContacts.map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => {
+                            setFormData({ ...formData, contactId: c.id });
+                            setContactSearch(c.company ?? '');
+                            setShowContactList(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0 ${formData.contactId === c.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}
+                        >
+                          <div className="min-w-0 flex-1 mr-2">
+                            <p className="text-sm font-black dark:text-white truncate">{c.company || '(senza nome)'}</p>
+                            {c.contactName && <p className="text-[11px] text-gray-400 truncate">{c.contactName}</p>}
+                          </div>
+                          <span className={`flex-shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${c.status === 'cliente' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'}`}>
+                            {c.status === 'cliente' ? 'Cliente' : 'Prospect'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {!formData.contactId && (
+                  <p className="text-[10px] text-gray-400 mt-1 ml-1">
+                    {Object.keys(contacts).length > 0
+                      ? `${Object.keys(contacts).length} contatti disponibili`
+                      : 'Nessun contatto — aggiungine dalla sezione Clienti'}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tipo</label>

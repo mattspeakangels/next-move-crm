@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, updateProfile, toggleTheme, resetAll } = useStore();
+  const { profile, theme, updateProfile, toggleTheme, resetAll, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
   const { showToast } = useToast();
   const [newProduct, setNewProduct] = useState('');
 
@@ -79,13 +79,36 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Approvazione Sconti */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Soglia Approvazione Sconti</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Le offerte con sconto medio superiore a questa soglia vengono marcate come "Richiede approvazione".
+        </p>
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min={0}
+            max={60}
+            step={5}
+            value={discountApprovalThreshold}
+            onChange={e => setDiscountApprovalThreshold(parseInt(e.target.value))}
+            className="flex-1 accent-indigo-600"
+          />
+          <span className="text-xl font-black text-indigo-600 min-w-[50px] text-right">{discountApprovalThreshold}%</span>
+        </div>
+        <div className="flex justify-between text-[9px] text-gray-400 font-bold mt-1">
+          <span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span><span>60%</span>
+        </div>
+      </div>
+
       {/* Preferenze */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold">
             {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />} Tema Scuro
           </div>
-          <button 
+          <button
             onClick={toggleTheme}
             className={`w-12 h-6 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-300'}`}
           >

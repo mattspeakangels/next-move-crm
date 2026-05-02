@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles } from 'lucide-react';
+import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react';
 import { Offer, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { useClaudeAI } from '../hooks/useClaudeAI';
@@ -37,6 +37,7 @@ export const OffersView: React.FC = () => {
     });
   };
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(true);
   
   const [selectedContact, setSelectedContact] = useState('');
   const [items, setItems] = useState<OfferItem[]>([]);
@@ -242,101 +243,164 @@ export const OffersView: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid gap-4">
-        {Object.values(offers).length > 0 ? (
-          Object.values(offers).sort((a, b) => b.date - a.date).map((offer) => {
-            const contact = contacts[offer.contactId];
+      {(() => {
+        const allOffers = Object.values(offers).sort((a, b) => b.date - a.date);
+        const active   = allOffers.filter(o => o.status === 'bozza' || o.status === 'inviata');
+        const archived = allOffers.filter(o => o.status === 'accettata' || o.status === 'rifiutata');
 
-            const STATUS_CONFIG: Record<OfferStatus, { label: string; bg: string; text: string; activeBg: string; activeText: string }> = {
-              bozza:     { label: 'Bozza',     bg: 'bg-gray-100 dark:bg-gray-700',   text: 'text-gray-500 dark:text-gray-300', activeBg: 'bg-gray-500',   activeText: 'text-white' },
-              inviata:   { label: 'Inviata',   bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-500',   activeBg: 'bg-blue-500',   activeText: 'text-white' },
-              accettata: { label: 'Accettata', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600', activeBg: 'bg-green-500', activeText: 'text-white' },
-              rifiutata: { label: 'Rifiutata', bg: 'bg-red-50 dark:bg-red-900/20',   text: 'text-red-500',    activeBg: 'bg-red-500',    activeText: 'text-white' },
-            };
+        const STATUS_CONFIG: Record<OfferStatus, { label: string; bg: string; text: string; activeBg: string; activeText: string }> = {
+          bozza:     { label: 'Bozza',     bg: 'bg-gray-100 dark:bg-gray-700',     text: 'text-gray-500 dark:text-gray-300', activeBg: 'bg-gray-500',   activeText: 'text-white' },
+          inviata:   { label: 'Inviata',   bg: 'bg-blue-50 dark:bg-blue-900/20',   text: 'text-blue-500',                    activeBg: 'bg-blue-500',   activeText: 'text-white' },
+          accettata: { label: 'Accettata', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600',                   activeBg: 'bg-green-500',  activeText: 'text-white' },
+          rifiutata: { label: 'Rifiutata', bg: 'bg-red-50 dark:bg-red-900/20',     text: 'text-red-500',                     activeBg: 'bg-red-500',    activeText: 'text-white' },
+        };
 
-            return (
-              <div
-                key={offer.id}
-                className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-colors ${
-                  offer.status === 'accettata' ? 'border-green-200 dark:border-green-800' :
-                  offer.status === 'rifiutata' ? 'border-red-200 dark:border-red-800' :
-                  offer.status === 'inviata'   ? 'border-blue-200 dark:border-blue-800' :
-                  'border-gray-100 dark:border-gray-700'
-                }`}
-              >
-                {/* Top row */}
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
-                      {offer.offerNumber}
-                    </span>
-                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
-                    <p className="text-xs text-gray-400 font-bold mt-0.5">
-                      {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-black dark:text-white tracking-tighter">
-                      € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
+        const OfferCard = ({ offer }: { offer: typeof allOffers[0] }) => {
+          const contact = contacts[offer.contactId];
+          return (
+            <div className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-colors ${
+              offer.status === 'inviata' ? 'border-blue-200 dark:border-blue-800' : 'border-gray-100 dark:border-gray-700'
+            }`}>
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                    {offer.offerNumber}
+                  </span>
+                  <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
+                  <p className="text-xs text-gray-400 font-bold mt-0.5">
+                    {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
+                  </p>
                 </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black dark:text-white tracking-tighter">
+                    € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+              <div className="mb-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stato offerta</p>
+                <div className="flex gap-2 flex-wrap">
+                  {(Object.keys(STATUS_CONFIG) as OfferStatus[]).map(s => {
+                    const cfg = STATUS_CONFIG[s];
+                    const isActive = offer.status === s;
+                    return (
+                      <button key={s} onClick={() => updateOffer(offer.id, { status: s })}
+                        className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-wide transition-all ${
+                          isActive ? `${cfg.activeBg} ${cfg.activeText} shadow-sm` : `${cfg.bg} ${cfg.text} hover:opacity-80`
+                        }`}>
+                        {cfg.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2">
+                    <Mail size={12} /> Email
+                  </button>
+                  <button onClick={() => handleWriteEmail(offer)} className="px-3 py-2 rounded-xl font-black text-[10px] uppercase bg-purple-50 dark:bg-purple-900/30 text-purple-600 hover:bg-purple-600 hover:text-white transition-all flex items-center gap-1.5" title="Scrivi email con Claude AI">
+                    <Sparkles size={12} /> AI
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors"><Printer size={18} /></button>
+                  <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 transition-colors"><Edit2 size={18} /></button>
+                  <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 transition-colors"><Trash2 size={18} /></button>
+                </div>
+              </div>
+            </div>
+          );
+        };
 
-                {/* Status selector */}
-                <div className="mb-4">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stato offerta</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {(Object.keys(STATUS_CONFIG) as OfferStatus[]).map(s => {
-                      const cfg = STATUS_CONFIG[s];
-                      const isActive = offer.status === s;
+        return (
+          <>
+            {/* ── OFFERTE ATTIVE ── */}
+            <div className="grid gap-4">
+              {active.length > 0 ? (
+                active.map(o => <OfferCard key={o.id} offer={o} />)
+              ) : (
+                <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
+                  <FileText size={48} className="mx-auto mb-4 text-gray-200 dark:text-gray-600" />
+                  <p className="text-gray-400 font-bold uppercase tracking-widest">Nessuna offerta attiva</p>
+                </div>
+              )}
+            </div>
+
+            {/* ── ARCHIVIO ── */}
+            {archived.length > 0 && (
+              <div className="mt-2">
+                {/* Header collapsible */}
+                <button
+                  onClick={() => setArchiveOpen(o => !o)}
+                  className="w-full flex items-center justify-between px-5 py-3 bg-gray-100 dark:bg-gray-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">Archivio</span>
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+                      <CheckCircle size={11} /> {archived.filter(o => o.status === 'accettata').length} accettate
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                      <XCircle size={11} /> {archived.filter(o => o.status === 'rifiutata').length} rifiutate
+                    </span>
+                    <span className="text-xs font-black text-gray-400">
+                      · € {archived.filter(o => o.status === 'accettata').reduce((s, o) => s + o.totalAmount, 0).toLocaleString('it-IT', { maximumFractionDigits: 0 })} vinti
+                    </span>
+                  </div>
+                  {archiveOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                </button>
+
+                {/* Lista compatta archivio */}
+                {archiveOpen && (
+                  <div className="mt-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    {archived.map((offer, idx) => {
+                      const contact = contacts[offer.contactId];
+                      const won = offer.status === 'accettata';
                       return (
-                        <button
-                          key={s}
-                          onClick={() => updateOffer(offer.id, { status: s })}
-                          className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-wide transition-all ${
-                            isActive ? `${cfg.activeBg} ${cfg.activeText} shadow-sm` : `${cfg.bg} ${cfg.text} hover:opacity-80`
-                          }`}
-                        >
-                          {cfg.label}
-                        </button>
+                        <div key={offer.id} className={`flex items-center justify-between px-5 py-3.5 gap-4 ${idx < archived.length - 1 ? 'border-b border-gray-50 dark:border-gray-700/60' : ''} hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors`}>
+                          {/* Icona stato */}
+                          <div className="flex-shrink-0">
+                            {won
+                              ? <CheckCircle size={18} className="text-green-500" />
+                              : <XCircle size={18} className="text-red-400" />
+                            }
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">{offer.offerNumber}</span>
+                              <span className="text-sm font-black text-gray-800 dark:text-white truncate">{contact?.company || 'Azienda'}</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
+                            </p>
+                          </div>
+
+                          {/* Importo */}
+                          <div className={`text-base font-black flex-shrink-0 ${won ? 'text-green-600' : 'text-red-400'}`}>
+                            € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </div>
+
+                          {/* Azioni minime */}
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            <button onClick={() => updateOffer(offer.id, { status: 'inviata' })} title="Riporta in lavorazione"
+                              className="p-1.5 rounded-lg text-xs text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 transition-colors font-bold">
+                              ↩
+                            </button>
+                            <button onClick={() => handlePrint(offer)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><Printer size={14} /></button>
+                            <button onClick={() => removeOffer(offer.id)} className="p-1.5 rounded-lg text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
-                </div>
-
-                {/* Bottom actions */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleSendEmail(offer)}
-                      className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
-                    >
-                      <Mail size={12} /> Email
-                    </button>
-                    <button
-                      onClick={() => handleWriteEmail(offer)}
-                      className="px-3 py-2 rounded-xl font-black text-[10px] uppercase bg-purple-50 dark:bg-purple-900/30 text-purple-600 hover:bg-purple-600 hover:text-white transition-all flex items-center gap-1.5"
-                      title="Scrivi email con Claude AI"
-                    >
-                      <Sparkles size={12} /> AI
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors"><Printer size={18} /></button>
-                    <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 transition-colors"><Edit2 size={18} /></button>
-                    <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 transition-colors"><Trash2 size={18} /></button>
-                  </div>
-                </div>
+                )}
               </div>
-            );
-          })
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
-             <FileText size={48} className="mx-auto mb-4 text-gray-200 dark:text-gray-600" />
-             <p className="text-gray-400 font-bold uppercase tracking-widest">Nessuna offerta registrata</p>
-          </div>
-        )}
-      </div>
+            )}
+          </>
+        );
+      })()}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">

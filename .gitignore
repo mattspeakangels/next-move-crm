@@ -22,3 +22,14 @@ build/
 
 # Misc
 .claude/launch.json
+.vercel
+
+# Dati personali / file utente
+*.csv
+*.xlsx
+*.numbers
+*.mov
+*.mp4
+clienti vink/
+prototipo-pipeline.html
+ANALISI-SALESFORCE-VS-NEXTMOVE.md

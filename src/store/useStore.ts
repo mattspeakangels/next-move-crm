@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset } from '../types';
 
 interface StoreState {
   contacts: Record<string, Contact>;
@@ -9,9 +9,11 @@ interface StoreState {
   products: Record<string, Product>;
   activities: Record<string, Activity>;
   salesTransactions: Record<string, SalesTransaction>;
+  assets: Record<string, Asset>;
   profile: AppProfile | null;
   theme: 'light' | 'dark';
   targets: Record<string, any>;
+  discountApprovalThreshold: number;
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -19,12 +21,14 @@ interface StoreState {
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;
   resetAll: () => void;
+  setDiscountApprovalThreshold: (value: number) => void;
 
   // Aziende
   addContact: (contact: Contact) => void;
   addContactsBatch: (contacts: Contact[]) => void;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
+  deleteAllContacts: () => void;
 
   // Trattative, Offerte, Prodotti
   addDeal: (deal: Deal) => void;
@@ -44,6 +48,11 @@ interface StoreState {
   deleteActivity: (id: string) => void;
   updateTarget: (target: any) => void;
 
+  // Asset / Parco Installato
+  addAsset: (asset: Asset) => void;
+  updateAsset: (id: string, updates: Partial<Asset>) => void;
+  removeAsset: (id: string) => void;
+
   // Business Intelligence
   addSalesTransaction: (transaction: SalesTransaction) => void;
   deleteSalesTransaction: (id: string) => void;
@@ -58,9 +67,11 @@ export const useStore = create<StoreState>()(
       products: {},
       activities: {},
       salesTransactions: {},
+      assets: {},
       targets: {},
       profile: null,
       theme: 'light',
+      discountApprovalThreshold: 20,
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -68,7 +79,8 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {} }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {} }),
+      setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
 
       addContact: (contact) => set((state) => ({
         contacts: { ...state.contacts, [contact.id]: contact }
@@ -86,6 +98,7 @@ export const useStore = create<StoreState>()(
         delete newContacts[id];
         return { contacts: newContacts };
       }),
+      deleteAllContacts: () => set({ contacts: {} }),
 
       addDeal: (deal) => set((state) => ({ deals: { ...state.deals, [deal.id]: deal } })),
       updateDeal: (id, updates) => set((state) => ({
@@ -134,6 +147,16 @@ export const useStore = create<StoreState>()(
       updateTarget: (target) => set((state) => ({
         targets: { ...state.targets, [target.id]: target }
       })),
+
+      addAsset: (asset) => set((state) => ({ assets: { ...state.assets, [asset.id]: asset } })),
+      updateAsset: (id, updates) => set((state) => ({
+        assets: { ...state.assets, [id]: { ...state.assets[id], ...updates, updatedAt: Date.now() } }
+      })),
+      removeAsset: (id) => set((state) => {
+        const newAssets = { ...state.assets };
+        delete newAssets[id];
+        return { assets: newAssets };
+      }),
 
       addSalesTransaction: (transaction) => set((state) => ({
         salesTransactions: { ...state.salesTransactions, [transaction.id]: transaction }
