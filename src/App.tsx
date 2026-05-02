@@ -18,7 +18,9 @@ import { NavView } from './types';
 
 // Analytics feature enabled
 function AppContent() {
-  const [currentView, setCurrentView] = useState<NavView>('dashboard');
+  const [currentView, setCurrentView] = useState<NavView>(
+    () => (localStorage.getItem('nm_last_view') as NavView) ?? 'dashboard'
+  );
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, profile } = useStore();
@@ -30,6 +32,7 @@ function AppContent() {
 
   const goTo = (view: NavView) => {
     setCurrentView(view);
+    localStorage.setItem('nm_last_view', view);
     setMobileMenuOpen(false);
   };
 
