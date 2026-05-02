@@ -4,7 +4,7 @@ import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users }
 import { useToast } from '../components/ui/ToastContext';
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, contacts, updateProfile, toggleTheme, resetAll, deleteAllContacts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
+  const { profile, theme, contacts, updateProfile, toggleTheme, deleteAllContacts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
   const { showToast } = useToast();
   const [newProduct, setNewProduct] = useState('');
 
