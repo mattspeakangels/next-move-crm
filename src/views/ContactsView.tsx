@@ -437,19 +437,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       const text = event.target?.result as string;
       const newContacts = parseCSVContacts(text, status);
       if (newContacts.length > 0) {
-        // Chiedi se sostituire o aggiungere
-        const existingCount = Object.values(contacts).filter(c => c.status === status).length;
-        let shouldReplace = false;
-
-        if (existingCount > 0) {
-          shouldReplace = window.confirm(
-            `Hai ${existingCount} ${status === 'cliente' ? 'clienti' : 'prospect'} esistenti.\n\n` +
-            `"OK" = Sostituisci i vecchi\n` +
-            `"Annulla" = Aggiungi ai vecchi`
-          );
-          if (shouldReplace) deleteAllContacts();
-        }
-
+        Object.values(contacts)
+          .filter(c => c.status === status)
+          .forEach(c => deleteContact(c.id));
         addContactsBatch(newContacts);
       }
       if (fileInputRef.current)         fileInputRef.current.value = '';
