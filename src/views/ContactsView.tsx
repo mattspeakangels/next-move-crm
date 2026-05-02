@@ -185,70 +185,94 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   }, [selectedContactId]);
 
-  const parseCSVContacts = (text: string, status: 'potenziale' | 'cliente'): Contact[] => {
+  const parseCSVContacts = (text: string, fallbackStatus: 'potenziale' | 'cliente'): Contact[] => {
     const lines = text.split('\n').filter(l => l.trim());
     if (lines.length < 2) return [];
 
-    // ─── Rileva il separatore (comma, semicolon, pipe, o tab) ───
+    // ─── Rileva il separatore ───
     const firstLine = lines[0];
     let separator = ',';
-    if (firstLine.includes('|')) separator = '|';
-    else if (firstLine.includes(';') && !firstLine.includes(',')) separator = ';';
-    else if (firstLine.includes('\t')) separator = '\t';
+    if (firstLine.includes('\t')) separator = '\t';
+    else if (firstLine.includes('|')) separator = '|';
+    else if (firstLine.includes(';') && (firstLine.split(';').length > firstLine.split(',').length)) separator = ';';
 
-    // ─── Parse header e crea mappa colonne ───
-    const headerLine = lines[0].split(separator).map(h => h.trim().toLowerCase());
-    const columnMap: { [key: string]: number } = {};
+    const headerLine = lines[0].split(separator).map(h => h.trim().toLowerCase().replace(/["“”‘’]/g, ''));
 
-    // Mapping dei nomi colonne comuni (case-insensitive, fuzzy matching)
+    // ─── findColumn: itera keywords in priorità, non colonne ───
+    // In questo modo il primo keyword più specifico vince sempre.
     const findColumn = (keywords: string[]): number => {
-      for (let i = 0; i < headerLine.length; i++) {
-        const header = headerLine[i];
-        for (const kw of keywords) {
-          if (header.includes(kw.toLowerCase())) return i;
-        }
+      for (const kw of keywords) {
+        const idx = headerLine.findIndex(h => h.includes(kw.toLowerCase()));
+        if (idx !== -1) return idx;
       }
       return -1;
     };
 
-    columnMap['company'] = findColumn(['azienda', 'ragione', 'company', 'cliente', 'cliente name']);
-    columnMap['contactName'] = findColumn(['contatto', 'contact', 'nome', 'referente', 'person']);
-    columnMap['role'] = findColumn(['ruolo', 'role', 'posizione', 'qualifica']);
-    columnMap['email'] = findColumn(['email', 'e-mail', 'mail']);
-    columnMap['phone'] = findColumn(['telefono', 'phone', 'numero', 'tel']);
-    columnMap['address'] = findColumn(['indirizzo', 'address', 'via', 'strada']);
-    columnMap['city'] = findColumn(['città', 'city', 'comune']);
-    columnMap['province'] = findColumn(['provincia', 'province', 'prov', 'provincia']);
-    columnMap['sector'] = findColumn(['settore', 'sector', 'industria', 'attività']);
+    // Mapping colonne — keywords in ordine di specificità (più specifico prima)
+    const col: Record<string, number> = {
+      company:     findColumn(['aziende', 'ragione sociale', 'nome azienda', 'company name', 'azienda', 'company', 'organizzazione', 'organization']),
+      status:      findColumn(['stato azienda', 'stato cliente', 'stato', 'status', 'tipo cliente', 'tipologia']),
+      contactName: findColumn(['referente', 'contatto principale', 'nome contatto', 'contatto', 'contact name', 'contact', 'nome', 'person']),
+      role:        findColumn(['ruolo', 'qualifica', 'posizione', 'role', 'title', 'job']),
+      email:       findColumn(['e-mail', 'email', 'mail', 'posta']),
+      phone:       findColumn(['numero di telefono', 'telefono fisso', 'telefono 1', 'telefono', 'phone', 'tel ']),
+      mobile:      findColumn(['cellulare', 'mobile', 'cell', 'telefono 2']),
+      website:     findColumn(['web', 'sito web', 'website', 'url', 'sito']),
+      address:     findColumn(['indirizzo', 'address', 'via ', 'strada']),
+      city:        findColumn(['citt', 'city', 'comune', 'località']),
+      province:    findColumn(['provincia', 'province', 'prov']),
+      zipCode:     findColumn(['codice postale', 'cap', 'zip', 'postal']),
+      sector:      findColumn(['settore', 'sector', 'industria', 'attività', 'categoria']),
+      notes:       findColumn(['commenti', 'note', 'notes', 'comments', 'osservazioni']),
+    };
+
+    const get = (row: string[], key: string): string =>
+      col[key] >= 0 ? (row[col[key]] ?? '').trim() : '';
+
+    const parseStatus = (raw: string): 'potenziale' | 'cliente' => {
+      const v = raw.toLowerCase().trim();
+      if (v.includes('client') || v === 'attivo' || v === 'active') return 'cliente';
+      if (v.includes('potenzial') || v.includes('prospect') || v.includes('lead')) return 'potenziale';
+      return fallbackStatus;
+    };
 
     const result: Contact[] = [];
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      const values = line.split(separator).map(v => v.trim());
+      const values = line.split(separator).map(v => v.trim().replace(/^["']|["']$/g, ''));
 
-      // Estrai valori usando la mappa colonne
-      const company = columnMap['company'] >= 0 ? values[columnMap['company']] || '' : values[0] || '';
+      // Fallback: se nessuna colonna company trovata, usa la prima colonna
+      const company = col['company'] >= 0 ? values[col['company']] || '' : values[0] || '';
+      if (!company) continue;
 
-      if (!company) continue; // Salta righe senza nome azienda
+      // Telefono: preferisce 'phone', poi 'mobile' se phone è vuoto
+      const phone = get(values, 'phone') || get(values, 'mobile');
+
+      // Status: dalla colonna CSV se disponibile, altrimenti fallbackStatus
+      const statusRaw = get(values, 'status');
+      const contactStatus = statusRaw ? parseStatus(statusRaw) : fallbackStatus;
 
       result.push({
         id: `c_${Date.now()}_${i}_${Math.random().toString(36).slice(2)}`,
         company,
-        contactName: columnMap['contactName'] >= 0 ? values[columnMap['contactName']]?.trim() || '' : '',
-        role: columnMap['role'] >= 0 ? values[columnMap['role']]?.trim() || '' : '',
-        email: columnMap['email'] >= 0 ? values[columnMap['email']]?.trim() || '' : '',
-        phone: columnMap['phone'] >= 0 ? values[columnMap['phone']]?.trim() || '' : '',
-        address: columnMap['address'] >= 0 ? values[columnMap['address']]?.trim() || '' : '',
-        city: columnMap['city'] >= 0 ? values[columnMap['city']]?.trim() || '' : '',
-        province: columnMap['province'] >= 0 ? values[columnMap['province']]?.trim() || '' : '',
-        region: columnMap['province'] >= 0 ? values[columnMap['province']]?.trim() || '' : '',
-        sector: columnMap['sector'] >= 0 ? values[columnMap['sector']]?.trim() || '' : '',
-        status,
-        country: 'Italia',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        contactName: get(values, 'contactName'),
+        role:        get(values, 'role'),
+        email:       get(values, 'email'),
+        phone,
+        website:     get(values, 'website'),
+        address:     get(values, 'address'),
+        city:        get(values, 'city'),
+        province:    get(values, 'province'),
+        zipCode:     get(values, 'zipCode'),
+        region:      get(values, 'province'),
+        sector:      get(values, 'sector'),
+        notes:       get(values, 'notes'),
+        status:      contactStatus,
+        country:     'Italia',
+        createdAt:   Date.now(),
+        updatedAt:   Date.now(),
       });
     }
     return result;
