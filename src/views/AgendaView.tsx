@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Search, ChevronDown } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Search } from 'lucide-react';
 import { Activity, ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 
@@ -567,66 +567,106 @@ export const AgendaView: React.FC = () => {
             <form onSubmit={handleSave} className="space-y-4">
               {/* Contact picker */}
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Azienda / Cliente</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">
+                  Cliente / Azienda
+                  {formData.contactId && (
+                    <span className="ml-2 normal-case font-bold text-indigo-600">✓ selezionato</span>
+                  )}
+                </label>
                 <div ref={contactPickerRef} className="relative">
-                  <div
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 flex items-center gap-2 cursor-pointer bg-white dark:bg-gray-800 focus-within:border-indigo-400 transition-colors"
-                    onClick={() => { setShowContactList(true); }}
-                  >
+                  <div className={`w-full border-2 rounded-2xl px-4 py-3 flex items-center gap-2 bg-white dark:bg-gray-800 transition-colors ${showContactList ? 'border-indigo-400' : formData.contactId ? 'border-green-400' : 'border-gray-100 dark:border-gray-700'}`}>
                     <Search size={14} className="text-gray-400 flex-shrink-0" />
                     <input
                       type="text"
+                      autoFocus={!editingId}
                       value={contactSearch}
-                      onChange={e => { setContactSearch(e.target.value); setFormData({ ...formData, contactId: '' }); setShowContactList(true); }}
+                      onChange={e => {
+                        setContactSearch(e.target.value);
+                        if (formData.contactId) setFormData({ ...formData, contactId: '' });
+                        setShowContactList(true);
+                      }}
                       onFocus={() => setShowContactList(true)}
-                      placeholder="Cerca azienda o contatto..."
-                      className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold"
+                      placeholder={`Scrivi il nome... (${Object.keys(contacts).length} contatti)`}
+                      className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold min-w-0"
                     />
-                    {formData.contactId && <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full uppercase">Sel.</span>}
-                    <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform ${showContactList ? 'rotate-180' : ''}`} />
+                    {contactSearch && (
+                      <button
+                        type="button"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => { setContactSearch(''); setFormData({ ...formData, contactId: '' }); setShowContactList(true); }}
+                        className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
 
                   {showContactList && (
-                    <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
-                      {filteredContacts.length === 0 ? (
-                        <div className="px-4 py-6 text-center">
-                          <p className="text-xs text-gray-400 font-bold">
-                            {Object.keys(contacts).length === 0
-                              ? 'Nessun contatto in rubrica — aggiungine uno dalla sezione Clienti'
-                              : 'Nessun risultato per questa ricerca'}
-                          </p>
-                        </div>
-                      ) : filteredContacts.map(c => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onMouseDown={e => e.preventDefault()}
-                          onClick={() => {
-                            setFormData({ ...formData, contactId: c.id });
-                            setContactSearch(c.company ?? '');
-                            setShowContactList(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0 ${formData.contactId === c.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}
-                        >
-                          <div className="min-w-0 flex-1 mr-2">
-                            <p className="text-sm font-black dark:text-white truncate">{c.company || '(senza nome)'}</p>
-                            {c.contactName && <p className="text-[11px] text-gray-400 truncate">{c.contactName}</p>}
+                    <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border-2 border-indigo-100 dark:border-gray-600 rounded-2xl shadow-2xl overflow-hidden">
+                      {/* Header count */}
+                      <div className="px-4 py-2 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wide">
+                          {contactSearch
+                            ? `${filteredContacts.length} risultat${filteredContacts.length === 1 ? 'o' : 'i'}`
+                            : `${Object.keys(contacts).length} contatti`}
+                        </span>
+                        {contactSearch && filteredContacts.length > 0 && (
+                          <span className="text-[10px] text-gray-300">↵ o click per selezionare</span>
+                        )}
+                      </div>
+
+                      <div className="max-h-52 overflow-y-auto">
+                        {filteredContacts.length === 0 ? (
+                          <div className="px-4 py-8 text-center">
+                            <p className="text-sm font-black text-gray-300">
+                              {Object.keys(contacts).length === 0 ? '📋 Rubrica vuota' : '🔍 Nessun risultato'}
+                            </p>
+                            <p className="text-[11px] text-gray-400 mt-1">
+                              {Object.keys(contacts).length === 0
+                                ? 'Aggiungi contatti dalla sezione Clienti'
+                                : `Prova con un termine diverso`}
+                            </p>
                           </div>
-                          <span className={`flex-shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${c.status === 'cliente' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'}`}>
-                            {c.status === 'cliente' ? 'Cliente' : 'Prospect'}
-                          </span>
-                        </button>
-                      ))}
+                        ) : filteredContacts.map(c => {
+                          const q = contactSearch.toLowerCase().trim();
+                          const company = c.company || '(senza nome)';
+                          const hiIdx = q ? company.toLowerCase().indexOf(q) : -1;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onMouseDown={e => e.preventDefault()}
+                              onClick={() => {
+                                setFormData({ ...formData, contactId: c.id });
+                                setContactSearch(company);
+                                setShowContactList(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-gray-50 dark:border-gray-700/50 last:border-0 ${formData.contactId === c.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
+                            >
+                              <div className="min-w-0 flex-1 mr-3">
+                                <p className="text-sm font-black dark:text-white truncate">
+                                  {hiIdx >= 0 ? (
+                                    <>
+                                      {company.slice(0, hiIdx)}
+                                      <mark className="bg-indigo-200 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-200 rounded px-0.5 not-italic">{company.slice(hiIdx, hiIdx + q.length)}</mark>
+                                      {company.slice(hiIdx + q.length)}
+                                    </>
+                                  ) : company}
+                                </p>
+                                {c.contactName && (
+                                  <p className="text-[11px] text-gray-400 truncate">{c.contactName}</p>
+                                )}
+                              </div>
+                              <span className={`flex-shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${c.status === 'cliente' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
+                                {c.status === 'cliente' ? 'Cliente' : 'Prospect'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
-                {!formData.contactId && (
-                  <p className="text-[10px] text-gray-400 mt-1 ml-1">
-                    {Object.keys(contacts).length > 0
-                      ? `${Object.keys(contacts).length} contatti disponibili`
-                      : 'Nessun contatto — aggiungine dalla sezione Clienti'}
-                  </p>
-                )}
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tipo</label>

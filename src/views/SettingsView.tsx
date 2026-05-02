@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, updateProfile, toggleTheme, resetAll, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
+  const { profile, theme, contacts, updateProfile, toggleTheme, resetAll, deleteAllContacts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
   const { showToast } = useToast();
   const [newProduct, setNewProduct] = useState('');
 
@@ -117,9 +117,30 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Gestione Rubrica */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><Users size={18} className="text-indigo-600"/> Gestione Rubrica</h3>
+        <p className="text-xs text-gray-400 mb-4">
+          Attualmente hai <span className="font-black text-indigo-600">{Object.keys(contacts).length}</span> contatti in rubrica
+          {' '}(<span className="text-green-600 font-bold">{Object.values(contacts).filter(c => c.status === 'cliente').length} clienti</span>
+          {' '}· <span className="text-blue-600 font-bold">{Object.values(contacts).filter(c => c.status === 'potenziale').length} prospect</span>)
+        </p>
+        <button
+          onClick={() => {
+            if (window.confirm(`Sei sicuro di voler eliminare tutti i ${Object.keys(contacts).length} contatti?\nQuesta azione non è reversibile.`)) {
+              deleteAllContacts();
+              showToast('Rubrica svuotata', 'success');
+            }
+          }}
+          className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        >
+          <Trash2 size={15} /> Svuota tutti i contatti
+        </button>
+      </div>
+
       {/* Azioni Pericolose */}
       <div className="p-6">
-        <button 
+        <button
           onClick={() => window.confirm('Sei sicuro? Perderai tutti i dati salvati.') && resetAll()}
           className="flex items-center gap-2 text-red-500 text-sm font-bold opacity-70 hover:opacity-100 transition-opacity"
         >
