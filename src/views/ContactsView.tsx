@@ -13,6 +13,126 @@ const ASSET_STATUS_CONFIG: Record<AssetStatus, { label: string; color: string; b
   dismesso:        { label: 'Dismesso',      color: 'text-gray-400',   bg: 'bg-gray-100 dark:bg-gray-700' },
 };
 
+// ── Inline Parco Installato ── extracted from IIFE to respect Rules of Hooks
+const InlineAssetSection: React.FC<{ contactId: string }> = ({ contactId }) => {
+  const { assets, addAsset, updateAsset, removeAsset } = useStore();
+  const [showAssetForm, setShowAssetForm] = useState(false);
+  const [newAssetDesc, setNewAssetDesc] = useState('');
+  const [newAssetSerial, setNewAssetSerial] = useState('');
+  const [newAssetStatus, setNewAssetStatus] = useState<AssetStatus>('attivo');
+  const [newAssetDate, setNewAssetDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newAssetExpiry, setNewAssetExpiry] = useState('');
+
+  const contactAssets = Object.values(assets || {}).filter(a => a.contactId === contactId);
+
+  const handleAdd = () => {
+    if (!newAssetDesc) return;
+    addAsset({
+      id: `asset_${Date.now()}`,
+      contactId,
+      description: newAssetDesc,
+      serialNumber: newAssetSerial || undefined,
+      installDate: new Date(newAssetDate).getTime(),
+      expiryDate: newAssetExpiry ? new Date(newAssetExpiry).getTime() : undefined,
+      status: newAssetStatus,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    setNewAssetDesc(''); setNewAssetSerial(''); setNewAssetExpiry('');
+    setShowAssetForm(false);
+  };
+
+  return (
+    <section>
+      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Package size={16} /> 6. Parco Installato
+        <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactAssets.length} asset</span>
+      </h3>
+      {contactAssets.length === 0 && !showAssetForm && (
+        <p className="text-xs text-gray-400 font-bold italic mb-3">Nessun asset registrato per questo cliente</p>
+      )}
+      {contactAssets.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {contactAssets.map(asset => (
+            <div key={asset.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-black text-xs dark:text-white truncate">{asset.description}</p>
+                  <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${ASSET_STATUS_CONFIG[asset.status].bg} ${ASSET_STATUS_CONFIG[asset.status].color}`}>
+                    {ASSET_STATUS_CONFIG[asset.status].label}
+                  </span>
+                </div>
+                <div className="flex gap-2 text-[9px] text-gray-400 font-bold mt-0.5">
+                  {asset.serialNumber && <span>SN: {asset.serialNumber}</span>}
+                  <span>{new Date(asset.installDate).toLocaleDateString('it-IT')}</span>
+                  {asset.expiryDate && (
+                    <span className={asset.expiryDate < Date.now() ? 'text-red-500' : asset.expiryDate - Date.now() < 30 * 24 * 60 * 60 * 1000 ? 'text-yellow-500' : ''}>
+                      Scad: {new Date(asset.expiryDate).toLocaleDateString('it-IT')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-1">
+                <select
+                  value={asset.status}
+                  onChange={e => updateAsset(asset.id, { status: e.target.value as AssetStatus })}
+                  className="text-[9px] font-black border border-gray-200 dark:border-gray-600 rounded-lg px-1.5 py-1 bg-white dark:bg-gray-700 dark:text-white outline-none"
+                >
+                  <option value="attivo">Attivo</option>
+                  <option value="scaduto">Scaduto</option>
+                  <option value="da-sostituire">Da sostituire</option>
+                  <option value="dismesso">Dismesso</option>
+                </select>
+                <button onClick={() => removeAsset(asset.id)}
+                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {showAssetForm && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-indigo-200 dark:border-indigo-700 mb-3 space-y-3">
+          <input type="text" placeholder="Descrizione asset..." value={newAssetDesc}
+            onChange={e => setNewAssetDesc(e.target.value)}
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400" />
+          <div className="grid grid-cols-2 gap-2">
+            <input type="text" placeholder="Seriale (opz.)" value={newAssetSerial}
+              onChange={e => setNewAssetSerial(e.target.value)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400" />
+            <input type="date" value={newAssetDate}
+              onChange={e => setNewAssetDate(e.target.value)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="date" placeholder="Scadenza contratto" value={newAssetExpiry}
+              onChange={e => setNewAssetExpiry(e.target.value)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400" />
+            <select value={newAssetStatus} onChange={e => setNewAssetStatus(e.target.value as AssetStatus)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-indigo-400">
+              <option value="attivo">Attivo</option>
+              <option value="scaduto">Scaduto</option>
+              <option value="da-sostituire">Da sostituire</option>
+              <option value="dismesso">Dismesso</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleAdd} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase">Aggiungi</button>
+            <button onClick={() => setShowAssetForm(false)} className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
+          </div>
+        </div>
+      )}
+      {!showAssetForm && (
+        <button onClick={() => setShowAssetForm(true)}
+          className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors">
+          <Plus size={12} /> Aggiungi asset
+        </button>
+      )}
+    </section>
+  );
+};
+
 interface ContactsViewProps {
   initialSearch?: string;
   onClearFilter?: () => void;
@@ -21,7 +141,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, offers, assets, addAsset, updateAsset, removeAsset, activities } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, offers, activities } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -595,147 +715,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             })()}
 
             {/* SEZIONE 6 - Parco Installato (solo in modifica) */}
-            {editingContact?.id && contacts[editingContact.id] && (() => {
-              const contactAssets = Object.values(assets || {}).filter(a => a.contactId === editingContact.id);
-              const [showAssetForm, setShowAssetForm] = React.useState(false);
-              const [newAssetDesc, setNewAssetDesc] = React.useState('');
-              const [newAssetSerial, setNewAssetSerial] = React.useState('');
-              const [newAssetStatus, setNewAssetStatus] = React.useState<AssetStatus>('attivo');
-              const [newAssetDate, setNewAssetDate] = React.useState(new Date().toISOString().split('T')[0]);
-              const [newAssetExpiry, setNewAssetExpiry] = React.useState('');
-              return (
-                <section>
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Package size={16} /> 6. Parco Installato
-                    <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactAssets.length} asset</span>
-                  </h3>
-                  {contactAssets.length === 0 && !showAssetForm && (
-                    <p className="text-xs text-gray-400 font-bold italic mb-3">Nessun asset registrato per questo cliente</p>
-                  )}
-                  {contactAssets.length > 0 && (
-                    <div className="space-y-2 mb-3">
-                      {contactAssets.map(asset => (
-                        <div key={asset.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-black text-xs dark:text-white truncate">{asset.description}</p>
-                              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${ASSET_STATUS_CONFIG[asset.status].bg} ${ASSET_STATUS_CONFIG[asset.status].color}`}>
-                                {ASSET_STATUS_CONFIG[asset.status].label}
-                              </span>
-                            </div>
-                            <div className="flex gap-2 text-[9px] text-gray-400 font-bold mt-0.5">
-                              {asset.serialNumber && <span>SN: {asset.serialNumber}</span>}
-                              <span>{new Date(asset.installDate).toLocaleDateString('it-IT')}</span>
-                              {asset.expiryDate && (
-                                <span className={asset.expiryDate < Date.now() ? 'text-red-500' : asset.expiryDate - Date.now() < 30 * 24 * 60 * 60 * 1000 ? 'text-yellow-500' : ''}>
-                                  Scad: {new Date(asset.expiryDate).toLocaleDateString('it-IT')}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            {(['attivo', 'scaduto', 'da-sostituire', 'dismesso'] as AssetStatus[]).includes(asset.status) && (
-                              <select
-                                value={asset.status}
-                                onChange={e => updateAsset(asset.id, { status: e.target.value as AssetStatus })}
-                                className="text-[9px] font-black border border-gray-200 dark:border-gray-600 rounded-lg px-1.5 py-1 bg-transparent dark:text-white outline-none"
-                              >
-                                <option value="attivo">Attivo</option>
-                                <option value="scaduto">Scaduto</option>
-                                <option value="da-sostituire">Da sostituire</option>
-                                <option value="dismesso">Dismesso</option>
-                              </select>
-                            )}
-                            <button onClick={() => removeAsset(asset.id)}
-                              className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {showAssetForm && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-indigo-200 dark:border-indigo-700 mb-3 space-y-3">
-                      <input
-                        type="text"
-                        placeholder="Descrizione asset..."
-                        value={newAssetDesc}
-                        onChange={e => setNewAssetDesc(e.target.value)}
-                        className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Seriale (opz.)"
-                          value={newAssetSerial}
-                          onChange={e => setNewAssetSerial(e.target.value)}
-                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
-                        />
-                        <input
-                          type="date"
-                          value={newAssetDate}
-                          onChange={e => setNewAssetDate(e.target.value)}
-                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="date"
-                          placeholder="Scadenza contratto"
-                          value={newAssetExpiry}
-                          onChange={e => setNewAssetExpiry(e.target.value)}
-                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
-                        />
-                        <select
-                          value={newAssetStatus}
-                          onChange={e => setNewAssetStatus(e.target.value as AssetStatus)}
-                          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
-                        >
-                          <option value="attivo">Attivo</option>
-                          <option value="scaduto">Scaduto</option>
-                          <option value="da-sostituire">Da sostituire</option>
-                          <option value="dismesso">Dismesso</option>
-                        </select>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            if (!newAssetDesc) return;
-                            addAsset({
-                              id: `asset_${Date.now()}`,
-                              contactId: editingContact.id,
-                              description: newAssetDesc,
-                              serialNumber: newAssetSerial || undefined,
-                              installDate: new Date(newAssetDate).getTime(),
-                              expiryDate: newAssetExpiry ? new Date(newAssetExpiry).getTime() : undefined,
-                              status: newAssetStatus,
-                              createdAt: Date.now(),
-                              updatedAt: Date.now(),
-                            });
-                            setNewAssetDesc(''); setNewAssetSerial(''); setNewAssetExpiry('');
-                            setShowAssetForm(false);
-                          }}
-                          className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase"
-                        >Aggiungi</button>
-                        <button onClick={() => setShowAssetForm(false)}
-                          className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">
-                          Annulla
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  {!showAssetForm && (
-                    <button
-                      onClick={() => setShowAssetForm(true)}
-                      className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors"
-                    >
-                      <Plus size={12} /> Aggiungi asset
-                    </button>
-                  )}
-                </section>
-              );
-            })()}
+            {editingContact?.id && contacts[editingContact.id] && (
+              <InlineAssetSection contactId={editingContact.id} />
+            )}
 
           </div>
         </div>
