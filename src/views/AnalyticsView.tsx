@@ -99,25 +99,10 @@ export const AnalyticsView: React.FC = () => {
 
           if (!date || !totalAmount || !customerName || isNaN(date)) return;
 
-          let contactId = Object.entries(state.contacts)
-            .find(([, c]) => c.company.toLowerCase().includes(customerName.toLowerCase()))?.[0];
-
-          if (!contactId) {
-            contactId = `contact_${Date.now()}_${Math.random()}`;
-            state.addContact({
-              id: contactId,
-              company: customerName,
-              contactName: 'Imported',
-              role: 'N/A',
-              email: '',
-              phone: '',
-              sector: 'sconosciuto',
-              region: 'N/A',
-              status: 'cliente',
-              createdAt: date,
-              updatedAt: date,
-            });
-          }
+          const contactId =
+            Object.entries(state.contacts)
+              .find(([, c]) => c.company.toLowerCase().includes(customerName.toLowerCase()))?.[0]
+            ?? `hist__${customerName}`;
 
           state.addSalesTransaction({
             id: `tx_${Date.now()}_${Math.random()}`,

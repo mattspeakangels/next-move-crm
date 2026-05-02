@@ -29,7 +29,7 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
 
   const sortedContacts = useMemo(() =>
     Object.values(contacts)
-      .filter(c => c.company && c.company.trim())
+      .filter(c => c.company && c.company.trim() && !c.id.startsWith('contact_') && !c.id.startsWith('hist__'))
       .sort((a, b) => a.company.localeCompare(b.company, 'it')),
     [contacts]
   );
