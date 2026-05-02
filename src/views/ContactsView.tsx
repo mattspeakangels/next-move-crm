@@ -336,8 +336,40 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   }, [selectedContactId]);
 
+  // Parser CSV che gestisce campi tra virgolette, separatori multipli, \r\n e BOM
+  const parseCSVLine = (line: string, sep: string): string[] => {
+    const result: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else {
+          field += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (line.slice(i, i + sep.length) === sep) {
+          result.push(field.trim());
+          field = '';
+          i += sep.length - 1;
+        } else {
+          field += ch;
+        }
+      }
+    }
+    result.push(field.trim());
+    return result;
+  };
+
   const parseCSVContacts = (text: string, fallbackStatus: 'potenziale' | 'cliente'): Contact[] => {
-    const lines = text.split('\n').filter(l => l.trim());
+    // Rimuovi BOM e normalizza line endings
+    const cleaned = text.replace(/\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const lines = cleaned.split('\n').filter(l => l.trim());
     if (lines.length < 2) return [];
 
     // ─── Rileva il separatore ───
@@ -347,7 +379,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     else if (firstLine.includes('|')) separator = '|';
     else if (firstLine.includes(';') && (firstLine.split(';').length > firstLine.split(',').length)) separator = ';';
 
-    const headerLine = lines[0].split(separator).map(h => h.trim().toLowerCase().replace(/["“”‘’]/g, ''));
+    const headerLine = parseCSVLine(lines[0], separator).map(h => h.toLowerCase().replace(/["""'']/g, ''));
 
     // ─── findColumn: itera keywords in priorità, non colonne ───
     // In questo modo il primo keyword più specifico vince sempre.
@@ -392,7 +424,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       const line = lines[i].trim();
       if (!line) continue;
 
-      const values = line.split(separator).map(v => v.trim().replace(/^["']|["']$/g, ''));
+      const values = parseCSVLine(line, separator);
 
       // Fallback: se nessuna colonna company trovata, usa la prima colonna
       const company = col['company'] >= 0 ? values[col['company']] || '' : values[0] || '';
