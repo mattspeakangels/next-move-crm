@@ -56,6 +56,7 @@ interface StoreState {
   // Business Intelligence
   addSalesTransaction: (transaction: SalesTransaction) => void;
   deleteSalesTransaction: (id: string) => void;
+  clearSalesTransactions: () => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -166,6 +167,7 @@ export const useStore = create<StoreState>()(
         delete newTransactions[id];
         return { salesTransactions: newTransactions };
       }),
+      clearSalesTransactions: () => set({ salesTransactions: {} }),
     }),
     { name: 'next-move-storage' }
   )

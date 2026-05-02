@@ -4,7 +4,7 @@ import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users }
 import { useToast } from '../components/ui/ToastContext';
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, contacts, updateProfile, toggleTheme, deleteAllContacts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
+  const { profile, theme, contacts, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
   const { showToast } = useToast();
   const [newProduct, setNewProduct] = useState('');
 
@@ -138,8 +138,23 @@ export const SettingsView: React.FC = () => {
         </button>
       </div>
 
+      {/* Reset Storico Vendite */}
+      <div className="p-6 border-t border-gray-100 dark:border-gray-700">
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Storico Vendite</p>
+        <button
+          onClick={() => {
+            if (window.confirm(`Eliminare tutto lo storico vendite (${Object.keys(salesTransactions).length} transazioni)? I clienti e i deal non verranno toccati.`)) {
+              clearSalesTransactions();
+            }
+          }}
+          className="flex items-center gap-2 text-orange-500 text-sm font-bold border border-orange-200 dark:border-orange-800 px-4 py-2 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+        >
+          <Trash2 size={15} /> Svuota storico vendite
+        </button>
+      </div>
+
       {/* Azioni Pericolose */}
-      <div className="p-6">
+      <div className="p-6 border-t border-gray-100 dark:border-gray-700">
         <button
           onClick={() => {
             if (window.confirm('Sei sicuro? Verranno eliminati TUTTI i dati (clienti, deal, offerte, attività). Questa azione non è reversibile.')) {
