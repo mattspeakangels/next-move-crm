@@ -79,7 +79,7 @@ function AppContent() {
   const mobileExtra = navItems.slice(4);
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen text-gray-900 dark:text-gray-100 ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
       <aside className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 hidden md:flex flex-col z-20">
@@ -89,7 +89,7 @@ function AppContent() {
         </div>
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {navItems.map(({ id, icon: Icon, label }) => (
-            <button key={id} onClick={() => goTo(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all ${currentView === id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+            <button key={id} onClick={() => goTo(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all ${currentView === id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:hover:text-white'}`}>
               <Icon size={20} />{label}
             </button>
           ))}
@@ -97,7 +97,7 @@ function AppContent() {
       </aside>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="md:pl-64 min-h-screen pb-20 md:pb-0">
+      <main className="md:pl-64 min-h-screen pb-20 md:pb-0 bg-gray-50 dark:bg-gray-900">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{renderView()}</div>
       </main>
 
