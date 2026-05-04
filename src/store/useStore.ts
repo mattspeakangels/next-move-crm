@@ -40,6 +40,7 @@ interface StoreState {
   addProduct: (product: Product) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   removeProduct: (id: string) => void;
+  clearProducts: () => void;
   addCustomProduct: (name: string) => void;
 
   // Attività e Target
@@ -130,6 +131,7 @@ export const useStore = create<StoreState>()(
         delete newProducts[id];
         return { products: newProducts };
       }),
+      clearProducts: () => set({ products: {} }),
       addCustomProduct: (name) => set((state) => ({
         profile: state.profile ? { ...state.profile, customProducts: [...(state.profile.customProducts || []), name] } : null
       })),

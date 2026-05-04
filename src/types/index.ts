@@ -98,6 +98,7 @@ export interface Product {
   colors?: string[];     // es. ['nero', 'blu', 'grigio']
   stock?: number;        // 0 = esaurito, undefined = non gestito
   line?: ProductLine;    // linea di prodotto Blåkläder
+  imageUrl?: string;     // base64 jpeg, max 400px
 }
 
 export interface Deal {

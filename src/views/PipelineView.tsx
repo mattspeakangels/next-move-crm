@@ -14,6 +14,15 @@ const STAGES: { id: DealStage; name: string; color: string }[] = [
   { id: 'negoziazione', name: 'Trattativa', color: 'bg-indigo-500' }
 ];
 
+const STAGE_LABELS: Record<string, string> = {
+  lead: 'Lead',
+  qualificato: 'Qualificato',
+  proposta: 'Proposta',
+  negoziazione: 'Trattativa',
+  'chiuso-vinto': 'Chiuso Vinto',
+  'chiuso-perso': 'Chiuso Perso',
+};
+
 function getSemaphore(deadline: number): { dot: string; overdueDays: number } {
   const diffDays = Math.floor((deadline - Date.now()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return { dot: 'bg-red-500', overdueDays: Math.abs(diffDays) };
@@ -30,7 +39,7 @@ interface PipelineViewProps {
 }
 
 export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact }) => {
-  const { deals, contacts, offers, updateDeal, removeDeal } = useStore();
+  const { deals, contacts, offers, updateDeal, removeDeal, addActivity } = useStore();
 
   const [addDealOpen, setAddDealOpen] = useState(false);
   const [editDealId, setEditDealId] = useState<string | null>(null);
@@ -85,6 +94,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
     nextActionPriority: NextActionPriority;
   }) => {
     if (pendingMove) {
+      const deal = deals[pendingMove.dealId];
+      const oldStage = deal?.stage;
       updateDeal(pendingMove.dealId, {
         stage: pendingMove.newStage,
         ...(pendingMove.newStage === 'chiuso-vinto' ? { closedAt: Date.now() } : {}),
@@ -93,6 +104,18 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
         nextActionDeadline: data.nextActionDeadline,
         nextActionPriority: data.nextActionPriority,
       });
+      if (deal && oldStage && oldStage !== pendingMove.newStage) {
+        addActivity({
+          id: `act_stage_${Date.now()}`,
+          contactId: deal.contactId,
+          dealId: deal.id,
+          type: 'nota',
+          date: Date.now(),
+          outcome: 'avanzamento-pipeline',
+          notes: `Pipeline: ${STAGE_LABELS[oldStage]} → ${STAGE_LABELS[pendingMove.newStage]}`,
+          createdAt: Date.now(),
+        });
+      }
     } else if (activeDealForModal) {
       updateDeal(activeDealForModal.id, {
         nextAction: data.nextAction,
@@ -109,10 +132,24 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
   const handleModalClose = () => {
     // Se si chiude senza salvare durante uno spostamento, sposta comunque il deal
     if (pendingMove) {
+      const deal = deals[pendingMove.dealId];
+      const oldStage = deal?.stage;
       updateDeal(pendingMove.dealId, {
         stage: pendingMove.newStage,
         ...(pendingMove.newStage === 'chiuso-vinto' ? { closedAt: Date.now() } : {}),
       });
+      if (deal && oldStage && oldStage !== pendingMove.newStage) {
+        addActivity({
+          id: `act_stage_${Date.now()}`,
+          contactId: deal.contactId,
+          dealId: deal.id,
+          type: 'nota',
+          date: Date.now(),
+          outcome: 'avanzamento-pipeline',
+          notes: `Pipeline: ${STAGE_LABELS[oldStage]} → ${STAGE_LABELS[pendingMove.newStage]}`,
+          createdAt: Date.now(),
+        });
+      }
     }
     setPendingMove(null);
     setActiveDealForModal(null);
@@ -157,13 +194,13 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
           return (
             <div key={stage.id} className="flex-shrink-0 w-72">
               {/* Column header */}
-              <div className="flex justify-between items-center px-1 mb-3">
+              <div className="flex justify-between items-center px-2 mb-3 pb-2 border-b-2 border-gray-100 dark:border-gray-700">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${stage.color}`} />
-                  <h3 className="font-bold uppercase text-[10px] tracking-widest text-gray-400">{stage.name}</h3>
-                  <span className="text-[10px] text-gray-400 font-bold">({stageDeals.length})</span>
+                  <span className={`w-3 h-3 rounded-full flex-shrink-0 ${stage.color}`} />
+                  <h3 className="font-black uppercase text-sm tracking-widest dark:text-white">{stage.name}</h3>
+                  <span className="text-xs text-gray-400 font-bold">({stageDeals.length})</span>
                 </div>
-                <span className="font-bold text-xs dark:text-gray-300">€{(stageTotal / 1000).toFixed(0)}k</span>
+                <span className="font-black text-sm text-indigo-600 dark:text-indigo-400">€{(stageTotal / 1000).toFixed(0)}k</span>
               </div>
 
               {/* Deal cards */}

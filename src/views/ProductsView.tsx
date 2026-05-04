@@ -2,7 +2,8 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import {
   Plus, Upload, Search, X, MoreHorizontal, Package,
-  LayoutList, LayoutGrid, Rows3, ShoppingBag, Check, Trash2, Copy, Pencil
+  LayoutList, LayoutGrid, Rows3, ShoppingBag, Check, Trash2, Copy, Pencil, RefreshCw,
+  Tag, Ruler, Layers
 } from 'lucide-react';
 import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
@@ -45,6 +46,25 @@ const COLOR_HEX: Record<string, string> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getColorHex = (c: string) => COLOR_HEX[c.toLowerCase()] ?? '#9CA3AF';
+
+function resizeImage(file: File, maxSize = 400): Promise<string> {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 const pName = (p: Product) => p.name || p.description;
 
@@ -149,10 +169,11 @@ const CompactList: React.FC<{
   products: Product[];
   selected: Set<string>;
   onToggle: (id: string) => void;
+  onOpen: (p: Product) => void;
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
   onEdit: (p: Product) => void;
-}> = ({ products, selected, onToggle, onDelete, onDuplicate, onEdit }) => {
+}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit }) => {
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
@@ -168,16 +189,20 @@ const CompactList: React.FC<{
         return (
           <div
             key={p.id}
-            onClick={() => onToggle(p.id)}
+            onClick={() => onOpen(p)}
             style={{ minHeight: 54, opacity: st === 'esaurito' ? 0.6 : 1 }}
             className={`flex items-center px-4 cursor-pointer transition-colors ${
               i > 0 ? 'border-t border-gray-50 dark:border-gray-700/50' : ''
             } ${sel ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'}`}
           >
-            {/* Left: color dots */}
+            {/* Left: thumbnail o color dots */}
             <div className="mr-3 flex-shrink-0">
-              <ColorDots colors={p.colors} size={14} />
-              {!p.colors?.length && <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center"><Package size={14} className="text-gray-400" /></div>}
+              {p.imageUrl
+                ? <img src={p.imageUrl} alt={pName(p)} className="w-9 h-9 rounded-xl object-cover border border-gray-100 dark:border-gray-700" />
+                : p.colors?.length
+                  ? <ColorDots colors={p.colors} size={14} />
+                  : <div className="w-9 h-9 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center"><Package size={14} className="text-gray-400" /></div>
+              }
             </div>
 
             {/* Center: name + code + meta */}
@@ -214,7 +239,8 @@ const CompactList: React.FC<{
               </div>
               <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
               <div
-                className={`w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                onClick={e => { e.stopPropagation(); onToggle(p.id); }}
+                className={`w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${
                   sel
                     ? 'bg-indigo-600 border-indigo-600'
                     : 'border-gray-300 dark:border-gray-600'
@@ -239,10 +265,11 @@ const VisualList: React.FC<{
   products: Product[];
   selected: Set<string>;
   onToggle: (id: string) => void;
+  onOpen: (p: Product) => void;
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
   onEdit: (p: Product) => void;
-}> = ({ products, selected, onToggle, onDelete, onDuplicate, onEdit }) => {
+}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit }) => {
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
@@ -264,7 +291,7 @@ const VisualList: React.FC<{
         return (
           <div
             key={p.id}
-            onClick={() => onToggle(p.id)}
+            onClick={() => onOpen(p)}
             style={{ opacity: st === 'esaurito' ? 0.65 : 1, borderRadius: 12, padding: 11 }}
             className={`bg-white dark:bg-gray-800 border flex gap-3 cursor-pointer transition-all ${
               sel ? 'border-indigo-400 dark:border-indigo-500' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
@@ -272,7 +299,10 @@ const VisualList: React.FC<{
           >
             {/* Thumbnail */}
             <div className="flex-shrink-0 relative" style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ width: '100%', height: '100%', background: thumbGrad(p) }} />
+              {p.imageUrl
+                ? <img src={p.imageUrl} alt={pName(p)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', background: thumbGrad(p) }} />
+              }
               {p.line && (
                 <span style={{
                   position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
@@ -325,7 +355,8 @@ const VisualList: React.FC<{
               <div className="flex items-center gap-1">
                 <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
                 <div
-                  className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all ${
+                  onClick={e => { e.stopPropagation(); onToggle(p.id); }}
+                  className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
                     sel ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   role="checkbox"
@@ -349,10 +380,11 @@ const GridList: React.FC<{
   products: Product[];
   selected: Set<string>;
   onToggle: (id: string) => void;
+  onOpen: (p: Product) => void;
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
   onEdit: (p: Product) => void;
-}> = ({ products, selected, onToggle, onDelete, onDuplicate, onEdit }) => {
+}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit }) => {
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
     return CATEGORIES.find(x => x.id === c)?.label ?? p.category;
@@ -374,14 +406,15 @@ const GridList: React.FC<{
         return (
           <div
             key={p.id}
-            onClick={() => onToggle(p.id)}
+            onClick={() => onOpen(p)}
             style={{ opacity: st === 'esaurito' ? 0.65 : 1, borderRadius: 14, overflow: 'hidden' }}
             className={`bg-white dark:bg-gray-800 border cursor-pointer transition-all ${
               sel ? 'border-indigo-400 shadow-md shadow-indigo-100 dark:shadow-indigo-900/20' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
             }`}
           >
             {/* Hero */}
-            <div style={{ position: 'relative', aspectRatio: '1 / 1.05', background: heroGrad(p) }}>
+            <div style={{ position: 'relative', aspectRatio: '1 / 1.05', background: p.imageUrl ? 'transparent' : heroGrad(p) }}>
+              {p.imageUrl && <img src={p.imageUrl} alt={pName(p)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
               {/* Stock badge top-left */}
               {(st === 'esaurito' || st === 'low') && (
                 <div style={{ position: 'absolute', top: 6, left: 6 }}>
@@ -389,8 +422,11 @@ const GridList: React.FC<{
                 </div>
               )}
               {/* Checkmark top-right */}
-              <div style={{ position: 'absolute', top: 6, right: 6 }}>
-                <div className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all ${
+              <div
+                style={{ position: 'absolute', top: 6, right: 6 }}
+                onClick={e => { e.stopPropagation(); onToggle(p.id); }}
+              >
+                <div className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
                   sel ? 'bg-indigo-600 border-indigo-600' : 'bg-white/20 border-white/50'
                 }`}>
                   {sel && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -450,10 +486,19 @@ const AddProductModal: React.FC<{
   const [form, setForm] = useState<Partial<Product>>(
     editProduct
       ? { ...editProduct }
-      : { code: '', description: '', name: '', category: '', price: 0, sizes: '', discount: 0, colors: [], stock: undefined, line: undefined }
+      : { code: '', description: '', name: '', category: '', price: 0, sizes: '', discount: 0, colors: [], stock: undefined, line: undefined, imageUrl: undefined }
   );
   const [colorInput, setColorInput] = useState('');
+  const imgInputRef = useRef<HTMLInputElement>(null);
   const set = (k: keyof Product, v: unknown) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const base64 = await resizeImage(file);
+    set('imageUrl', base64);
+    if (imgInputRef.current) imgInputRef.current.value = '';
+  };
 
   const handleSave = () => {
     if (!form.code || !form.description) return;
@@ -461,7 +506,8 @@ const AddProductModal: React.FC<{
       code: form.code!, description: form.description!, name: form.name || form.description,
       category: form.category || 'accessori', price: Number(form.price) || 0,
       sizes: form.sizes || '', discount: Number(form.discount) || 0,
-      colors: form.colors || [], stock: form.stock, line: form.line
+      colors: form.colors || [], stock: form.stock, line: form.line,
+      imageUrl: form.imageUrl,
     });
     onClose();
   };
@@ -544,6 +590,29 @@ const AddProductModal: React.FC<{
               </div>
             )}
           </div>
+          {/* Immagine */}
+          <div>
+            <label className={labelCls}>Immagine articolo</label>
+            <input ref={imgInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            {form.imageUrl ? (
+              <div className="flex items-center gap-3">
+                <img src={form.imageUrl} alt="preview" className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100 dark:border-gray-700" />
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => imgInputRef.current?.click()} className="text-xs font-bold text-indigo-600 hover:underline">Cambia foto</button>
+                  <button onClick={() => set('imageUrl', undefined)} className="text-xs font-bold text-red-400 hover:underline">Rimuovi</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => imgInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+              >
+                <Upload size={20} />
+                <span className="text-xs font-bold">Carica foto (jpg, png, webp)</span>
+              </button>
+            )}
+          </div>
+
           <button onClick={handleSave} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-indigo-700 transition-all mt-2">
             {editProduct ? 'Salva Modifiche' : 'Salva nel Catalogo'}
           </button>
@@ -650,6 +719,178 @@ const AddToOfferModal: React.FC<{
   );
 };
 
+// ─── PRODUCT DETAIL MODAL ─────────────────────────────────────────────────────
+const ProductDetailModal: React.FC<{
+  product: Product;
+  onClose: () => void;
+  onEdit: (p: Product) => void;
+  onDuplicate: (p: Product) => void;
+  onDelete: (id: string) => void;
+  onAddToOffer: (p: Product) => void;
+}> = ({ product: p, onClose, onEdit, onDuplicate, onDelete, onAddToOffer }) => {
+  const catStyle = CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
+  const catLabel = CATEGORIES.find(x => x.id === normCat(p.category))?.label ?? p.category;
+  const st = stockSt(p);
+
+  const heroGrad = () => {
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#4F46E5';
+    const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : c1 + '99';
+    return `linear-gradient(160deg, ${c1} 0%, ${c2} 100%)`;
+  };
+
+  const netPrice = p.price > 0 && p.discount ? p.price * (1 - p.discount / 100) : p.price;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
+      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-t-[2rem] md:rounded-[2rem] shadow-2xl max-h-[92vh] overflow-y-auto">
+        {/* Hero image / color gradient */}
+        <div style={{ position: 'relative', height: 200, background: p.imageUrl ? 'transparent' : heroGrad(), borderRadius: '2rem 2rem 0 0', overflow: 'hidden' }}>
+          {p.imageUrl && (
+            <img src={p.imageUrl} alt={pName(p)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white rounded-full p-2 hover:bg-black/50 transition-all"
+          >
+            <X size={18} />
+          </button>
+          {p.line && (
+            <span style={{
+              position: 'absolute', bottom: 12, left: 16,
+              background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(255,255,255,0.35)',
+              borderRadius: 20, padding: '3px 10px',
+              fontSize: 11, fontWeight: 700, color: '#fff',
+            }}>{p.line}</span>
+          )}
+          {(st === 'esaurito' || st === 'low') && (
+            <div style={{ position: 'absolute', top: 12, left: 16 }}>
+              <StockBadge p={p} />
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-5">
+          {/* Name + code */}
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="text-xl font-black dark:text-white leading-tight">{pName(p)}</h2>
+              <span className={`flex-shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${catStyle.bg} ${catStyle.text}`}>{catLabel}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="font-mono text-gray-400 text-sm">{p.code}</span>
+              {p.line && <><span className="text-gray-200 dark:text-gray-600">·</span><span className="font-mono text-gray-400 text-sm">{p.line}</span></>}
+            </div>
+          </div>
+
+          {/* Price */}
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Prezzo</div>
+              {p.price > 0 ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black dark:text-white">{fPrice(p)}</span>
+                  {p.discount ? (
+                    <>
+                      <span className="text-sm text-gray-400 line-through">€{p.price.toFixed(2)}</span>
+                      <span className="text-xs font-black text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">-{p.discount}%</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="text-lg font-bold text-gray-400">Da configurare</span>
+              )}
+              {p.discount && p.price > 0 ? (
+                <div className="text-xs text-gray-400 mt-0.5">Netto: <span className="font-bold text-gray-600 dark:text-gray-300">€{netPrice.toFixed(2)}</span></div>
+              ) : null}
+            </div>
+            {p.stock !== undefined && p.stock !== null && (
+              <div className="text-right">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Stock</div>
+                <div className={`text-xl font-black ${st === 'esaurito' ? 'text-red-500' : st === 'low' ? 'text-yellow-600' : 'dark:text-white'}`}>{p.stock}</div>
+                <div className="text-[10px] text-gray-400">pz</div>
+              </div>
+            )}
+          </div>
+
+          {/* Details grid */}
+          <div className="space-y-3">
+            {p.sizes && (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Ruler size={14} className="text-gray-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Taglie</div>
+                  <div className="text-sm font-bold dark:text-white">{p.sizes}</div>
+                </div>
+              </div>
+            )}
+            {p.colors?.length ? (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Layers size={14} className="text-gray-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Colori</div>
+                  <div className="flex flex-wrap gap-2">
+                    {p.colors.map((c, i) => (
+                      <span key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 rounded-full px-2.5 py-1 text-xs font-bold dark:text-white">
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: getColorHex(c), display: 'inline-block', border: '1px solid rgba(0,0,0,0.1)' }} />
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {p.category && (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Tag size={14} className="text-gray-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Categoria</div>
+                  <div className="text-sm font-bold dark:text-white">{catLabel}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <button
+              onClick={() => { onAddToOffer(p); onClose(); }}
+              className="flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all col-span-2"
+            >
+              <ShoppingBag size={14} /> Aggiungi a offerta
+            </button>
+            <button
+              onClick={() => { onEdit(p); onClose(); }}
+              className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+            >
+              <Pencil size={13} /> Modifica
+            </button>
+            <button
+              onClick={() => { onDuplicate(p); onClose(); }}
+              className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+            >
+              <Copy size={13} /> Duplica
+            </button>
+            <button
+              onClick={() => { onDelete(p.id); onClose(); }}
+              className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-500 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all col-span-2"
+            >
+              <Trash2 size={13} /> Elimina articolo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── MAIN VIEW ────────────────────────────────────────────────────────────────
 export const ProductsView: React.FC = () => {
   const { products, addProduct, updateProduct, removeProduct } = useStore();
@@ -665,6 +906,8 @@ export const ProductsView: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [importingBlk, setImportingBlk] = useState(false);
 
   const changeLayout = (v: LayoutVariant) => {
     setLayout(v);
@@ -724,6 +967,34 @@ export const ProductsView: React.FC = () => {
     setShowOfferModal(true);
   };
 
+  const handleDeleteSelected = () => {
+    if (selected.size === 0) return;
+    if (!window.confirm(`Eliminare ${selected.size} articoli selezionati?`)) return;
+    selected.forEach(id => removeProduct(id));
+    showToast(`${selected.size} articoli eliminati`, 'success');
+    clearSelect();
+  };
+
+  const handleImportBlaklader = async () => {
+    const existingIds = new Set(productList.map(p => p.id));
+    setImportingBlk(true);
+    try {
+      const res = await fetch('/blaklader_catalog.json');
+      const catalog: Omit<Product, 'id'>[] = await res.json();
+      let added = 0;
+      for (const item of catalog as (Omit<Product, 'id'> & { id: string })[]) {
+        if (!existingIds.has(item.id)) {
+          addProduct(item);
+          added++;
+        }
+      }
+      showToast(`${added} articoli Blåkläder importati${added < catalog.length ? ` (${catalog.length - added} già presenti)` : ''}`, 'success');
+    } catch {
+      showToast('Errore durante il caricamento del catalogo', 'error' as any);
+    }
+    setImportingBlk(false);
+  };
+
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
@@ -758,7 +1029,13 @@ export const ProductsView: React.FC = () => {
     { id: 'grid'    as LayoutVariant, icon: <LayoutGrid size={15} />,  label: 'Griglia'  },
   ];
 
-  const listProps = { products: filtered, selected, onToggle: toggleSelect, onDelete: handleDelete, onDuplicate: handleDuplicate, onEdit: setEditingProduct };
+  const handleOpenDetail = (p: Product) => setViewingProduct(p);
+  const handleAddToOfferFromDetail = (p: Product) => {
+    setSelected(new Set([p.id]));
+    setShowOfferModal(true);
+  };
+
+  const listProps = { products: filtered, selected, onToggle: toggleSelect, onOpen: handleOpenDetail, onDelete: handleDelete, onDuplicate: handleDuplicate, onEdit: setEditingProduct };
 
   return (
     <div className="space-y-4 pb-6">
@@ -773,6 +1050,14 @@ export const ProductsView: React.FC = () => {
           <button onClick={() => fileInputRef.current?.click()}
             className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-indigo-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all">
             <Upload size={16} /> CSV
+          </button>
+          <button
+            onClick={handleImportBlaklader}
+            disabled={importingBlk}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-amber-600 border-2 border-amber-100 dark:border-amber-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-amber-50 transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={importingBlk ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">Blåkläder</span>
           </button>
           <button onClick={() => setShowModal(true)}
             className="bg-indigo-600 text-white px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all text-sm">
@@ -832,9 +1117,12 @@ export const ProductsView: React.FC = () => {
       {selected.size > 0 && (
         <div className="sticky top-2 z-20 bg-indigo-600 text-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-xl shadow-indigo-200 dark:shadow-indigo-900/40">
           <span className="font-bold text-sm">{selected.size} selezionati</span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button onClick={handleAddToOffer} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all">
               <ShoppingBag size={13} /> Aggiungi a offerta
+            </button>
+            <button onClick={handleDeleteSelected} className="flex items-center gap-1.5 bg-red-500/80 hover:bg-red-500 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all">
+              <Trash2 size={13} /> Elimina
             </button>
             <button onClick={clearSelect} className="p-1.5 hover:bg-white/20 rounded-lg transition-all">
               <X size={16} />
@@ -878,6 +1166,18 @@ export const ProductsView: React.FC = () => {
         <AddToOfferModal
           selectedProducts={productList.filter(p => selected.has(p.id))}
           onClose={() => { setShowOfferModal(false); clearSelect(); }}
+        />
+      )}
+
+      {/* ── Product Detail Modal ── */}
+      {viewingProduct && (
+        <ProductDetailModal
+          product={viewingProduct}
+          onClose={() => setViewingProduct(null)}
+          onEdit={p => { setViewingProduct(null); setEditingProduct(p); }}
+          onDuplicate={p => { handleDuplicate(p); setViewingProduct(null); }}
+          onDelete={id => { handleDelete(id); setViewingProduct(null); }}
+          onAddToOffer={handleAddToOfferFromDetail}
         />
       )}
     </div>

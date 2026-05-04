@@ -4,7 +4,7 @@ import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users }
 import { useToast } from '../components/ui/ToastContext';
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, contacts, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
+  const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
   const { showToast } = useToast();
   const [newProduct, setNewProduct] = useState('');
 
@@ -135,6 +135,25 @@ export const SettingsView: React.FC = () => {
           className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <Trash2 size={15} /> Svuota tutti i contatti
+        </button>
+      </div>
+
+      {/* Svuota Catalogo Prodotti */}
+      <div className="p-6 border-t border-gray-100 dark:border-gray-700">
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Catalogo Prodotti</p>
+        <p className="text-xs text-gray-400 mb-3">
+          Attualmente hai <span className="font-black text-indigo-600">{Object.keys(products).length}</span> articoli nel catalogo
+        </p>
+        <button
+          onClick={() => {
+            if (window.confirm(`Eliminare tutti i ${Object.keys(products).length} articoli del catalogo? Questa azione non è reversibile.`)) {
+              clearProducts();
+              showToast('Catalogo prodotti svuotato', 'success');
+            }
+          }}
+          className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        >
+          <Trash2 size={15} /> Svuota catalogo prodotti
         </button>
       </div>
 

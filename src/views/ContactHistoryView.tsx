@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
+import { useStoricoStore } from '../store/storicoStore';
 import { Contact } from '../types';
 import {
   ArrowLeft, Phone, Mail, MapPin, Video, Wrench, GraduationCap,
   MonitorPlay, FileText, TrendingUp, StickyNote,
-  ShoppingCart, CheckCircle, XCircle, Send
+  ShoppingCart, CheckCircle, XCircle, Send, Package
 } from 'lucide-react';
 
 // ── Tipi evento unificati ────────────────────────────────────────────────
@@ -54,14 +55,55 @@ interface Props {
   onBack: () => void;
 }
 
+function normalizeName(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
   const { activities, offers, salesTransactions, deals } = useStore();
+  const { clientiDettagliati } = useStoricoStore();
   const [filter, setFilter] = useState<'tutti' | EventKind>('tutti');
+
+  // Match del cliente nel file storico tramite nome normalizzato
+  const clienteStorico = useMemo(() => {
+    const target = normalizeName(contact.company);
+    return clientiDettagliati.find(c => normalizeName(c.nome) === target) ?? null;
+  }, [clientiDettagliati, contact.company]);
 
   // ── Costruisce la timeline unificata ──
 
   const allEvents: TimelineEvent[] = useMemo(() => {
     const events: TimelineEvent[] = [];
+
+    // Ordini dallo storico Excel (clientiDettagliati)
+    if (clienteStorico) {
+      clienteStorico.prodotti.forEach(prodotto => {
+        prodotto.ordini.forEach(ordine => {
+          const parts = ordine.date.split('-');
+          let ts = Date.now();
+          if (parts.length === 3) {
+            const [dd, mm, yyyy] = parts;
+            ts = new Date(`${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}T12:00:00`).getTime();
+          }
+          if (isNaN(ts)) return;
+          events.push({
+            id: `storico_${prodotto.itemId}_${ordine.date}_${ordine.amount}`,
+            kind: 'ordine',
+            date: ts,
+            title: prodotto.nome,
+            subtitle: ordine.quantity > 0
+              ? `${ordine.quantity} pz · ${ordine.year}`
+              : `${ordine.year}`,
+            amount: ordine.amount,
+            color: 'text-emerald-600',
+            bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
+            icon: <Package size={14} />,
+            badge: 'Storico',
+            badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+          });
+        });
+      });
+    }
 
     // Attività
     Object.values(activities)
@@ -145,7 +187,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
       });
 
     return events.sort((a, b) => b.date - a.date);
-  }, [activities, offers, salesTransactions, deals, contact.id]);
+  }, [activities, offers, salesTransactions, deals, contact.id, clienteStorico]);
 
   const filtered = filter === 'tutti' ? allEvents : allEvents.filter(e => e.kind === filter);
 
@@ -156,7 +198,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
     const offs = allEvents.filter(e => e.kind === 'offerta').length;
     const ords = allEvents.filter(e => e.kind === 'ordine').length;
     const fatturato = allEvents
-      .filter(e => (e.kind === 'ordine' || (e.kind === 'offerta')) && e.amount)
+      .filter(e => e.kind === 'ordine' && e.amount)
       .reduce((sum, e) => sum + (e.amount ?? 0), 0);
     return { acts, offs, ords, fatturato };
   }, [allEvents]);
@@ -192,7 +234,14 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-black dark:text-white truncate">{contact.company}</h1>
-          <p className="text-xs text-gray-400 font-bold">{contact.contactName && `${contact.contactName} · `}Storico completo</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-xs text-gray-400 font-bold">{contact.contactName && `${contact.contactName} · `}Storico completo</p>
+            {clienteStorico && (
+              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                Fatturato collegato
+              </span>
+            )}
+          </div>
         </div>
         <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full ${contact.status === 'cliente' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
           {contact.status === 'cliente' ? 'Cliente' : 'Prospect'}

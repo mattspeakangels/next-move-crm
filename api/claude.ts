@@ -373,7 +373,6 @@ export default async function handler(req: { method: string; body: unknown; head
         });
 
         if (!response.ok) {
-          const errBody = await response.text();
           lastError = `${model}: ${response.status}`;
           continue;
         }

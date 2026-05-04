@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from './lib/authContext';
+import { useFirestoreSync } from './lib/useFirestoreSync';
+import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp } from 'lucide-react';
 import { Dashboard } from './views/DashboardView';
 import { ContactsView } from './views/ContactsView';
@@ -156,4 +159,20 @@ function AppContent() {
   );
 }
 
-export default function App() { return (<ToastProvider><AppContent /></ToastProvider>); }
+function AuthGate() {
+  const { user, loading } = useAuth();
+  useFirestoreSync(user?.uid ?? '');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) return <LoginView />;
+  return <AppContent />;
+}
+
+export default function App() { return (<ToastProvider><AuthGate /></ToastProvider>); }

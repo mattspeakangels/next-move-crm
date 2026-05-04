@@ -366,10 +366,31 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     return result;
   };
 
+  // Divide il CSV in record rispettando campi tra virgolette che contengono newline
+  const splitCSVRecords = (text: string): string[] => {
+    const records: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (inQuotes && text[i + 1] === '"') { current += '"'; i++; }
+        else { inQuotes = !inQuotes; current += ch; }
+      } else if (ch === '\n' && !inQuotes) {
+        if (current.trim()) records.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    if (current.trim()) records.push(current);
+    return records;
+  };
+
   const parseCSVContacts = (text: string, fallbackStatus: 'potenziale' | 'cliente'): Contact[] => {
     // Rimuovi BOM e normalizza line endings
     const cleaned = text.replace(/\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    const lines = cleaned.split('\n').filter(l => l.trim());
+    const lines = splitCSVRecords(cleaned);
     if (lines.length < 2) return [];
 
     // ─── Rileva il separatore ───

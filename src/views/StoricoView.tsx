@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import * as XLSX from 'xlsx';
-import { useStoricoStore, ClienteRecord } from '../store/storicoStore';
+import { useStoricoStore, ClienteRecord, ClienteDettagliato as ClienteDettagliatoType } from '../store/storicoStore';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import {
@@ -17,34 +17,7 @@ import {
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 // ClienteRecord, ProdottoRecord, StoricoBudget are imported from storicoStore
 
-interface OrderRecord {
-  date: string; // DD-MM-YYYY o raw
-  year: number; // Anno estratto dalla data
-  amount: number;
-  margin: number;
-  quantity: number;
-}
-
-interface ProdottoDettagliato {
-  itemId: string;
-  nome: string;
-  ordini: OrderRecord[]; // Ordini individuali per questo prodotto
-}
-
-interface ClienteDettagliato {
-  clientId: number;
-  nome: string;
-  prodotti: ProdottoDettagliato[];
-  // Aggregati per anno (calcolati da ordini)
-  fatturato2023: number;
-  fatturato2024: number;
-  fatturato2025: number;
-  fatturato2026: number;
-  margine2023: number;
-  margine2024: number;
-  margine2025: number;
-  margine2026: number;
-}
+type ClienteDettagliato = ClienteDettagliatoType;
 
 interface DealSuggerito {
   clientId: number;
@@ -55,6 +28,8 @@ interface DealSuggerito {
   trend: 'crescita' | 'stabile' | 'calo';
   prodottiSuggeriti: string[];
   deltaPct: number;
+  mensili: { year: number; amount: number }[];
+  mesiWindow: number[];
 }
 
 
@@ -471,7 +446,63 @@ function analyzeClientSignals(cliente: ClienteDettagliato, oggi: Date): ClientSi
 
 // ─── PIPELINE ENGINE ──────────────────────────────────────────────────────────
 
-function generaDeal(clienti: ClienteRecord[]): DealSuggerito[] {
+// ─── SEASONAL BASE ────────────────────────────────────────────────────────────
+
+function getSeasonalBase(cliente: ClienteDettagliato, windowSize: number = 2): {
+  base: number;
+  byYear: { year: number; amount: number }[];
+  mesiConsiderati: number[];
+  topProdotti: { nome: string; avgAmount: number }[];
+} {
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+
+  const mesiConsiderati: number[] = [];
+  for (let i = -windowSize; i <= windowSize; i++) {
+    let m = currentMonth + i;
+    if (m < 1) m += 12;
+    if (m > 12) m -= 12;
+    mesiConsiderati.push(m);
+  }
+
+  const byYearMap: Record<number, number> = {};
+  const prodottiMap: Record<string, Record<number, number>> = {};
+
+  for (const prodotto of cliente.prodotti) {
+    for (const ordine of prodotto.ordini) {
+      const parts = ordine.date.split('-');
+      if (parts.length < 3) continue;
+      const month = parseInt(parts[1]);
+      if (!mesiConsiderati.includes(month)) continue;
+
+      byYearMap[ordine.year] = (byYearMap[ordine.year] || 0) + ordine.amount;
+
+      if (!prodottiMap[prodotto.nome]) prodottiMap[prodotto.nome] = {};
+      prodottiMap[prodotto.nome][ordine.year] = (prodottiMap[prodotto.nome][ordine.year] || 0) + ordine.amount;
+    }
+  }
+
+  const byYear = Object.entries(byYearMap)
+    .map(([y, a]) => ({ year: parseInt(y), amount: a }))
+    .sort((a, b) => a.year - b.year);
+
+  const base = byYear.length > 0
+    ? byYear.reduce((s, d) => s + d.amount, 0) / byYear.length
+    : 0;
+
+  const topProdotti = Object.entries(prodottiMap)
+    .map(([nome, byYr]) => {
+      const vals = Object.values(byYr);
+      return { nome, avgAmount: vals.reduce((s, v) => s + v, 0) / vals.length };
+    })
+    .sort((a, b) => b.avgAmount - a.avgAmount)
+    .slice(0, 3);
+
+  return { base, byYear, mesiConsiderati, topProdotti };
+}
+
+// ─── DEAL GENERATION ──────────────────────────────────────────────────────────
+
+function generaDeal(clienti: ClienteDettagliato[]): DealSuggerito[] {
   const totale2024 = clienti.reduce((s, c) => s + c.fatturato2024, 0);
   const totale2023 = clienti.reduce((s, c) => s + c.fatturato2023, 0);
   const crescitaMedia = totale2023 > 0 ? ((totale2024 - totale2023) / totale2023) : 0;
@@ -483,65 +514,64 @@ function generaDeal(clienti: ClienteRecord[]): DealSuggerito[] {
     const f24 = cliente.fatturato2024;
     if (f23 === 0 && f24 === 0) continue;
 
-    const media = (f23 + f24) / (f23 > 0 && f24 > 0 ? 2 : 1);
     const delta = f23 > 0 ? ((f24 - f23) / f23) : 0;
+    const mediaAnnua = (f23 + f24) / (f23 > 0 && f24 > 0 ? 2 : 1);
 
-    // ── Top 3 prodotti per valore (base dell'opportunità) ──
-    // L'opportunità di deal riguarda specifici prodotti da riordinare,
-    // NON l'intero fatturato annuale del cliente.
-    const topProdottiSorted = [...cliente.prodotti]
-      .sort((a, b) => (b.fatturato2024 || b.fatturato2023) - (a.fatturato2024 || a.fatturato2023))
-      .slice(0, 3);
+    // Base stagionale: media degli ordini nello stesso periodo degli anni precedenti
+    const seasonal = getSeasonalBase(cliente);
+    const baseOpportunita = seasonal.base > 0
+      ? seasonal.base
+      : Math.round(mediaAnnua * 0.25);
 
-    // Somma dei top prodotti = base realistica dell'opportunità
-    const topSum = topProdottiSorted.reduce(
-      (s, p) => s + (p.fatturato2024 > 0 ? p.fatturato2024 : p.fatturato2023), 0
-    );
-    // Fallback se non ci sono prodotti: 25% del fatturato medio (stima conservativa)
-    const baseOpportunita = topSum > 0 ? topSum : Math.round(media * 0.25);
+    // Top prodotti: preferisce quelli stagionali, fallback per totale ordini annuali
+    const topProdotti = seasonal.topProdotti.length > 0
+      ? seasonal.topProdotti.map(p => p.nome.length > 35 ? p.nome.substring(0, 35) + '…' : p.nome)
+      : [...cliente.prodotti]
+          .sort((a, b) => {
+            const totA = a.ordini.reduce((s, o) => s + o.amount, 0);
+            const totB = b.ordini.reduce((s, o) => s + o.amount, 0);
+            return totB - totA;
+          })
+          .slice(0, 3)
+          .map(p => p.nome.length > 35 ? p.nome.substring(0, 35) + '…' : p.nome);
 
     let priorita: 'alta' | 'media' | 'bassa' = 'media';
     let motivazione = '';
     let valoreStimato = 0;
     let trend: 'crescita' | 'stabile' | 'calo' = 'stabile';
 
+    const mesiLabel = seasonal.mesiConsiderati
+      .map(m => MESI[m - 1])
+      .join('/');
+
     if (f24 > 0 && f23 > 0) {
       if (delta > 0.1) {
-        // Cliente in crescita → stima leggermente superiore alla base
         trend = 'crescita';
         valoreStimato = Math.round(baseOpportunita * (1 + Math.min(delta, 0.3)));
         priorita = 'alta';
-        motivazione = `Crescita ${Math.round(delta * 100)}% dal 2023 al 2024 — tendenza positiva`;
+        motivazione = `Crescita ${Math.round(delta * 100)}% YoY — stima su ordini ${mesiLabel}`;
       } else if (delta < -0.1) {
-        // Cliente in calo → target leggermente sotto la base per recupero
         trend = 'calo';
         valoreStimato = Math.round(baseOpportunita * 0.9);
         priorita = delta < -0.3 ? 'alta' : 'media';
-        motivazione = `Calo ${Math.round(Math.abs(delta) * 100)}% — recuperare con visita mirata`;
+        motivazione = `Calo ${Math.round(Math.abs(delta) * 100)}% — recuperare con visita mirata (${mesiLabel})`;
       } else {
-        // Cliente stabile → rinnovo sui prodotti chiave
         trend = 'stabile';
         valoreStimato = Math.round(baseOpportunita * (1 + crescitaMedia * 0.5));
         priorita = f24 > 10000 ? 'alta' : 'media';
-        motivazione = `Cliente stabile — opportunità rinnovo sui prodotti top`;
+        motivazione = `Cliente stabile — rinnovo stagionale (${mesiLabel})`;
       }
     } else if (f24 === 0 && f23 > 0) {
-      // Dormiente
       trend = 'calo';
       valoreStimato = Math.round(baseOpportunita * 0.7);
       priorita = f23 > 5000 ? 'alta' : 'bassa';
       motivazione = `Cliente dormiente — attivo in 2023 (€${fmt(f23)}) ma assente in 2024`;
     } else if (f23 === 0 && f24 > 0) {
-      // Nuovo cliente 2024
       trend = 'crescita';
       valoreStimato = Math.round(baseOpportunita * 1.2);
       priorita = 'alta';
       motivazione = `Nuovo cliente 2024 — alto potenziale di fidelizzazione`;
     }
-
-    const topProdotti = topProdottiSorted.map(p =>
-      p.nome.length > 35 ? p.nome.substring(0, 35) + '…' : p.nome
-    );
 
     deals.push({
       clientId: cliente.clientId,
@@ -552,17 +582,18 @@ function generaDeal(clienti: ClienteRecord[]): DealSuggerito[] {
       trend,
       prodottiSuggeriti: topProdotti,
       deltaPct: Math.round(delta * 100),
+      mensili: seasonal.byYear,
+      mesiWindow: seasonal.mesiConsiderati,
     });
   }
 
-  // Sort: alta priorità prima, poi per valore
   deals.sort((a, b) => {
     const pOrder = { alta: 0, media: 1, bassa: 2 };
     if (pOrder[a.priorita] !== pOrder[b.priorita]) return pOrder[a.priorita] - pOrder[b.priorita];
     return b.valoreStimato - a.valoreStimato;
   });
 
-  return deals.slice(0, 20); // Top 20
+  return deals.slice(0, 20);
 }
 
 // ─── FORMATTERS ───────────────────────────────────────────────────────────────
@@ -633,18 +664,53 @@ function DealCard({ deal, rank, onAddToPipeline }: { deal: DealSuggerito; rank: 
             {deal.priorita === 'alta' ? '🔴 Priorità Alta' : deal.priorita === 'media' ? '🟡 Priorità Media' : '⚪ Priorità Bassa'}
           </span>
           <button onClick={() => setOpen(!open)} className="text-xs text-gray-400 flex items-center gap-1 hover:text-gray-600">
-            Prodotti {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            Dettaglio {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
         </div>
 
-        {open && deal.prodottiSuggeriti.length > 0 && (
-          <div className="mt-3 space-y-1">
-            {deal.prodottiSuggeriti.map((p, i) => (
-              <div key={i} className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-                {p}
+        {open && (
+          <div className="mt-3 space-y-3">
+            {/* Breakdown stagionale */}
+            {deal.mensili && deal.mensili.length > 0 && (
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                  Ordini periodo {deal.mesiWindow?.map(m => MESI[m - 1]).join('/')}
+                </p>
+                <div className="space-y-1">
+                  {deal.mensili.map(({ year, amount }) => (
+                    <div key={year} className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-500 w-10">{year}</span>
+                      <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${c.dot}`}
+                          style={{ width: `${Math.min(100, (amount / Math.max(...deal.mensili!.map(d => d.amount))) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-black text-gray-700 dark:text-gray-300 w-16 text-right">
+                        {fmtEur(Math.round(amount))}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-700 mt-1">
+                    <span className="text-[10px] font-black uppercase text-gray-400">Media</span>
+                    <span className="text-xs font-black text-indigo-600">
+                      {fmtEur(Math.round(deal.mensili.reduce((s, d) => s + d.amount, 0) / deal.mensili.length))}
+                    </span>
+                  </div>
+                </div>
               </div>
-            ))}
+            )}
+            {/* Prodotti suggeriti */}
+            {deal.prodottiSuggeriti.length > 0 && (
+              <div className="space-y-1">
+                {deal.prodottiSuggeriti.map((p, i) => (
+                  <div key={i} className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${c.dot}`} />
+                    {p}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -663,13 +729,10 @@ function DealCard({ deal, rank, onAddToPipeline }: { deal: DealSuggerito; rank: 
 // ─── MAIN VIEW ────────────────────────────────────────────────────────────────
 
 export function StoricoView() {
-  // ── Stato persistente tra navigazioni (Zustand store in-memory) ──
-  const { clienti, fileName, anni, budget, setClienti, setFileName, setAnni, setBudget, reset } = useStoricoStore();
+  // ── Stato persistente (Zustand store con persist su localStorage) ──
+  const { clienti, clientiDettagliati, fileName, anni, budget, setClienti, setClientiDettagliati, setFileName, setAnni, setBudget, reset } = useStoricoStore();
   const { contacts, addDeal } = useStore();
   const { showToast } = useToast();
-
-  // ── Dati dettagliati con ordini individuali (date, importi singoli) ──
-  const [clientiDettagliati, setClientiDettagliati] = useState<ClienteDettagliato[]>([]);
 
   // ── Stato locale di UI (non serve che sopravviva alla navigazione) ──
   const [loading, setLoading] = useState(false);
@@ -775,7 +838,7 @@ export function StoricoView() {
   // Budget calculations
   const budgetAnnuale = budget.annuale || 0;
   const budgetMensileBase = budgetAnnuale / 12;
-  const deals = clienti.length > 0 ? generaDeal(clienti) : [];
+  const deals = clientiDettagliati.length > 0 ? generaDeal(clientiDettagliati) : [];
   const totalePipeline = deals.reduce((s, d) => s + d.valoreStimato, 0);
   const gapBudget = Math.max(0, budgetAnnuale - tot2024);
 
@@ -1351,15 +1414,18 @@ export function StoricoView() {
                           onClick={() => {
                             const clienteData = clientiDettagliati.find(c => c.clientId === signal.clientId);
                             const estimatedValue = Math.round(signal.frequency.mediaGiorni > 0 ? (clienteData?.fatturato2024 || 0) / (365 / signal.frequency.mediaGiorni) : (clienteData?.fatturato2024 || 0) * 0.25);
+                            const seasonal = clienteData ? getSeasonalBase(clienteData) : null;
                             const newDeal: DealSuggerito = {
                               clientId: signal.clientId,
                               nomeCliente: signal.nomeCliente,
-                              valoreStimato: estimatedValue,
+                              valoreStimato: seasonal && seasonal.base > 0 ? Math.round(seasonal.base) : estimatedValue,
                               motivazione: signal.action,
                               priorita: signal.score > 75 ? 'alta' : signal.score > 50 ? 'media' : 'bassa',
                               trend: signal.quantityTrend.direction as 'crescita' | 'stabile' | 'calo',
                               prodottiSuggeriti: signal.productsLost.map(p => p.nome).slice(0, 3),
                               deltaPct: Math.round(signal.quantityTrend.pctChange),
+                              mensili: seasonal?.byYear ?? [],
+                              mesiWindow: seasonal?.mesiConsiderati ?? [],
                             };
                             setPipelineModal(newDeal);
                           }}
