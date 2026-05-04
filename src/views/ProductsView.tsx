@@ -952,6 +952,20 @@ export const ProductsView: React.FC = () => {
   };
 
   const handleSaveProduct = (data: Omit<Product, 'id'>) => {
+    // Validate product (business logic)
+    if (data.price < 0) {
+      showToast('Errore: Il prezzo non può essere negativo', 'error');
+      return;
+    }
+    if (data.discount < 0) {
+      showToast('Errore: Lo sconto non può essere negativo', 'error');
+      return;
+    }
+    if (data.discount > 100) {
+      showToast('Errore: Lo sconto non può superare il 100%', 'error');
+      return;
+    }
+
     if (editingProduct) {
       updateProduct(editingProduct.id, data);
       showToast('Articolo aggiornato', 'success');
@@ -1001,23 +1015,39 @@ export const ProductsView: React.FC = () => {
     reader.onload = ev => {
       const text = ev.target?.result as string;
       let count = 0;
+      let errors = 0;
       text.split('\n').slice(1).forEach((line, i) => {
         const l = line.trim(); if (!l) return;
         const sep = l.includes(';') ? ';' : ',';
         const v = l.split(sep);
         if (v[0] && v[1]) {
+          const price = parseFloat(v[3]) || 0;
+          const discount = parseFloat(v[5]) || 0;
+
+          // Validate data before importing
+          if (price < 0) {
+            console.warn(`Riga ${i + 2}: Prezzo negativo, saltato`);
+            errors++;
+            return;
+          }
+          if (discount < 0 || discount > 100) {
+            console.warn(`Riga ${i + 2}: Sconto invalido (${discount}), saltato`);
+            errors++;
+            return;
+          }
+
           addProduct({
             id: `prod_${Date.now()}_${i}`,
             code: v[0].trim(), description: v[1].trim(), name: v[1].trim(),
             category: v[2]?.trim() || 'accessori',
-            price: parseFloat(v[3]) || 0,
+            price,
             sizes: v[4]?.trim() || '',
-            discount: parseFloat(v[5]) || 0,
+            discount,
           });
           count++;
         }
       });
-      showToast(`${count} articoli importati`, 'success');
+      showToast(`${count} articoli importati${errors > 0 ? ` (${errors} errori ignorati)` : ''}`, 'success');
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);

@@ -104,6 +104,31 @@ export const OffersView: React.FC = () => {
       return;
     }
 
+    // Validate offer items (business logic)
+    for (const item of items) {
+      if (item.discount < 0) {
+        showToast(`Errore: Lo sconto non può essere negativo (${item.description})`, 'error');
+        return;
+      }
+      if (item.discount > 100) {
+        showToast(`Errore: Lo sconto non può superare il 100% (${item.description})`, 'error');
+        return;
+      }
+      if (item.quantity <= 0) {
+        showToast(`Errore: La quantità deve essere almeno 1 (${item.description})`, 'error');
+        return;
+      }
+      if (item.price < 0) {
+        showToast(`Errore: Il prezzo non può essere negativo (${item.description})`, 'error');
+        return;
+      }
+    }
+
+    if (Number(shippingCost) < 0) {
+      showToast('Errore: Il costo di trasporto non può essere negativo', 'error');
+      return;
+    }
+
     const offerData: Offer = {
       id: editingId || `off_${Date.now()}`,
       contactId: selectedContact,
@@ -124,7 +149,7 @@ export const OffersView: React.FC = () => {
       addOffer(offerData);
       showToast('Offerta creata!', 'success');
     }
-    
+
     setShowModal(false);
   };
 
