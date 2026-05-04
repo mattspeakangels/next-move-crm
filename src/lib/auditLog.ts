@@ -1,10 +1,10 @@
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { AuditLog, AuditOperation } from '../types';
 
 export async function logAuditEvent(
   userId: string,
-  collection: string,
+  collectionName: string,
   documentId: string,
   operation: AuditOperation,
   previousValues?: Record<string, any>,
@@ -15,7 +15,7 @@ export async function logAuditEvent(
 
     const auditEntry: Omit<AuditLog, 'id'> = {
       timestamp: Date.now(),
-      collection,
+      collection: collectionName,
       documentId,
       operation,
       changes: Object.keys(changes).length > 0 ? changes : undefined,
@@ -56,7 +56,7 @@ function calculateChanges(
 export async function getAuditLogs(userId: string, limit = 100): Promise<AuditLog[]> {
   try {
     const auditCollection = collection(db, 'users', userId, 'audit_logs');
-    const snapshot = await (await import('firebase/firestore')).getDocs(auditCollection);
+    const snapshot = await getDocs(auditCollection);
 
     const logs: AuditLog[] = [];
     snapshot.forEach((doc) => {
