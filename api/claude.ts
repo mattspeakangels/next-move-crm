@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit';
+import { applyCors, handleCorsPreFlight } from './cors';
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {
@@ -246,32 +247,20 @@ Formato:
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
-const ALLOWED_ORIGINS = [
-  'https://your-domain.com',
-  'https://www.your-domain.com',
-  process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : null,
-  process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null,
-  process.env.NEXT_PUBLIC_APP_URL,
-].filter(Boolean) as string[];
-
-
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
   status: (code: number) => { json: (data: unknown) => void };
   setHeader: (name: string, value: string) => void;
   json: (data: unknown) => void;
 }) {
-  const origin = req.headers.origin || req.headers.referer;
-
-  // Only set CORS headers if origin is in whitelist
-  if (origin && ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed || ''))) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+  // Handle CORS preflight and validation
+  if (handleCorsPreFlight(req, res)) {
+    return;
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).json({});
+  // Apply CORS headers for allowed origins
+  const corsAllowed = applyCors(req, res);
+  if (!corsAllowed) {
+    res.status(403).json({ error: 'CORS not allowed for this origin' });
     return;
   }
 
