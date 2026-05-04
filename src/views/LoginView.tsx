@@ -3,17 +3,14 @@ import { Target } from 'lucide-react';
 import { useAuth } from '../lib/authContext';
 
 export function LoginView() {
-  const { loginWithGoogle } = useAuth();
-  const [error, setError] = useState('');
+  const { loginWithGoogle, loginError } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleGoogle = async () => {
-    setError('');
     setLoading(true);
     try {
       await loginWithGoogle();
-    } catch {
-      setError('Accesso non riuscito. Riprova.');
+    } finally {
       setLoading(false);
     }
   };
@@ -38,7 +35,7 @@ export function LoginView() {
             {loading ? 'Accesso in corso...' : 'Accedi con Google'}
           </button>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {loginError && <p className="text-sm text-red-500">{loginError}</p>}
         </div>
       </div>
     </div>
