@@ -1,63 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function: check if user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function: check if user owns the document
-    function isDocumentOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // --- Collections accessible only by authenticated users in their own context ---
-
-    // Contacts collection
-    match /contacts/{document=**} {
-      allow read, write: if isAuthenticated();
-
-      // Log access for audit trail
-      allow read, write: if isAuthenticated() {
-        let docData = request.resource.data;
-        // Metadata tracking (optional, for audit)
-        // Can be enhanced with user tracking: updatedBy, updatedAt, etc.
-      }
-    }
-
-    // Deals collection
-    match /deals/{document=**} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Offers collection
-    match /offers/{document=**} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Products collection
-    match /products/{document=**} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Activities collection
-    match /activities/{document=**} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Assets collection
-    match /assets/{document=**} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // SalesTransactions collection
-    match /salesTransactions/{document=**} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Default deny all other paths
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if request.auth.uid != null;
     }
   }
 }

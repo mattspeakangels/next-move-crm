@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "next-move---crm---dev"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
