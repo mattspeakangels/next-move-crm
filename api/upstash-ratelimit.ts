@@ -181,3 +181,96 @@ export async function resetRateLimit(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Check and increment rate limit for an IP address
+ * Limit: 20 requests per hour (prevents DDoS/bot attacks)
+ */
+export async function checkRateLimitByIP(ipAddress: string): Promise<RateLimitResult> {
+  if (!UPSTASH_REST_URL || !UPSTASH_REST_TOKEN) {
+    console.warn('Upstash Redis not configured, IP rate limiting disabled');
+    return {
+      allowed: true,
+      remaining: 20,
+      resetAt: Date.now() + 3600000,
+    };
+  }
+
+  try {
+    const key = `ratelimit_ip:${ipAddress}`;
+    const limit = 20;
+    const window = 3600; // 1 hour in seconds
+
+    // Get current count
+    const getResponse = await fetch(`${UPSTASH_REST_URL}/get/${key}`, {
+      headers: {
+        Authorization: `Bearer ${UPSTASH_REST_TOKEN}`,
+      },
+    });
+
+    if (!getResponse.ok) {
+      throw new Error(`Redis GET failed: ${getResponse.status}`);
+    }
+
+    const getData = await getResponse.json() as { result?: string | null };
+    const currentCount = getData.result ? parseInt(getData.result, 10) : 0;
+
+    // Check if limit exceeded
+    if (currentCount >= limit) {
+      const ttlResponse = await fetch(`${UPSTASH_REST_URL}/ttl/${key}`, {
+        headers: {
+          Authorization: `Bearer ${UPSTASH_REST_TOKEN}`,
+        },
+      });
+
+      const ttlData = await ttlResponse.json() as { result: number };
+      const ttl = ttlData.result;
+      const resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : window * 1000);
+
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt,
+      };
+    }
+
+    // Increment counter
+    const incrResponse = await fetch(`${UPSTASH_REST_URL}/incr/${key}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${UPSTASH_REST_TOKEN}`,
+      },
+    });
+
+    if (!incrResponse.ok) {
+      throw new Error(`Redis INCR failed: ${incrResponse.status}`);
+    }
+
+    // Set expiration on first request only
+    if (currentCount === 0) {
+      await fetch(`${UPSTASH_REST_URL}/expire/${key}/${window}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${UPSTASH_REST_TOKEN}`,
+        },
+      });
+    }
+
+    const remaining = limit - (currentCount + 1);
+    const resetAt = Date.now() + window * 1000;
+
+    return {
+      allowed: true,
+      remaining,
+      resetAt,
+    };
+  } catch (error) {
+    console.error('IP rate limit check failed:', error);
+    // Fail open on error (allow request)
+    return {
+      allowed: true,
+      remaining: 20,
+      resetAt: Date.now() + 3600000,
+    };
+  }
+}

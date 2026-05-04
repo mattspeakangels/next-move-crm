@@ -2,7 +2,7 @@
 // Uses raw fetch to Anthropic API with fallback to cheapest models
 
 import { z } from 'zod';
-import { checkRateLimit } from './upstash-ratelimit';
+import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit';
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {
@@ -297,7 +297,30 @@ export default async function handler(req: { method: string; body: unknown; head
     return;
   }
 
-  // Check rate limit (5 requests per hour, persisted via Upstash Redis)
+  // Extract IP address (support Vercel x-forwarded-for)
+  const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
+                    (req.headers['x-real-ip'] as string) ||
+                    'unknown';
+
+  // Check rate limit by IP (20 requests per hour, prevents DDoS/bot attacks)
+  const ipRateLimitResult = await checkRateLimitByIP(ipAddress);
+  if (!ipRateLimitResult.allowed) {
+    logError('IP rate limit exceeded', {
+      ipAddress,
+      remaining: ipRateLimitResult.remaining,
+      resetAt: new Date(ipRateLimitResult.resetAt).toISOString(),
+    });
+    const retryAfter = Math.ceil((ipRateLimitResult.resetAt - Date.now()) / 1000);
+    res.setHeader('Retry-After', retryAfter.toString());
+    res.status(429).json({
+      error: 'Rate limited by IP: Max 20 requests per hour',
+      remaining: ipRateLimitResult.remaining,
+      resetAt: new Date(ipRateLimitResult.resetAt).toISOString(),
+    });
+    return;
+  }
+
+  // Check rate limit by user token (5 requests per hour, persisted via Upstash Redis)
   const rateLimitResult = await checkRateLimit(token);
   if (!rateLimitResult.allowed) {
     logError('Rate limit exceeded', {
