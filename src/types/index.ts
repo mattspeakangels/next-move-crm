@@ -9,7 +9,7 @@ export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
 // AGGIUNTO 'map' ALLA NAVIGAZIONE
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics' | 'storico' | 'assets';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets';
 
 export type CustomerType = 'dealer' | 'end-user';
 export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
