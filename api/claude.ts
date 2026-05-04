@@ -2,6 +2,12 @@
 // Uses raw fetch to Anthropic API with fallback to cheapest models
 
 import { z } from 'zod';
+import { checkRateLimit } from './upstash-ratelimit';
+
+// Simple logging for API errors (Sentry integration handled by frontend)
+function logError(message: string, context: Record<string, unknown>) {
+  console.error(`[API Error] ${message}`, JSON.stringify(context, null, 2));
+}
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
 
@@ -248,37 +254,6 @@ const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_APP_URL,
 ].filter(Boolean) as string[];
 
-// In-memory daily rate limit tracker (5 requests per day)
-// For production, use Redis (Upstash)
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
-}
-
-const rateLimitMap = new Map<string, RateLimitEntry>();
-const DAILY_LIMIT = 5;
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
-function checkRateLimit(token: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(token);
-
-  if (!entry || now > entry.resetTime) {
-    // Reset or first request
-    rateLimitMap.set(token, {
-      count: 1,
-      resetTime: now + DAY_IN_MS,
-    });
-    return true;
-  }
-
-  if (entry.count >= DAILY_LIMIT) {
-    return false; // Rate limited
-  }
-
-  entry.count++;
-  return true;
-}
 
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
   status: (code: number) => { json: (data: unknown) => void };
@@ -312,15 +287,30 @@ export default async function handler(req: { method: string; body: unknown; head
   const validToken = process.env.ADMIN_API_TOKEN;
 
   if (!token || token !== validToken) {
+    logError('Unauthorized API access', {
+      endpoint: '/api/claude',
+      status: 401,
+      hasToken: !!token,
+      tokenMatch: token === validToken,
+    });
     res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
     return;
   }
 
-  // Check rate limit (5 requests per day max)
-  if (!checkRateLimit(token)) {
+  // Check rate limit (5 requests per hour, persisted via Upstash Redis)
+  const rateLimitResult = await checkRateLimit(token);
+  if (!rateLimitResult.allowed) {
+    logError('Rate limit exceeded', {
+      token: token.substring(0, 10) + '...',
+      remaining: rateLimitResult.remaining,
+      resetAt: new Date(rateLimitResult.resetAt).toISOString(),
+    });
+    const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+    res.setHeader('Retry-After', retryAfter.toString());
     res.status(429).json({
-      error: 'Rate limited: Max 5 requests per day',
-      resetTime: new Date(Date.now() + DAY_IN_MS).toISOString(),
+      error: 'Rate limited: Max 5 requests per hour',
+      remaining: rateLimitResult.remaining,
+      resetAt: new Date(rateLimitResult.resetAt).toISOString(),
     });
     return;
   }

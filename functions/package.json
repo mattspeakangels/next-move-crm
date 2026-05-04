@@ -1,0 +1,16 @@
+{
+  "name": "next-move-firestore-backup",
+  "description": "Cloud Function per backup automatico Firestore",
+  "runtime": "nodejs20",
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "@google-cloud/firestore": "^7.0.0",
+    "@google-cloud/storage": "^7.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "20"
+  }
+}

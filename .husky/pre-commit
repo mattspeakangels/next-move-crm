@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Dependency audit
+echo "🔍 Running npm audit..."
+npm audit --audit-level=moderate
+
+# TypeScript type check
+echo "📝 Running TypeScript type check..."
+npm run build
+
+# If both pass, allow commit
+exit 0
