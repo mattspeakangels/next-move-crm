@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useStore } from '../store/useStore';
+import { logAuditEvent } from './auditLog';
 
 const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions'] as const;
 
@@ -37,13 +38,21 @@ export function useFirestoreSync(userId: string) {
 
         for (const [id, data] of Object.entries(curr)) {
           if (curr[id] !== prev[id]) {
+            const isNew = !prev[id];
             setDoc(doc(db, 'users', userId, col, id), data, { merge: true });
+
+            if (isNew) {
+              logAuditEvent(userId, col, id, 'CREATE', {}, data);
+            } else {
+              logAuditEvent(userId, col, id, 'UPDATE', prev[id], data);
+            }
           }
         }
 
         for (const id of Object.keys(prev)) {
           if (!curr[id]) {
             deleteDoc(doc(db, 'users', userId, col, id));
+            logAuditEvent(userId, col, id, 'DELETE', prev[id], {});
           }
         }
       }

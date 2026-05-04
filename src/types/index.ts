@@ -194,3 +194,16 @@ export interface BITopItem {
   count: number;          // transaction count
   percentage: string;     // "15.3" (string, calculated in selector)
 }
+
+export type AuditOperation = 'CREATE' | 'UPDATE' | 'DELETE';
+
+export interface AuditLog {
+  id: string;
+  timestamp: number;
+  collection: string;           // contacts, deals, offers, etc
+  documentId: string;           // the document that was changed
+  operation: AuditOperation;    // CREATE, UPDATE, DELETE
+  changes?: Record<string, any>; // fields that changed (for UPDATE)
+  previousValues?: Record<string, any>;
+  newValues?: Record<string, any>;
+}
