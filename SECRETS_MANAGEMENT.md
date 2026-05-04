@@ -78,7 +78,7 @@ vercel env pull
 TOKEN=$(openssl rand -hex 16 | sed 's/^/sk_live_/')
 echo "New token: $TOKEN"
 
-# Example output: sk_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+# Example output: sk_live_EXAMPLE
 ```
 
 ### Step 2: Update Vercel Environment
