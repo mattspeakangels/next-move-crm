@@ -80,21 +80,13 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
     let ok = 0, fail = 0;
 
     const allContacts = Object.values(contacts);
-    console.log('📊 Total contacts:', allContacts.length);
-
     const toGeocode = allContacts.filter(c => !c.lat && c.address && c.city);
-    console.log('🎯 To geocode:', toGeocode.length);
-    console.log('📋 Sample:', toGeocode.slice(0, 2).map(c => ({ company: c.company, address: c.address, city: c.city })));
 
     for (const c of toGeocode) {
-      const q = encodeURIComponent(`${c.address}, ${c.city}, Italy`);
       console.log(`🌍 Geocoding: ${c.company} → ${c.address}, ${c.city}`);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
-          headers: { 'Accept-Language': 'it' }
-        });
+        const res = await fetch(`/api/geocode?address=${encodeURIComponent(c.address as string)}&city=${encodeURIComponent(c.city as string)}`);
         const data = await res.json();
-        console.log(`📡 Response for ${c.company}:`, data);
         if (data?.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lng = parseFloat(data[0].lon);
