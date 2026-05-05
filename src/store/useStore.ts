@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn } from '../types';
 
 interface StoreState {
   contacts: Record<string, Contact>;
@@ -10,6 +10,7 @@ interface StoreState {
   activities: Record<string, Activity>;
   salesTransactions: Record<string, SalesTransaction>;
   assets: Record<string, Asset>;
+  checkIns: Record<string, CheckIn>;
   profile: AppProfile | null;
   theme: 'light' | 'dark';
   targets: Record<string, any>;
@@ -58,6 +59,11 @@ interface StoreState {
   addSalesTransaction: (transaction: SalesTransaction) => void;
   deleteSalesTransaction: (id: string) => void;
   clearSalesTransactions: () => void;
+
+  // Check-in Geolocalizzazione
+  addCheckIn: (checkIn: CheckIn) => void;
+
+  deleteCheckIn: (id: string) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -70,6 +76,7 @@ export const useStore = create<StoreState>()(
       activities: {},
       salesTransactions: {},
       assets: {},
+      checkIns: {},
       targets: {},
       profile: null,
       theme: 'light',
@@ -170,7 +177,43 @@ export const useStore = create<StoreState>()(
         return { salesTransactions: newTransactions };
       }),
       clearSalesTransactions: () => set({ salesTransactions: {} }),
+
+      addCheckIn: (checkIn) => set((state) => ({
+        checkIns: { ...state.checkIns, [checkIn.id]: checkIn }
+      })),
+      
+      deleteCheckIn: (id) => set((state) => {
+        const newCheckIns = { ...state.checkIns };
+        delete newCheckIns[id];
+        return { checkIns: newCheckIns };
+      }),
     }),
-    { name: 'next-move-storage' }
+    {
+      name: 'next-move-storage',
+      partialize: (state) => ({
+        contacts: state.contacts,
+        deals: state.deals,
+        offers: state.offers,
+        products: state.products,
+        activities: state.activities,
+        salesTransactions: state.salesTransactions,
+        assets: state.assets,
+        checkIns: state.checkIns,
+        targets: state.targets,
+        theme: state.theme,
+        profile: state.profile,
+        discountApprovalThreshold: state.discountApprovalThreshold,
+      }),
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('Failed to hydrate store from localStorage:', error);
+        } else if (state) {
+          console.log('Store hydrated from localStorage', {
+            contactCount: Object.keys(state.contacts || {}).length,
+            productCount: Object.keys(state.products || {}).length,
+          });
+        }
+      }
+    }
   )
 );

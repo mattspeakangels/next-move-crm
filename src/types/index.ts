@@ -207,3 +207,13 @@ export interface AuditLog {
   previousValues?: Record<string, any>;
   newValues?: Record<string, any>;
 }
+
+export interface CheckIn {
+  id: string;
+  contactId: string;
+  timestamp: number;
+  latitude: number;
+  longitude: number;
+  notes?: string;
+  createdAt: number;
+}

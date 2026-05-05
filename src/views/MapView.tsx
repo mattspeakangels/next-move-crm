@@ -77,16 +77,30 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
     setIsGeocoding(true);
     setDebugMsg('Ricerca coordinate in corso…');
     let ok = 0, fail = 0;
-    for (const c of Object.values(contacts)) {
-      if (!c.lat && c.address && c.city) {
-        try {
-          const q   = encodeURIComponent(`${c.address}, ${c.city}, Italy`);
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, { headers: { 'Accept-Language': 'it' } });
-          const data = await res.json();
-          if (data?.length > 0) { updateContact(c.id, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }); ok++; }
-          else fail++;
-          await new Promise(r => setTimeout(r, 1500)); // rispetta rate-limit Nominatim
-        } catch { fail++; }
+    const toGeocode = Object.values(contacts).filter(c => !c.lat && !c.lng && (c.address || c.city));
+    console.log('Clienti da geocodificare:', toGeocode.length);
+    
+    for (const c of toGeocode) {
+      const address = `${c.address || ''} ${c.city || ''}`.trim();
+      if (!address) continue;
+      
+      try {
+        const q   = encodeURIComponent(`${address}, Italy`);
+        console.log('Geocodificando:', address);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, { headers: { 'User-Agent': 'NextMoveCRM' } });
+        const data = await res.json();
+        if (data?.length > 0) { 
+          console.log('Trovato:', c.company, data[0].lat, data[0].lon);
+          updateContact(c.id, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }); 
+          ok++; 
+        } else {
+          console.log('Non trovato:', address);
+          fail++;
+        }
+        await new Promise(r => setTimeout(r, 1500));
+      } catch (err) {
+        console.error('Errore geocodifica:', err);
+        fail++;
       }
     }
     setIsGeocoding(false);
@@ -111,7 +125,17 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
 
   const defaultCenter: [number, number] = userPos ?? [41.9, 12.5]; // default: Roma
 
-  const unmappedWithAddress = allContacts.filter(c => !c.lat && (c.address || c.city));
+  const unmappedWithAddress = allContacts.filter(c => !c.lat && !c.lng && (c.address || c.city));
+  
+  // Debug
+  React.useEffect(() => {
+    console.log('📍 MapView Debug:', {
+      totalContacts: allContacts.length,
+      mapped: allMapped.length,
+      unmappedWithAddress: unmappedWithAddress.length,
+      sample: unmappedWithAddress.slice(0, 3).map(c => ({ company: c.company, address: c.address, city: c.city }))
+    });
+  }, [allContacts, allMapped, unmappedWithAddress]);
 
   return (
     <div className="h-[calc(100vh-120px)] space-y-4 flex flex-col">
