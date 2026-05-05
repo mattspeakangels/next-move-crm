@@ -363,6 +363,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       }
     }
     result.push(field.trim());
+    console.log('🎉 PARSECSV COMPLETED:', result.length, 'contatti');
     return result;
   };
 
@@ -485,15 +486,29 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, status: 'potenziale' | 'cliente' = 'potenziale') => {
     const file = e.target.files?.[0];
     if (!file) return;
+    console.log('📥 CSV CARICATO:', file.name, file.size, 'bytes');
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
+      console.log('📄 CSV TEXT (first 500 chars):', text.substring(0, 500));
       const newContacts = parseCSVContacts(text, status);
+      console.log('✅ CONTATTI PARSATI:', newContacts.length);
+      console.log('📋 SAMPLE CONTATTI:', newContacts.slice(0, 3).map(c => ({
+        company: c.company,
+        address: c.address,
+        city: c.city,
+        phone: c.phone,
+        status: c.status
+      })));
+      
       if (newContacts.length > 0) {
         Object.values(contacts)
           .filter(c => c.status === status)
           .forEach(c => deleteContact(c.id));
         addContactsBatch(newContacts);
+        console.log('✨ CONTATTI SALVATI NELLO STORE');
+      } else {
+        console.warn('⚠️ NESSUN CONTATTO PARSATO!');
       }
       if (fileInputRef.current)         fileInputRef.current.value = '';
       if (fileInputRefProspect.current) fileInputRefProspect.current.value = '';

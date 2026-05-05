@@ -77,30 +77,28 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
     setIsGeocoding(true);
     setDebugMsg('Ricerca coordinate in corso…');
     let ok = 0, fail = 0;
-    const toGeocode = Object.values(contacts).filter(c => !c.lat && !c.lng && (c.address || c.city));
-    console.log('Clienti da geocodificare:', toGeocode.length);
-    
-    for (const c of toGeocode) {
-      const address = `${c.address || ''} ${c.city || ''}`.trim();
-      if (!address) continue;
-      
-      try {
-        const q   = encodeURIComponent(`${address}, Italy`);
-        console.log('Geocodificando:', address);
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, { headers: { 'User-Agent': 'NextMoveCRM' } });
-        const data = await res.json();
-        if (data?.length > 0) { 
-          console.log('Trovato:', c.company, data[0].lat, data[0].lon);
-          updateContact(c.id, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }); 
-          ok++; 
-        } else {
-          console.log('Non trovato:', address);
+
+    for (const c of Object.values(contacts)) {
+      if (!c.lat && c.address && c.city) {
+        const q = encodeURIComponent(`${c.address}, ${c.city}, Italy`);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
+            headers: { 'Accept-Language': 'it' }
+          });
+          const data = await res.json();
+          if (data?.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+            updateContact(c.id, { lat, lng });
+            ok++;
+          } else {
+            fail++;
+          }
+          await new Promise(r => setTimeout(r, 1500));
+        } catch (err) {
+          console.error('Geocoding error:', err);
           fail++;
         }
-        await new Promise(r => setTimeout(r, 1500));
-      } catch (err) {
-        console.error('Errore geocodifica:', err);
-        fail++;
       }
     }
     setIsGeocoding(false);
