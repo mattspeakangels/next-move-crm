@@ -123,7 +123,7 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
 
   const defaultCenter: [number, number] = userPos ?? [41.9, 12.5]; // default: Roma
 
-  const unmappedWithAddress = allContacts.filter(c => !c.lat && !c.lng && (c.address || c.city));
+  const unmappedWithAddress = allContacts.filter(c => !c.lat && c.address && c.city);
   
   // Debug
   React.useEffect(() => {
