@@ -74,35 +74,46 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
   }, []);
 
   const geocodeContacts = async () => {
+    console.log('🚀 GEOCODING START');
     setIsGeocoding(true);
     setDebugMsg('Ricerca coordinate in corso…');
     let ok = 0, fail = 0;
 
-    for (const c of Object.values(contacts)) {
-      if (!c.lat && c.address && c.city) {
-        const q = encodeURIComponent(`${c.address}, ${c.city}, Italy`);
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
-            headers: { 'Accept-Language': 'it' }
-          });
-          const data = await res.json();
-          if (data?.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lng = parseFloat(data[0].lon);
-            updateContact(c.id, { lat, lng });
-            ok++;
-          } else {
-            fail++;
-          }
-          await new Promise(r => setTimeout(r, 1500));
-        } catch (err) {
-          console.error('Geocoding error:', err);
+    const allContacts = Object.values(contacts);
+    console.log('📊 Total contacts:', allContacts.length);
+
+    const toGeocode = allContacts.filter(c => !c.lat && c.address && c.city);
+    console.log('🎯 To geocode:', toGeocode.length);
+    console.log('📋 Sample:', toGeocode.slice(0, 2).map(c => ({ company: c.company, address: c.address, city: c.city })));
+
+    for (const c of toGeocode) {
+      const q = encodeURIComponent(`${c.address}, ${c.city}, Italy`);
+      console.log(`🌍 Geocoding: ${c.company} → ${c.address}, ${c.city}`);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
+          headers: { 'Accept-Language': 'it' }
+        });
+        const data = await res.json();
+        console.log(`📡 Response for ${c.company}:`, data);
+        if (data?.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lng = parseFloat(data[0].lon);
+          updateContact(c.id, { lat, lng });
+          console.log(`✅ Updated ${c.company} → ${lat}, ${lng}`);
+          ok++;
+        } else {
+          console.log(`❌ Not found: ${c.address}, ${c.city}`);
           fail++;
         }
+        await new Promise(r => setTimeout(r, 1500));
+      } catch (err) {
+        console.error('❌ Geocoding error:', err);
+        fail++;
       }
     }
     setIsGeocoding(false);
     setDebugMsg(`Trovate: ${ok}, Non trovate: ${fail}`);
+    console.log('✨ GEOCODING COMPLETE: ok=', ok, 'fail=', fail);
   };
 
   const allContacts = Object.values(contacts);
