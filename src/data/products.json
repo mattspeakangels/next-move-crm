@@ -1,0 +1,1002 @@
+[
+  {
+    "id": "prod_1990",
+    "code": "1990",
+    "name": "Pantaloni artigiano stretch X1900 (CORDURA® Denim)",
+    "description": "Pantaloni artigiano stretch X1900 (CORDURA® Denim)",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "C146-C158"
+    ],
+    "sizes": "\"C44-C62",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_1970",
+    "code": "1970",
+    "name": "Pantaloni artigiano stretch Striker (twill stretch)",
+    "description": "Pantaloni artigiano stretch Striker (twill stretch)",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "C144-C156"
+    ],
+    "sizes": "\"C44-C64",
+    "line": "X1600"
+  },
+  {
+    "id": "prod_1428",
+    "code": "1428",
+    "name": "Pantaloni stretch Industria/Service",
+    "description": "Pantaloni stretch Industria/Service",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "D84-D136\""
+    ],
+    "sizes": "\"C44-C68",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_1407",
+    "code": "1407",
+    "name": "Pantaloni industria in poliestere/cotone",
+    "description": "Pantaloni industria in poliestere/cotone",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "C146-C156"
+    ],
+    "sizes": "\"C42-C64",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2644",
+    "code": "2644",
+    "name": "Salopette industria stretch",
+    "description": "Salopette industria stretch",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "D84-D136\""
+    ],
+    "sizes": "\"C44-C64",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_6061",
+    "code": "6061",
+    "name": "Tuta antifiamma",
+    "description": "Tuta antifiamma",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "C146-C156"
+    ],
+    "sizes": "\"C44-C64",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_7990",
+    "code": "7990",
+    "name": "Pantaloni artigiano stretch X1900 donna",
+    "description": "Pantaloni artigiano stretch X1900 donna",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "Vedi guida taglie donna",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_7100",
+    "code": "7100",
+    "name": "Pantaloni premaman stretch 4-vie",
+    "description": "Pantaloni premaman stretch 4-vie",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "Vedi guida taglie donna",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_5225",
+    "code": "5225",
+    "name": "Pantaloni artigiano stretch X1900 bambino",
+    "description": "Pantaloni artigiano stretch X1900 bambino",
+    "category": "pantaloni",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "98/104-158/164",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4491",
+    "code": "4491",
+    "name": "Giacca softshell High Vis 3 strati",
+    "description": "Giacca softshell High Vis 3 strati",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Giallo High Vis/Grigio medio"
+    ],
+    "sizes": "\"XS-4XL (fino a 5XL per alcuni colori)\"",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_4467",
+    "code": "4467",
+    "name": "Parka invernale multinorma antifiamma",
+    "description": "Parka invernale multinorma antifiamma",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Giallo high vis/Blu marino"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4720",
+    "code": "4720",
+    "name": "Giacca in cotone twill",
+    "description": "Giacca in cotone twill",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Blu marino"
+    ],
+    "sizes": "S-XXL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4499",
+    "code": "4499",
+    "name": "Giacca invernale foderata in pile",
+    "description": "Giacca invernale foderata in pile",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Grigio Scuro"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4752",
+    "code": "4752",
+    "name": "Giacca softshell idrorepellente",
+    "description": "Giacca softshell idrorepellente",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4863",
+    "code": "4863",
+    "name": "Giacca in pile con cappuccio",
+    "description": "Giacca in pile con cappuccio",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "S-XXXL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4725",
+    "code": "4725",
+    "name": "Giacca in pile",
+    "description": "Giacca in pile",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4727",
+    "code": "4727",
+    "name": "Giacca in pile donna",
+    "description": "Giacca in pile donna",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "XS-XXXL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4858",
+    "code": "4858",
+    "name": "Giacca invernale bambino",
+    "description": "Giacca invernale bambino",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero/Giallo high vis"
+    ],
+    "sizes": "C104-C164",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_8158",
+    "code": "8158",
+    "name": "Grembiule da lavoro industria",
+    "description": "Grembiule da lavoro industria",
+    "category": "giacche",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Bianco"
+    ],
+    "sizes": "C44-C58",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3552",
+    "code": "3552",
+    "name": "Felpa con cappuccio High Vis 100% cotone",
+    "description": "Felpa con cappuccio High Vis 100% cotone",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Giallo high vis"
+    ],
+    "sizes": "XS-4XL",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3359",
+    "code": "3359",
+    "name": "Maglia High Vis a girocollo",
+    "description": "Maglia High Vis a girocollo",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Arancione"
+    ],
+    "sizes": "\"XS-4XL (fino a 6XL per alcuni colori)\"",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3534",
+    "code": "3534",
+    "name": "Felpa in cotone french terry",
+    "description": "Felpa in cotone french terry",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Verde Foresta"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3335",
+    "code": "3335",
+    "name": "Felpa in misto cotone/poliestere",
+    "description": "Felpa in misto cotone/poliestere",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Nero"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3580",
+    "code": "3580",
+    "name": "Felpa bicolore",
+    "description": "Felpa bicolore",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro/Giallo high vis"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3585",
+    "code": "3585",
+    "name": "Felpa classica",
+    "description": "Felpa classica",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro"
+    ],
+    "sizes": "XS-6XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3586",
+    "code": "3586",
+    "name": "Felpa con cappuccio",
+    "description": "Felpa con cappuccio",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro"
+    ],
+    "sizes": "XS-6XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3371",
+    "code": "3371",
+    "name": "Felpa con zip",
+    "description": "Felpa con zip",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3401",
+    "code": "3401",
+    "name": "Felpa girocollo (Giallo/Arancio)",
+    "description": "Felpa girocollo (Giallo/Arancio)",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Giallo high vis"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3364",
+    "code": "3364",
+    "name": "Felpa girocollo pesante",
+    "description": "Felpa girocollo pesante",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino"
+    ],
+    "sizes": "\"XS-4XL (XXS-4XL per il grigio)\"",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3430",
+    "code": "3430",
+    "name": "Felpa standard",
+    "description": "Felpa standard",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Grigio melange"
+    ],
+    "sizes": "\"XS-4XL (XS-XL per il blu marino)\"",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3590",
+    "code": "3590",
+    "name": "Pullover in lana con scollo a V",
+    "description": "Pullover in lana con scollo a V",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3548",
+    "code": "3548",
+    "name": "Felpa con zip in pile piqué",
+    "description": "Felpa con zip in pile piqué",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Nero"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3362",
+    "code": "3362",
+    "name": "Felpa con zip bicolore",
+    "description": "Felpa con zip bicolore",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Bianco/Grigio scuro"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3462",
+    "code": "3462",
+    "name": "Felpa multinorma inerente con zip lunga",
+    "description": "Felpa multinorma inerente con zip lunga",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "Vedi guida taglie",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4735",
+    "code": "4735",
+    "name": "Pile garzato Striker con inserti in rete",
+    "description": "Pile garzato Striker con inserti in rete",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Verde Foresta"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1600"
+  },
+  {
+    "id": "prod_4745",
+    "code": "4745",
+    "name": "Pile donna Striker",
+    "description": "Pile donna Striker",
+    "category": "felpe",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Verde Foresta"
+    ],
+    "sizes": "XS-XXXL",
+    "line": "X1600"
+  },
+  {
+    "id": "prod_3416",
+    "code": "3416",
+    "name": "Polo con protezione raggi UV UPF 40+",
+    "description": "Polo con protezione raggi UV UPF 40+",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Verde Foresta"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3625",
+    "code": "3625",
+    "name": "T-shirt (confezione da 5 pezzi)",
+    "description": "T-shirt (confezione da 5 pezzi)",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Bianco"
+    ],
+    "sizes": "\"XS-4XL (fino a 6XL per il nero)\"",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3525",
+    "code": "3525",
+    "name": "T-shirt classica",
+    "description": "T-shirt classica",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Ecru"
+    ],
+    "sizes": "\"XS-4XL (fino a 6XL per alcuni colori)\"",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3523",
+    "code": "3523",
+    "name": "T-shirt con inserti High Vis",
+    "description": "T-shirt con inserti High Vis",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Giallo"
+    ],
+    "sizes": "XS-7XL",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3528",
+    "code": "3528",
+    "name": "Polo con inserti High Vis",
+    "description": "Polo con inserti High Vis",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Giallo high vis"
+    ],
+    "sizes": "XS-4XL",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3388",
+    "code": "3388",
+    "name": "Polo a manica lunga",
+    "description": "Polo a manica lunga",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3397",
+    "code": "3397",
+    "name": "T-shirt High Vis UV Classe 2",
+    "description": "T-shirt High Vis UV Classe 2",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Giallo high vis/Blu marino"
+    ],
+    "sizes": "XS-4XL",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3337",
+    "code": "3337",
+    "name": "T-shirt High Vis UV Classe 1",
+    "description": "T-shirt High Vis UV Classe 1",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Arancione"
+    ],
+    "sizes": "\"XS-4XL (fino a 6XL per alcuni colori)\"",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3338",
+    "code": "3338",
+    "name": "Polo High Vis UV Classe 1",
+    "description": "Polo High Vis UV Classe 1",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Arancione"
+    ],
+    "sizes": "\"XS-4XL (fino a 6XL per alcuni colori)\"",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3510",
+    "code": "3510",
+    "name": "T-shirt High Vis a maniche lunghe",
+    "description": "T-shirt High Vis a maniche lunghe",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino/Arancione"
+    ],
+    "sizes": "\"XS-4XL (fino a 6XL per alcuni colori)\"",
+    "line": "HiVis"
+  },
+  {
+    "id": "prod_3431",
+    "code": "3431",
+    "name": "T-shirt donna 3D",
+    "description": "T-shirt donna 3D",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro"
+    ],
+    "sizes": "XS-XXXL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_5200",
+    "code": "5200",
+    "name": "T-shirt bambino",
+    "description": "T-shirt bambino",
+    "category": "tshirt",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero/Giallo high vis"
+    ],
+    "sizes": "98/104-158/164",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3299",
+    "code": "3299",
+    "name": "Camicia in flanella (100% cotone o cotone/poliestere)",
+    "description": "Camicia in flanella (100% cotone o cotone/poliestere)",
+    "category": "camicie",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Verde oliva scuro/Nero"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3297",
+    "code": "3297",
+    "name": "Camicia in twill di cotone",
+    "description": "Camicia in twill di cotone",
+    "category": "camicie",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3225",
+    "code": "3225",
+    "name": "Camicia in flanella foderata in pile",
+    "description": "Camicia in flanella foderata in pile",
+    "category": "camicie",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Rosso/Nero"
+    ],
+    "sizes": "S-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3288",
+    "code": "3288",
+    "name": "Camicia in flanella Profile",
+    "description": "Camicia in flanella Profile",
+    "category": "camicie",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "Vedi guida taglie",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4703",
+    "code": "4703",
+    "name": "Maglia intima termica Light",
+    "description": "Maglia intima termica Light",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero/Blu fiordaliso"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_1840",
+    "code": "1840",
+    "name": "Sottopantalone Light",
+    "description": "Sottopantalone Light",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero/Blu fiordaliso"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_6810",
+    "code": "6810",
+    "name": "Set intimo Light (Maglia + Pantalone)",
+    "description": "Set intimo Light (Maglia + Pantalone)",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero/Blu fiordaliso"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_1847",
+    "code": "1847",
+    "name": "Boxer XLight 100% Merino",
+    "description": "Boxer XLight 100% Merino",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Grigio scuro/Giallo"
+    ],
+    "sizes": "S-XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_1844",
+    "code": "1844",
+    "name": "Sottopantalone XLight 100% Merino",
+    "description": "Sottopantalone XLight 100% Merino",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Grigio scuro/Giallo"
+    ],
+    "sizes": "XS-4XL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_1897",
+    "code": "1897",
+    "name": "Boxer (confezione da 2 paia)",
+    "description": "Boxer (confezione da 2 paia)",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero"
+    ],
+    "sizes": "S-XXL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2504",
+    "code": "2504",
+    "name": "Calza in lana antifiamma",
+    "description": "Calza in lana antifiamma",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "37-39"
+    ],
+    "sizes": "\"34-36",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_7201",
+    "code": "7201",
+    "name": "Sottopantalone termico donna 100% Merino",
+    "description": "Sottopantalone termico donna 100% Merino",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Grigio medio/Nero"
+    ],
+    "sizes": "XS-XXXL",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2017",
+    "code": "2017",
+    "name": "Beanie in pile Striker",
+    "description": "Beanie in pile Striker",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "L/XL\""
+    ],
+    "sizes": "\"S/M",
+    "line": "X1600"
+  },
+  {
+    "id": "prod_2063",
+    "code": "2063",
+    "name": "Beanie stretch in cotone",
+    "description": "Beanie stretch in cotone",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Giallo high vis"
+    ],
+    "sizes": "Taglia unica",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2035",
+    "code": "2035",
+    "name": "Beanie in lana Merino",
+    "description": "Beanie in lana Merino",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Grigio medio/Nero"
+    ],
+    "sizes": "Taglia unica",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2070",
+    "code": "2070",
+    "name": "Cappellino imbianchino",
+    "description": "Cappellino imbianchino",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Bianco"
+    ],
+    "sizes": "Taglia unica (56-60 cm)",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2079",
+    "code": "2079",
+    "name": "Cappellino Trucker",
+    "description": "Cappellino Trucker",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Blu marino scuro"
+    ],
+    "sizes": "Taglia unica (57-60 cm)",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4047",
+    "code": "4047",
+    "name": "Cintura stretch metal-free",
+    "description": "Cintura stretch metal-free",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "L/XL (135 cm)\""
+    ],
+    "sizes": "\"S/M (110 cm)",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4034",
+    "code": "4034",
+    "name": "Cintura in poliestere regolabile",
+    "description": "Cintura in poliestere regolabile",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "\"Giallo high vis"
+    ],
+    "sizes": "Taglia unica (130 cm)",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_4067",
+    "code": "4067",
+    "name": "Tasca per ginocchiere CORDURA®",
+    "description": "Tasca per ginocchiere CORDURA®",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "M/L"
+    ],
+    "sizes": "\"XS/S",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2159",
+    "code": "2159",
+    "name": "Tasche flottanti da attaccare alla cintura",
+    "description": "Tasche flottanti da attaccare alla cintura",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "L/XL\""
+    ],
+    "sizes": "\"S/M",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2811",
+    "code": "2811",
+    "name": "Guanto da lavoro foderato WP",
+    "description": "Guanto da lavoro foderato WP",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "Vedi guida taglie",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_2860",
+    "code": "2860",
+    "name": "Guanto di precisione Supreme Strong",
+    "description": "Guanto di precisione Supreme Strong",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [],
+    "sizes": "Vedi guida taglie",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_B101/B104/B105",
+    "code": "B101/B104/B105",
+    "name": "Kit di riparazione Freelock per calzature",
+    "description": "Kit di riparazione Freelock per calzature",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero/Grigio medio"
+    ],
+    "sizes": "Taglia unica",
+    "line": "X1900"
+  },
+  {
+    "id": "prod_3099",
+    "code": "3099",
+    "name": "Borsone da viaggio 110 Litri",
+    "description": "Borsone da viaggio 110 Litri",
+    "category": "accessori",
+    "price": 0,
+    "discount": 0,
+    "colors": [
+      "Nero"
+    ],
+    "sizes": "Taglia unica (68x37x37 cm)",
+    "line": "X1900"
+  }
+]

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './lib/authContext';
 import { useFirestoreSync } from './lib/useFirestoreSync';
+import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Shield } from 'lucide-react';
 import { Dashboard } from './views/DashboardView';
@@ -28,6 +29,8 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, profile } = useStore();
+
+  useInitializeProducts();
 
   const navigateToContact = (contactId: string) => {
     setSelectedContactId(contactId);
