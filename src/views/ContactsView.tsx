@@ -444,7 +444,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
     const parseStatus = (raw: string): 'potenziale' | 'cliente' => {
       const v = raw.toLowerCase().trim();
-      if (v.includes('client') || v === 'attivo' || v === 'active') return 'cliente';
+      if (v.includes('client') || v.includes('enduser') || v === 'attivo' || v === 'active') return 'cliente';
       if (v.includes('potenzial') || v.includes('prospect') || v.includes('lead')) return 'potenziale';
       return fallbackStatus;
     };
