@@ -249,19 +249,20 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
               {seg === 'dealer' ? '🏪 Dealer' : seg === 'edilizia' ? '🏗️ Edilizia' : '🏭 Industria'} ({filtered.filter(c => c.segment === seg).length})
             </button>
           ))}
+        </div>
 
-          {/* Legenda */}
-          <div className="ml-auto flex items-center gap-3 text-xs text-gray-400 font-bold">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> Clienti
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Prospect
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Tu
-            </span>
-          </div>
+        {/* Legenda */}
+        <div className="flex items-center gap-3 text-xs text-gray-400 font-bold">
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> Clienti
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Prospect
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Tu
+          </span>
+          <div className="ml-auto" />
         </div>
       </div>
 
