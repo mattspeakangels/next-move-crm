@@ -167,7 +167,7 @@ function AppContent() {
 
 function AuthGate() {
   const { user, loading } = useAuth();
-  useFirestoreSync(user?.uid ?? '');
+  if (user) useFirestoreSync(user.uid);
 
   if (loading) {
     return (
