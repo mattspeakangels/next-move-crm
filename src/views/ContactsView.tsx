@@ -500,13 +500,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         phone: c.phone,
         status: c.status
       })));
-      
+
       if (newContacts.length > 0) {
-        Object.values(contacts)
-          .filter(c => c.status === status)
-          .forEach(c => deleteContact(c.id));
         addContactsBatch(newContacts);
-        console.log('✨ CONTATTI SALVATI NELLO STORE');
+        console.log('✨ CONTATTI AGGIUNTI NELLO STORE (mantenuti i precedenti)');
       } else {
         console.warn('⚠️ NESSUN CONTATTO PARSATO!');
       }
