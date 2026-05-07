@@ -12,6 +12,7 @@ export type Theme = 'light' | 'dark';
 export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets';
 
 export type CustomerType = 'dealer' | 'end-user';
+export type ContactSegment = 'dealer' | 'industria' | 'edilizia';
 export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
 
 export interface Stakeholder {
@@ -44,17 +45,18 @@ export interface Contact {
   zipCode?: string;
   province?: string;
   country?: string;
-  
+
   // NUOVI CAMPI PER LA MAPPA
   lat?: number;
   lng?: number;
-  
+
   status: ContactStatus;
+  segment?: ContactSegment;
   classification?: string;
   sector: string;
   region: string;
   notes?: string;
-  intelligence?: CompanyIntelligence; 
+  intelligence?: CompanyIntelligence;
   stakeholders?: Stakeholder[];
   createdAt: number;
   updatedAt: number;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { Contact } from '../types';
+import { Contact, ContactSegment } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
@@ -388,6 +388,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     return records;
   };
 
+  const classifySegment = (industry: string, company: string): ContactSegment => {
+    const text = (industry + ' ' + company).toLowerCase();
+    if (text.match(/rivendit|ferramenta|hardware|magazzin|distribu|consorz|agrario|edile|negozio|shop/)) return 'dealer';
+    if (text.match(/costruz|edil|cantier|impresa|carpentr|murature|edilizia/)) return 'edilizia';
+    return 'industria';
+  };
+
   const parseCSVContacts = (text: string, fallbackStatus: 'potenziale' | 'cliente'): Contact[] => {
     // Rimuovi BOM e normalizza line endings
     const cleaned = text.replace(/\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -459,6 +466,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       const statusRaw = get(values, 'status');
       const contactStatus = statusRaw ? parseStatus(statusRaw) : fallbackStatus;
 
+      const sectorVal = get(values, 'sector');
       result.push({
         id: `c_${Date.now()}_${i}_${Math.random().toString(36).slice(2)}`,
         company,
@@ -472,7 +480,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         province:    get(values, 'province'),
         zipCode:     get(values, 'zipCode'),
         region:      get(values, 'province'),
-        sector:      get(values, 'sector'),
+        sector:      sectorVal,
+        segment:     classifySegment(sectorVal, company),
         notes:       get(values, 'notes'),
         status:      contactStatus,
         country:     'Italia',
