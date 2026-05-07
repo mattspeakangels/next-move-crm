@@ -303,6 +303,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
+  const [segmentFilter, setSegmentFilter] = useState<ContactSegment | null>(null);
   const fileInputRefProspect = useRef<HTMLInputElement>(null);
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
@@ -1009,6 +1010,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
             const list = Object.values(contacts)
               .filter(c => c.status === statusFilter)
+              .filter(c => !segmentFilter || c.segment === segmentFilter)
               .filter(c =>
                 (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (c.city    && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -1051,6 +1053,35 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     <Plus size={18} /> {isProspect ? 'Nuovo Prospect' : 'Nuovo Cliente'}
                   </button>
                 </div>
+
+                {/* Filtri Segment */}
+                {!isProspect && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSegmentFilter(null)}
+                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                        segmentFilter === null
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                      }`}
+                    >
+                      Tutti ({Object.values(contacts).filter(c => c.status === statusFilter).length})
+                    </button>
+                    {(['dealer', 'industria', 'edilizia'] as const).map(seg => (
+                      <button
+                        key={seg}
+                        onClick={() => setSegmentFilter(seg)}
+                        className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                          segmentFilter === seg
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                        }`}
+                      >
+                        {seg === 'dealer' ? '🏪 Dealer' : seg === 'edilizia' ? '🏗️ Edilizia' : '🏭 Industria'} ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === seg).length})
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import { useStore } from '../store/useStore';
+import { ContactSegment } from '../types';
 import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -65,6 +66,7 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [debugMsg, setDebugMsg]   = useState('');
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
+  const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -115,7 +117,7 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
     if (mapFilter === 'clienti')  return c.status === 'cliente';
     if (mapFilter === 'prospect') return c.status === 'potenziale';
     return true;
-  });
+  }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter);
 
   const nearby = userPos
     ? filtered.filter(c => calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius)
@@ -217,6 +219,34 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
               {key === 'prospect' && <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />}
               {key === 'tutti'    && <span className="w-3 h-3 rounded-full bg-gray-400 inline-block" />}
               {label} <span className="opacity-70">({count})</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Filtro Segment ── */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-1">Segmento:</span>
+          <button
+            onClick={() => setMapSegmentFilter(null)}
+            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+              mapSegmentFilter === null
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Tutti ({filtered.length})
+          </button>
+          {(['dealer', 'industria', 'edilizia'] as const).map(seg => (
+            <button
+              key={seg}
+              onClick={() => setMapSegmentFilter(seg)}
+              className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                mapSegmentFilter === seg
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+              }`}
+            >
+              {seg === 'dealer' ? '🏪 Dealer' : seg === 'edilizia' ? '🏗️ Edilizia' : '🏭 Industria'} ({filtered.filter(c => c.segment === seg).length})
             </button>
           ))}
 
