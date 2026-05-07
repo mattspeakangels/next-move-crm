@@ -389,8 +389,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     return records;
   };
 
-  const classifySegment = (industry: string, company: string): ContactSegment => {
-    const text = (industry + ' ' + company).toLowerCase();
+  const classifySegment = (industry: string = '', company: string = ''): ContactSegment => {
+    const text = ((industry || '') + ' ' + (company || '')).toLowerCase();
     if (text.match(/rivendit|ferramenta|hardware|magazzin|distribu|consorz|agrario|edile|negozio|shop/)) return 'dealer';
     if (text.match(/costruz|edil|cantier|impresa|carpentr|murature|edilizia/)) return 'edilizia';
     return 'industria';
