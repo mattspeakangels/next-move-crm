@@ -1,6 +1,9 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default async (req: VercelRequest, res: VercelResponse) => {
+export default async function handler(
+  req: { method: string; query: Record<string, string | string[] | undefined> },
+  res: {
+    status: (code: number) => { json: (body: unknown) => void };
+  }
+) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
