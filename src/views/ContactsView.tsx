@@ -415,9 +415,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
     // Mapping colonne — keywords in ordine di specificità (più specifico prima)
     const col: Record<string, number> = {
-      company:     findColumn(['aziende', 'ragione sociale', 'nome azienda', 'company name', 'azienda', 'company', 'organizzazione', 'organization']),
-      status:      findColumn(['stato azienda', 'stato cliente', 'stato', 'status', 'tipo cliente', 'tipologia']),
-      contactName: findColumn(['referente', 'contatto principale', 'nome contatto', 'contatto', 'contact name', 'contact', 'nome', 'person']),
+      company:     findColumn(['aziende', 'ragione sociale', 'nome azienda', 'company name', 'azienda', 'company', 'organizzazione', 'organization', 'name']),
+      status:      findColumn(['stato azienda', 'stato cliente', 'stato', 'status', 'tipo cliente', 'tipologia', 'ruolo']),
+      contactName: findColumn(['referente', 'contatto principale', 'nome contatto', 'contatto', 'contact name', 'contact', 'person']),
       role:        findColumn(['ruolo', 'qualifica', 'posizione', 'role', 'title', 'job']),
       email:       findColumn(['e-mail', 'email', 'mail', 'posta']),
       phone:       findColumn(['numero di telefono', 'telefono fisso', 'telefono 1', 'telefono', 'phone', 'tel ']),
