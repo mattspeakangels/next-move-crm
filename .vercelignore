@@ -1,0 +1,24 @@
+# Heavy non-app content — not needed for the Vite build
+Salesforce/
+Assets/
+Data/
+Docs/
+Security/
+clienti vink/
+functions/
+tests/
+scripts/
+
+# Loose data / media / backups
+*.mov
+*.numbers
+*.xlsx
+*.XLSX
+*.pdf
+*.save
+prototipo-pipeline.html
+
+# Build artifacts / deps (Vercel builds fresh)
+dist/
+node_modules/
+.DS_Store
