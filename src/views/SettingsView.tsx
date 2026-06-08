@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
+import { useStoricoStore } from '../store/storicoStore';
 import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 
 export const SettingsView: React.FC = () => {
   const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
+  // Lo "storico" mostrato nella pagina Storico & Pipeline vive in useStoricoStore (file Excel caricato),
+  // separato da salesTransactions. Svuotando lo storico vendite azzeriamo entrambi così la pagina si svuota davvero.
+  const storicoClienti = useStoricoStore(s => s.clienti);
+  const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
   const [newProduct, setNewProduct] = useState('');
 
@@ -162,8 +167,12 @@ export const SettingsView: React.FC = () => {
         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Storico Vendite</p>
         <button
           onClick={() => {
-            if (window.confirm(`Eliminare tutto lo storico vendite (${Object.keys(salesTransactions).length} transazioni)? I clienti e i deal non verranno toccati.`)) {
+            const nTransazioni = Object.keys(salesTransactions).length;
+            const nStorico = storicoClienti.length;
+            if (window.confirm(`Eliminare tutto lo storico vendite (${nStorico} clienti caricati da Excel + ${nTransazioni} transazioni)? I clienti CRM e i deal non verranno toccati.`)) {
               clearSalesTransactions();
+              resetStorico();
+              showToast('Storico vendite svuotato', 'success');
             }
           }}
           className="flex items-center gap-2 text-orange-500 text-sm font-bold border border-orange-200 dark:border-orange-800 px-4 py-2 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
