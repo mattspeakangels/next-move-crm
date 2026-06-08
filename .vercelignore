@@ -1,24 +1,26 @@
-# Heavy non-app content — not needed for the Vite build
-Salesforce/
-Assets/
-Data/
-Docs/
-Security/
-clienti vink/
-functions/
-tests/
-scripts/
+# Heavy non-app content — not needed for the Vite build.
+# NB: pattern ancorati alla root con "/" iniziale, altrimenti su filesystem
+# case-insensitive "Data/" catturerebbe anche "src/data/" (rompe il build).
+/Salesforce/
+/Assets/
+/Data/
+/Docs/
+/Security/
+/clienti vink/
+/functions/
+/tests/
+/scripts/
 
-# Loose data / media / backups
+# Loose data / media / backups (a qualsiasi livello)
 *.mov
 *.numbers
 *.xlsx
 *.XLSX
 *.pdf
 *.save
-prototipo-pipeline.html
+/prototipo-pipeline.html
 
 # Build artifacts / deps (Vercel builds fresh)
-dist/
+/dist/
 node_modules/
 .DS_Store
