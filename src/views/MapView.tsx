@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Brain } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { parseClassification, getCategoryStyle, AI_CATEGORIES } from '../lib/aiCategories';
 
 // ── Icone colorate via divIcon ─────────────────────────────────────────────────
 
@@ -21,8 +22,8 @@ const makeIcon = (color: string) =>
     popupAnchor: [0, -30],
   });
 
-const clienteIcon  = makeIcon('#4f46e5'); // indigo
-const prospectIcon = makeIcon('#f59e0b'); // amber
+const clienteIcon  = makeIcon('#4f46e5');
+const prospectIcon = makeIcon('#f59e0b');
 const userIcon = L.divIcon({
   className: '',
   html: `<div style="
@@ -67,6 +68,7 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
   const [debugMsg, setDebugMsg]   = useState('');
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
   const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
+  const [aiCategoryFilter, setAiCategoryFilter] = useState<string | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -76,48 +78,40 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
   }, []);
 
   const geocodeContacts = async () => {
-    console.log('🚀 GEOCODING START');
     setIsGeocoding(true);
     setDebugMsg('Ricerca coordinate in corso…');
     let ok = 0, fail = 0;
-
-    const allContacts = Object.values(contacts);
-    const toGeocode = allContacts.filter(c => !c.lat && c.address && c.city);
-
+    const toGeocode = Object.values(contacts).filter(c => !c.lat && c.address && c.city);
     for (const c of toGeocode) {
-      console.log(`🌍 Geocoding: ${c.company} → ${c.address}, ${c.city}`);
       try {
         const res = await fetch(`/api/geocode?address=${encodeURIComponent(c.address as string)}&city=${encodeURIComponent(c.city as string)}`);
         const data = await res.json();
         if (data?.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lng = parseFloat(data[0].lon);
-          updateContact(c.id, { lat, lng });
-          console.log(`✅ Updated ${c.company} → ${lat}, ${lng}`);
+          updateContact(c.id, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
           ok++;
-        } else {
-          console.log(`❌ Not found: ${c.address}, ${c.city}`);
-          fail++;
-        }
+        } else { fail++; }
         await new Promise(r => setTimeout(r, 1500));
-      } catch (err) {
-        console.error('❌ Geocoding error:', err);
-        fail++;
-      }
+      } catch { fail++; }
     }
     setIsGeocoding(false);
     setDebugMsg(`Trovate: ${ok}, Non trovate: ${fail}`);
-    console.log('✨ GEOCODING COMPLETE: ok=', ok, 'fail=', fail);
   };
 
   const allContacts = Object.values(contacts);
   const allMapped   = allContacts.filter(c => c.lat && c.lng);
 
-  const filtered = allMapped.filter(c => {
-    if (mapFilter === 'clienti')  return c.status === 'cliente';
-    if (mapFilter === 'prospect') return c.status === 'potenziale';
-    return true;
-  }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter);
+  const filtered = allMapped
+    .filter(c => {
+      if (mapFilter === 'clienti')  return c.status === 'cliente';
+      if (mapFilter === 'prospect') return c.status === 'potenziale';
+      return true;
+    })
+    .filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter)
+    .filter(c => {
+      if (!aiCategoryFilter) return true;
+      const cls = parseClassification((c as any).classification);
+      return cls?.categoria === aiCategoryFilter;
+    });
 
   const nearby = userPos
     ? filtered.filter(c => calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius)
@@ -125,20 +119,13 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
 
   const nClienti  = allMapped.filter(c => c.status === 'cliente').length;
   const nProspect = allMapped.filter(c => c.status === 'potenziale').length;
-
-  const defaultCenter: [number, number] = userPos ?? [41.9, 12.5]; // default: Roma
-
+  const defaultCenter: [number, number] = userPos ?? [41.9, 12.5];
   const unmappedWithAddress = allContacts.filter(c => !c.lat && c.address && c.city);
-  
-  // Debug
+  const categorizedCount = allMapped.filter(c => parseClassification((c as any).classification)).length;
+
   React.useEffect(() => {
-    console.log('📍 MapView Debug:', {
-      totalContacts: allContacts.length,
-      mapped: allMapped.length,
-      unmappedWithAddress: unmappedWithAddress.length,
-      sample: unmappedWithAddress.slice(0, 3).map(c => ({ company: c.company, address: c.address, city: c.city }))
-    });
-  }, [allContacts, allMapped, unmappedWithAddress]);
+    console.log('📍 MapView Debug:', { totalContacts: allContacts.length, mapped: allMapped.length, unmappedWithAddress: unmappedWithAddress.length });
+  }, [allContacts.length, allMapped.length, unmappedWithAddress.length]);
 
   return (
     <div className="h-[calc(100vh-120px)] space-y-4 flex flex-col">
@@ -152,10 +139,8 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
               <span className="font-black">{unmappedWithAddress.length}</span> clienti con indirizzo non ancora posizionati sulla mappa
             </p>
           </div>
-          <button
-            onClick={geocodeContacts}
-            className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors"
-          >
+          <button onClick={geocodeContacts}
+            className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors">
             Posiziona ora
           </button>
         </div>
@@ -172,6 +157,9 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
             <p className="text-gray-400 text-sm font-bold mt-0.5">
               <span className="text-indigo-600 font-black">{nClienti}</span> clienti ·{' '}
               <span className="text-amber-500 font-black">{nProspect}</span> prospect · mappati {allMapped.length}/{allContacts.length}
+              {categorizedCount > 0 && (
+                <span className="ml-2 text-purple-500 font-black">· {categorizedCount} analizzati AI</span>
+              )}
             </p>
           </div>
 
@@ -201,20 +189,15 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-1">Mostra:</span>
           {([
             { key: 'tutti',    label: 'Tutti',    count: allMapped.length,  color: 'indigo' },
-            { key: 'clienti',  label: 'Clienti',  count: nClienti,           color: 'indigo' },
-            { key: 'prospect', label: 'Prospect', count: nProspect,          color: 'amber'  },
+            { key: 'clienti',  label: 'Clienti',  count: nClienti,          color: 'indigo' },
+            { key: 'prospect', label: 'Prospect', count: nProspect,         color: 'amber'  },
           ] as const).map(({ key, label, count, color }) => (
-            <button
-              key={key}
-              onClick={() => setMapFilter(key)}
+            <button key={key} onClick={() => setMapFilter(key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all border ${
                 mapFilter === key
-                  ? color === 'amber'
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-indigo-600 text-white border-indigo-600'
+                  ? color === 'amber' ? 'bg-amber-500 text-white border-amber-500' : 'bg-indigo-600 text-white border-indigo-600'
                   : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 hover:border-gray-400'
-              }`}
-            >
+              }`}>
               {key === 'clienti'  && <span className="w-3 h-3 rounded-full bg-indigo-500 inline-block" />}
               {key === 'prospect' && <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />}
               {key === 'tutti'    && <span className="w-3 h-3 rounded-full bg-gray-400 inline-block" />}
@@ -226,42 +209,62 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
         {/* ── Filtro Segment ── */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-1">Segmento:</span>
-          <button
-            onClick={() => setMapSegmentFilter(null)}
-            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-              mapSegmentFilter === null
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-            }`}
-          >
+          <button onClick={() => setMapSegmentFilter(null)}
+            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${mapSegmentFilter === null ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}>
             Tutti ({filtered.length})
           </button>
           {(['dealer', 'industria', 'edilizia'] as const).map(seg => (
-            <button
-              key={seg}
-              onClick={() => setMapSegmentFilter(seg)}
-              className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-                mapSegmentFilter === seg
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-              }`}
-            >
+            <button key={seg} onClick={() => setMapSegmentFilter(seg)}
+              className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${mapSegmentFilter === seg ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}>
               {seg === 'dealer' ? '🏪 Dealer' : seg === 'edilizia' ? '🏗️ Edilizia' : '🏭 Industria'} ({filtered.filter(c => c.segment === seg).length})
             </button>
           ))}
         </div>
 
+        {/* ── Filtro AI Categoria ── */}
+        {categorizedCount > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest mr-1 flex items-center gap-1">
+              <Brain size={11} /> AI:
+            </span>
+            <button onClick={() => setAiCategoryFilter(null)}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs uppercase transition-all ${aiCategoryFilter === null ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'}`}>
+              Tutte
+            </button>
+            {AI_CATEGORIES.map(cat => {
+              const style = getCategoryStyle(cat);
+              const count = allMapped.filter(c => parseClassification((c as any).classification)?.categoria === cat).length;
+              if (count === 0) return null;
+              return (
+                <button key={cat} onClick={() => setAiCategoryFilter(aiCategoryFilter === cat ? null : cat)}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${aiCategoryFilter === cat ? `${style.bg} ${style.text} ring-2 ring-purple-300` : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'}`}>
+                  {cat} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Legenda */}
-        <div className="flex items-center gap-3 text-xs text-gray-400 font-bold">
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> Clienti
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Prospect
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Tu
-          </span>
+        <div className="flex items-center gap-3 text-xs text-gray-400 font-bold flex-wrap">
+          {aiCategoryFilter ? (
+            <>
+              {AI_CATEGORIES.filter(cat => allMapped.some(c => parseClassification((c as any).classification)?.categoria === cat)).map(cat => {
+                const style = getCategoryStyle(cat);
+                return (
+                  <span key={cat} className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full inline-block" style={{ background: style.mapColor }} /> {cat}
+                  </span>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> Clienti</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Prospect</span>
+            </>
+          )}
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Tu</span>
           <div className="ml-auto" />
         </div>
       </div>
@@ -277,34 +280,46 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
           {filtered.map(c => {
             const isCliente = c.status === 'cliente';
             const distKm    = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
+            const cls       = parseClassification((c as any).classification);
+            const catStyle  = cls ? getCategoryStyle(cls.categoria) : null;
+            const icon      = cls
+              ? makeIcon(catStyle!.mapColor)
+              : isCliente ? clienteIcon : prospectIcon;
+
             return (
-              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={isCliente ? clienteIcon : prospectIcon}>
-                <Popup minWidth={220}>
+              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={icon}>
+                <Popup minWidth={240}>
                   <div className="p-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
                         {isCliente ? '● Cliente' : '◆ Prospect'}
                       </span>
+                      {cls && (
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${catStyle!.bg} ${catStyle!.text}`}>
+                          {cls.categoria}
+                        </span>
+                      )}
                       {distKm !== null && (
                         <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>
                       )}
                     </div>
                     <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
+                    {cls && (
+                      <p className="text-[10px] text-gray-400 italic mb-1 flex items-start gap-1">
+                        <Brain size={9} className="mt-0.5 flex-shrink-0" /> {cls.motivazione}
+                      </p>
+                    )}
                     {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
-                    {c.phone    && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
+                    {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
                     <div className="flex flex-col gap-1.5 pt-2 mt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => onNavigateToContact(c.id)}
-                        className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700 transition-colors"
-                      >
+                      <button onClick={() => onNavigateToContact(c.id)}
+                        className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700 transition-colors">
                         <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
                       </button>
                       {c.lat && c.lng && (
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
                           target="_blank" rel="noreferrer"
-                          className="w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-colors"
-                        >
+                          className="w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-colors">
                           <Navigation size={10} /> Naviga
                         </a>
                       )}
