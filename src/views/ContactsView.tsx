@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, Brain, Loader2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact, ContactSegment } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
+import { useCategorizeContacts } from '../hooks/useCategorizeContacts';
+import { parseClassification, getCategoryStyle, AI_CATEGORIES } from '../lib/aiCategories';
 import { ContactHistoryView } from './ContactHistoryView';
 
 const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) => {
@@ -304,8 +306,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
   const [segmentFilter, setSegmentFilter] = useState<ContactSegment | null>(null);
+  const [aiCategoryFilter, setAiCategoryFilter] = useState<string | null>(null);
   const fileInputRefProspect = useRef<HTMLInputElement>(null);
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
+  const { categorize, categorizeAll, loadingId: catLoadingId, bulkProgress, error: catError } = useCategorizeContacts();
 
   useEffect(() => {
     if (initialSearch) setSearchTerm(initialSearch);
@@ -611,6 +615,26 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             <div className="flex items-center gap-2">
               {editingContact?.id && contacts[editingContact.id] && (
                 <button
+                  disabled={catLoadingId === editingContact.id}
+                  onClick={async () => {
+                    const result = await categorize(contacts[editingContact.id]);
+                    if (result) {
+                      setEditingContact((prev: any) => ({
+                        ...prev,
+                        classification: JSON.stringify(result),
+                      }));
+                    }
+                  }}
+                  className="flex items-center gap-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-purple-100 transition-colors disabled:opacity-50"
+                >
+                  {catLoadingId === editingContact.id
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Brain size={14} />}
+                  <span className="hidden sm:inline">Categorizza</span>
+                </button>
+              )}
+              {editingContact?.id && contacts[editingContact.id] && (
+                <button
                   onClick={() => {
                     const contactDeals = Object.values(deals)
                       .filter(d => d.contactId === editingContact.id && !['chiuso-vinto','chiuso-perso'].includes(d.stage))
@@ -659,6 +683,41 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
           {/* Content */}
           <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-8">
+
+            {/* AI Classification Banner */}
+            {(() => {
+              const cls = parseClassification(editingContact?.classification);
+              const style = cls ? getCategoryStyle(cls.categoria) : null;
+              if (!cls || !style) return null;
+              return (
+                <div className={`flex items-start gap-3 px-5 py-4 rounded-2xl border ${style.bg} border-transparent`}>
+                  <Brain size={18} className={`${style.text} flex-shrink-0 mt-0.5`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs font-black uppercase tracking-widest ${style.text}`}>
+                        {cls.categoria}
+                      </span>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        cls.priorita === 'alta' ? 'bg-red-100 text-red-600' :
+                        cls.priorita === 'media' ? 'bg-yellow-100 text-yellow-600' :
+                        'bg-gray-200 text-gray-500'
+                      }`}>
+                        Priorità {cls.priorita}
+                      </span>
+                    </div>
+                    <p className={`text-xs font-bold mt-0.5 ${style.text} opacity-80`}>{cls.motivazione}</p>
+                  </div>
+                  {catError && (
+                    <p className="text-xs text-red-500 font-bold">{catError}</p>
+                  )}
+                </div>
+              );
+            })()}
+            {catError && !parseClassification(editingContact?.classification) && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 rounded-2xl">
+                <p className="text-xs text-red-600 font-bold">{catError}</p>
+              </div>
+            )}
 
             {/* SEZIONE 1 */}
             <section>
@@ -1011,6 +1070,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const list = Object.values(contacts)
               .filter(c => c.status === statusFilter)
               .filter(c => !segmentFilter || c.segment === segmentFilter)
+              .filter(c => {
+                if (!aiCategoryFilter) return true;
+                const cls = parseClassification((c as any).classification);
+                return cls?.categoria === aiCategoryFilter;
+              })
               .filter(c =>
                 (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (c.city    && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -1052,7 +1116,25 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     className={`text-white px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all text-sm ${btnCls}`}>
                     <Plus size={18} /> {isProspect ? 'Nuovo Prospect' : 'Nuovo Cliente'}
                   </button>
+                  <button
+                    disabled={!!bulkProgress}
+                    onClick={() => {
+                      const uncategorized = list.filter(c => !parseClassification((c as any).classification));
+                      const toAnalyze = uncategorized.slice(0, 5);
+                      if (toAnalyze.length === 0) return alert('Tutti i contatti visibili hanno già una categoria AI.');
+                      categorizeAll(toAnalyze);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all text-sm"
+                  >
+                    {bulkProgress
+                      ? <><Loader2 size={16} className="animate-spin" /> {bulkProgress.done}/{bulkProgress.total}</>
+                      : <><Brain size={16} /> <span className="hidden md:inline">Analizza AI</span></>
+                    }
+                  </button>
                 </div>
+                {catError && (
+                  <p className="text-xs text-red-500 font-bold px-1">{catError}</p>
+                )}
 
                 {/* Filtri Segment */}
                 {!isProspect && (
@@ -1083,6 +1165,38 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </div>
                 )}
 
+                {/* Filtro AI categoria */}
+                {(() => {
+                  const allInTab = Object.values(contacts).filter(c => c.status === statusFilter);
+                  const categorized = allInTab.filter(c => parseClassification((c as any).classification));
+                  if (categorized.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1"><Brain size={11} /> AI:</span>
+                      <button
+                        onClick={() => setAiCategoryFilter(null)}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs uppercase transition-all ${aiCategoryFilter === null ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'}`}
+                      >
+                        Tutte
+                      </button>
+                      {AI_CATEGORIES.map(cat => {
+                        const style = getCategoryStyle(cat);
+                        const count = allInTab.filter(c => parseClassification((c as any).classification)?.categoria === cat).length;
+                        if (count === 0) return null;
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => setAiCategoryFilter(aiCategoryFilter === cat ? null : cat)}
+                            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${aiCategoryFilter === cat ? `${style.bg} ${style.text} ring-2 ring-offset-1` : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'}`}
+                          >
+                            {cat} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {list.length === 0 ? (
@@ -1108,11 +1222,23 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                           </div>
                           <div className="min-w-0">
                             <h3 className="font-black dark:text-white uppercase leading-tight truncate">{contact.company}</h3>
-                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                              (contact as any).customerType === 'dealer' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
-                            }`}>
-                              {(contact as any).customerType === 'dealer' ? 'Dealer' : 'End User'}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                (contact as any).customerType === 'dealer' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
+                              }`}>
+                                {(contact as any).customerType === 'dealer' ? 'Dealer' : 'End User'}
+                              </span>
+                              {(() => {
+                                const cls = parseClassification((contact as any).classification);
+                                if (!cls) return null;
+                                const style = getCategoryStyle(cls.categoria);
+                                return (
+                                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+                                    {cls.categoria}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </div>
                         </div>
 
@@ -1145,6 +1271,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs font-black uppercase tracking-wide hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 transition-all"
                         >
                           <History size={13} /> Storico
+                        </button>
+                        <button
+                          disabled={catLoadingId === contact.id}
+                          onClick={e => { e.stopPropagation(); categorize(contact); }}
+                          className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 text-xs font-black uppercase tracking-wide hover:bg-purple-100 transition-all disabled:opacity-40"
+                        >
+                          {catLoadingId === contact.id ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}
                         </button>
                         {isProspect && (
                           <button

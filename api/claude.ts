@@ -79,9 +79,24 @@ const EmailOffertaDataSchema = z.object({
   sector: z.string().max(200).optional(),
 });
 
+const CategorizzaClienteDataSchema = z.object({
+  company: z.string().min(1).max(200),
+  status: z.enum(['potenziale', 'cliente']),
+  customerType: z.enum(['dealer', 'end-user']).optional(),
+  segment: z.string().max(100).optional(),
+  sector: z.string().max(200).optional(),
+  city: z.string().max(200).optional(),
+  intelligence: IntelligenceSchema,
+  dealCount: z.number().nonnegative().optional(),
+  dealTotalValue: z.number().nonnegative().optional(),
+  activityCount: z.number().nonnegative().optional(),
+  daysSinceLastActivity: z.number().nonnegative().optional(),
+  notes: z.string().max(500).optional(),
+});
+
 const RequestSchema = z.object({
-  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta']),
-  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema]),
+  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta', 'categorizza-cliente']),
+  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema, CategorizzaClienteDataSchema]),
 });
 
 // ─── Security utilities ───────────────────────────────────────────────────────
@@ -245,6 +260,55 @@ Formato:
 [testo]`;
 }
 
+function buildCategorizzaClientePrompt(data: {
+  company: string;
+  status: 'potenziale' | 'cliente';
+  customerType?: string;
+  segment?: string;
+  sector?: string;
+  city?: string;
+  intelligence?: { products?: string[]; competitors?: string[]; pricesAndPayments?: string; logisticsAndService?: string };
+  dealCount?: number;
+  dealTotalValue?: number;
+  activityCount?: number;
+  daysSinceLastActivity?: number;
+  notes?: string;
+}): string {
+  const safeCompany = sanitizeInput(data.company);
+  const safeSector = sanitizeInput(data.sector || '');
+  const safeCity = sanitizeInput(data.city || '');
+  const safeProducts = data.intelligence?.products?.map(p => sanitizeInput(p)).join(', ') || '';
+  const safeCompetitors = data.intelligence?.competitors?.map(c => sanitizeInput(c)).join(', ') || '';
+  const safeNotes = sanitizeInput(data.notes || '');
+
+  return `Sei un CRM analyst esperto nel settore workwear (Blåkläder). Analizza il contatto e classificalo in modo preciso.
+
+**CONTATTO**: ${safeCompany}
+**Status**: ${data.status === 'cliente' ? 'Cliente attivo' : 'Prospect'}
+**Tipo**: ${data.customerType === 'dealer' ? 'Rivenditore/Dealer' : 'Utilizzatore Finale'}
+**Segmento**: ${data.segment || 'non specificato'}
+**Settore**: ${safeSector || 'non specificato'}
+**Città**: ${safeCity || 'non specificata'}
+${safeProducts ? `**Prodotti acquistati**: ${safeProducts}` : ''}
+${safeCompetitors ? `**Competitor presenti**: ${safeCompetitors}` : ''}
+**Opportunità aperte**: ${data.dealCount ?? 0} | **Valore pipeline**: €${(data.dealTotalValue ?? 0).toLocaleString('it')}
+**Attività registrate**: ${data.activityCount ?? 0} | **Giorni dall'ultima attività**: ${data.daysSinceLastActivity != null ? data.daysSinceLastActivity : 'N/A'}
+${safeNotes ? `**Note**: ${safeNotes}` : ''}
+
+Classificalo in UNA di queste categorie:
+- "Cliente Premium": cliente ad alto valore, relazione consolidata, acquisti frequenti
+- "Cliente Attivo": cliente regolare con buona relazione e potenziale di crescita
+- "Cliente a Rischio": inattivo da >60 giorni, competitor presenti, rischio abbandono
+- "Dealer Strategico": rivenditore con alto volume o forte potenziale moltiplicatore
+- "Prospect Caldo": prospect con attività recente o pipeline aperta, alto interesse
+- "Prospect Freddo": prospect con scarsa attività, nessuna pipeline significativa
+
+Rispondi ESCLUSIVAMENTE con questo JSON (nessun testo aggiuntivo):
+{"categoria":"...","motivazione":"...","priorita":"alta|media|bassa"}
+
+La motivazione deve essere max 80 caratteri, in italiano, concisa e specifica per questo contatto.`;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
@@ -348,6 +412,9 @@ export default async function handler(req: { method: string; body: unknown; head
         break;
       case 'email-offerta':
         prompt = buildEmailOffertaPrompt(data as Parameters<typeof buildEmailOffertaPrompt>[0]);
+        break;
+      case 'categorizza-cliente':
+        prompt = buildCategorizzaClientePrompt(data as Parameters<typeof buildCategorizzaClientePrompt>[0]);
         break;
       default:
         res.status(400).json({ error: 'Invalid request type' });
