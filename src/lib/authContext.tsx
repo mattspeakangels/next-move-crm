@@ -4,9 +4,10 @@ import { auth } from './firebase';
 import { checkLoginRateLimit, recordSuccessfulLogin, recordFailedLogin } from './loginRateLimiter';
 
 const provider = new GoogleAuthProvider();
-const isMobileStandalone = () =>
+const isMobileOrStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
-  ('standalone' in navigator && (navigator as any).standalone === true);
+  ('standalone' in navigator && (navigator as any).standalone === true) ||
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 interface AuthContextType {
   user: User | null;
@@ -32,8 +33,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           recordSuccessfulLogin(result.user.email).catch(console.error);
         }
       })
-      .catch(() => {
+      .catch((error: any) => {
         recordFailedLogin(undefined).catch(console.error);
+        if (error?.code === 'auth/unauthorized-domain') {
+          setLoginError('Dominio non autorizzato. Contatta il supporto.');
+        } else if (error?.code && error.code !== 'auth/no-auth-event') {
+          setLoginError(error.message || 'Login fallito. Riprova.');
+        }
       });
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -56,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setLoginError(undefined);
 
-      if (isMobileStandalone()) {
+      if (isMobileOrStandalone()) {
         await signInWithRedirect(auth, provider);
       } else {
         const result = await signInWithPopup(auth, provider);
@@ -66,11 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       recordFailedLogin(undefined).catch(console.error);
 
       if (error.code === 'auth/popup-closed-by-user') {
-        setLoginError('Login cancelled');
+        setLoginError('Login annullato.');
       } else if (error.code === 'auth/popup-blocked') {
-        setLoginError('Login popup was blocked. Please allow popups and try again.');
+        setLoginError('Il popup è stato bloccato. Abilita i popup e riprova.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setLoginError('Dominio non autorizzato. Contatta il supporto.');
       } else {
-        setLoginError(error.message || 'Login failed. Please try again.');
+        setLoginError(error.message || 'Login fallito. Riprova.');
       }
     }
   };
