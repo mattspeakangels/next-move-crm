@@ -62,11 +62,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setLoginError(undefined);
 
-      if (isMobileOrStandalone()) {
+      if (isStandalone()) {
+        // PWA installed: popup non funziona, usa redirect
         await signInWithRedirect(auth, provider);
-      } else {
+        return;
+      }
+
+      try {
+        // Tenta popup (funziona su tutti i browser mobili e desktop)
         const result = await signInWithPopup(auth, provider);
         recordSuccessfulLogin(result.user.email).catch(console.error);
+      } catch (popupError: any) {
+        if (
+          popupError.code === 'auth/popup-blocked' ||
+          popupError.code === 'auth/operation-not-supported-in-this-environment'
+        ) {
+          // Popup bloccato: fallback automatico al redirect
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw popupError;
+        }
       }
     } catch (error: any) {
       recordFailedLogin(undefined).catch(console.error);
