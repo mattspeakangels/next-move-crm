@@ -4,10 +4,10 @@ import { auth } from './firebase';
 import { checkLoginRateLimit, recordSuccessfulLogin, recordFailedLogin } from './loginRateLimiter';
 
 const provider = new GoogleAuthProvider();
-const isMobileOrStandalone = () =>
+// Use redirect only for PWA installed mode — popup works fine on mobile browsers
+const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
-  ('standalone' in navigator && (navigator as any).standalone === true) ||
-  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  ('standalone' in navigator && (navigator as any).standalone === true);
 
 interface AuthContextType {
   user: User | null;
