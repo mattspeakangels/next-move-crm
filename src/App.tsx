@@ -29,8 +29,10 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, profile } = useStore();
+  const { user } = useAuth();
 
   useInitializeProducts();
+  useFirestoreSync(user!.uid);
 
   const navigateToContact = (contactId: string) => {
     setSelectedContactId(contactId);
@@ -167,7 +169,6 @@ function AppContent() {
 
 function AuthGate() {
   const { user, loading } = useAuth();
-  if (user) useFirestoreSync(user.uid);
 
   if (loading) {
     return (
