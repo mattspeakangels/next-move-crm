@@ -1,25 +1,32 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './lib/authContext';
 import { useFirestoreSync } from './lib/useFirestoreSync';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Shield } from 'lucide-react';
-import { Dashboard } from './views/DashboardView';
-import { ContactsView } from './views/ContactsView';
-import { PipelineView } from './views/PipelineView';
-import { OffersView } from './views/OffersView';
-import { AgendaView } from './views/AgendaView';
-import { SettingsView } from './views/SettingsView';
-import { OnboardingView } from './views/OnboardingView';
-import { ProductsView } from './views/ProductsView';
-import { MapView } from './views/MapView';
-import { ActivityLogView } from './views/ActivityLogView';
-import { AnalyticsView } from './views/AnalyticsView';
-import { StoricoView } from './views/StoricoView';
-import { LegalView } from './views/LegalView';
 import { ToastProvider } from './components/ui/ToastContext';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
+
+const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
+const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
+const PipelineView   = lazy(() => import('./views/PipelineView').then(m => ({ default: m.PipelineView })));
+const OffersView     = lazy(() => import('./views/OffersView').then(m => ({ default: m.OffersView })));
+const AgendaView     = lazy(() => import('./views/AgendaView').then(m => ({ default: m.AgendaView })));
+const SettingsView   = lazy(() => import('./views/SettingsView').then(m => ({ default: m.SettingsView })));
+const OnboardingView = lazy(() => import('./views/OnboardingView').then(m => ({ default: m.OnboardingView })));
+const ProductsView   = lazy(() => import('./views/ProductsView').then(m => ({ default: m.ProductsView })));
+const MapView        = lazy(() => import('./views/MapView').then(m => ({ default: m.MapView })));
+const ActivityLogView = lazy(() => import('./views/ActivityLogView').then(m => ({ default: m.ActivityLogView })));
+const AnalyticsView  = lazy(() => import('./views/AnalyticsView').then(m => ({ default: m.AnalyticsView })));
+const StoricoView    = lazy(() => import('./views/StoricoView').then(m => ({ default: m.StoricoView })));
+const LegalView      = lazy(() => import('./views/LegalView').then(m => ({ default: m.LegalView })));
+
+const ViewLoader = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 // Analytics feature enabled
 function AppContent() {
@@ -48,7 +55,11 @@ function AppContent() {
     else document.documentElement.classList.remove('dark');
   }, [theme]);
 
-  if (!profile) return <OnboardingView />;
+  if (!profile) return (
+    <Suspense fallback={<ViewLoader />}>
+      <OnboardingView />
+    </Suspense>
+  );
 
   const renderView = () => {
     switch (currentView) {
@@ -108,7 +119,9 @@ function AppContent() {
 
       {/* ── MAIN CONTENT ── */}
       <main className="md:pl-64 min-h-screen pb-20 md:pb-0 bg-gray-50 dark:bg-gray-900">
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">{renderView()}</div>
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+          <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
+        </div>
       </main>
 
       {/* ── MOBILE BOTTOM NAV ── */}

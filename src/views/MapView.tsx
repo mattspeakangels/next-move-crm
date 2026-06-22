@@ -141,7 +141,7 @@ const stopIcon = (n: number) => L.divIcon({
 });
 
 // Componente sortable per singola tappa — drag handle visibile
-const SortableTappa: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+const SortableTappa = React.memo(function SortableTappa({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
     <div
@@ -161,15 +161,25 @@ const SortableTappa: React.FC<{ id: string; children: React.ReactNode }> = ({ id
       {children}
     </div>
   );
-};
+});
 
 // Vista fullscreen itinerario: mappa + bottom sheet
+// Chiama map.invalidateSize() quando la mappa torna visibile dopo display:none
+const SizeInvalidator: React.FC<{ isVisible: boolean }> = ({ isVisible }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (isVisible) setTimeout(() => map.invalidateSize(), 50);
+  }, [isVisible, map]);
+  return null;
+};
+
 interface ItinerarioViewProps {
   contacts: Record<string, any>;
   onClose: () => void;
+  isVisible: boolean;
 }
 
-const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) => {
+const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVisible }) => {
   const { addActivity } = useStore();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
@@ -189,16 +199,19 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
 
   const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
 
-  const searchItinNorm = searchItinQuery.toLowerCase().trim();
-  const itinSearchResults = searchItinNorm.length >= 1
-    ? allContactsList
-        .filter((c: any) =>
-          c.lat && c.lng &&
-          (c.company.toLowerCase().includes(searchItinNorm) ||
-           (c.city || '').toLowerCase().includes(searchItinNorm))
-        )
-        .slice(0, 6)
-    : [];
+  const searchItinNorm = useMemo(() => searchItinQuery.toLowerCase().trim(), [searchItinQuery]);
+  const itinSearchResults = useMemo(() =>
+    searchItinNorm.length >= 1
+      ? allContactsList
+          .filter((c: any) =>
+            c.lat && c.lng &&
+            (c.company.toLowerCase().includes(searchItinNorm) ||
+             (c.city || '').toLowerCase().includes(searchItinNorm))
+          )
+          .slice(0, 6)
+      : [],
+    [searchItinNorm, allContactsList]
+  );
 
   const mapped = useMemo(() =>
     Object.values(contacts).filter((c: any) => c.lat && c.lng),
@@ -452,7 +465,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
   );
 
   return (
-    <div className="fixed inset-0 z-[600] flex bg-gray-900">
+    <div className="fixed inset-0 z-[600] flex bg-gray-900" style={{ display: isVisible ? 'flex' : 'none' }}>
 
       {/* ── MAPPA (occupa tutto, o sx su desktop) ── */}
       <div className="flex-1 relative">
@@ -563,6 +576,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
         {/* Mappa */}
         <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap" />
+          <SizeInvalidator isVisible={isVisible} />
           <FlyToContact position={itinFlyTo} />
           <Marker position={[HOME.lat, HOME.lng]} icon={homeIcon}>
             <Popup><strong>Partenza — {HOME.label}</strong></Popup>
@@ -929,6 +943,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const [showFilters, setShowFilters] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [showItinerario, setShowItinerario] = useState(false);
+  const [itinerarioEverOpened, setItinerarioEverOpened] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
@@ -1128,7 +1143,7 @@ export const MapView: React.FC<MapViewProps> = ({
           <div className="flex items-center gap-2">
             {/* Itinerario */}
             <button
-              onClick={() => setShowItinerario(true)}
+              onClick={() => { setShowItinerario(true); setItinerarioEverOpened(true); }}
               className="p-2.5 rounded-xl border-2 border-orange-200 text-orange-500 hover:bg-orange-50 transition-all"
               title="Crea itinerario di viaggio"
             >
@@ -1477,11 +1492,12 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
       )}
 
-      {/* ── Itinerario View ── */}
-      {showItinerario && (
+      {/* ── Itinerario View — keep-alive: montato una volta, nascosto con display:none ── */}
+      {itinerarioEverOpened && (
         <ItinerarioView
           contacts={contacts}
           onClose={() => setShowItinerario(false)}
+          isVisible={showItinerario}
         />
       )}
 
