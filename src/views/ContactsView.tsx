@@ -306,6 +306,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
   const [segmentFilter, setSegmentFilter] = useState<ContactSegment | null>(null);
   const fileInputRefProspect = useRef<HTMLInputElement>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoStatus, setGeoStatus] = useState<'idle' | 'ok' | 'error'>('idle');
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
   useEffect(() => {
@@ -313,7 +315,36 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   }, [initialSearch]);
 
 
+  const handleGeocode = async () => {
+    if (!editingContact) return;
+    setGeoLoading(true);
+    setGeoStatus('idle');
+    try {
+      const params = new URLSearchParams();
+      if (editingContact.city) params.set('city', editingContact.city);
+      if (editingContact.province) params.set('province', editingContact.province);
+      if (editingContact.address) params.set('address', editingContact.address);
+      const res = await fetch(`/api/geocode?${params}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const jitter = () => (Math.random() - 0.5) * 0.004;
+        const lat = parseFloat(data[0].lat) + jitter();
+        const lng = parseFloat(data[0].lon) + jitter();
+        setEditingContact((prev: any) => ({ ...prev, lat, lng }));
+        if (contacts[editingContact.id]) updateContact(editingContact.id, { lat, lng });
+        setGeoStatus('ok');
+      } else {
+        setGeoStatus('error');
+      }
+    } catch {
+      setGeoStatus('error');
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
   const openDetail = (contact?: Contact | any) => {
+    setGeoStatus('idle');
     if (contact) {
       setDetailContact(contact);
       setEditingContact(contact);
@@ -697,6 +728,30 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 >
                   <Sparkles size={14} /> <span className="hidden sm:inline">Prepara Visita</span>
                 </button>
+              )}
+              {/* Bottone sincronizzazione mappa — visibile se mancano le coordinate */}
+              {!(editingContact?.lat && editingContact?.lng) && (editingContact?.city || editingContact?.address) && (
+                <button
+                  onClick={handleGeocode}
+                  disabled={geoLoading}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest transition-colors border ${
+                    geoStatus === 'ok'
+                      ? 'bg-green-50 border-green-200 text-green-600'
+                      : geoStatus === 'error'
+                      ? 'bg-red-50 border-red-200 text-red-500'
+                      : 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100'
+                  } disabled:opacity-60`}
+                >
+                  <MapPin size={14} className={geoLoading ? 'animate-bounce' : ''} />
+                  <span className="hidden sm:inline">
+                    {geoLoading ? 'Ricerca…' : geoStatus === 'ok' ? 'Posizionato!' : geoStatus === 'error' ? 'Non trovato' : 'Posiziona su Mappa'}
+                  </span>
+                </button>
+              )}
+              {(editingContact?.lat && editingContact?.lng) && (
+                <span className="hidden sm:flex items-center gap-1 text-[10px] font-black text-green-500 uppercase tracking-widest">
+                  <MapPin size={11} /> In mappa
+                </span>
               )}
               <button
                 onClick={handleSave}
