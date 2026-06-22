@@ -6,10 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': il nuovo service worker resta in attesa finché l'utente non
+      // clicca "Aggiorna" (UpdateBanner). Niente skipWaiting/clientsClaim qui:
+      // l'attivazione è controllata da updateServiceWorker(true).
+      registerType: 'prompt',
       workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
         // Aumenta il limite per precachare tutti i chunk
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },

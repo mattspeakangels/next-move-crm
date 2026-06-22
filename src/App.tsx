@@ -5,6 +5,7 @@ import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Shield } from 'lucide-react';
 import { ToastProvider } from './components/ui/ToastContext';
+import { UpdateBanner } from './components/UpdateBanner';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 
@@ -195,4 +196,11 @@ function AuthGate() {
   return <AppContent />;
 }
 
-export default function App() { return (<ToastProvider><AuthGate /></ToastProvider>); }
+export default function App() {
+  return (
+    <ToastProvider>
+      <AuthGate />
+      <UpdateBanner />
+    </ToastProvider>
+  );
+}
