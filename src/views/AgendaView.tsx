@@ -469,6 +469,7 @@ export const AgendaView: React.FC = () => {
   const [pstEvents, setPstEvents] = useState<any[]>([]);
   const [pstSelected, setPstSelected] = useState<Set<number>>(new Set());
   const [pstModalOpen, setPstModalOpen] = useState(false);
+  const [pstContactOverrides, setPstContactOverrides] = useState<Record<number, string>>({});
 
   const inferActivityType = (subject: string, location: string): string => {
     const s = (subject + ' ' + location).toLowerCase();
@@ -566,8 +567,12 @@ export const AgendaView: React.FC = () => {
       const sel = new Set<number>(
         enriched.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx)
       );
+      // Inizializza override con auto-match
+      const overrides: Record<number, string> = {};
+      enriched.forEach((e: any) => { overrides[e._idx] = e._contactId || ''; });
       setPstEvents(enriched);
       setPstSelected(sel);
+      setPstContactOverrides(overrides);
       setPstModalOpen(true);
     } catch (err: any) {
       showToast(`Errore: ${err.message}`, 'error');
@@ -583,7 +588,7 @@ export const AgendaView: React.FC = () => {
       const ts = new Date(ev.start).getTime();
       addActivity({
         id: `pst_${Date.now()}_${ev._idx}`,
-        contactId: ev._contactId || '',
+        contactId: pstContactOverrides[ev._idx] ?? ev._contactId ?? '',
         type: ev._type as any,
         date: ts,
         outcome: 'da-fare',
@@ -1417,9 +1422,12 @@ export const AgendaView: React.FC = () => {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2 min-h-0">
               {pstEvents.map((ev: any) => {
                 const sel = pstSelected.has(ev._idx);
-                const contact = ev._contactId ? (contacts as any)[ev._contactId] : null;
+                const overrideId = pstContactOverrides[ev._idx] ?? '';
                 const startDate = ev.start ? new Date(ev.start) : null;
                 const hasDate = !!startDate;
+                const sortedContacts = Object.values(contacts as any).sort((a: any, b: any) =>
+                  (a.company || '').localeCompare(b.company || '', 'it')
+                );
                 return (
                   <div
                     key={ev._idx}
@@ -1465,15 +1473,25 @@ export const AgendaView: React.FC = () => {
                           ev._type === 'formazione' ? 'bg-green-100 text-green-600' :
                           'bg-indigo-100 text-indigo-600'
                         }`}>{ev._type}</span>
-                        {contact ? (
-                          <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">
-                            ✓ {contact.company}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                            Nessun cliente abbinato
-                          </span>
-                        )}
+                        {/* Dropdown selezione cliente */}
+                        <select
+                          value={overrideId}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => {
+                            e.stopPropagation();
+                            setPstContactOverrides(prev => ({ ...prev, [ev._idx]: e.target.value }));
+                          }}
+                          className={`text-[11px] font-bold rounded-full px-2 py-0.5 border outline-none cursor-pointer max-w-[180px] ${
+                            overrideId
+                              ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                              : 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 text-gray-400'
+                          }`}
+                        >
+                          <option value="">— Nessun cliente —</option>
+                          {(sortedContacts as any[]).map((c: any) => (
+                            <option key={c.id} value={c.id}>{c.company}</option>
+                          ))}
+                        </select>
                         {ev._duplicate && (
                           <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
                             ⚠ già presente
