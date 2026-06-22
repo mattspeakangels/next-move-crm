@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Contact, ContactSegment } from '../types';
@@ -421,14 +422,24 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       return -1;
     };
 
+    // Trova TUTTE le colonne che matchano almeno un keyword (escluse quelle con excludes)
+    const findAllColumns = (includes: string[], excludes: string[] = []): number[] => {
+      const results: number[] = [];
+      headerLine.forEach((h, i) => {
+        const matched = includes.some(kw => h.includes(kw.toLowerCase()));
+        const excluded = excludes.some(kw => h.includes(kw.toLowerCase()));
+        if (matched && !excluded) results.push(i);
+      });
+      return results;
+    };
+
     // Mapping colonne — keywords in ordine di specificità (più specifico prima)
     const col: Record<string, number> = {
       company:     findColumn(['aziende', 'ragione sociale', 'nome azienda', 'company name', 'azienda', 'company', 'organizzazione', 'organization', 'name']),
       status:      findColumn(['stato azienda', 'stato cliente', 'stato', 'status', 'tipo cliente', 'tipologia', 'ruolo']),
       contactName: findColumn(['referente', 'contatto principale', 'nome contatto', 'contatto', 'contact name', 'contact', 'person']),
       role:        findColumn(['ruolo', 'qualifica', 'posizione', 'role', 'title', 'job']),
-      email:       findColumn(['e-mail', 'email', 'mail', 'posta']),
-      phone:       findColumn(['numero di telefono', 'telefono fisso', 'telefono 1', 'telefono', 'phone', 'tel ']),
+      phone:       findColumn(['numero di telefono', 'telefono fisso', 'telefono 1', 'telefono', 'telefoni', 'phone', 'tel ']),
       mobile:      findColumn(['cellulare', 'mobile', 'cell', 'telefono 2']),
       website:     findColumn(['web', 'sito web', 'website', 'url', 'sito']),
       address:     findColumn(['indirizzo', 'address', 'via ', 'strada', 'street']),
@@ -439,8 +450,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       notes:       findColumn(['commenti', 'note', 'notes', 'comments', 'osservazioni']),
     };
 
+    // Tutte le colonne email (info, vendite, direzione, tecnico, ecc.) escludendo i flag "verificate"
+    const emailCols = findAllColumns(['email', 'e-mail', 'mail', 'posta'], ['verificat']);
+
     const get = (row: string[], key: string): string =>
       col[key] >= 0 ? (row[col[key]] ?? '').trim() : '';
+
+    // Prima email non vuota tra tutte le colonne email trovate
+    const getEmail = (row: string[]): string =>
+      emailCols.map(i => (row[i] ?? '').trim()).find(v => v) ?? '';
 
     const parseStatus = (raw: string): 'potenziale' | 'cliente' => {
       const v = raw.toLowerCase().trim();
@@ -460,8 +478,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       const company = col['company'] >= 0 ? values[col['company']] || '' : values[0] || '';
       if (!company) continue;
 
-      // Telefono: preferisce 'phone', poi 'mobile' se phone è vuoto
-      const phone = get(values, 'phone') || get(values, 'mobile');
+      // Telefono: preferisce 'phone', poi 'mobile'; prende solo il primo numero se ce ne sono più
+      const rawPhone = get(values, 'phone') || get(values, 'mobile');
+      const phone = rawPhone.split(',')[0].trim();
 
       // Status: dalla colonna CSV se disponibile, altrimenti fallbackStatus
       const statusRaw = get(values, 'status');
@@ -473,7 +492,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         company,
         contactName: get(values, 'contactName'),
         role:        get(values, 'role'),
-        email:       get(values, 'email'),
+        email:       getEmail(values),
         phone,
         website:     get(values, 'website'),
         address:     get(values, 'address'),
@@ -496,10 +515,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, status: 'potenziale' | 'cliente' = 'potenziale') => {
     const file = e.target.files?.[0];
     if (!file) return;
-    console.log('📥 CSV CARICATO:', file.name, file.size, 'bytes');
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    console.log('📥 FILE CARICATO:', file.name, file.size, 'bytes', isExcel ? '(Excel)' : '(CSV)');
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
+    const processText = (text: string) => {
       console.log('📄 CSV TEXT (first 500 chars):', text.substring(0, 500));
       const newContacts = parseCSVContacts(text, status);
       console.log('✅ CONTATTI PARSATI:', newContacts.length);
@@ -510,7 +529,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         phone: c.phone,
         status: c.status
       })));
-
       if (newContacts.length > 0) {
         addContactsBatch(newContacts);
         console.log('✨ CONTATTI AGGIUNTI NELLO STORE (mantenuti i precedenti)');
@@ -520,7 +538,17 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       if (fileInputRef.current)         fileInputRef.current.value = '';
       if (fileInputRefProspect.current) fileInputRefProspect.current.value = '';
     };
-    reader.readAsText(file);
+    if (isExcel) {
+      reader.onload = (event) => {
+        const wb = XLSX.read(event.target?.result, { type: 'array' });
+        const csv = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+        processText(csv);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = (event) => processText(event.target?.result as string);
+      reader.readAsText(file);
+    }
   };
 
   const handleSave = () => {
@@ -1028,10 +1056,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </div>
 
                   {/* CSV input — clienti */}
-                  <input type="file" accept=".csv" className="hidden" ref={fileInputRef}
+                  <input type="file" accept=".csv,.xlsx,.xls" className="hidden" ref={fileInputRef}
                     onChange={e => handleFileUpload(e, 'cliente')} />
                   {/* CSV input — prospect */}
-                  <input type="file" accept=".csv" className="hidden" ref={fileInputRefProspect}
+                  <input type="file" accept=".csv,.xlsx,.xls" className="hidden" ref={fileInputRefProspect}
                     onChange={e => handleFileUpload(e, 'potenziale')} />
 
                   <button onClick={() => csvRef.current?.click()}
@@ -1067,17 +1095,22 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     >
                       Tutti ({Object.values(contacts).filter(c => c.status === statusFilter).length})
                     </button>
-                    {(['dealer', 'industria', 'edilizia'] as const).map(seg => (
+                    {([
+                      { key: 'dealer',    label: '🏪 Dealer' },
+                      { key: 'industria', label: '🏭 Industria' },
+                      { key: 'edilizia',  label: '🏗️ Edilizia' },
+                      { key: 'end-user',  label: '👤 End User' },
+                    ] as const).map(({ key, label }) => (
                       <button
-                        key={seg}
-                        onClick={() => setSegmentFilter(seg)}
+                        key={key}
+                        onClick={() => setSegmentFilter(key)}
                         className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-                          segmentFilter === seg
+                          segmentFilter === key
                             ? 'bg-indigo-600 text-white'
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                         }`}
                       >
-                        {seg === 'dealer' ? '🏪 Dealer' : seg === 'edilizia' ? '🏗️ Edilizia' : '🏭 Industria'} ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === seg).length})
+                        {label} ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === key).length})
                       </button>
                     ))}
                   </div>

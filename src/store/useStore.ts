@@ -39,6 +39,7 @@ interface StoreState {
   updateOffer: (id: string, updates: Partial<Offer>) => void;
   removeOffer: (id: string) => void;
   addProduct: (product: Product) => void;
+  bulkAddProducts: (products: Product[]) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   removeProduct: (id: string) => void;
   clearProducts: () => void;
@@ -130,6 +131,11 @@ export const useStore = create<StoreState>()(
       }),
 
       addProduct: (product) => set((state) => ({ products: { ...state.products, [product.id]: product } })),
+      bulkAddProducts: (newProds) => set((state) => {
+        const added: Record<string, Product> = {};
+        for (const p of newProds) added[p.id] = p;
+        return { products: { ...state.products, ...added } };
+      }),
       updateProduct: (id, updates) => set((state) => ({
         products: { ...state.products, [id]: { ...state.products[id], ...updates } }
       })),

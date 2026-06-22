@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { blakladerUrl, enrichProduct } from '../lib/blaklader';
+import * as XLSX from 'xlsx';
 import { useStore } from '../store/useStore';
 import {
   Plus, Upload, Search, X, MoreHorizontal, Package,
   LayoutList, LayoutGrid, Rows3, ShoppingBag, Check, Trash2, Copy, Pencil, RefreshCw,
-  Tag, Ruler, Layers
+  Tag, Ruler, Layers, Sparkles, Loader2, ExternalLink
 } from 'lucide-react';
 import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
@@ -80,7 +82,7 @@ const normCat = (cat: string): string => {
 };
 
 const fPrice = (p: Product) =>
-  p.price > 0 ? `€${p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}` : 'Da configurare';
+  p.price > 0 ? `€${p.price % 1 === 0 ? p.price.toFixed(0) : p.price.toFixed(2)}` : '';
 
 const stockSt = (p: Product): 'esaurito' | 'low' | 'ok' | null => {
   if (p.stock === undefined || p.stock === null) return null;
@@ -173,7 +175,9 @@ const CompactList: React.FC<{
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
   onEdit: (p: Product) => void;
-}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit }) => {
+  onEnrich: (p: Product) => void;
+  enrichingIds: Set<string>;
+}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit, onEnrich, enrichingIds }) => {
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
@@ -214,12 +218,28 @@ const CompactList: React.FC<{
                 >
                   {pName(p)}
                 </span>
-                <span
-                  className="text-gray-400 flex-shrink-0 font-mono"
+                <a
+                  href={blakladerUrl(p.code, p.productUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="text-indigo-500 hover:text-indigo-700 flex-shrink-0 font-mono hover:underline flex items-center gap-0.5"
                   style={{ fontSize: 10.5 }}
                 >
                   {p.code}
-                </span>
+                  {p.productUrl && <ExternalLink size={9} />}
+                </a>
+                {!p.productUrl && (
+                  <button
+                    onClick={e => { e.stopPropagation(); onEnrich(p); }}
+                    title="Recupera dati da blaklader.it"
+                    className="text-gray-300 hover:text-emerald-500 transition-colors"
+                  >
+                    {enrichingIds.has(p.id)
+                      ? <Loader2 size={11} className="animate-spin text-emerald-500" />
+                      : <Sparkles size={11} />}
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <span className={`text-[9.5px] font-black uppercase tracking-wide ${cs.text}`}>
@@ -269,7 +289,9 @@ const VisualList: React.FC<{
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
   onEdit: (p: Product) => void;
-}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit }) => {
+  onEnrich: (p: Product) => void;
+  enrichingIds: Set<string>;
+}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit, onEnrich: _onEnrich2, enrichingIds: _enrichingIds2 }) => {
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
@@ -328,9 +350,16 @@ const VisualList: React.FC<{
                 <span className={`text-[9.5px] font-black uppercase nowrap ${cs.text} flex-shrink-0`} style={{ whiteSpace: 'nowrap', minWidth: 0 }}>
                   {catLabel(p)}
                 </span>
-                <span className="text-gray-400 dark:text-gray-500 font-mono flex-shrink-0" style={{ fontSize: 10 }}>
+                <a
+                  href={blakladerUrl(p.code)}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="text-indigo-500 hover:text-indigo-700 font-mono flex-shrink-0 hover:underline"
+                  style={{ fontSize: 10 }}
+                >
                   {p.code}
-                </span>
+                </a>
               </div>
               {/* Name */}
               <div
@@ -384,7 +413,9 @@ const GridList: React.FC<{
   onDelete: (id: string) => void;
   onDuplicate: (p: Product) => void;
   onEdit: (p: Product) => void;
-}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit }) => {
+  onEnrich: (p: Product) => void;
+  enrichingIds: Set<string>;
+}> = ({ products, selected, onToggle, onOpen, onDelete, onDuplicate, onEdit, onEnrich: _onEnrich, enrichingIds: _enrichingIds }) => {
   const catLabel = (p: Product) => {
     const c = normCat(p.category);
     return CATEGORIES.find(x => x.id === c)?.label ?? p.category;
@@ -451,7 +482,10 @@ const GridList: React.FC<{
               {/* Cat + code */}
               <div className="flex items-center gap-1.5 mb-1">
                 <span className={`text-[9px] font-black uppercase ${cs.text}`}>{catLabel(p)}</span>
-                <span className="text-gray-400 font-mono text-[9px] ml-auto flex-shrink-0">{p.code}</span>
+                <a href={blakladerUrl(p.code, p.productUrl)} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                  className="text-indigo-500 hover:text-indigo-700 font-mono text-[9px] ml-auto flex-shrink-0 hover:underline flex items-center gap-0.5">
+                  {p.code}{p.productUrl && <ExternalLink size={8} />}
+                </a>
               </div>
               {/* Name */}
               <div
@@ -727,7 +761,9 @@ const ProductDetailModal: React.FC<{
   onDuplicate: (p: Product) => void;
   onDelete: (id: string) => void;
   onAddToOffer: (p: Product) => void;
-}> = ({ product: p, onClose, onEdit, onDuplicate, onDelete, onAddToOffer }) => {
+  onEnrich: (p: Product) => void;
+  enrichingIds: Set<string>;
+}> = ({ product: p, onClose, onEdit, onDuplicate, onDelete, onAddToOffer, onEnrich, enrichingIds }) => {
   const catStyle = CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
   const catLabel = CATEGORIES.find(x => x.id === normCat(p.category))?.label ?? p.category;
   const st = stockSt(p);
@@ -778,9 +814,31 @@ const ProductDetailModal: React.FC<{
               <h2 className="text-xl font-black dark:text-white leading-tight">{pName(p)}</h2>
               <span className={`flex-shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${catStyle.bg} ${catStyle.text}`}>{catLabel}</span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-mono text-gray-400 text-sm">{p.code}</span>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <a
+                href={blakladerUrl(p.code, p.productUrl)}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-indigo-500 hover:text-indigo-700 text-sm hover:underline flex items-center gap-1"
+              >
+                {p.code} <ExternalLink size={12} />
+              </a>
               {p.line && <><span className="text-gray-200 dark:text-gray-600">·</span><span className="font-mono text-gray-400 text-sm">{p.line}</span></>}
+              {!p.productUrl && (
+                <button
+                  onClick={() => onEnrich(p)}
+                  className="flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full hover:bg-emerald-100 transition-colors"
+                >
+                  {enrichingIds.has(p.id)
+                    ? <><Loader2 size={10} className="animate-spin" /> Caricamento...</>
+                    : <><Sparkles size={10} /> Arricchisci da blaklader.it</>}
+                </button>
+              )}
+              {p.productUrl && (
+                <span className="text-[10px] text-emerald-600 font-black flex items-center gap-1">
+                  <Check size={10} /> Dati sincronizzati
+                </span>
+              )}
             </div>
           </div>
 
@@ -798,11 +856,12 @@ const ProductDetailModal: React.FC<{
                     </>
                   ) : null}
                 </div>
-              ) : (
-                <span className="text-lg font-bold text-gray-400">Da configurare</span>
-              )}
+              ) : null}
               {p.discount && p.price > 0 ? (
                 <div className="text-xs text-gray-400 mt-0.5">Netto: <span className="font-bold text-gray-600 dark:text-gray-300">€{netPrice.toFixed(2)}</span></div>
+              ) : null}
+              {p.listPrice && p.listPrice > 0 ? (
+                <div className="text-xs text-gray-400 mt-0.5">Listino lordo: <span className="font-bold text-blue-600 dark:text-blue-400">€{p.listPrice.toFixed(2)}</span></div>
               ) : null}
             </div>
             {p.stock !== undefined && p.stock !== null && (
@@ -893,7 +952,7 @@ const ProductDetailModal: React.FC<{
 
 // ─── MAIN VIEW ────────────────────────────────────────────────────────────────
 export const ProductsView: React.FC = () => {
-  const { products, addProduct, updateProduct, removeProduct } = useStore();
+  const { products, addProduct, bulkAddProducts, updateProduct, removeProduct } = useStore();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -908,11 +967,80 @@ export const ProductsView: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [importingBlk, setImportingBlk] = useState(false);
+  const [enrichingIds, setEnrichingIds] = useState<Set<string>>(new Set());
+  const [enrichBulkRunning, setEnrichBulkRunning] = useState(false);
 
   const changeLayout = (v: LayoutVariant) => {
     setLayout(v);
     localStorage.setItem(LAYOUT_KEY, v);
   };
+
+  const enrichOne = useCallback(async (p: Product) => {
+    if (enrichingIds.has(p.id)) return;
+    setEnrichingIds(prev => new Set(prev).add(p.id));
+    const data = await enrichProduct(p.code);
+    setEnrichingIds(prev => { const s = new Set(prev); s.delete(p.id); return s; });
+    if (!data) { showToast(`Prodotto ${p.code} non trovato su blaklader.it`, 'error'); return; }
+    updateProduct(p.id, {
+      productUrl:  data.url,
+      imageUrl:    data.imageUrl ?? p.imageUrl,
+      name:        p.name || data.title || p.description,
+      description: p.description || data.description,
+      ...(data.listPrice != null ? { listPrice: data.listPrice } : {}),
+    });
+    showToast(`${p.code} arricchito ✓`);
+  }, [enrichingIds, updateProduct, showToast]);
+
+  const removeDuplicates = useCallback(() => {
+    const all = Object.values(products) as Product[];
+    // Raggruppa per codice articolo normalizzato (prime 4 cifre numeriche)
+    const byCode: Record<string, Product[]> = {};
+    for (const p of all) {
+      const digits = p.code.replace(/\D/g, '');
+      const key = digits.slice(0, 4) || p.code;
+      if (!byCode[key]) byCode[key] = [];
+      byCode[key].push(p);
+    }
+    const toDelete: string[] = [];
+    for (const group of Object.values(byCode)) {
+      if (group.length <= 1) continue;
+      // Tieni il prodotto più completo: preferisce chi ha productUrl, poi imageUrl, poi listPrice
+      group.sort((a, b) => {
+        const scoreA = (a.productUrl ? 4 : 0) + (a.imageUrl ? 2 : 0) + (a.listPrice ? 1 : 0);
+        const scoreB = (b.productUrl ? 4 : 0) + (b.imageUrl ? 2 : 0) + (b.listPrice ? 1 : 0);
+        return scoreB - scoreA;
+      });
+      // Elimina tutti tranne il primo
+      for (let i = 1; i < group.length; i++) toDelete.push(group[i].id);
+    }
+    if (toDelete.length === 0) { showToast('Nessun doppione trovato'); return; }
+    if (!window.confirm(`Trovati ${toDelete.length} doppioni. Eliminarli tenendo il prodotto più completo per ogni codice?`)) return;
+    toDelete.forEach(id => removeProduct(id));
+    showToast(`${toDelete.length} doppioni eliminati`, 'success');
+  }, [products, removeProduct, showToast]);
+
+  const enrichAll = useCallback(async () => {
+    const toEnrich = Object.values(products).filter(p => !p.productUrl);
+    if (toEnrich.length === 0) { showToast('Tutti i prodotti già arricchiti'); return; }
+    setEnrichBulkRunning(true);
+    for (const p of toEnrich) {
+      setEnrichingIds(prev => new Set(prev).add(p.id));
+      const data = await enrichProduct(p.code);
+      setEnrichingIds(prev => { const s = new Set(prev); s.delete(p.id); return s; });
+      if (data) {
+        updateProduct(p.id, {
+          productUrl:  data.url,
+          imageUrl:    data.imageUrl ?? p.imageUrl,
+          name:        p.name || data.title || p.description,
+          description: p.description || data.description,
+          ...(data.listPrice != null ? { listPrice: data.listPrice } : {}),
+        });
+      }
+      await new Promise(r => setTimeout(r, 600)); // throttle
+    }
+    setEnrichBulkRunning(false);
+    showToast(`Arricchimento completato`);
+  }, [products, updateProduct, showToast]);
 
   const productList = useMemo(() => Object.values(products) as Product[], [products]);
 
@@ -989,31 +1117,81 @@ export const ProductsView: React.FC = () => {
     clearSelect();
   };
 
-  const handleImportBlaklader = async () => {
-    const existingIds = new Set(productList.map(p => p.id));
-    setImportingBlk(true);
+  const syncPricesFromCatalog = async () => {
     try {
-      const res = await fetch('/blaklader_catalog.json');
-      const catalog: Omit<Product, 'id'>[] = await res.json();
-      let added = 0;
-      for (const item of catalog as (Omit<Product, 'id'> & { id: string })[]) {
-        if (!existingIds.has(item.id)) {
-          addProduct(item);
-          added++;
+      const res = await fetch('/blak-catalog.json');
+      const data: { catalog: Record<string, { url: string; name: string; imageUrl: string | null; description: string; listPrice: number | null }> } = await res.json();
+      let updated = 0;
+      let notFound = 0;
+      for (const p of Object.values(products) as Product[]) {
+        const digits = p.code.replace(/\D/g, '');
+        const artCode = digits.slice(0, 4);
+        const entry = data.catalog[artCode];
+        if (entry?.listPrice != null && entry.listPrice > 0) {
+          updateProduct(p.id, { listPrice: entry.listPrice });
+          updated++;
+        } else {
+          notFound++;
         }
       }
-      showToast(`${added} articoli Blåkläder importati${added < catalog.length ? ` (${catalog.length - added} già presenti)` : ''}`, 'success');
+      showToast(`${updated} prezzi aggiornati${notFound > 0 ? ` · ${notFound} non trovati` : ''}`, 'success');
     } catch {
-      showToast('Errore durante il caricamento del catalogo', 'error' as any);
+      showToast('Errore caricamento catalogo', 'error');
+    }
+  };
+
+  const handleImportBlaklader = async () => {
+    if (!window.confirm('Importare tutti i prodotti Blåkläder dal catalogo ufficiale (1061 articoli con URL, immagine e prezzo lordo)?')) return;
+    setImportingBlk(true);
+    try {
+      const res = await fetch('/blak-catalog.json');
+      const data: { catalog: Record<string, { url: string; name: string; imageUrl: string | null; description: string; listPrice: number | null }> } = await res.json();
+
+      // Codici già presenti → salta
+      const existingCodes = new Set(productList.map(p => p.code.slice(0, 4)));
+
+      // Derive category from product name/URL
+      const guessCategory = (name: string, url: string): string => {
+        const s = (name + ' ' + url).toLowerCase();
+        if (/pantalon|salopette|short/.test(s)) return 'pantaloni';
+        if (/giacc|giubbott|parka|softshell|wind/.test(s)) return 'giacche';
+        if (/felpa|maglion|pullover|hoodie|zip|knitwear/.test(s)) return 'felpe';
+        if (/hi.?vis|alta.?visib|high.?vis/.test(s)) return 'hivis';
+        if (/t.?shirt|polo|magliett|canottiera/.test(s)) return 'tshirt';
+        return 'accessori';
+      };
+
+      const toAdd: Product[] = [];
+      let skipped = 0;
+      const ts = Date.now();
+      for (const [code, entry] of Object.entries(data.catalog)) {
+        if (existingCodes.has(code)) { skipped++; continue; }
+        toAdd.push({
+          id: `blk_${code}_${ts}_${Math.random().toString(36).slice(2, 6)}`,
+          code,
+          name: entry.name,
+          description: entry.description || entry.name,
+          category: guessCategory(entry.name, entry.url),
+          price: 0,
+          discount: 0,
+          imageUrl: entry.imageUrl ?? undefined,
+          productUrl: entry.url,
+          listPrice: entry.listPrice ?? undefined,
+        });
+      }
+      bulkAddProducts(toAdd);
+      showToast(`${toAdd.length} articoli Blåkläder importati${skipped > 0 ? ` · ${skipped} già presenti saltati` : ''}`, 'success');
+    } catch {
+      showToast('Errore durante il caricamento del catalogo', 'error');
     }
     setImportingBlk(false);
   };
 
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
     const reader = new FileReader();
-    reader.onload = ev => {
-      const text = ev.target?.result as string;
+    const processText = (text: string) => {
       let count = 0;
       let errors = 0;
       text.split('\n').slice(1).forEach((line, i) => {
@@ -1023,19 +1201,8 @@ export const ProductsView: React.FC = () => {
         if (v[0] && v[1]) {
           const price = parseFloat(v[3]) || 0;
           const discount = parseFloat(v[5]) || 0;
-
-          // Validate data before importing
-          if (price < 0) {
-            console.warn(`Riga ${i + 2}: Prezzo negativo, saltato`);
-            errors++;
-            return;
-          }
-          if (discount < 0 || discount > 100) {
-            console.warn(`Riga ${i + 2}: Sconto invalido (${discount}), saltato`);
-            errors++;
-            return;
-          }
-
+          if (price < 0) { console.warn(`Riga ${i + 2}: Prezzo negativo, saltato`); errors++; return; }
+          if (discount < 0 || discount > 100) { console.warn(`Riga ${i + 2}: Sconto invalido (${discount}), saltato`); errors++; return; }
           addProduct({
             id: `prod_${Date.now()}_${i}`,
             code: v[0].trim(), description: v[1].trim(), name: v[1].trim(),
@@ -1050,7 +1217,16 @@ export const ProductsView: React.FC = () => {
       showToast(`${count} articoli importati${errors > 0 ? ` (${errors} errori ignorati)` : ''}`, 'success');
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
-    reader.readAsText(file);
+    if (isExcel) {
+      reader.onload = ev => {
+        const wb = XLSX.read(ev.target?.result, { type: 'array' });
+        processText(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]));
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = ev => processText(ev.target?.result as string);
+      reader.readAsText(file);
+    }
   };
 
   const LAYOUT_TABS = [
@@ -1065,7 +1241,7 @@ export const ProductsView: React.FC = () => {
     setShowOfferModal(true);
   };
 
-  const listProps = { products: filtered, selected, onToggle: toggleSelect, onOpen: handleOpenDetail, onDelete: handleDelete, onDuplicate: handleDuplicate, onEdit: setEditingProduct };
+  const listProps = { products: filtered, selected, onToggle: toggleSelect, onOpen: handleOpenDetail, onDelete: handleDelete, onDuplicate: handleDuplicate, onEdit: setEditingProduct, onEnrich: enrichOne, enrichingIds };
 
   return (
     <div className="space-y-4 pb-6">
@@ -1076,10 +1252,10 @@ export const ProductsView: React.FC = () => {
           <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">{productList.length} articoli</p>
         </div>
         <div className="flex gap-2">
-          <input type="file" accept=".csv" ref={fileInputRef} onChange={handleCSV} className="hidden" />
+          <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSV} className="hidden" />
           <button onClick={() => fileInputRef.current?.click()}
             className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-indigo-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all">
-            <Upload size={16} /> CSV
+            <Upload size={16} /> CSV / Excel
           </button>
           <button
             onClick={handleImportBlaklader}
@@ -1088,6 +1264,33 @@ export const ProductsView: React.FC = () => {
           >
             <RefreshCw size={16} className={importingBlk ? 'animate-spin' : ''} />
             <span className="hidden sm:inline">Blåkläder</span>
+          </button>
+          <button
+            onClick={syncPricesFromCatalog}
+            title="Aggiorna prezzi di listino lordo da catalogo blaklader.it"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-blue-600 border-2 border-blue-100 dark:border-blue-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-blue-50 transition-all"
+          >
+            <Tag size={16} />
+            <span className="hidden sm:inline">Prezzi</span>
+          </button>
+          <button
+            onClick={removeDuplicates}
+            title="Rimuovi prodotti duplicati per codice articolo"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-rose-500 border-2 border-rose-100 dark:border-rose-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-rose-50 transition-all"
+          >
+            <Trash2 size={16} />
+            <span className="hidden sm:inline">Doppioni</span>
+          </button>
+          <button
+            onClick={enrichAll}
+            disabled={enrichBulkRunning}
+            title="Recupera immagini e descrizioni da blaklader.it per tutti i prodotti non ancora arricchiti"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-emerald-600 border-2 border-emerald-100 dark:border-emerald-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-emerald-50 transition-all disabled:opacity-50"
+          >
+            {enrichBulkRunning
+              ? <Loader2 size={16} className="animate-spin" />
+              : <Sparkles size={16} />}
+            <span className="hidden sm:inline">Arricchisci</span>
           </button>
           <button onClick={() => setShowModal(true)}
             className="bg-indigo-600 text-white px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all text-sm">
@@ -1208,6 +1411,8 @@ export const ProductsView: React.FC = () => {
           onDuplicate={p => { handleDuplicate(p); setViewingProduct(null); }}
           onDelete={id => { handleDelete(id); setViewingProduct(null); }}
           onAddToOffer={handleAddToOfferFromDetail}
+          onEnrich={enrichOne}
+          enrichingIds={enrichingIds}
         />
       )}
     </div>

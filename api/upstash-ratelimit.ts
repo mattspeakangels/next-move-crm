@@ -158,6 +158,55 @@ export async function getRateLimitStatus(userId: string): Promise<{
 }
 
 /**
+ * Generic rate limit check with custom key, limit and window.
+ * Used by endpoints that need different quotas than the default.
+ */
+export async function checkRateLimitCustom(
+  key: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<RateLimitResult> {
+  if (!UPSTASH_REST_URL || !UPSTASH_REST_TOKEN) {
+    return { allowed: true, remaining: limit, resetAt: Date.now() + windowSeconds * 1000 };
+  }
+  try {
+    const getRes = await fetch(`${UPSTASH_REST_URL}/get/${key}`, {
+      headers: { Authorization: `Bearer ${UPSTASH_REST_TOKEN}` },
+    });
+    if (!getRes.ok) throw new Error(`Redis GET failed: ${getRes.status}`);
+    const getData = await getRes.json() as { result?: string | null };
+    const current = getData.result ? parseInt(getData.result, 10) : 0;
+
+    if (current >= limit) {
+      const ttlRes = await fetch(`${UPSTASH_REST_URL}/ttl/${key}`, {
+        headers: { Authorization: `Bearer ${UPSTASH_REST_TOKEN}` },
+      });
+      const ttlData = await ttlRes.json() as { result: number };
+      const ttl = ttlData.result;
+      return { allowed: false, remaining: 0, resetAt: Date.now() + (ttl > 0 ? ttl * 1000 : windowSeconds * 1000) };
+    }
+
+    const incrRes = await fetch(`${UPSTASH_REST_URL}/incr/${key}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${UPSTASH_REST_TOKEN}` },
+    });
+    if (!incrRes.ok) throw new Error(`Redis INCR failed: ${incrRes.status}`);
+
+    if (current === 0) {
+      await fetch(`${UPSTASH_REST_URL}/expire/${key}/${windowSeconds}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${UPSTASH_REST_TOKEN}` },
+      });
+    }
+
+    return { allowed: true, remaining: limit - (current + 1), resetAt: Date.now() + windowSeconds * 1000 };
+  } catch (error) {
+    console.error('checkRateLimitCustom failed:', error);
+    return { allowed: true, remaining: limit, resetAt: Date.now() + windowSeconds * 1000 };
+  }
+}
+
+/**
  * Reset rate limit for a user (admin function)
  */
 export async function resetRateLimit(userId: string): Promise<boolean> {

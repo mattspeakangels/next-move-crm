@@ -1,10 +1,15 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut } from 'firebase/auth';
+import {
+  User, onAuthStateChanged,
+  signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider,
+  signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
+} from 'firebase/auth';
 import { auth } from './firebase';
 import { checkLoginRateLimit, recordSuccessfulLogin, recordFailedLogin } from './loginRateLimiter';
 
 const provider = new GoogleAuthProvider();
-const isMobileStandalone = () =>
+const isMobile = () =>
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   window.matchMedia('(display-mode: standalone)').matches ||
   ('standalone' in navigator && (navigator as any).standalone === true);
 
@@ -12,8 +17,12 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   loginError?: string;
+  clearLoginError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -32,8 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           recordSuccessfulLogin(result.user.email).catch(console.error);
         }
       })
-      .catch(() => {
-        recordFailedLogin(undefined).catch(console.error);
+      .catch((err) => {
+        // Ignora errori "no redirect pending" — registra solo errori reali di auth
+        if (err?.code && err.code !== 'auth/no-current-user') {
+          recordFailedLogin(undefined).catch(console.error);
+        }
       });
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -56,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setLoginError(undefined);
 
-      if (isMobileStandalone()) {
+      if (isMobile()) {
         await signInWithRedirect(auth, provider);
       } else {
         const result = await signInWithPopup(auth, provider);
@@ -75,12 +87,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginWithEmail = async (email: string, password: string) => {
+    try {
+      setLoginError(undefined);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      recordSuccessfulLogin(result.user.email).catch(console.error);
+    } catch (error: any) {
+      const msg: Record<string, string> = {
+        'auth/invalid-credential': 'Email o password non corretti.',
+        'auth/user-not-found': 'Nessun account con questa email.',
+        'auth/wrong-password': 'Password non corretta.',
+        'auth/too-many-requests': 'Troppi tentativi. Riprova più tardi.',
+        'auth/invalid-email': 'Email non valida.',
+      };
+      setLoginError(msg[error.code] ?? 'Accesso non riuscito. Riprova.');
+      recordFailedLogin(undefined).catch(console.error);
+    }
+  };
+
+  const registerWithEmail = async (email: string, password: string) => {
+    try {
+      setLoginError(undefined);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      recordSuccessfulLogin(result.user.email).catch(console.error);
+    } catch (error: any) {
+      const msg: Record<string, string> = {
+        'auth/email-already-in-use': 'Questa email è già registrata.',
+        'auth/invalid-email': 'Email non valida.',
+        'auth/weak-password': 'Password troppo debole (minimo 6 caratteri).',
+      };
+      setLoginError(msg[error.code] ?? 'Registrazione non riuscita. Riprova.');
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      setLoginError(undefined);
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      setLoginError('Impossibile inviare email di reset. Controlla l\'indirizzo.');
+    }
+  };
+
+  const clearLoginError = () => setLoginError(undefined);
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout, loginError }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, resetPassword, logout, loginError, clearLoginError }}>
       {children}
     </AuthContext.Provider>
   );

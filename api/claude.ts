@@ -355,7 +355,7 @@ export default async function handler(req: { method: string; body: unknown; head
     }
 
     // Try models in order of cost (cheapest first)
-    const models = ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-6'];
+    const models = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-8'];
     let lastError = '';
 
     for (const model of models) {
@@ -375,7 +375,9 @@ export default async function handler(req: { method: string; body: unknown; head
         });
 
         if (!response.ok) {
-          lastError = `${model}: ${response.status}`;
+          const errBody = await response.text().catch(() => '');
+          lastError = `${model}: ${response.status} ${errBody.slice(0, 200)}`;
+          console.error('[claude api]', lastError);
           continue;
         }
 

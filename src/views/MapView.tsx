@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Search, Route, Home, CalendarCheck } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
 
 // ── Icone colorate via divIcon ─────────────────────────────────────────────────
 
@@ -21,8 +22,20 @@ const makeIcon = (color: string) =>
     popupAnchor: [0, -30],
   });
 
-const clienteIcon  = makeIcon('#4f46e5'); // indigo
-const prospectIcon = makeIcon('#f59e0b'); // amber
+// Cliente = verde | Prospect Dealer = celeste | Edilizia = giallo | Industria = arancione
+const clienteIcon         = makeIcon('#22c55e');   // verde
+const prospectDealerIcon  = makeIcon('#38bdf8');   // celeste
+const prospectEdiliziaIcon= makeIcon('#eab308');   // giallo
+const prospectIndustriaIcon= makeIcon('#f87171');  // arancione
+const prospectDefaultIcon = makeIcon('#94a3b8');   // grigio (nessun segmento)
+
+function getContactIcon(status: string, segment?: string) {
+  if (status === 'cliente') return clienteIcon;
+  if (segment === 'dealer')    return prospectDealerIcon;
+  if (segment === 'edilizia')  return prospectEdiliziaIcon;
+  if (segment === 'industria') return prospectIndustriaIcon;
+  return prospectDefaultIcon;
+}
 const userIcon = L.divIcon({
   className: '',
   html: `<div style="
@@ -42,6 +55,19 @@ const ChangeView = ({ center }: { center: [number, number] }) => {
   return null;
 };
 
+const DoubleClickHandler = ({ onDoubleClick }: { onDoubleClick: () => void }) => {
+  useMapEvents({ dblclick: () => { onDoubleClick(); } });
+  return null;
+};
+
+const FlyToContact = ({ position }: { position: [number, number] | null }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (position) map.flyTo(position, 14, { duration: 1 });
+  }, [position]);
+  return null;
+};
+
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -51,15 +77,760 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+// ── Itinerario ────────────────────────────────────────────────────────────────
+
+const HOME = { lat: 45.5386, lng: 9.0667, label: 'Casa — Via Don Bianchi, Rho' };
+const AVG_SPEED_KMH = 70; // velocità media stradale stimata
+
+function fmtTime(km: number): string {
+  const mins = Math.round((km / AVG_SPEED_KMH) * 60);
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
+function nearestNeighbor(
+  stops: { id: string; lat: number; lng: number }[],
+): { id: string; lat: number; lng: number }[] {
+  const unvisited = [...stops];
+  const route: typeof stops = [];
+  let curLat = HOME.lat, curLng = HOME.lng;
+  while (unvisited.length > 0) {
+    let minD = Infinity, minI = 0;
+    unvisited.forEach((s, i) => {
+      const d = calculateDistance(curLat, curLng, s.lat, s.lng);
+      if (d < minD) { minD = d; minI = i; }
+    });
+    route.push(unvisited[minI]);
+    curLat = unvisited[minI].lat;
+    curLng = unvisited[minI].lng;
+    unvisited.splice(minI, 1);
+  }
+  return route;
+}
+
+const homeIcon = L.divIcon({
+  className: '',
+  html: `<div style="width:26px;height:26px;border-radius:50%;background:#4f46e5;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+  </div>`,
+  iconSize: [26, 26], iconAnchor: [13, 13],
+});
+
+const stopIcon = (n: number) => L.divIcon({
+  className: '',
+  html: `<div style="width:28px;height:28px;border-radius:50%;background:#f97316;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:white;font-family:sans-serif;">${n}</div>`,
+  iconSize: [28, 28], iconAnchor: [14, 14],
+});
+
+// Vista fullscreen itinerario: mappa + bottom sheet
+interface ItinerarioViewProps {
+  contacts: Record<string, any>;
+  onClose: () => void;
+}
+
+const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) => {
+  const { addActivity } = useStore();
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'tutti' | 'clienti' | 'prospect'>('tutti');
+  const [filterSegment, setFilterSegment] = useState<ContactSegment | null>(null);
+  const [showFiltersBar, setShowFiltersBar] = useState(false);
+  const [startTime, setStartTime] = useState('09:00');
+  const [visitDuration, setVisitDuration] = useState(60);
+  const [savedToAgenda, setSavedToAgenda] = useState(false);
+  const [customTimes, setCustomTimes] = useState<Record<string, string>>({});
+  const [searchItinQuery, setSearchItinQuery] = useState('');
+  const [showItinResults, setShowItinResults] = useState(false);
+  const [itinFlyTo, setItinFlyTo] = useState<[number, number] | null>(null);
+
+  const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
+
+  const searchItinNorm = searchItinQuery.toLowerCase().trim();
+  const itinSearchResults = searchItinNorm.length >= 1
+    ? allContactsList
+        .filter((c: any) =>
+          c.lat && c.lng &&
+          (c.company.toLowerCase().includes(searchItinNorm) ||
+           (c.city || '').toLowerCase().includes(searchItinNorm))
+        )
+        .slice(0, 6)
+    : [];
+
+  const mapped = useMemo(() =>
+    Object.values(contacts).filter((c: any) => c.lat && c.lng),
+    [contacts]
+  );
+
+  const visible = useMemo(() => mapped.filter((c: any) => {
+    if (filterStatus === 'clienti' && c.status !== 'cliente') return false;
+    if (filterStatus === 'prospect' && c.status !== 'potenziale') return false;
+    if (filterSegment && c.segment !== filterSegment) return false;
+    return true;
+  }), [mapped, filterStatus, filterSegment]);
+
+  const toggle = (id: string) =>
+    setSelectedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      if (next.length > 0) setSheetOpen(true);
+      return next;
+    });
+
+  const optimizedRoute = useMemo(() =>
+    nearestNeighbor(selectedIds.map(id => contacts[id]).filter(Boolean).map((c: any) => ({ id: c.id, lat: c.lat, lng: c.lng }))),
+    [selectedIds, contacts]
+  );
+
+  const legs = useMemo(() => {
+    let cum = 0, cumMins = 0, prevLat = HOME.lat, prevLng = HOME.lng;
+    return optimizedRoute.map((s: any) => {
+      const d = calculateDistance(prevLat, prevLng, s.lat, s.lng);
+      const legMins = Math.round((d / AVG_SPEED_KMH) * 60);
+      cum += d; cumMins += legMins;
+      prevLat = s.lat; prevLng = s.lng;
+      return { stop: s, legDist: d, cumDist: cum, legMins, cumMins };
+    });
+  }, [optimizedRoute]);
+
+  const totalKm = legs.length > 0 ? legs[legs.length - 1].cumDist : 0;
+
+  // Orari effettivi per tappa: calcolati ma sovrascrivibili dall'utente
+  const effectiveTimes = useMemo(() => {
+    const [sh, sm] = startTime.split(':').map(Number);
+    let cursor = sh * 60 + sm;
+    return legs.map(({ stop, legDist }) => {
+      cursor += Math.round((legDist / AVG_SPEED_KMH) * 60);
+      const calcH = Math.floor(cursor / 60), calcM = cursor % 60;
+      const calcTime = `${String(calcH).padStart(2,'0')}:${String(calcM).padStart(2,'0')}`;
+      const effective = customTimes[stop.id] ?? calcTime;
+      const [eh, em] = effective.split(':').map(Number);
+      cursor = eh * 60 + em + visitDuration;
+      return { stopId: stop.id, calcTime, effective, isCustom: !!customTimes[stop.id] };
+    });
+  }, [legs, startTime, visitDuration, customTimes]);
+
+  const routeCoords: [number, number][] = useMemo(() =>
+    optimizedRoute.length > 0
+      ? [[HOME.lat, HOME.lng], ...optimizedRoute.map((s: any) => [s.lat, s.lng] as [number, number])]
+      : [],
+    [optimizedRoute]
+  );
+
+  const googleMapsUrl = useMemo(() => {
+    if (optimizedRoute.length === 0) return '';
+    return `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/` +
+      optimizedRoute.map((s: any) => `${s.lat},${s.lng}`).join('/');
+  }, [optimizedRoute]);
+
+  const addToAgenda = () => {
+    const baseDate = new Date(`${date}T00:00:00`);
+    const label = new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+    effectiveTimes.forEach(({ stopId, effective }) => {
+      const [h, m] = effective.split(':').map(Number);
+      const visitDate = new Date(baseDate);
+      visitDate.setHours(h, m, 0, 0);
+      addActivity({
+        id: `act_itin_${Date.now()}_${stopId}`,
+        contactId: stopId,
+        type: 'visita',
+        date: visitDate.getTime(),
+        outcome: 'da-fare',
+        notes: `Visita pianificata — Itinerario del ${label}`,
+        createdAt: Date.now(),
+      });
+    });
+    setSavedToAgenda(true);
+    setTimeout(() => setSavedToAgenda(false), 3000);
+  };
+
+  // Icona marker: selezionato = numero arancione, non selezionato = pallino verde/grigio
+  const makeItinIcon = (contact: any) => {
+    const idx = optimizedRoute.findIndex((s: any) => s.id === contact.id);
+    if (idx >= 0) {
+      return stopIcon(idx + 1);
+    }
+    return getContactIcon(contact.status, contact.segment);
+  };
+
+  // Pannello itinerario — contenuto condiviso tra sidebar desktop e sheet mobile
+  const itineraryPanel = (
+    <div className="flex flex-col h-full">
+      {/* Scrollabile */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 min-h-0">
+        {selectedIds.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-6 font-bold">
+            Tocca i clienti sulla mappa per costruire l'itinerario
+          </p>
+        ) : (
+          <>
+            {/* Partenza */}
+            <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl px-3 py-2.5">
+              <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                <Home size={13} className="text-white" />
+              </div>
+              <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 truncate">{HOME.label}</p>
+            </div>
+
+            {/* Tappe */}
+            {legs.map(({ stop, legDist, cumDist }, i) => {
+              const c = contacts[stop.id];
+              const et = effectiveTimes[i];
+              return (
+                <div key={stop.id} className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-3 py-2 flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center flex-shrink-0 text-xs font-black">{i + 1}</div>
+
+                  {/* Orario editabile */}
+                  <div className="flex-shrink-0">
+                    <input
+                      type="time"
+                      value={et?.effective ?? ''}
+                      onChange={e => setCustomTimes(prev => ({ ...prev, [stop.id]: e.target.value }))}
+                      className={`w-[72px] text-xs font-black rounded-lg px-1.5 py-1 outline-none border transition-colors ${
+                        et?.isCustom
+                          ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                      }`}
+                    />
+                    {et?.isCustom && (
+                      <button
+                        onClick={() => setCustomTimes(prev => { const n = { ...prev }; delete n[stop.id]; return n; })}
+                        className="block text-[9px] text-gray-400 hover:text-indigo-500 font-bold mt-0.5 pl-1"
+                      >↩ reset</button>
+                    )}
+                  </div>
+
+                  {/* Info cliente */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black dark:text-white uppercase truncate">{c?.company}</p>
+                    <p className="text-[10px] text-gray-400 font-bold">+{legDist.toFixed(0)} km · {cumDist.toFixed(0)} km tot</p>
+                  </div>
+
+                  <button onClick={() => toggle(stop.id)} className="text-gray-300 hover:text-red-500 flex-shrink-0"><X size={14} /></button>
+                </div>
+              );
+            })}
+
+            {/* Impostazioni orario */}
+            <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl px-4 py-3 space-y-3">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Impostazioni giornata</p>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <p className="text-[10px] text-gray-400 font-bold mb-1">Partenza</p>
+                  <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm font-black text-gray-800 dark:text-white outline-none" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] text-gray-400 font-bold mb-1">Durata visita</p>
+                  <select value={visitDuration} onChange={e => setVisitDuration(Number(e.target.value))}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm font-black text-gray-800 dark:text-white outline-none">
+                    <option value={30}>30 min</option>
+                    <option value={45}>45 min</option>
+                    <option value={60}>1 ora</option>
+                    <option value={90}>1h 30min</option>
+                    <option value={120}>2 ore</option>
+                  </select>
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400">Gli orari si calcolano automaticamente. Modificali direttamente su ogni tappa — le tappe successive si adattano.</p>
+            </div>
+
+            {/* Google Maps */}
+            <a href={googleMapsUrl} target="_blank" rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-black text-sm uppercase tracking-wide transition-all">
+              <Navigation size={15} /> Apri in Google Maps
+            </a>
+            <button onClick={() => setSelectedIds([])} className="w-full py-2 text-xs text-red-400 font-bold hover:text-red-600 transition-colors">
+              Azzera itinerario
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Footer sticky con CTA */}
+      {selectedIds.length > 0 && (
+        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+          <button onClick={addToAgenda}
+            className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-wide transition-all shadow-lg ${
+              savedToAgenda ? 'bg-green-500 text-white' : 'bg-indigo-600 active:bg-indigo-700 text-white'
+            }`}>
+            <CalendarCheck size={17} />
+            {savedToAgenda ? '✓ Salvato in Agenda!' : "Aggiungi all'Agenda"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[600] flex bg-gray-900">
+
+      {/* ── MAPPA (occupa tutto, o sx su desktop) ── */}
+      <div className="flex-1 relative">
+
+        {/* Top bar — sopra la mappa */}
+        <div className="absolute top-0 left-0 right-0 z-[700] px-4 pt-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 w-full">
+            <button onClick={onClose}
+              className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-700 dark:text-white rounded-2xl px-4 py-2.5 font-black text-xs uppercase flex items-center gap-2 shadow-lg flex-shrink-0">
+              <X size={14} /> Chiudi
+            </button>
+
+            <div className="flex-1 flex items-center gap-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-lg">
+              <Route size={14} className="text-orange-500 flex-shrink-0" />
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                className="flex-1 bg-transparent text-sm font-black text-gray-800 dark:text-white outline-none" />
+            </div>
+
+            <button onClick={() => setShowFiltersBar(v => !v)}
+              className={`p-2.5 rounded-xl shadow-lg flex-shrink-0 transition-all ${showFiltersBar ? 'bg-indigo-600 text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-600 dark:text-white'}`}>
+              <SlidersHorizontal size={16} />
+            </button>
+          </div>
+
+          {showFiltersBar && (
+            <div className="w-full flex flex-col gap-2 mt-1">
+              <div className="flex gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg">
+                {([{ key: 'tutti', label: 'Tutti' }, { key: 'clienti', label: 'Clienti' }, { key: 'prospect', label: 'Prospect' }] as const).map(({ key, label }) => (
+                  <button key={key} onClick={() => setFilterStatus(key)}
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterStatus === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg">
+                <button onClick={() => setFilterSegment(null)}
+                  className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === null ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                  Tutti
+                </button>
+                {([{ key: 'dealer', label: 'Dealer', icon: '🏪' }, { key: 'industria', label: 'Industria', icon: '🏭' }, { key: 'edilizia', label: 'Edilizia', icon: '🏗️' }, { key: 'end-user', label: 'End User', icon: '👤' }] as const).map(({ key, label, icon }) => (
+                  <button key={key} onClick={() => setFilterSegment(key)}
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {icon} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Barra di ricerca cliente */}
+          <div className="relative w-full mt-1">
+            <div className="flex items-center gap-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl px-3 py-2.5 shadow-lg focus-within:ring-2 focus-within:ring-orange-400 transition-all">
+              <Search size={14} className="text-gray-400 flex-shrink-0" />
+              <input
+                type="text"
+                value={searchItinQuery}
+                onChange={e => { setSearchItinQuery(e.target.value); setShowItinResults(true); }}
+                onFocus={() => setShowItinResults(true)}
+                onBlur={() => setTimeout(() => setShowItinResults(false), 150)}
+                placeholder="Cerca cliente per nome o città…"
+                className="flex-1 bg-transparent text-sm font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none"
+              />
+              {searchItinQuery && (
+                <button onClick={() => { setSearchItinQuery(''); setShowItinResults(false); }} className="text-gray-400 hover:text-gray-600">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {showItinResults && itinSearchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[800] overflow-hidden">
+                {itinSearchResults.map((c: any) => {
+                  const already = selectedIds.includes(c.id);
+                  const isCliente = c.status === 'cliente';
+                  return (
+                    <button
+                      key={c.id}
+                      onMouseDown={() => {
+                        if (!already) {
+                          setSelectedIds(prev => [...prev, c.id]);
+                          setSheetOpen(true);
+                        }
+                        setItinFlyTo([c.lat, c.lng]);
+                        setSearchItinQuery('');
+                        setShowItinResults(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0"
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'}`}>
+                        <Building2 size={14} />
+                      </div>
+                      <div className="text-left min-w-0 flex-1">
+                        <p className="text-sm font-black text-gray-900 dark:text-white truncate">{c.company}</p>
+                        <p className="text-xs text-gray-400 font-bold">{c.city || '—'} · {isCliente ? 'Cliente' : 'Prospect'}</p>
+                      </div>
+                      {already
+                        ? <span className="text-[9px] font-black text-orange-500 flex-shrink-0">in itinerario</span>
+                        : <span className="text-[9px] font-black text-gray-300 flex-shrink-0">+ aggiungi</span>
+                      }
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mappa */}
+        <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap" />
+          <FlyToContact position={itinFlyTo} />
+          <Marker position={[HOME.lat, HOME.lng]} icon={homeIcon}>
+            <Popup><strong>Partenza — {HOME.label}</strong></Popup>
+          </Marker>
+          {visible.map((c: any) => {
+            const selected = selectedIds.includes(c.id);
+            return (
+              <Marker key={c.id} position={[c.lat, c.lng]} icon={makeItinIcon(c)} eventHandlers={{ click: () => toggle(c.id) }}>
+                <Popup minWidth={90} maxWidth={160} className="compact-popup">
+                  <div style={{ padding: '2px 0', lineHeight: 1.2 }}>
+                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company}</p>
+                    <button onClick={() => toggle(c.id)}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, width: '100%', padding: '3px 6px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', background: selected ? '#fee2e2' : '#f97316', color: selected ? '#dc2626' : '#fff', border: 'none', cursor: 'pointer' }}>
+                      {selected ? '− Rimuovi' : '+ Aggiungi'}
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+          {routeCoords.length > 1 && (
+            <Polyline positions={routeCoords} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9, dashArray: '10 6' }} />
+          )}
+        </MapContainer>
+
+        {/* Hint iniziale */}
+        {selectedIds.length === 0 && (
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-[700] lg:hidden bg-black/70 backdrop-blur-sm text-white rounded-2xl px-5 py-3 text-xs font-bold text-center pointer-events-none">
+            Tocca un cliente sulla mappa per aggiungerlo all'itinerario
+          </div>
+        )}
+
+        {/* ── MOBILE: pillola collassata + sheet ── */}
+        <div className="lg:hidden">
+          {/* Pillola sempre visibile in basso */}
+          <button
+            onClick={() => setSheetOpen(v => !v)}
+            className={`absolute bottom-4 left-4 right-4 z-[700] flex items-center justify-between rounded-2xl px-4 py-3 shadow-2xl transition-all ${
+              selectedIds.length > 0
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-700 dark:text-white'
+            }`}
+          >
+            <span className="flex items-center gap-2 font-black text-xs uppercase">
+              <Route size={14} className={selectedIds.length > 0 ? 'text-white' : 'text-orange-500'} />
+              {selectedIds.length === 0
+                ? 'Nessuna tappa selezionata'
+                : `${optimizedRoute.length} tappe · ${totalKm.toFixed(0)} km · ${fmtTime(totalKm)}`}
+            </span>
+            <span className="text-[10px] font-bold opacity-70">{sheetOpen ? '▼' : '▲'}</span>
+          </button>
+
+          {/* Sheet slide-up */}
+          {sheetOpen && (
+            <div className="fixed inset-0 z-[800] flex flex-col justify-end" onClick={() => setSheetOpen(false)}>
+              <div
+                className="bg-white dark:bg-gray-900 rounded-t-[2rem] shadow-2xl flex flex-col"
+                style={{ maxHeight: '70vh' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Handle */}
+                <div className="flex flex-col items-center pt-3 pb-1 flex-shrink-0">
+                  <div className="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mb-2" />
+                  <div className="flex items-center justify-between w-full px-5 pb-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-xs font-black uppercase text-gray-700 dark:text-white flex items-center gap-2">
+                      <Route size={13} className="text-orange-500" />
+                      {optimizedRoute.length} tappe · {totalKm.toFixed(0)} km · {fmtTime(totalKm)}
+                    </span>
+                    <button onClick={() => setSheetOpen(false)} className="text-gray-400 hover:text-gray-600">
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+                {itineraryPanel}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── DESKTOP: sidebar destra fissa ── */}
+      <div className="hidden lg:flex flex-col w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl">
+        {/* Header sidebar */}
+        <div className="flex-shrink-0 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-black text-sm uppercase text-gray-800 dark:text-white flex items-center gap-2">
+              <Route size={15} className="text-orange-500" /> Itinerario
+            </h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={16} />
+            </button>
+          </div>
+          {selectedIds.length > 0 && (
+            <div className="flex gap-3 text-center">
+              <div className="flex-1 bg-orange-50 dark:bg-orange-900/20 rounded-xl py-2">
+                <p className="text-xs font-black text-orange-600">{totalKm.toFixed(0)} km</p>
+                <p className="text-[10px] text-gray-400 font-bold">totale</p>
+              </div>
+              <div className="flex-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl py-2">
+                <p className="text-xs font-black text-indigo-600">{fmtTime(totalKm)}</p>
+                <p className="text-[10px] text-gray-400 font-bold">in viaggio</p>
+              </div>
+              <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl py-2">
+                <p className="text-xs font-black text-gray-700 dark:text-white">{optimizedRoute.length}</p>
+                <p className="text-[10px] text-gray-400 font-bold">tappe</p>
+              </div>
+            </div>
+          )}
+        </div>
+        {itineraryPanel}
+      </div>
+    </div>
+  );
+};
+
+// ── AI Catalog Panel ──────────────────────────────────────────────────────────
+
+const SEGMENT_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  dealer:    { bg: 'bg-indigo-100 dark:bg-indigo-900/40', text: 'text-indigo-700 dark:text-indigo-300', label: '🏪 Dealer' },
+  edilizia:  { bg: 'bg-amber-100 dark:bg-amber-900/40',  text: 'text-amber-700 dark:text-amber-300',   label: '🏗️ Edilizia' },
+  industria: { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300', label: '🏭 Industria' },
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  alta:  'text-emerald-600 font-black',
+  media: 'text-amber-500 font-bold',
+  bassa: 'text-gray-400 font-bold',
+};
+
+interface AICatalogPanelProps {
+  onClose: () => void;
+  onApply: (suggestions: CatalogSuggestion[]) => void;
+}
+
+const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => {
+  const { contacts } = useStore();
+  const {
+    suggestions, processedIds, progress, loading, error, rateLimitReset,
+    run, toggleApproval, setAllApproved, clearResults,
+  } = useAICatalog();
+
+  const [onlyUncategorized, setOnlyUncategorized] = useState(true);
+
+  const allContacts = Object.values(contacts);
+  const uncategorized = allContacts.filter(c => !c.segment);
+  const targetContacts = onlyUncategorized ? uncategorized : allContacts;
+  const remaining = targetContacts.filter(c => !processedIds.includes(c.id));
+  const approvedCount = suggestions.filter(s => s.approved).length;
+
+  const resetMins = rateLimitReset
+    ? Math.ceil((rateLimitReset - Date.now()) / 60000)
+    : 0;
+
+  const progressPct = progress ? Math.round((progress.done / progress.total) * 100) : 0;
+
+  return (
+    <div className="fixed inset-0 z-[500] flex items-end md:items-center justify-center p-2 md:p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-900 rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black uppercase tracking-tight dark:text-white flex items-center gap-2">
+                <Sparkles size={18} className="text-indigo-500" /> AI Cataloga Contatti
+              </h2>
+              <p className="text-xs text-gray-400 font-bold mt-0.5">
+                Classifica segment + priorità con Claude Haiku
+              </p>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-all flex-shrink-0">
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Tab: non categ. vs tutti */}
+          <div className="flex gap-1.5 mt-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            <button
+              onClick={() => setOnlyUncategorized(true)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${onlyUncategorized ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+            >
+              Non categ. ({uncategorized.length})
+            </button>
+            <button
+              onClick={() => setOnlyUncategorized(false)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${!onlyUncategorized ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+            >
+              Tutti ({allContacts.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2" style={{ minHeight: 0 }}>
+
+          {/* Progress bar */}
+          {(loading || (progress && progress.done > 0)) && (
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
+                  {loading ? `Elaborazione… ${progress?.done ?? 0}/${progress?.total ?? 0}` : `Completato ${progress?.done}/${progress?.total}`}
+                </span>
+                <span className="text-xs font-black text-indigo-500">{progressPct}%</span>
+              </div>
+              <div className="h-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              {!loading && remaining.length > 0 && (
+                <p className="text-[10px] text-indigo-400 font-bold mt-1.5">
+                  {remaining.length} contatti rimanenti — clicca "Continua" per completare
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Errore / rate limit */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl p-3 flex items-start gap-2.5">
+              <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-black text-red-700 dark:text-red-400">{error}</p>
+                {rateLimitReset && (
+                  <p className="text-[10px] text-red-400 mt-0.5 flex items-center gap-1">
+                    <Clock size={10} /> Riprendi tra {resetMins} {resetMins === 1 ? 'minuto' : 'minuti'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Lista suggerimenti */}
+          {suggestions.length > 0 && (
+            <>
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  {suggestions.length} catalogati
+                </span>
+                <div className="flex gap-2">
+                  <button onClick={() => setAllApproved(true)} className="text-[10px] font-black text-indigo-600 uppercase hover:underline">Seleziona tutto</button>
+                  <button onClick={() => setAllApproved(false)} className="text-[10px] font-black text-gray-400 uppercase hover:underline">Deseleziona</button>
+                </div>
+              </div>
+
+              {suggestions.map(s => {
+                const seg = SEGMENT_COLORS[s.segment] ?? SEGMENT_COLORS.industria;
+                return (
+                  <div
+                    key={s.id}
+                    className={`rounded-2xl border-2 p-3 transition-all cursor-pointer ${s.approved ? 'border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 opacity-60'}`}
+                    onClick={() => toggleApproval(s.id)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-black dark:text-white uppercase truncate">{s.company}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 font-bold truncate">{s.note}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${seg.bg} ${seg.text}`}>
+                          {seg.label}
+                        </span>
+                        {s.approved
+                          ? <CheckCircle2 size={16} className="text-indigo-500" />
+                          : <XCircle size={16} className="text-gray-300" />
+                        }
+                      </div>
+                    </div>
+                    <div className="mt-1.5">
+                      <span className={`text-[9px] uppercase tracking-wide ${PRIORITY_COLORS[s.priority]}`}>
+                        ● {s.priority} priorità
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {suggestions.length === 0 && !loading && !error && (
+            <div className="text-center py-8">
+              <Sparkles size={28} className="mx-auto mb-3 text-indigo-200" />
+              <p className="text-sm font-black text-gray-400 uppercase tracking-widest">Nessun risultato</p>
+              <p className="text-xs text-gray-300 mt-1">Avvia l'analisi per catalogare i contatti</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 pb-5 pt-3 border-t border-gray-100 dark:border-gray-800 flex-shrink-0 space-y-2">
+          {/* Reset */}
+          {suggestions.length > 0 && !loading && (
+            <button
+              onClick={clearResults}
+              className="w-full text-xs text-gray-400 font-bold flex items-center justify-center gap-1.5 hover:text-red-500 transition-colors py-1"
+            >
+              <RotateCcw size={12} /> Azzera risultati salvati
+            </button>
+          )}
+
+          {/* Avvia / Continua */}
+          {remaining.length > 0 && (
+            <button
+              onClick={() => run(targetContacts)}
+              disabled={loading}
+              className={`w-full py-3 rounded-2xl font-black uppercase text-sm tracking-wide transition-all flex items-center justify-center gap-2 ${
+                loading ? 'bg-gray-200 dark:bg-gray-700 text-gray-400' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'
+              }`}
+            >
+              <Sparkles size={16} />
+              {loading
+                ? 'Analisi in corso…'
+                : processedIds.length > 0
+                  ? `Continua (${remaining.length} rimanenti)`
+                  : `Analizza ${remaining.length} contatti`
+              }
+            </button>
+          )}
+
+          {/* Applica */}
+          {approvedCount > 0 && !loading && (
+            <button
+              onClick={() => { onApply(suggestions.filter(s => s.approved)); onClose(); }}
+              className="w-full py-3 rounded-2xl font-black uppercase text-sm tracking-wide bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg flex items-center justify-center gap-2 transition-all"
+            >
+              <CheckCircle2 size={16} /> Applica {approvedCount} selezionati
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 type MapFilter = 'tutti' | 'clienti' | 'prospect';
+type MobileTab = 'mappa' | 'lista';
 
 interface MapViewProps {
   onNavigateToContact: (contactId: string) => void;
+  isFullscreen?: boolean;
+  onGoFullscreen?: () => void;
+  onExitFullscreen?: () => void;
 }
 
-export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
+export const MapView: React.FC<MapViewProps> = ({
+  onNavigateToContact,
+  isFullscreen = false,
+  onGoFullscreen,
+  onExitFullscreen,
+}) => {
   const { contacts, updateContact } = useStore();
   const [userPos, setUserPos]     = useState<[number, number] | null>(null);
   const [radius, setRadius]       = useState(50);
@@ -67,235 +838,435 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
   const [debugMsg, setDebugMsg]   = useState('');
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
   const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('mappa');
+  const [showFilters, setShowFilters] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [showItinerario, setShowItinerario] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
+
+  const applyAISuggestions = (suggestions: CatalogSuggestion[]) => {
+    suggestions.forEach(s => {
+      updateContact(s.id, { segment: s.segment });
+    });
+  };
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       pos => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      ()  => setDebugMsg('GPS non autorizzato — posizione non disponibile')
+      ()  => setDebugMsg('GPS non autorizzato')
     );
   }, []);
 
   const geocodeContacts = async () => {
-    console.log('🚀 GEOCODING START');
     setIsGeocoding(true);
-    setDebugMsg('Ricerca coordinate in corso…');
     let ok = 0, fail = 0;
 
-    const allContacts = Object.values(contacts);
-    const toGeocode = allContacts.filter(c => !c.lat && c.address && c.city);
+    // Raccogli tutti i contatti senza coordinate che hanno almeno city o province
+    const unmapped = Object.values(contacts).filter(c => !c.lat && (c.city || c.province));
 
-    for (const c of toGeocode) {
-      console.log(`🌍 Geocoding: ${c.company} → ${c.address}, ${c.city}`);
+    // Deduplica per città: geocodifico ogni città UNA sola volta
+    const cityGroups = new Map<string, typeof unmapped>();
+    for (const c of unmapped) {
+      const key = (c.city || c.province || '').trim().toLowerCase();
+      if (!key) continue;
+      if (!cityGroups.has(key)) cityGroups.set(key, []);
+      cityGroups.get(key)!.push(c);
+    }
+
+    const cities = Array.from(cityGroups.entries());
+    setDebugMsg(`Trovate ${cities.length} città da geocodificare…`);
+
+    for (let i = 0; i < cities.length; i++) {
+      const [, group] = cities[i];
+      const sample = group[0];
+      const city = sample.city || sample.province || '';
+      const prov = sample.province || '';
+
+      setDebugMsg(`Città ${i + 1}/${cities.length}: ${city} (${group.length} contatti)`);
+
       try {
-        const res = await fetch(`/api/geocode?address=${encodeURIComponent(c.address as string)}&city=${encodeURIComponent(c.city as string)}`);
+        const params = new URLSearchParams({ city });
+        if (prov) params.set('province', prov);
+        const res = await fetch(`/api/geocode?${params}`);
         const data = await res.json();
-        if (data?.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lng = parseFloat(data[0].lon);
-          updateContact(c.id, { lat, lng });
-          console.log(`✅ Updated ${c.company} → ${lat}, ${lng}`);
-          ok++;
+
+        if (Array.isArray(data) && data.length > 0) {
+          const baseLat = parseFloat(data[0].lat);
+          const baseLng = parseFloat(data[0].lon);
+          // Applica a tutti i contatti della città con piccolo offset (≈300m) per distinguerli
+          for (const c of group) {
+            const jitter = () => (Math.random() - 0.5) * 0.006;
+            updateContact(c.id, { lat: baseLat + jitter(), lng: baseLng + jitter() });
+            ok++;
+          }
         } else {
-          console.log(`❌ Not found: ${c.address}, ${c.city}`);
-          fail++;
+          fail += group.length;
         }
-        await new Promise(r => setTimeout(r, 1500));
-      } catch (err) {
-        console.error('❌ Geocoding error:', err);
-        fail++;
+        await new Promise(r => setTimeout(r, 1200));
+      } catch {
+        fail += group.length;
       }
     }
+
     setIsGeocoding(false);
-    setDebugMsg(`Trovate: ${ok}, Non trovate: ${fail}`);
-    console.log('✨ GEOCODING COMPLETE: ok=', ok, 'fail=', fail);
+    setDebugMsg(`Mappati: ${ok}, Non trovati: ${fail}`);
   };
 
-  const allContacts = Object.values(contacts);
-  const allMapped   = allContacts.filter(c => c.lat && c.lng);
+  const allContacts  = Object.values(contacts);
+  const allMapped    = allContacts.filter(c => c.lat && c.lng);
+  const nClienti     = allMapped.filter(c => c.status === 'cliente').length;
+  const nProspect    = allMapped.filter(c => c.status === 'potenziale').length;
+
+  const searchNorm = searchQuery.toLowerCase().trim();
+  const searchResults = searchNorm.length >= 1
+    ? allContacts
+        .filter(c =>
+          c.company.toLowerCase().includes(searchNorm) ||
+          (c.city || '').toLowerCase().includes(searchNorm)
+        )
+        .slice(0, 7)
+    : [];
 
   const filtered = allMapped.filter(c => {
     if (mapFilter === 'clienti')  return c.status === 'cliente';
     if (mapFilter === 'prospect') return c.status === 'potenziale';
     return true;
-  }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter);
+  }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter)
+    .filter(c => !searchNorm || c.company.toLowerCase().includes(searchNorm) || (c.city || '').toLowerCase().includes(searchNorm));
 
   const nearby = userPos
     ? filtered.filter(c => calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius)
     : [];
 
-  const nClienti  = allMapped.filter(c => c.status === 'cliente').length;
-  const nProspect = allMapped.filter(c => c.status === 'potenziale').length;
+  const listContacts = filtered.map(c => ({
+    ...c,
+    distKm: userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null,
+  })).sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
 
-  const defaultCenter: [number, number] = userPos ?? [41.9, 12.5]; // default: Roma
+  const unmappedWithAddress = allContacts.filter(c => !c.lat && (c.city || c.province));
+  const defaultCenter: [number, number] = userPos ?? [45.5, 9.2]; // default: Milano
 
-  const unmappedWithAddress = allContacts.filter(c => !c.lat && c.address && c.city);
-  
-  // Debug
-  React.useEffect(() => {
-    console.log('📍 MapView Debug:', {
-      totalContacts: allContacts.length,
-      mapped: allMapped.length,
-      unmappedWithAddress: unmappedWithAddress.length,
-      sample: unmappedWithAddress.slice(0, 3).map(c => ({ company: c.company, address: c.address, city: c.city }))
-    });
-  }, [allContacts, allMapped, unmappedWithAddress]);
-
-  return (
-    <div className="h-[calc(100vh-120px)] space-y-4 flex flex-col">
-
-      {/* ── Banner geocoding needed ── */}
-      {unmappedWithAddress.length > 0 && !isGeocoding && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl px-5 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" />
-            <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-              <span className="font-black">{unmappedWithAddress.length}</span> clienti con indirizzo non ancora posizionati sulla mappa
-            </p>
-          </div>
-          <button
-            onClick={geocodeContacts}
-            className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors"
-          >
-            Posiziona ora
-          </button>
-        </div>
-      )}
-
-      {/* ── Controls ── */}
-      <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] flex flex-col gap-4 shadow-sm border border-gray-50 dark:border-gray-700">
-
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-          <div>
-            <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter flex items-center gap-2">
-              <Navigation className="text-indigo-600" /> Radar Clienti
-            </h1>
-            <p className="text-gray-400 text-sm font-bold mt-0.5">
-              <span className="text-indigo-600 font-black">{nClienti}</span> clienti ·{' '}
-              <span className="text-amber-500 font-black">{nProspect}</span> prospect · mappati {allMapped.length}/{allContacts.length}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 items-center">
-            {debugMsg && (
-              <div className="bg-orange-50 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
-                <AlertTriangle size={13} /> {debugMsg}
-              </div>
-            )}
-            <select
-              className="border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none text-sm"
-              value={radius} onChange={e => setRadius(Number(e.target.value))}
-            >
-              {[10, 20, 50, 100, 500].map(r => <option key={r} value={r}>{r} km</option>)}
-            </select>
-            <button
-              onClick={geocodeContacts} disabled={isGeocoding}
-              className={`px-5 py-2.5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${isGeocoding ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg'}`}
-            >
-              {isGeocoding ? 'Ricerca…' : 'Trova Coordinate'}
-            </button>
-          </div>
-        </div>
-
-        {/* ── Filtro tipo ── */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-1">Mostra:</span>
-          {([
-            { key: 'tutti',    label: 'Tutti',    count: allMapped.length,  color: 'indigo' },
-            { key: 'clienti',  label: 'Clienti',  count: nClienti,           color: 'indigo' },
-            { key: 'prospect', label: 'Prospect', count: nProspect,          color: 'amber'  },
-          ] as const).map(({ key, label, count, color }) => (
-            <button
-              key={key}
-              onClick={() => setMapFilter(key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all border ${
-                mapFilter === key
-                  ? color === 'amber'
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 hover:border-gray-400'
-              }`}
-            >
-              {key === 'clienti'  && <span className="w-3 h-3 rounded-full bg-indigo-500 inline-block" />}
-              {key === 'prospect' && <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />}
-              {key === 'tutti'    && <span className="w-3 h-3 rounded-full bg-gray-400 inline-block" />}
-              {label} <span className="opacity-70">({count})</span>
-            </button>
-          ))}
-        </div>
-
-        {/* ── Filtro Segment ── */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-1">Segmento:</span>
-          <button
-            onClick={() => setMapSegmentFilter(null)}
-            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-              mapSegmentFilter === null
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Tutti ({filtered.length})
-          </button>
-          {(['dealer', 'industria', 'edilizia'] as const).map(seg => (
-            <button
-              key={seg}
-              onClick={() => setMapSegmentFilter(seg)}
-              className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-                mapSegmentFilter === seg
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-              }`}
-            >
-              {seg === 'dealer' ? '🏪 Dealer' : seg === 'edilizia' ? '🏗️ Edilizia' : '🏭 Industria'} ({filtered.filter(c => c.segment === seg).length})
-            </button>
-          ))}
-        </div>
-
-        {/* Legenda */}
-        <div className="flex items-center gap-3 text-xs text-gray-400 font-bold">
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block" /> Clienti
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Prospect
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Tu
-          </span>
-          <div className="ml-auto" />
-        </div>
-      </div>
-
-      {/* ── Mappa ── */}
-      <div className="rounded-[2.5rem] overflow-hidden shadow-xl flex-1 relative z-0 border-4 border-white dark:border-gray-800">
-        <MapContainer center={defaultCenter} zoom={userPos ? 8 : 6} style={{ height: '100%', width: '100%' }}>
+  // ── FULLSCREEN MODE ─────────────────────────────────────────────────────────
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black">
+        <MapContainer
+          center={defaultCenter}
+          zoom={userPos ? 8 : 6}
+          style={{ height: '100%', width: '100%' }}
+          doubleClickZoom={false}
+        >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
-
+          <DoubleClickHandler onDoubleClick={() => onExitFullscreen?.()} />
+          <FlyToContact position={flyToTarget} />
           {filtered.map(c => {
             const isCliente = c.status === 'cliente';
-            const distKm    = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
+            const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={isCliente ? clienteIcon : prospectIcon}>
+              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={getContactIcon(c.status, c.segment)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
                         {isCliente ? '● Cliente' : '◆ Prospect'}
                       </span>
-                      {distKm !== null && (
-                        <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>
-                      )}
+                      {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
                     </div>
                     <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
                     {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
-                    {c.phone    && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
+                    {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
+                    <button
+                      onClick={() => onNavigateToContact(c.id)}
+                      className="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
+                    >
+                      <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
+                    </button>
+                    {c.lat && c.lng && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
+                        target="_blank" rel="noreferrer"
+                        className="mt-1 w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
+                      >
+                        <Navigation size={10} /> Naviga
+                      </a>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+
+        {/* Bottone chiudi */}
+        <button
+          onClick={onExitFullscreen}
+          className="absolute top-4 right-4 z-[1000] bg-white/90 backdrop-blur-sm text-gray-800 rounded-2xl px-4 py-2.5 font-black uppercase text-xs flex items-center gap-2 shadow-lg"
+        >
+          <X size={16} /> Chiudi
+        </button>
+
+        {/* Info overlay */}
+        <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2.5 shadow-lg">
+          <p className="text-xs font-black text-gray-700">
+            <span className="text-indigo-600">{nClienti}</span> clienti ·{' '}
+            <span className="text-amber-500">{nProspect}</span> prospect
+          </p>
+          <p className="text-[10px] text-gray-400 font-bold mt-0.5">Doppio click per uscire</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── NORMAL MODE ─────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+
+      {/* ── Header compatto ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-[1.5rem] px-4 py-3 shadow-sm border border-gray-50 dark:border-gray-700 mb-3 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-black dark:text-white uppercase tracking-tighter flex items-center gap-2">
+              <Navigation className="text-indigo-600" size={20} /> Radar Clienti
+            </h1>
+            <p className="text-gray-400 text-xs font-bold">
+              <span className="text-indigo-600 font-black">{nClienti}</span> clienti ·{' '}
+              <span className="text-amber-500 font-black">{nProspect}</span> prospect · {allMapped.length}/{allContacts.length} mappati
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Itinerario */}
+            <button
+              onClick={() => setShowItinerario(true)}
+              className="p-2.5 rounded-xl border-2 border-orange-200 text-orange-500 hover:bg-orange-50 transition-all"
+              title="Crea itinerario di viaggio"
+            >
+              <Route size={16} />
+            </button>
+            {/* AI Cataloga */}
+            <button
+              onClick={() => setShowAIPanel(true)}
+              className="p-2.5 rounded-xl border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-all"
+              title="AI Cataloga contatti"
+            >
+              <Sparkles size={16} />
+            </button>
+            {/* Toggle filtri */}
+            <button
+              onClick={() => setShowFilters(v => !v)}
+              className={`p-2.5 rounded-xl border-2 transition-all ${showFilters ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-200 dark:border-gray-600 text-gray-500'}`}
+            >
+              <SlidersHorizontal size={16} />
+            </button>
+            {/* Espandi fullscreen */}
+            {onGoFullscreen && (
+              <button
+                onClick={onGoFullscreen}
+                className="p-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all"
+                title="Espandi a tutto schermo"
+              >
+                <Maximize2 size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Barra di ricerca ── */}
+        <div className="relative mt-3">
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors">
+            <Search size={15} className="text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setShowSearchResults(true); }}
+              onFocus={() => setShowSearchResults(true)}
+              onBlur={() => setTimeout(() => setShowSearchResults(false), 150)}
+              placeholder="Cerca cliente o prospect…"
+              className="flex-1 bg-transparent text-sm font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none"
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown risultati */}
+          {showSearchResults && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl z-[500] overflow-hidden">
+              {searchResults.map(c => {
+                const isCliente = c.status === 'cliente';
+                const hasPinned = !!(c.lat && c.lng);
+                return (
+                  <button
+                    key={c.id}
+                    onMouseDown={() => {
+                      setSearchQuery(c.company);
+                      setShowSearchResults(false);
+                      if (hasPinned) {
+                        setFlyToTarget([c.lat!, c.lng!]);
+                        setMobileTab('mappa');
+                      } else {
+                        onNavigateToContact(c.id);
+                      }
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0"
+                  >
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'}`}>
+                      <Building2 size={14} />
+                    </div>
+                    <div className="text-left min-w-0 flex-1">
+                      <p className="text-sm font-black text-gray-900 dark:text-white truncate">{c.company}</p>
+                      <p className="text-xs text-gray-400 font-bold">{c.city || '—'} · {isCliente ? 'Cliente' : 'Prospect'}</p>
+                    </div>
+                    {hasPinned
+                      ? <MapPin size={13} className="text-indigo-400 flex-shrink-0" />
+                      : <span className="text-[9px] text-gray-300 font-bold flex-shrink-0">no pin</span>
+                    }
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Filtri collassabili */}
+        {showFilters && (
+          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-3">
+            {/* Banner geocoding */}
+            {unmappedWithAddress.length > 0 && !isGeocoding && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
+                  <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                    <span className="font-black">{unmappedWithAddress.length}</span> senza coordinate
+                  </p>
+                </div>
+                <button onClick={geocodeContacts} className="flex-shrink-0 bg-amber-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg">
+                  Posiziona
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Raggio:</span>
+              <select
+                className="border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-1.5 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none text-xs"
+                value={radius} onChange={e => setRadius(Number(e.target.value))}
+              >
+                {[10, 20, 50, 100, 500].map(r => <option key={r} value={r}>{r} km</option>)}
+              </select>
+              <button
+                onClick={geocodeContacts} disabled={isGeocoding}
+                className={`px-3 py-1.5 rounded-xl font-black uppercase text-[10px] transition-all ${isGeocoding ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white'}`}
+              >
+                {isGeocoding ? 'Ricerca…' : 'Trova Coordinate'}
+              </button>
+              {debugMsg && <span className="text-[10px] text-orange-600 font-bold">{debugMsg}</span>}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                { key: 'tutti',    label: 'Tutti',    count: allMapped.length },
+                { key: 'clienti',  label: 'Clienti',  count: nClienti },
+                { key: 'prospect', label: 'Prospect', count: nProspect },
+              ] as const).map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setMapFilter(key)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${
+                    mapFilter === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {label} ({count})
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setMapSegmentFilter(null)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${mapSegmentFilter === null ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+              >
+                Tutti
+              </button>
+              {([
+                { key: 'dealer',    icon: '🏪', label: 'Dealer' },
+                { key: 'industria', icon: '🏭', label: 'Industria' },
+                { key: 'edilizia',  icon: '🏗️', label: 'Edilizia' },
+                { key: 'end-user',  icon: '👤', label: 'End User' },
+              ] as const).map(({ key, icon, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setMapSegmentFilter(key)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${mapSegmentFilter === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+                >
+                  {icon} {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Tab Mappa / Lista (mobile only) ── */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-full mb-3 md:hidden flex-shrink-0">
+        <button
+          onClick={() => setMobileTab('mappa')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${mobileTab === 'mappa' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+        >
+          <MapIcon size={16} /> Mappa
+        </button>
+        <button
+          onClick={() => setMobileTab('lista')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${mobileTab === 'lista' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+        >
+          <List size={16} /> Lista
+          <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 px-1.5 py-0.5 rounded-full font-black">{filtered.length}</span>
+        </button>
+      </div>
+
+      {/* ── Mappa (nascosta su mobile se tab=lista) ── */}
+      <div className={`rounded-[2rem] overflow-hidden shadow-xl flex-1 relative z-0 border-4 border-white dark:border-gray-800 ${mobileTab === 'lista' ? 'hidden md:block' : 'block'}`}
+        style={{ minHeight: 0 }}
+      >
+        <MapContainer
+          center={defaultCenter}
+          zoom={userPos ? 8 : 6}
+          style={{ height: '100%', width: '100%' }}
+          doubleClickZoom={false}
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
+          {userPos && <ChangeView center={userPos} />}
+          {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
+          {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
+          {onGoFullscreen && <DoubleClickHandler onDoubleClick={onGoFullscreen} />}
+          <FlyToContact position={flyToTarget} />
+
+          {filtered.map(c => {
+            const isCliente = c.status === 'cliente';
+            const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
+            return (
+              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={getContactIcon(c.status, c.segment)}>
+                <Popup minWidth={220}>
+                  <div className="p-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {isCliente ? '● Cliente' : '◆ Prospect'}
+                      </span>
+                      {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
+                    </div>
+                    <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
+                    {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
+                    {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
                     <div className="flex flex-col gap-1.5 pt-2 mt-2 border-t border-gray-100">
                       <button
                         onClick={() => onNavigateToContact(c.id)}
-                        className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700 transition-colors"
+                        className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700"
                       >
                         <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
                       </button>
@@ -303,7 +1274,7 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
                         <a
                           href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
                           target="_blank" rel="noreferrer"
-                          className="w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-colors"
+                          className="w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-gray-200"
                         >
                           <Navigation size={10} /> Naviga
                         </a>
@@ -314,19 +1285,125 @@ export const MapView: React.FC<MapViewProps> = ({ onNavigateToContact }) => {
               </Marker>
             );
           })}
+
         </MapContainer>
+
+        {/* Overlay hint doppio click */}
+        {onGoFullscreen && (
+          <div className="absolute bottom-3 right-3 z-[400] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl px-3 py-1.5 pointer-events-none">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Maximize2 size={10} /> Doppio click per fullscreen
+            </p>
+          </div>
+        )}
+
+        {/* Legenda colori */}
+        <div className="absolute top-3 left-3 z-[400] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow pointer-events-none">
+          <div className="space-y-1">
+            {[
+              { color: '#22c55e', label: 'Cliente' },
+              { color: '#38bdf8', label: 'Dealer' },
+              { color: '#eab308', label: 'Edilizia' },
+              { color: '#f87171', label: 'Industria' },
+              { color: '#94a3b8', label: 'Non categ.' },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <div style={{ background: color }} className="w-3 h-3 rounded-full flex-shrink-0" />
+                <span className="text-[9px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-wide">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* ── Nearby summary ── */}
-      {userPos && nearby.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl px-5 py-3 border border-gray-100 dark:border-gray-700 flex items-center gap-3">
-          <Navigation size={16} className="text-indigo-500 flex-shrink-0" />
-          <p className="text-sm font-bold text-gray-600 dark:text-gray-300">
-            <span className="font-black text-gray-900 dark:text-white">{nearby.length}</span> {mapFilter === 'tutti' ? 'contatti' : mapFilter} nel raggio di <span className="font-black">{radius} km</span>
+      {/* ── Lista clienti (mobile tab=lista + desktop sidebar) ── */}
+      <div className={`flex-1 overflow-y-auto space-y-2 ${mobileTab === 'mappa' ? 'hidden md:hidden' : 'block'} md:hidden`}
+        style={{ minHeight: 0 }}
+      >
+        {listContacts.length === 0 ? (
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl">
+            <MapPin size={32} className="mx-auto mb-3 text-gray-200" />
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Nessun contatto mappato</p>
+            <p className="text-xs text-gray-300 mt-1">Apri i filtri e clicca "Trova Coordinate"</p>
+          </div>
+        ) : listContacts.map(c => {
+          const isCliente = c.status === 'cliente';
+          return (
+            <div
+              key={c.id}
+              onClick={() => onNavigateToContact(c.id)}
+              className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-2 cursor-pointer transition-all ${isCliente ? 'border-gray-100 dark:border-gray-700 hover:border-indigo-200' : 'border-amber-100 dark:border-amber-900/30 hover:border-amber-300'}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-500'}`}>
+                    <Building2 size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-black text-sm dark:text-white uppercase truncate">{c.company}</p>
+                    <p className="text-xs text-gray-400 font-bold flex items-center gap-1 mt-0.5">
+                      <MapPin size={11} className="flex-shrink-0" />
+                      {c.city || '—'}{c.province ? ` (${c.province})` : ''}
+                    </p>
+                    {c.phone && (
+                      <p className="text-xs text-gray-400 font-bold flex items-center gap-1">
+                        <Phone size={11} className="flex-shrink-0" /> {c.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {isCliente ? 'Cliente' : 'Prospect'}
+                  </span>
+                  {c.distKm !== null && (
+                    <span className="text-[10px] font-black text-gray-400">
+                      {c.distKm.toFixed(0)} km
+                    </span>
+                  )}
+                </div>
+              </div>
+              {c.address && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
+                  target="_blank" rel="noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 text-xs font-black uppercase hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                >
+                  <Navigation size={12} /> Naviga
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Nearby summary (solo se mappa visibile) ── */}
+      {userPos && nearby.length > 0 && mobileTab === 'mappa' && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-2.5 border border-gray-100 dark:border-gray-700 flex items-center gap-3 mt-2 flex-shrink-0">
+          <Navigation size={14} className="text-indigo-500 flex-shrink-0" />
+          <p className="text-xs font-bold text-gray-600 dark:text-gray-300">
+            <span className="font-black text-gray-900 dark:text-white">{nearby.length}</span> nel raggio di <span className="font-black">{radius} km</span>
             {' · '}<span className="text-indigo-600 font-black">{nearby.filter(c => c.status === 'cliente').length} clienti</span>
             {' · '}<span className="text-amber-500 font-black">{nearby.filter(c => c.status === 'potenziale').length} prospect</span>
           </p>
         </div>
+      )}
+
+      {/* ── Itinerario View ── */}
+      {showItinerario && (
+        <ItinerarioView
+          contacts={contacts}
+          onClose={() => setShowItinerario(false)}
+        />
+      )}
+
+      {/* ── AI Catalog Panel ── */}
+      {showAIPanel && (
+        <AICatalogPanel
+          onClose={() => setShowAIPanel(false)}
+          onApply={applyAISuggestions}
+        />
       )}
     </div>
   );

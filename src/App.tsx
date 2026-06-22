@@ -58,7 +58,8 @@ function AppContent() {
       case 'offers': return <OffersView />;
       case 'agenda': return <AgendaView />;
       case 'products': return <ProductsView />;
-      case 'map': return <MapView onNavigateToContact={navigateToContact} />;
+      case 'map': return <MapView onNavigateToContact={navigateToContact} onGoFullscreen={() => goTo('map-full')} />;
+      case 'map-full': return <MapView onNavigateToContact={navigateToContact} isFullscreen onExitFullscreen={() => goTo('map')} />;
       case 'attivita': return <ActivityLogView />;
       case 'analytics': return <AnalyticsView />;
       case 'storico': return <StoricoView />;

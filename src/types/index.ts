@@ -9,10 +9,10 @@ export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
 // AGGIUNTO 'map' ALLA NAVIGAZIONE
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets';
 
 export type CustomerType = 'dealer' | 'end-user';
-export type ContactSegment = 'dealer' | 'industria' | 'edilizia';
+export type ContactSegment = 'dealer' | 'industria' | 'edilizia' | 'end-user';
 export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabile Tecnico' | 'Altro';
 
 export interface Stakeholder {
@@ -100,7 +100,9 @@ export interface Product {
   colors?: string[];     // es. ['nero', 'blu', 'grigio']
   stock?: number;        // 0 = esaurito, undefined = non gestito
   line?: ProductLine;    // linea di prodotto Blåkläder
-  imageUrl?: string;     // base64 jpeg, max 400px
+  imageUrl?: string;     // base64 jpeg o URL remoto
+  productUrl?: string;   // link pagina prodotto blaklader.it
+  listPrice?: number;    // prezzo di listino lordo (IVA inclusa)
 }
 
 export interface Deal {
@@ -122,6 +124,7 @@ export interface Deal {
   offerRef?: string;
   lostReason?: LostReason;
   competitor?: string;
+  nomeStorico?: string;
 }
 
 export interface Activity {

@@ -1,13 +1,15 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { useStoricoStore, ClienteRecord, ClienteDettagliato as ClienteDettagliatoType } from '../store/storicoStore';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
+import { useAuth } from '../lib/authContext';
+import { saveStoricoToFirestore, loadStoricoFromFirestore, deleteStoricoFromFirestore } from '../lib/storicoFirestore';
 import {
   Upload, TrendingUp, TrendingDown, Target, Zap, AlertTriangle,
   ChevronDown, ChevronUp, Euro, BarChart3,
   Star, ArrowRight, RefreshCw,
-  Minus, Plus, X, ArrowRightCircle
+  Minus, Plus, X, ArrowRightCircle, Search
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -95,14 +97,22 @@ function detectColumns(rows: any[][]): {
   colItemId: number;
   colItemName: number;
   colDate: number;
+  colAnno: number;
   yearAmountCols: number[];
+  colAmount: number;
+  colQuantity: number;
+  isLongFormat: boolean;
 } {
   const result = {
     colCustomerName: -1,
     colItemId: -1,
     colItemName: -1,
     colDate: -1,
+    colAnno: -1,
     yearAmountCols: [] as number[],
+    colAmount: -1,
+    colQuantity: -1,
+    isLongFormat: false,
   };
 
   // Cerca le intestazioni nelle prime 3 righe
@@ -111,18 +121,29 @@ function detectColumns(rows: any[][]): {
     for (let c = 0; c < row.length; c++) {
       const cell = String(row[c] || '').toLowerCase().trim();
 
+      // Formato wide (inglese Blaklader originale)
       if (cell.includes('customer name') || cell.includes('customer')) result.colCustomerName = c;
       if (cell.includes('item id')) result.colItemId = c;
       if (cell.includes('item name')) result.colItemName = c;
-      if (cell.includes('date')) result.colDate = c;
       if (cell.includes('invoiced line am')) {
-        if (!result.yearAmountCols.includes(c)) {
-          result.yearAmountCols.push(c);
-        }
+        if (!result.yearAmountCols.includes(c)) result.yearAmountCols.push(c);
       }
+
+      // Formato long (italiano — una riga per transazione)
+      if (cell === 'cliente' || cell.includes('ragione sociale')) result.colCustomerName = c;
+      if (cell === 'qualità' || cell === 'qualita' || cell === 'item id') result.colItemId = c;
+      if (cell === 'prodotto' || cell.includes('item name')) result.colItemName = c;
+      if (cell === 'importo (€)' || cell === 'importo' || cell.startsWith('importo')) result.colAmount = c;
+      if (cell === 'quantità' || cell === 'quantita' || cell === 'qty' || cell === 'quantity') result.colQuantity = c;
+      if (cell === 'anno' || cell === 'year') result.colAnno = c;
+
+      // Data — sia inglese che italiano
+      if (cell.includes('data fattura') || cell === 'data') result.colDate = c;
+      else if (result.colDate < 0 && cell.includes('date')) result.colDate = c;
     }
   }
 
+  result.isLongFormat = result.yearAmountCols.length === 0 && result.colAmount >= 0;
   return result;
 }
 
@@ -139,7 +160,9 @@ function parseCSVData(rows: any[][]): ClienteDettagliato[] {
   console.log('📊 First 3 rows:', rows.slice(0, 3));
 
   // Validate column detection
-  if (cols.colCustomerName < 0 || cols.colItemId < 0 || cols.colItemName < 0 || cols.colDate < 0 || cols.yearAmountCols.length === 0) {
+  const hasWideAmount = cols.yearAmountCols.length > 0;
+  const hasLongAmount = cols.isLongFormat && cols.colAmount >= 0;
+  if (cols.colCustomerName < 0 || cols.colItemId < 0 || cols.colItemName < 0 || cols.colDate < 0 || (!hasWideAmount && !hasLongAmount)) {
     console.error('❌ Column detection failed:', cols);
     alert('Errore: Non riesco a trovare le colonne nel file. Controlla la struttura del file.');
     return [];
@@ -155,16 +178,21 @@ function parseCSVData(rows: any[][]): ClienteDettagliato[] {
 
     const rawCustomerName = String(row[cols.colCustomerName] || '').trim();
     const itemId = String(row[cols.colItemId] || '').trim();
-    const itemName = String(row[cols.colItemName] || '').trim();
+    // itemName: fallback su itemId se la colonna prodotto è vuota (es. righe 2026 senza descrizione)
+    const itemName = String(row[cols.colItemName] || '').trim() || itemId;
     const dateOrder = String(row[cols.colDate] || '').trim();
+    // annoRiga: colonna Anno separata, usata come fallback se Data fattura è null
+    const annoRiga: number | null = cols.colAnno >= 0
+      ? (typeof row[cols.colAnno] === 'number' ? row[cols.colAnno] as number : parseInt(String(row[cols.colAnno] || '')) || null)
+      : null;
 
     // Aggiorna il nome cliente corrente se presente nella riga
     if (rawCustomerName && rawCustomerName !== 'Customer name' && !rawCustomerName.toLowerCase().includes('calendar')) {
       currentCustomerName = rawCustomerName;
     }
 
-    // Skip header rows and rows without data
-    if (!currentCustomerName || !itemId || !itemName || !dateOrder) {
+    // Skip header rows e righe senza dati minimi (itemId è obbligatorio; dateOrder o annoRiga devono esserci)
+    if (!currentCustomerName || !itemId || (!dateOrder && !annoRiga)) {
       continue;
     }
 
@@ -210,6 +238,12 @@ function parseCSVData(rows: any[][]): ClienteDettagliato[] {
       }
     }
 
+    // Fallback: se la data è assente ma la colonna Anno ha un valore valido (es. righe 2026 senza Data fattura)
+    if (yearFromDate === 0 && annoRiga && annoRiga >= 2023 && annoRiga <= 2026) {
+      yearFromDate = annoRiga;
+      normalizedDate = `01-01-${annoRiga}`;
+    }
+
     if (yearFromDate < 2023 || yearFromDate > 2026) continue;
 
     // Inizializza cliente
@@ -234,19 +268,29 @@ function parseCSVData(rows: any[][]): ClienteDettagliato[] {
       cliente.prodotti.push(prodotto);
     }
 
-    // Determina quale colonna leggere in base all'anno
-    let colAmountIdx = 0;
-    if (yearFromDate === 2023) colAmountIdx = cols.yearAmountCols[0] || 0;
-    else if (yearFromDate === 2024) colAmountIdx = cols.yearAmountCols[1] || 0;
-    else if (yearFromDate === 2025) colAmountIdx = cols.yearAmountCols[2] || 0;
-    else if (yearFromDate === 2026) colAmountIdx = cols.yearAmountCols[3] || 0;
+    // Estrai amount, margin, quantity — formato long o wide
+    let amount = 0;
+    let margin = 0;
+    let quantity = 0;
 
-    if (colAmountIdx === 0) continue; // Colonna non trovata
-
-    // Estrai amount, margin, quantity
-    const amount = parseAmount(row[colAmountIdx]);
-    const margin = parseMargin(row[colAmountIdx + 1]);
-    const quantity = parseAmount(row[colAmountIdx + 2]);
+    if (cols.isLongFormat) {
+      // Long format: importo e quantità in colonne dedicate
+      const rawAmt = row[cols.colAmount];
+      amount = typeof rawAmt === 'number' ? rawAmt : parseAmount(rawAmt);
+      const rawQty = cols.colQuantity >= 0 ? row[cols.colQuantity] : undefined;
+      quantity = rawQty !== undefined ? (typeof rawQty === 'number' ? rawQty : parseAmount(rawQty)) : 0;
+    } else {
+      // Wide format: colonne per anno
+      let colAmountIdx = 0;
+      if (yearFromDate === 2023) colAmountIdx = cols.yearAmountCols[0] || 0;
+      else if (yearFromDate === 2024) colAmountIdx = cols.yearAmountCols[1] || 0;
+      else if (yearFromDate === 2025) colAmountIdx = cols.yearAmountCols[2] || 0;
+      else if (yearFromDate === 2026) colAmountIdx = cols.yearAmountCols[3] || 0;
+      if (colAmountIdx === 0) continue;
+      amount = parseAmount(row[colAmountIdx]);
+      margin = parseMargin(row[colAmountIdx + 1]);
+      quantity = parseAmount(row[colAmountIdx + 2]);
+    }
 
     // Registra ordine se ha importo
     if (amount > 0) {
@@ -303,6 +347,112 @@ function convertToClienteRecord(dettagliato: ClienteDettagliato): ClienteRecord 
       fatturato2026: p.ordini.filter(o => o.year === 2026).reduce((s, o) => s + o.amount, 0),
     })),
   };
+}
+
+// ─── PIVOT FORMAT PARSER ──────────────────────────────────────────────────────
+
+const PIVOT_MONTH_MAP: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+
+function isPivotFormat(rows: any[][]): boolean {
+  if (rows.length < 6) return false;
+  const r1 = rows[1] || [];
+  const r4 = rows[4] || [];
+  // "Somma di Invoice Amount" è il segnale più affidabile: appare molte volte in row 4
+  const hasSommaInvoice = r4.some((v: any) =>
+    String(v || '').toLowerCase().includes('somma di invoice amount')
+  );
+  // Anni 2020-2030 in row 1, accetta sia number che string
+  const hasYear = r1.some((v: any) => {
+    const n = typeof v === 'number' ? v : parseInt(String(v || ''), 10);
+    return !isNaN(n) && n >= 2020 && n <= 2030;
+  });
+  return hasSommaInvoice && hasYear;
+}
+
+function parsePivotData(rows: any[][]): ClienteDettagliato[] {
+  const r1 = rows[1] || [], r2 = rows[2] || [], r3 = rows[3] || [], r4 = rows[4] || [];
+
+  // Mappa colonne: (anno, mese, giorno) → {colAmt, colQty}
+  const leafCols: { colAmt: number; colQty: number; year: number; month: number; day: number }[] = [];
+  let curYear = 0, curMonth = 0, curDay = 0;
+
+  for (let c = 1; c < r4.length; c++) {
+    const yRaw = r1[c];
+    const yNum = typeof yRaw === 'number' ? yRaw : parseInt(String(yRaw || ''), 10);
+    if (!isNaN(yNum) && yNum >= 2020 && yNum <= 2030) curYear = yNum;
+    const monthStr = String(r2[c] || '').toLowerCase().trim();
+    if (monthStr && PIVOT_MONTH_MAP[monthStr]) curMonth = PIVOT_MONTH_MAP[monthStr];
+    const dRaw = r3[c];
+    const dNum = typeof dRaw === 'number' ? dRaw : parseInt(String(dRaw || ''), 10);
+    if (!isNaN(dNum) && dNum >= 1 && dNum <= 31) curDay = dNum;
+    const leaf = String(r4[c] || '').toLowerCase().trim();
+    if (leaf === 'somma di invoice amount' && curYear >= 2023 && curMonth >= 1 && curDay >= 1) {
+      leafCols.push({ colAmt: c, colQty: c + 1, year: curYear, month: curMonth, day: curDay });
+    }
+  }
+
+  const clientMap = new Map<string, ClienteDettagliato>();
+  let currentCliente: ClienteDettagliato | null = null;
+
+  for (let ri = 5; ri < rows.length; ri++) {
+    const row = rows[ri];
+    const rawLabel = String(row[0] || '').trim();
+    if (!rawLabel) continue;
+    const labelLower = rawLabel.toLowerCase();
+    if (labelLower.startsWith('totale') || labelLower === '(vuoto)' || labelLower.startsWith('grand')) continue;
+
+    // Codice articolo Blåkläder: 0-4 lettere opzionali + cifre, senza spazi
+    // Es: "1193", "E218", "NC3281" → articolo; "ARON SRL", "ATEA..." → cliente
+    const cleanLabel = rawLabel.replace(/^\*+\s*/, '').trim();
+    const isProductCode = /^[A-Za-z]{0,4}\d+$/.test(cleanLabel);
+
+    if (!isProductCode) {
+      // Nuova riga cliente
+      if (!clientMap.has(cleanLabel)) {
+        clientMap.set(cleanLabel, {
+          clientId: clientMap.size + 1,
+          nome: cleanLabel,
+          prodotti: [],
+          fatturato2023: 0, margine2023: 0,
+          fatturato2024: 0, margine2024: 0,
+          fatturato2025: 0, margine2025: 0,
+          fatturato2026: 0, margine2026: 0,
+        });
+      }
+      currentCliente = clientMap.get(cleanLabel)!;
+    } else {
+      // Riga prodotto — leggi gli ordini per data
+      if (!currentCliente) continue;
+      const itemId = cleanLabel;
+
+      let prodotto = currentCliente.prodotti.find(p => p.itemId === itemId);
+      if (!prodotto) {
+        prodotto = { itemId, nome: itemId, ordini: [] };
+        currentCliente.prodotti.push(prodotto);
+      }
+
+      for (const ci of leafCols) {
+        const rawAmt = row[ci.colAmt];
+        const amount = typeof rawAmt === 'number' ? rawAmt : parseAmount(rawAmt);
+        if (amount <= 0) continue;
+        const rawQty = row[ci.colQty];
+        const quantity = typeof rawQty === 'number' ? rawQty : parseAmount(rawQty);
+        const dd = String(ci.day).padStart(2, '0');
+        const mm = String(ci.month).padStart(2, '0');
+        const date = `${dd}-${mm}-${ci.year}`;
+        prodotto.ordini.push({ date, year: ci.year, amount, margin: 0, quantity });
+        const key = `fatturato${ci.year}` as keyof ClienteDettagliato;
+        (currentCliente[key] as number) = ((currentCliente[key] as number) || 0) + amount;
+      }
+    }
+  }
+
+  return Array.from(clientMap.values()).filter(
+    c => c.fatturato2023 > 0 || c.fatturato2024 > 0 || c.fatturato2025 > 0 || c.fatturato2026 > 0
+  );
 }
 
 // ─── SIGNAL ANALYSIS (Ordini dal Passato) ─────────────────────────────────────
@@ -503,27 +653,48 @@ function getSeasonalBase(cliente: ClienteDettagliato, windowSize: number = 2): {
 // ─── DEAL GENERATION ──────────────────────────────────────────────────────────
 
 function generaDeal(clienti: ClienteDettagliato[]): DealSuggerito[] {
-  const totale2024 = clienti.reduce((s, c) => s + c.fatturato2024, 0);
-  const totale2023 = clienti.reduce((s, c) => s + c.fatturato2023, 0);
-  const crescitaMedia = totale2023 > 0 ? ((totale2024 - totale2023) / totale2023) : 0;
+  // Determina dinamicamente gli ultimi 2 anni con dati reali
+  const tuttiAnni = [2023, 2024, 2025, 2026] as const;
+  type Anno = typeof tuttiAnni[number];
+  const anniConDati = tuttiAnni.filter(y =>
+    clienti.some(c => (c[`fatturato${y}` as keyof ClienteDettagliato] as number) > 0)
+  );
+  if (anniConDati.length === 0) return [];
+
+  // Se 2026 ha dati usa 2025 vs 2024 come confronto (2026 è anno parziale)
+  // Altrimenti prende gli ultimi 2 anni disponibili
+  let annoCorr: Anno;
+  let annoPrev: Anno;
+  if (anniConDati.includes(2026) && anniConDati.includes(2025)) {
+    annoCorr = 2025; annoPrev = anniConDati.includes(2024) ? 2024 : 2025;
+  } else {
+    annoCorr = anniConDati[anniConDati.length - 1];
+    annoPrev = anniConDati.length >= 2 ? anniConDati[anniConDati.length - 2] : annoCorr;
+  }
+
+  const fKey  = (y: number) => `fatturato${y}` as keyof ClienteDettagliato;
+  const totCorr = clienti.reduce((s, c) => s + (c[fKey(annoCorr)] as number), 0);
+  const totPrev = clienti.reduce((s, c) => s + (c[fKey(annoPrev)] as number), 0);
+  const crescitaMedia = totPrev > 0 ? ((totCorr - totPrev) / totPrev) : 0;
 
   const deals: DealSuggerito[] = [];
 
   for (const cliente of clienti) {
-    const f23 = cliente.fatturato2023;
-    const f24 = cliente.fatturato2024;
-    if (f23 === 0 && f24 === 0) continue;
+    const fCorr = cliente[fKey(annoCorr)] as number;
+    const fPrev = cliente[fKey(annoPrev)] as number;
 
-    const delta = f23 > 0 ? ((f24 - f23) / f23) : 0;
-    const mediaAnnua = (f23 + f24) / (f23 > 0 && f24 > 0 ? 2 : 1);
+    // Includi anche clienti con dati solo in 2026 (anno corrente parziale)
+    const f2026 = cliente.fatturato2026;
+    if (fCorr === 0 && fPrev === 0 && f2026 === 0) continue;
 
-    // Base stagionale: media degli ordini nello stesso periodo degli anni precedenti
+    const delta = fPrev > 0 ? ((fCorr - fPrev) / fPrev) : 0;
+    const mediaAnnua = (fPrev + fCorr) / (fPrev > 0 && fCorr > 0 ? 2 : 1);
+
     const seasonal = getSeasonalBase(cliente);
     const baseOpportunita = seasonal.base > 0
       ? seasonal.base
       : Math.round(mediaAnnua * 0.25);
 
-    // Top prodotti: preferisce quelli stagionali, fallback per totale ordini annuali
     const topProdotti = seasonal.topProdotti.length > 0
       ? seasonal.topProdotti.map(p => p.nome.length > 35 ? p.nome.substring(0, 35) + '…' : p.nome)
       : [...cliente.prodotti]
@@ -540,16 +711,14 @@ function generaDeal(clienti: ClienteDettagliato[]): DealSuggerito[] {
     let valoreStimato = 0;
     let trend: 'crescita' | 'stabile' | 'calo' = 'stabile';
 
-    const mesiLabel = seasonal.mesiConsiderati
-      .map(m => MESI[m - 1])
-      .join('/');
+    const mesiLabel = seasonal.mesiConsiderati.map(m => MESI[m - 1]).join('/');
 
-    if (f24 > 0 && f23 > 0) {
+    if (fCorr > 0 && fPrev > 0) {
       if (delta > 0.1) {
         trend = 'crescita';
         valoreStimato = Math.round(baseOpportunita * (1 + Math.min(delta, 0.3)));
         priorita = 'alta';
-        motivazione = `Crescita ${Math.round(delta * 100)}% YoY — stima su ordini ${mesiLabel}`;
+        motivazione = `Crescita ${Math.round(delta * 100)}% ${annoPrev}→${annoCorr} — stima su ordini ${mesiLabel}`;
       } else if (delta < -0.1) {
         trend = 'calo';
         valoreStimato = Math.round(baseOpportunita * 0.9);
@@ -558,20 +727,28 @@ function generaDeal(clienti: ClienteDettagliato[]): DealSuggerito[] {
       } else {
         trend = 'stabile';
         valoreStimato = Math.round(baseOpportunita * (1 + crescitaMedia * 0.5));
-        priorita = f24 > 10000 ? 'alta' : 'media';
+        priorita = fCorr > 10000 ? 'alta' : 'media';
         motivazione = `Cliente stabile — rinnovo stagionale (${mesiLabel})`;
       }
-    } else if (f24 === 0 && f23 > 0) {
+    } else if (fCorr === 0 && fPrev > 0) {
       trend = 'calo';
       valoreStimato = Math.round(baseOpportunita * 0.7);
-      priorita = f23 > 5000 ? 'alta' : 'bassa';
-      motivazione = `Cliente dormiente — attivo in 2023 (€${fmt(f23)}) ma assente in 2024`;
-    } else if (f23 === 0 && f24 > 0) {
+      priorita = fPrev > 5000 ? 'alta' : 'bassa';
+      motivazione = `Cliente dormiente — attivo in ${annoPrev} (€${fmt(fPrev)}) ma assente in ${annoCorr}`;
+    } else if (fPrev === 0 && fCorr > 0) {
       trend = 'crescita';
       valoreStimato = Math.round(baseOpportunita * 1.2);
       priorita = 'alta';
-      motivazione = `Nuovo cliente 2024 — alto potenziale di fidelizzazione`;
+      motivazione = `Nuovo cliente ${annoCorr} — alto potenziale di fidelizzazione`;
+    } else if (f2026 > 0) {
+      // Cliente con solo dati 2026 (anno parziale)
+      trend = 'crescita';
+      valoreStimato = Math.round(f2026 * 2); // stima annualizzata
+      priorita = 'alta';
+      motivazione = `Nuovo cliente 2026 — ${fmt(f2026)}€ YTD, alto potenziale`;
     }
+
+    if (!motivazione) continue;
 
     deals.push({
       clientId: cliente.clientId,
@@ -733,18 +910,46 @@ export function StoricoView() {
   const { clienti, clientiDettagliati, fileName, anni, budget, setClienti, setClientiDettagliati, setFileName, setAnni, setBudget, reset } = useStoricoStore();
   const { contacts, addDeal } = useStore();
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   // ── Stato locale di UI (non serve che sopravviva alla navigazione) ──
   const [loading, setLoading] = useState(false);
+  const [firestoreLoading, setFirestoreLoading] = useState(false);
   const [budgetMode, setBudgetMode] = useState<'annuale' | 'mensile'>('annuale');
   const [activeTab, setActiveTab] = useState<'storico' | 'budget' | 'pipeline'>('storico');
   const [sortField, setSortField] = useState<'id' | 'f2023' | 'f2024' | 'delta'>('f2024');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [filterDormienti, setFilterDormienti] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedClientId, setExpandedClientId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // ── Caricamento da Firestore al primo accesso (sync cross-device) ──
+  useEffect(() => {
+    if (!user || clienti.length > 0) return;
+    setFirestoreLoading(true);
+    loadStoricoFromFirestore(user.uid)
+      .then(data => {
+        if (data) {
+          setClienti(data.clienti);
+          setClientiDettagliati(data.clientiDettagliati);
+          setFileName(data.fileName);
+          setAnni(data.anni);
+          setBudget(data.budget);
+        }
+      })
+      .catch(() => { /* fallback silenzioso: mostra upload prompt */ })
+      .finally(() => setFirestoreLoading(false));
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleReset = useCallback(async () => {
+    reset();
+    if (user) {
+      deleteStoricoFromFirestore(user.uid).catch(() => {});
+    }
+  }, [user, reset]);
 
   // ── Analisi ordini dal passato ──
   const clientiSignals = clientiDettagliati.map(c => analyzeClientSignals(c, new Date())).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
@@ -754,9 +959,30 @@ export function StoricoView() {
   const [pmContactId, setPmContactId] = useState('');
   const [pmValue, setPmValue] = useState(0);
 
+  // Normalizza nome per confronto fuzzy: maiuscolo, no spazi doppi, no punteggiatura
+  const normName = (s: string) =>
+    s.toUpperCase().trim().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ');
+
+  const findContactByName = (nomeStorico: string) => {
+    const key = normName(nomeStorico);
+    const all = Object.values(contacts);
+    // Match esatto
+    const exact = all.find(c => normName(c.company) === key);
+    if (exact) return exact;
+    // Match parziale: uno contiene l'altro (min 6 caratteri per sicurezza)
+    if (key.length >= 6) {
+      return all.find(c => {
+        const cn = normName(c.company);
+        return cn.length >= 6 && (cn.includes(key) || key.includes(cn));
+      });
+    }
+    return undefined;
+  };
+
   const openPipelineModal = (deal: DealSuggerito) => {
     setPipelineModal(deal);
-    setPmContactId('');
+    const matched = findContactByName(deal.nomeCliente);
+    setPmContactId(matched?.id ?? '');
     setPmValue(deal.valoreStimato);
   };
 
@@ -778,6 +1004,7 @@ export function StoricoView() {
       nextActionType: 'chiama',
       nextActionPriority: pipelineModal.priorita === 'alta' ? 'alta' : pipelineModal.priorita === 'media' ? 'media' : 'bassa',
       notes: `[Da Storico] Cliente #${pipelineModal.clientId} — ${pipelineModal.motivazione}${prodStr}`,
+      nomeStorico: pipelineModal.nomeCliente,
       createdAt: now,
       updatedAt: now,
     });
@@ -791,31 +1018,59 @@ export function StoricoView() {
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array', cellDates: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: '' }) as string[][];
 
-      // Detect which years are present from headers
-      const anniPresenti: string[] = [];
-      for (const row of rows.slice(0, 3)) {
-        for (const cell of row) {
-          const s = String(cell || '');
-          if (s.includes('2023')) anniPresenti.push('2023');
-          if (s.includes('2024')) anniPresenti.push('2024');
-          if (s.includes('2025')) anniPresenti.push('2025');
-          if (s.includes('2026')) anniPresenti.push('2026');
+      // Prova ogni foglio in ordine e usa il primo con colonne valide
+      let rows: string[][] = [];
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const candidate = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: '' }) as string[][];
+        const cols = detectColumns(candidate);
+        const valid = cols.colCustomerName >= 0 && cols.colItemId >= 0 && cols.colItemName >= 0 && cols.colDate >= 0
+          && (cols.yearAmountCols.length > 0 || cols.colAmount >= 0);
+        if (valid) { rows = candidate; break; }
+      }
+      if (rows.length === 0) {
+        // Fallback al primo foglio
+        rows = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' }) as string[][];
+      }
+
+      // Detect which years are present — dalle intestazioni (formato wide) o dalla colonna Anno (formato long)
+      const anniSet = new Set<string>();
+      const detectedCols = detectColumns(rows);
+      if (detectedCols.isLongFormat && detectedCols.colAnno >= 0) {
+        // Formato long: scansiona la colonna Anno su tutte le righe dati
+        for (const row of rows.slice(1)) {
+          const v = row[detectedCols.colAnno];
+          const y = typeof v === 'number' ? v : parseInt(String(v || ''));
+          if (y >= 2023 && y <= 2026) anniSet.add(String(y));
+        }
+      } else {
+        // Formato wide: anni codificati nelle intestazioni
+        for (const row of rows.slice(0, 3)) {
+          for (const cell of row) {
+            const s = String(cell || '');
+            ['2023','2024','2025','2026'].forEach(y => { if (s.includes(y)) anniSet.add(y); });
+          }
         }
       }
-      setAnni([...new Set(anniPresenti)]);
+      setAnni([...anniSet].sort());
 
-      const parsedDettagliato = parseCSVData(rows);
+      const parsedDettagliato = isPivotFormat(rows) ? parsePivotData(rows) : parseCSVData(rows);
       setClientiDettagliati(parsedDettagliato);
       const parsedRecords = parsedDettagliato.map(convertToClienteRecord);
       setClienti(parsedRecords);
+
+      // Sync su Firestore per renderlo disponibile su tutti i dispositivi
+      if (user && parsedRecords.length > 0) {
+        saveStoricoToFirestore(user.uid, parsedRecords, [...anniSet].sort(), file.name, budget, parsedDettagliato)
+          .then(() => showToast('Storico sincronizzato sul cloud ✅', 'success'))
+          .catch(() => showToast('Sync cloud fallita — dati salvati localmente', 'error'));
+      }
     } catch (e) {
       alert('Errore nel leggere il file. Assicurati sia un file Excel o CSV valido.');
     }
     setLoading(false);
-  }, []);
+  }, [user, budget, showToast]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -828,12 +1083,19 @@ export function StoricoView() {
     if (file) handleFile(file);
   };
 
-  // Computed stats
-  const tot2023 = clienti.reduce((s, c) => s + c.fatturato2023, 0);
+  // Determina dinamicamente gli anni da confrontare in base ai dati reali
+  const anniConDatiKPI = ([2023, 2024, 2025, 2026] as const).filter(y =>
+    clienti.some(c => ((c as any)[`fatturato${y}`] || 0) > 0)
+  );
+  const annoCorr: number = anniConDatiKPI.length > 0 ? anniConDatiKPI[anniConDatiKPI.length - 1] : 2024;
+  const annoPrev: number = anniConDatiKPI.length > 1 ? anniConDatiKPI[anniConDatiKPI.length - 2] : annoCorr - 1;
+  const totCorr = clienti.reduce((s, c) => s + (((c as any)[`fatturato${annoCorr}`] as number) || 0), 0);
+  const totPrev = clienti.reduce((s, c) => s + (((c as any)[`fatturato${annoPrev}`] as number) || 0), 0);
+  // Mantieni tot2024 per compatibilità con sezione Budget che lo usa
   const tot2024 = clienti.reduce((s, c) => s + c.fatturato2024, 0);
-  const deltaYoY = tot2023 > 0 ? ((tot2024 - tot2023) / tot2023 * 100) : 0;
-  const dormienti = clienti.filter(c => c.fatturato2023 > 0 && c.fatturato2024 === 0);
-  const nuovi2024 = clienti.filter(c => c.fatturato2023 === 0 && c.fatturato2024 > 0);
+  const deltaYoY = totPrev > 0 ? ((totCorr - totPrev) / totPrev * 100) : 0;
+  const dormienti = clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) === 0);
+  const nuoviCorr = clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) === 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) > 0);
 
   // Budget calculations
   const budgetAnnuale = budget.annuale || 0;
@@ -843,28 +1105,34 @@ export function StoricoView() {
   const gapBudget = Math.max(0, budgetAnnuale - tot2024);
 
   // Sort clienti
+  const searchNorm = searchQuery.toLowerCase().trim();
   const clientiSorted = [...clienti]
-    .filter(c => !filterDormienti || (c.fatturato2023 > 0 && c.fatturato2024 === 0))
+    .filter(c => !filterDormienti || ((((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) === 0))
+    .filter(c => !searchNorm || (c.nome || '').toLowerCase().includes(searchNorm))
     .sort((a, b) => {
       let va = 0, vb = 0;
       if (sortField === 'id') { va = a.clientId; vb = b.clientId; }
-      else if (sortField === 'f2023') { va = a.fatturato2023; vb = b.fatturato2023; }
-      else if (sortField === 'f2024') { va = a.fatturato2024; vb = b.fatturato2024; }
+      else if (sortField === 'f2023') { va = (((a as any)[`fatturato${annoPrev}`] as number) || 0); vb = (((b as any)[`fatturato${annoPrev}`] as number) || 0); }
+      else if (sortField === 'f2024') { va = (((a as any)[`fatturato${annoCorr}`] as number) || 0); vb = (((b as any)[`fatturato${annoCorr}`] as number) || 0); }
       else if (sortField === 'delta') {
-        va = a.fatturato2023 > 0 ? (a.fatturato2024 - a.fatturato2023) / a.fatturato2023 : 0;
-        vb = b.fatturato2023 > 0 ? (b.fatturato2024 - b.fatturato2023) / b.fatturato2023 : 0;
+        const aPrev = (((a as any)[`fatturato${annoPrev}`] as number) || 0);
+        const aCorr = (((a as any)[`fatturato${annoCorr}`] as number) || 0);
+        const bPrev = (((b as any)[`fatturato${annoPrev}`] as number) || 0);
+        const bCorr = (((b as any)[`fatturato${annoCorr}`] as number) || 0);
+        va = aPrev > 0 ? (aCorr - aPrev) / aPrev : 0;
+        vb = bPrev > 0 ? (bCorr - bPrev) / bPrev : 0;
       }
       return sortDir === 'desc' ? vb - va : va - vb;
     });
 
   // Chart data
   const topClientiChart = [...clienti]
-    .sort((a, b) => b.fatturato2024 - a.fatturato2024)
+    .sort((a, b) => (((b as any)[`fatturato${annoCorr}`] as number) || 0) - (((a as any)[`fatturato${annoCorr}`] as number) || 0))
     .slice(0, 12)
     .map(c => ({
       name: c.nome ? (c.nome.length > 15 ? c.nome.substring(0, 15) + '…' : c.nome) : `#${c.clientId}`,
-      '2023': Math.round(c.fatturato2023),
-      '2024': Math.round(c.fatturato2024),
+      [`${annoPrev}`]: Math.round((((c as any)[`fatturato${annoPrev}`] as number) || 0)),
+      [`${annoCorr}`]: Math.round((((c as any)[`fatturato${annoCorr}`] as number) || 0)),
     }));
 
   const toggleSort = (field: typeof sortField) => {
@@ -891,25 +1159,25 @@ export function StoricoView() {
         <div
           onDrop={onDrop}
           onDragOver={e => e.preventDefault()}
-          onClick={() => fileRef.current?.click()}
+          onClick={() => !firestoreLoading && fileRef.current?.click()}
           className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-16 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all group"
         >
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.numbers" className="hidden" onChange={onFileChange} />
-          {loading
+          {(loading || firestoreLoading)
             ? <RefreshCw size={40} className="mx-auto text-indigo-500 animate-spin mb-4" />
             : <Upload size={40} className="mx-auto text-gray-300 group-hover:text-indigo-400 mb-4 transition-colors" />
           }
           <h3 className="font-black text-gray-900 dark:text-white text-lg mb-2">
-            {loading ? 'Elaborazione in corso…' : 'Carica Storico Vendite'}
+            {loading ? 'Elaborazione in corso…' : firestoreLoading ? 'Caricamento dati dal cloud…' : 'Carica Storico Vendite'}
           </h3>
           <p className="text-gray-400 text-sm mb-4">
             Trascina qui il file Excel (.xlsx) o clicca per selezionarlo
           </p>
           <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
-            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Anno 2023 ✓</span>
+            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Formato Blaklader ✓</span>
             <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Anno 2024 ✓</span>
-            <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-500 px-3 py-1 rounded-full">Anno 2025 (presto)</span>
-            <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-500 px-3 py-1 rounded-full">Anno 2026 (presto)</span>
+            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Anno 2025 ✓</span>
+            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Pivot Excel ✓</span>
           </div>
         </div>
 
@@ -943,7 +1211,7 @@ export function StoricoView() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => reset()}
+            onClick={handleReset}
             className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
           >
             <Upload size={15} /> Cambia file
@@ -951,12 +1219,32 @@ export function StoricoView() {
         </div>
       </div>
 
+      {/* Barra di ricerca */}
+      <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors">
+        <Search size={15} className="text-gray-400 flex-shrink-0" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => { setSearchQuery(e.target.value); setPage(0); }}
+          placeholder="Cerca cliente…"
+          className="flex-1 bg-transparent text-sm font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none"
+        />
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(''); setPage(0); }} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={14} />
+          </button>
+        )}
+        {searchNorm && (
+          <span className="text-xs font-bold text-indigo-500 flex-shrink-0">{clientiSorted.length} risultati</span>
+        )}
+      </div>
+
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Fatturato 2023" value={fmtEur(tot2023)} sub={`${clienti.filter(c => c.fatturato2023 > 0).length} clienti attivi`} color="bg-blue-500" icon={Euro} />
-        <KPICard label="Fatturato 2024" value={fmtEur(tot2024)} sub={`${deltaYoY > 0 ? '+' : ''}${deltaYoY.toFixed(1)}% vs 2023`} color={deltaYoY >= 0 ? 'bg-green-500' : 'bg-red-500'} icon={TrendingUp} />
-        <KPICard label="Clienti Dormienti" value={String(dormienti.length)} sub="attivi 2023, assenti 2024" color="bg-amber-500" icon={AlertTriangle} />
-        <KPICard label="Nuovi 2024" value={String(nuovi2024.length)} sub="non presenti in 2023" color="bg-purple-500" icon={Star} />
+        <KPICard label={`Fatturato ${annoPrev}`} value={fmtEur(totPrev)} sub={`${clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0).length} clienti attivi`} color="bg-blue-500" icon={Euro} />
+        <KPICard label={`Fatturato ${annoCorr}`} value={fmtEur(totCorr)} sub={`${deltaYoY > 0 ? '+' : ''}${deltaYoY.toFixed(1)}% vs ${annoPrev}`} color={deltaYoY >= 0 ? 'bg-green-500' : 'bg-red-500'} icon={TrendingUp} />
+        <KPICard label="Clienti Dormienti" value={String(dormienti.length)} sub={`attivi ${annoPrev}, assenti ${annoCorr}`} color="bg-amber-500" icon={AlertTriangle} />
+        <KPICard label={`Nuovi ${annoCorr}`} value={String(nuoviCorr.length)} sub={`non presenti in ${annoPrev}`} color="bg-purple-500" icon={Star} />
       </div>
 
       {/* Tabs */}
@@ -985,8 +1273,8 @@ export function StoricoView() {
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `€${Math.round(v/1000)}K`} />
                 <Tooltip formatter={(v: number) => fmtEur(v)} />
                 <Legend />
-                <Bar dataKey="2023" fill="#93c5fd" radius={[4,4,0,0]} />
-                <Bar dataKey="2024" fill="#6366f1" radius={[4,4,0,0]} />
+                <Bar dataKey={String(annoPrev)} fill="#93c5fd" radius={[4,4,0,0]} />
+                <Bar dataKey={String(annoCorr)} fill="#6366f1" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1010,8 +1298,8 @@ export function StoricoView() {
                     <th className="w-8 px-2" />
                     {[
                       { label: 'Cliente', field: 'id' as const },
-                      { label: '2023 (€)', field: 'f2023' as const },
-                      { label: '2024 (€)', field: 'f2024' as const },
+                      { label: `${annoPrev} (€)`, field: 'f2023' as const },
+                      { label: `${annoCorr} (€)`, field: 'f2024' as const },
                       { label: 'Δ YoY', field: 'delta' as const },
                     ].map(({ label, field }) => (
                       <th key={field} onClick={() => toggleSort(field)} className="text-left px-4 py-3 text-xs font-black uppercase tracking-widest text-gray-400 cursor-pointer hover:text-gray-600 select-none">
@@ -1025,9 +1313,11 @@ export function StoricoView() {
                 </thead>
                 <tbody>
                   {clientiSorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(c => {
-                    const delta = c.fatturato2023 > 0 ? ((c.fatturato2024 - c.fatturato2023) / c.fatturato2023 * 100) : null;
-                    const isDormiente = c.fatturato2023 > 0 && c.fatturato2024 === 0;
-                    const isNuovo = c.fatturato2023 === 0 && c.fatturato2024 > 0;
+                    const cPrev = (((c as any)[`fatturato${annoPrev}`] as number) || 0);
+                    const cCorr = (((c as any)[`fatturato${annoCorr}`] as number) || 0);
+                    const delta = cPrev > 0 ? ((cCorr - cPrev) / cPrev * 100) : null;
+                    const isDormiente = cPrev > 0 && cCorr === 0;
+                    const isNuovo = cPrev === 0 && cCorr > 0;
                     const isExpanded = expandedClientId === c.clientId;
                     const hasProdotti = c.prodotti.length > 0;
                     // Cerca i dati dettagliati con ordini individuali
@@ -1064,8 +1354,8 @@ export function StoricoView() {
                             {hasProdotti && (isExpanded ? <ChevronUp size={14} className="text-indigo-500" /> : <ChevronDown size={14} />)}
                           </td>
                           <td className="px-4 py-3 font-bold text-gray-900 dark:text-white truncate max-w-[250px]" title={c.nome || `#${c.clientId}`}>{c.nome || `#${c.clientId}`}</td>
-                          <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-300">{c.fatturato2023 > 0 ? fmtEur(c.fatturato2023) : '—'}</td>
-                          <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-white">{c.fatturato2024 > 0 ? fmtEur(c.fatturato2024) : '—'}</td>
+                          <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-300">{cPrev > 0 ? fmtEur(cPrev) : '—'}</td>
+                          <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-white">{cCorr > 0 ? fmtEur(cCorr) : '—'}</td>
                           <td className="px-4 py-3">
                             {delta !== null ? (
                               <span className={`flex items-center gap-1 font-bold text-xs ${delta > 0 ? 'text-green-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
@@ -1078,7 +1368,7 @@ export function StoricoView() {
                           <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-300">{(c.fatturato2026 || 0) > 0 ? fmtEur(c.fatturato2026!) : '—'}</td>
                           <td className="px-4 py-3">
                             {isDormiente && <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-lg font-bold">Dormiente</span>}
-                            {isNuovo && <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-lg font-bold">Nuovo 2024</span>}
+                            {isNuovo && <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-lg font-bold">Nuovo {annoCorr}</span>}
                             {!isDormiente && !isNuovo && delta !== null && delta > 20 && <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-lg font-bold">In crescita</span>}
                             {!isDormiente && !isNuovo && delta !== null && delta < -20 && <span className="text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded-lg font-bold">In calo</span>}
                           </td>
@@ -1266,9 +1556,9 @@ export function StoricoView() {
               <h3 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-widest mb-4">📊 Storico vs Budget</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={[
-                  { anno: '2023', fatturato: Math.round(tot2023), budget: 0 },
-                  { anno: '2024', fatturato: Math.round(tot2024), budget: 0 },
-                  { anno: '2025 (prev)', fatturato: 0, budget: Math.round(budget.annuale) },
+                  { anno: String(annoPrev), fatturato: Math.round(totPrev), budget: 0 },
+                  { anno: String(annoCorr), fatturato: Math.round(totCorr), budget: 0 },
+                  { anno: `${annoCorr + 1} (prev)`, fatturato: 0, budget: Math.round(budget.annuale) },
                 ]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="anno" tick={{ fontSize: 11 }} />
@@ -1452,8 +1742,6 @@ export function StoricoView() {
 
       {/* ── MODAL: Aggiungi a Pipeline ─────────────────────────────────────── */}
       {pipelineModal && (() => {
-        // Recupera il record storico del cliente per mostrare il contesto
-        const clienteRecord = clienti.find(c => c.clientId === pipelineModal.clientId);
         return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md p-6">
@@ -1469,26 +1757,37 @@ export function StoricoView() {
               </button>
             </div>
 
-            {/* Contesto storico — separato dal valore deal */}
-            {clienteRecord && (
-              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">📊 Storico fatturato cliente (riferimento)</p>
-                <div className="flex gap-4">
-                  {clienteRecord.fatturato2023 > 0 && (
-                    <div>
-                      <p className="text-[10px] text-gray-400">2023 totale</p>
-                      <p className="text-sm font-black text-gray-600 dark:text-gray-300">{fmtEur(clienteRecord.fatturato2023)}</p>
-                    </div>
-                  )}
-                  {clienteRecord.fatturato2024 > 0 && (
-                    <div>
-                      <p className="text-[10px] text-gray-400">2024 totale</p>
-                      <p className="text-sm font-black text-gray-700 dark:text-white">{fmtEur(clienteRecord.fatturato2024)}</p>
-                    </div>
-                  )}
+            {/* Contesto storico — cerca per clientId O per nome CRM collegato */}
+            {(() => {
+              const byId = clienti.find(c => c.clientId === pipelineModal.clientId);
+              const byCrm = pmContactId
+                ? (() => {
+                    const crm = contacts[pmContactId];
+                    return crm ? clienti.find(c => normName(c.nome) === normName(crm.company)) : undefined;
+                  })()
+                : undefined;
+              const rec = byId ?? byCrm;
+              if (!rec) return null;
+              const yearsWithData = ([2023, 2024, 2025, 2026] as const).filter(y =>
+                (rec[`fatturato${y}` as keyof typeof rec] as number) > 0
+              );
+              if (yearsWithData.length === 0) return null;
+              return (
+                <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">📊 Fatturato effettivo (da storico)</p>
+                  <div className="flex gap-4 flex-wrap">
+                    {yearsWithData.map(y => (
+                      <div key={y}>
+                        <p className="text-[10px] text-gray-400">{y}{y === 2026 ? ' YTD' : ''}</p>
+                        <p className="text-sm font-black text-gray-700 dark:text-white">
+                          {fmtEur(rec[`fatturato${y}` as keyof typeof rec] as number)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Valore opportunità — basato sui prodotti top, NON sul fatturato totale */}
             <div className="mb-4">
@@ -1510,23 +1809,39 @@ export function StoricoView() {
             {/* Selezione azienda CRM */}
             <div className="mb-5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">
-                Collega ad Azienda CRM <span className="text-gray-300 font-normal normal-case">(opzionale)</span>
+                Collega ad Azienda CRM
+                {pmContactId && <span className="ml-2 text-emerald-500 font-black normal-case">✓ Collegato automaticamente</span>}
               </label>
               <select
                 value={pmContactId}
                 onChange={e => setPmContactId(e.target.value)}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm"
+                className={`w-full border-2 rounded-xl px-3 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm ${pmContactId ? 'border-emerald-300 dark:border-emerald-700' : 'border-gray-100 dark:border-gray-700'}`}
               >
                 <option value="">— Nessuna azienda (aggiungila dopo) —</option>
-                {Object.values(contacts)
-                  .filter(c => c.status === 'cliente')
-                  .sort((a, b) => a.company.localeCompare(b.company))
-                  .map(c => (
-                    <option key={c.id} value={c.id}>{c.company}</option>
-                  ))}
+                {(() => {
+                  const all = Object.values(contacts).sort((a, b) => a.company.localeCompare(b.company));
+                  const clienti = all.filter(c => c.status === 'cliente');
+                  const prospect = all.filter(c => c.status !== 'cliente');
+                  return (
+                    <>
+                      {clienti.length > 0 && <option disabled>── Clienti ──</option>}
+                      {clienti.map(c => {
+                        const storicoC = clienti.length > 0 ? clientiDettagliati.find(s => normName(s.nome) === normName(c.company)) : undefined;
+                        const fattLabel = storicoC ? ` · storico €${fmt(storicoC.fatturato2024 || storicoC.fatturato2025 || storicoC.fatturato2023)}` : '';
+                        return <option key={c.id} value={c.id}>{c.company}{fattLabel}</option>;
+                      })}
+                      {prospect.length > 0 && <option disabled>── Prospect ──</option>}
+                      {prospect.map(c => {
+                        const storicoC = clientiDettagliati.find(s => normName(s.nome) === normName(c.company));
+                        const fattLabel = storicoC ? ` · storico €${fmt(storicoC.fatturato2024 || storicoC.fatturato2025 || storicoC.fatturato2023)}` : '';
+                        return <option key={c.id} value={c.id}>{c.company}{fattLabel}</option>;
+                      })}
+                    </>
+                  );
+                })()}
               </select>
-              <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-                <Star size={10} /> Solo clienti attivi — puoi modificare il deal in Pipeline dopo la creazione
+              <p className="text-[10px] text-gray-400 mt-1.5">
+                Il collegamento viene cercato automaticamente per nome — modifica se necessario
               </p>
             </div>
 

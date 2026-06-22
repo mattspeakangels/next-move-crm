@@ -1,8 +1,14 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Search } from 'lucide-react';
-import { Activity, ActivityType } from '../types';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Search, Mic, MicOff, CheckCircle, Loader2 } from 'lucide-react';
+import { Activity, ActivityType, ActivityOutcome } from '../types';
 import { useToast } from '../components/ui/ToastContext';
+import {
+  DndContext, DragEndEvent, DragOverlay, DragStartEvent,
+  PointerSensor, TouchSensor, useSensor, useSensors,
+  useDroppable, useDraggable,
+} from '@dnd-kit/core';
+import { useVoiceInput } from '../hooks/useVoiceInput';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,6 +66,13 @@ const TYPE_BG: Record<ActivityType, string> = {
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 const MONTHS_IT = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
+const OUTCOME_OPTIONS: { value: ActivityOutcome; label: string; emoji: string; color: string }[] = [
+  { value: 'riuscita',          label: 'Positivo',    emoji: '✅', color: 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
+  { value: 'parziale',          label: 'Parziale',    emoji: '🟡', color: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
+  { value: 'promessa-callback', label: 'Richiamata',  emoji: '📞', color: 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+  { value: 'rifiuto',           label: 'Non riuscita',emoji: '❌', color: 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
+];
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function isSameDay(a: Date, b: Date) {
@@ -98,6 +111,70 @@ function getWeekDays(anchor: Date): Date[] {
   });
 }
 
+// ─── Week Timegrid DnD ───────────────────────────────────────────────────────
+
+const HOUR_START = 7;   // 07:00
+const HOUR_END   = 21;  // 21:00
+const SLOT_MINS  = 30;  // slot da 30 min
+const SLOTS_PER_DAY = ((HOUR_END - HOUR_START) * 60) / SLOT_MINS; // 28
+
+function slotId(dayIdx: number, slotIdx: number) {
+  return `slot-${dayIdx}-${slotIdx}`;
+}
+
+function slotToTime(slotIdx: number): { h: number; m: number } {
+  const totalMins = HOUR_START * 60 + slotIdx * SLOT_MINS;
+  return { h: Math.floor(totalMins / 60), m: totalMins % 60 };
+}
+
+interface DraggableCardProps {
+  activity: Activity;
+  company: string;
+  onEdit: () => void;
+}
+
+const DraggableCard: React.FC<DraggableCardProps> = ({ activity, company, onEdit }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: activity.id });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px,${transform.y}px,0)`, zIndex: 999 }
+    : undefined;
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`rounded-xl px-2 py-1.5 text-white text-[10px] font-black truncate cursor-grab active:cursor-grabbing select-none transition-opacity ${TYPE_COLORS[activity.type]} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+      onClick={e => { e.stopPropagation(); onEdit(); }}
+    >
+      {company}
+    </div>
+  );
+};
+
+interface DroppableSlotProps {
+  id: string;
+  children?: React.ReactNode;
+  isHour: boolean;
+}
+
+const DroppableSlot: React.FC<DroppableSlotProps> = ({ id, children, isHour }) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative border-b transition-colors ${
+        isHour
+          ? 'border-gray-200 dark:border-gray-700'
+          : 'border-gray-100 dark:border-gray-800'
+      } ${isOver ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+      style={{ height: 28 }}
+    >
+      {children}
+    </div>
+  );
+};
+
 // ─── Activity Card ────────────────────────────────────────────────────────────
 
 interface ActivityCardProps {
@@ -106,32 +183,55 @@ interface ActivityCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onExport: () => void;
+  onClose: () => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport }) => (
-  <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-50 dark:border-gray-700 flex items-center justify-between gap-4">
-    <div className="flex gap-3 items-center flex-1 min-w-0">
-      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${TYPE_BG[activity.type]}`}>
-        {activity.type === 'visita' ? <MapPin size={16} /> : activity.type === 'chiamata' ? <Phone size={16} /> : <span className="text-xs font-black">{TYPE_LABELS[activity.type][0]}</span>}
+const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport, onClose }) => {
+  const isDone = activity.outcome !== 'da-fare';
+  return (
+    <div className={`bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border flex items-center justify-between gap-4 ${isDone ? 'border-green-100 dark:border-green-900/40 opacity-75' : 'border-gray-50 dark:border-gray-700'}`}>
+      <div className="flex gap-3 items-center flex-1 min-w-0">
+        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${TYPE_BG[activity.type]}`}>
+          {activity.type === 'visita' ? <MapPin size={16} /> : activity.type === 'chiamata' ? <Phone size={16} /> : <span className="text-xs font-black">{TYPE_LABELS[activity.type][0]}</span>}
+        </div>
+        <div className="min-w-0">
+          <p className="font-black text-sm dark:text-white truncate">{companyName}</p>
+          <p className="text-xs text-gray-400 font-bold">
+            {new Date(activity.date).toLocaleString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </p>
+          {activity.notes && <p className="text-[11px] text-gray-400 truncate mt-0.5">{activity.notes}</p>}
+          {activity.results && (
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 truncate mt-0.5 italic">✓ {activity.results}</p>
+          )}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className={`text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full ${TYPE_BG[activity.type]}`}>
+              {TYPE_LABELS[activity.type]}
+            </span>
+            {isDone && activity.outcomeType && (
+              <span className="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                {OUTCOME_OPTIONS.find(o => o.value === activity.outcomeType)?.label ?? activity.outcomeType}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="min-w-0">
-        <p className="font-black text-sm dark:text-white truncate">{companyName}</p>
-        <p className="text-xs text-gray-400 font-bold">
-          {new Date(activity.date).toLocaleString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-        </p>
-        {activity.notes && <p className="text-[11px] text-gray-400 truncate mt-0.5">{activity.notes}</p>}
-        <span className={`inline-block mt-1 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full ${TYPE_BG[activity.type]}`}>
-          {TYPE_LABELS[activity.type]}
-        </span>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {!isDone && (
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+            title="Chiudi appuntamento"
+          >
+            <CheckCircle size={16} />
+          </button>
+        )}
+        <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
+        <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
+        <button onClick={onDelete} className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Elimina"><Trash2 size={14} /></button>
       </div>
     </div>
-    <div className="flex items-center gap-1 flex-shrink-0">
-      <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
-      <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
-      <button onClick={onDelete} className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Elimina"><Trash2 size={14} /></button>
-    </div>
-  </div>
-);
+  );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -156,6 +256,18 @@ export const AgendaView: React.FC = () => {
   const [showContactList, setShowContactList] = useState(false);
   const contactPickerRef = useRef<HTMLDivElement>(null);
 
+  // ── Voice schedule ──
+  const voiceSched = useVoiceInput();
+  const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'parsing'>('idle');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [showVoicePanel, setShowVoicePanel] = useState(false);
+
+  // ── Close activity ──
+  const [closingActivity, setClosingActivity] = useState<Activity | null>(null);
+  const [closeOutcome, setCloseOutcome] = useState<ActivityOutcome>('riuscita');
+  const [closeNotes, setCloseNotes] = useState('');
+  const voiceClose = useVoiceInput();
+
   useEffect(() => {
     if (!showContactList) return;
     const handler = (e: MouseEvent) => {
@@ -166,6 +278,95 @@ export const AgendaView: React.FC = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showContactList]);
+
+  // ── Voice schedule: parse transcript → pre-fill form ──
+  const parseVoiceActivity = async (transcript: string) => {
+    setVoiceState('parsing');
+    setVoiceError(null);
+    try {
+      const token = import.meta.env.VITE_ADMIN_TOKEN;
+      const contactList = Object.values(contacts).map(c => ({ id: c.id, company: c.company }));
+      const res = await fetch('/api/parse-activity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ transcript, contacts: contactList }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as {
+        type?: string;
+        companyName?: string;
+        date?: string;
+        time?: string;
+        notes?: string;
+      };
+
+      // Find best contact match
+      const matchedContact = data.companyName
+        ? Object.values(contacts).find(c =>
+            c.company.toLowerCase().includes(data.companyName!.toLowerCase()) ||
+            data.companyName!.toLowerCase().includes(c.company.toLowerCase())
+          )
+        : null;
+
+      const type = (data.type as ActivityType) ?? 'visita';
+      const date = data.date ?? new Date().toISOString().split('T')[0];
+      const time = data.time ?? '09:00';
+
+      setFormData({
+        contactId: matchedContact?.id ?? '',
+        type,
+        date,
+        time,
+        notes: data.notes ?? '',
+      });
+      setContactSearch(matchedContact?.company ?? data.companyName ?? '');
+      setShowModal(true);
+      setShowVoicePanel(false);
+      setVoiceState('idle');
+      voiceSched.reset();
+    } catch (err) {
+      setVoiceError(`Errore parsing: ${String(err)}`);
+      setVoiceState('idle');
+    }
+  };
+
+  const startVoiceSchedule = () => {
+    setShowVoicePanel(true);
+    setVoiceError(null);
+    setVoiceState('recording');
+    voiceSched.start({ onFinal: (text) => parseVoiceActivity(text) });
+  };
+
+  const cancelVoiceSchedule = () => {
+    voiceSched.stop();
+    voiceSched.reset();
+    setVoiceState('idle');
+    setShowVoicePanel(false);
+    setVoiceError(null);
+  };
+
+  // ── Close activity ──
+  const openCloseModal = (activity: Activity) => {
+    setClosingActivity(activity);
+    setCloseOutcome('riuscita');
+    setCloseNotes('');
+    voiceClose.reset();
+  };
+
+  const handleCloseActivity = () => {
+    if (!closingActivity) return;
+    updateActivity(closingActivity.id, {
+      outcome: 'fatto',
+      outcomeType: closeOutcome,
+      results: closeNotes || undefined,
+    });
+    showToast('Appuntamento chiuso!', 'success');
+    setClosingActivity(null);
+    setCloseNotes('');
+  };
 
   const allActivities = Object.values(activities);
 
@@ -198,6 +399,7 @@ export const AgendaView: React.FC = () => {
     setFormData({
       ...defaultForm(),
       date: d.toISOString().split('T')[0],
+      time: d.toTimeString().slice(0, 5),
     });
     setShowModal(true);
   };
@@ -443,6 +645,138 @@ export const AgendaView: React.FC = () => {
     );
   };
 
+  // ── DnD sensors ──────────────────────────────────────────────────────────────
+  const [activeActivityId, setActiveActivityId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
+
+  const handleDragStart = (e: DragStartEvent) => setActiveActivityId(String(e.active.id));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    setActiveActivityId(null);
+    const { active, over } = e;
+    if (!over) return;
+    const overId = String(over.id);
+    if (!overId.startsWith('slot-')) return;
+    const [, dayIdxStr, slotIdxStr] = overId.split('-');
+    const dayIdx  = parseInt(dayIdxStr);
+    const slotIdx = parseInt(slotIdxStr);
+    const days    = getWeekDays(anchor);
+    const day     = days[dayIdx];
+    const { h, m } = slotToTime(slotIdx);
+    const newDate = new Date(day);
+    newDate.setHours(h, m, 0, 0);
+    updateActivity(String(active.id), { date: newDate.getTime() });
+  };
+
+  // ── Week timegrid con drag & drop ─────────────────────────────────────────
+
+  const renderWeekTimegrid = () => {
+    const days = getWeekDays(anchor);
+    const activeActivity = activeActivityId ? activities[activeActivityId] : null;
+
+    // Per ogni giorno × slot: quali attività ci sono?
+    const slotMap = new Map<string, Activity[]>();
+    Object.values(activities).forEach(a => {
+      const d = new Date(a.date);
+      const dayIdx = days.findIndex(day => isSameDay(day, d));
+      if (dayIdx < 0) return;
+      const totalMins = d.getHours() * 60 + d.getMinutes();
+      const startMins = HOUR_START * 60;
+      const slotIdx   = Math.floor((totalMins - startMins) / SLOT_MINS);
+      if (slotIdx < 0 || slotIdx >= SLOTS_PER_DAY) return;
+      const key = slotId(dayIdx, slotIdx);
+      if (!slotMap.has(key)) slotMap.set(key, []);
+      slotMap.get(key)!.push(a);
+    });
+
+    return (
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+          {/* Intestazione giorni */}
+          <div className="grid border-b border-gray-200 dark:border-gray-700" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
+            <div className="border-r border-gray-100 dark:border-gray-700" />
+            {days.map((day, i) => {
+              const isToday = isSameDay(day, today);
+              return (
+                <div key={i} className={`py-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0 ${isToday ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{DAYS_IT[i]}</p>
+                  <p className={`text-sm font-black ${isToday ? 'text-indigo-600' : 'dark:text-white'}`}>{day.getDate()}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Griglia ore */}
+          <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+            <div className="grid" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
+              {/* Colonna ore */}
+              <div>
+                {Array.from({ length: SLOTS_PER_DAY }, (_, si) => {
+                  const { h, m } = slotToTime(si);
+                  const showLabel = m === 0;
+                  return (
+                    <div key={si} className="border-b border-gray-100 dark:border-gray-800 border-r border-r-gray-200 dark:border-r-gray-700 flex items-start justify-end pr-1.5" style={{ height: 28 }}>
+                      {showLabel && <span className="text-[9px] font-black text-gray-400 -mt-2">{String(h).padStart(2,'0')}:00</span>}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Colonne giorni */}
+              {days.map((_, dayIdx) => (
+                <div key={dayIdx} className="border-r border-gray-100 dark:border-gray-700 last:border-r-0">
+                  {Array.from({ length: SLOTS_PER_DAY }, (_, slotIdx) => {
+                    const key = slotId(dayIdx, slotIdx);
+                    const slotActivities = slotMap.get(key) ?? [];
+                    const { h, m } = slotToTime(slotIdx);
+                    return (
+                      <DroppableSlot key={key} id={key} isHour={m === 0}>
+                        <div className="absolute inset-0 flex flex-col gap-0.5 px-0.5 py-0.5 overflow-hidden">
+                          {slotActivities.map(a => (
+                            <DraggableCard
+                              key={a.id}
+                              activity={a}
+                              company={contacts[a.contactId]?.company ?? '—'}
+                              onEdit={() => openEdit(a)}
+                            />
+                          ))}
+                        </div>
+                        {/* Click su slot vuoto per nuovo appuntamento */}
+                        {slotActivities.length === 0 && (
+                          <div
+                            className="absolute inset-0 cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors"
+                            onClick={() => {
+                              const day = getWeekDays(anchor)[dayIdx];
+                              const d = new Date(day);
+                              d.setHours(h, m, 0, 0);
+                              openNew(d);
+                            }}
+                          />
+                        )}
+                      </DroppableSlot>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Overlay durante il drag */}
+        <DragOverlay>
+          {activeActivity && (
+            <div className={`rounded-xl px-2 py-1.5 text-white text-[10px] font-black shadow-xl ${TYPE_COLORS[activeActivity.type]}`}>
+              {contacts[activeActivity.contactId]?.company ?? '—'}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+    );
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -455,10 +789,20 @@ export const AgendaView: React.FC = () => {
           <button
             onClick={handleExportICS}
             className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm"
-            title="Esporta tutti gli appuntamenti futuri come file .ics (Outlook, Apple Calendar, ecc.)"
+            title="Esporta tutti gli appuntamenti futuri come file .ics"
           >
             <Download size={15} /> Esporta .ics
           </button>
+          {voiceSched.isSupported && (
+            <button
+              onClick={startVoiceSchedule}
+              disabled={voiceState !== 'idle'}
+              className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 p-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
+              title="Pianifica con la voce"
+            >
+              <Mic size={16} />
+            </button>
+          )}
           <button
             onClick={() => openNew(selectedDay ?? undefined)}
             className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors text-sm"
@@ -467,6 +811,48 @@ export const AgendaView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Voice schedule panel */}
+      {showVoicePanel && (
+        <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="font-black dark:text-white text-sm">Pianifica con la voce</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">Es: "Visita da Rossi SRL venerdì alle 10 per i giubbotti nuovi"</p>
+            </div>
+            <button onClick={cancelVoiceSchedule} className="text-gray-300 hover:text-gray-500 flex-shrink-0"><X size={18} /></button>
+          </div>
+
+          {/* Mic visual */}
+          <div className="flex flex-col items-center gap-3 py-4">
+            {voiceState === 'recording' ? (
+              <>
+                <button
+                  onClick={() => { voiceSched.stop(); setVoiceState('parsing'); }}
+                  className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse"
+                >
+                  <MicOff size={28} />
+                </button>
+                <p className="text-xs text-gray-400 font-bold">Registrazione in corso... (tocca per fermare)</p>
+              </>
+            ) : voiceState === 'parsing' ? (
+              <>
+                <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                  <Loader2 size={28} className="text-indigo-600 animate-spin" />
+                </div>
+                <p className="text-xs text-gray-400 font-bold">Analisi in corso...</p>
+              </>
+            ) : null}
+
+            {voiceSched.transcript && (
+              <div className="w-full bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-3 text-sm text-gray-700 dark:text-gray-200 italic min-h-[48px]">
+                "{voiceSched.transcript}"
+              </div>
+            )}
+            {voiceError && <p className="text-xs text-red-500 font-bold">{voiceError}</p>}
+          </div>
+        </div>
+      )}
 
       {/* Calendar card */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-700 overflow-hidden">
@@ -501,7 +887,12 @@ export const AgendaView: React.FC = () => {
         {/* Calendar grid */}
         {calMode !== 'list' && (
           <div className="p-4">
-            {calMode === 'month' ? renderMonthGrid() : renderWeekGrid()}
+            {calMode === 'month' ? renderMonthGrid() : (
+              <>
+                {renderWeekGrid()}
+                <div className="mt-3">{renderWeekTimegrid()}</div>
+              </>
+            )}
           </div>
         )}
 
@@ -551,6 +942,7 @@ export const AgendaView: React.FC = () => {
               onEdit={() => openEdit(activity)}
               onDelete={() => setConfirmDeleteId(activity.id)}
               onExport={() => handleExport(activity)}
+              onClose={() => openCloseModal(activity)}
             />
           ))}
         </div>
@@ -707,6 +1099,107 @@ export const AgendaView: React.FC = () => {
             <div className="flex gap-3">
               <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 rounded-2xl font-black bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Annulla</button>
               <button onClick={() => handleDelete(confirmDeleteId)} className="flex-1 py-3 rounded-2xl font-black bg-red-500 text-white hover:bg-red-600 transition-colors">Elimina</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Chiudi Appuntamento Modal ── */}
+      {closingActivity && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 w-full sm:max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl">
+
+            {/* Header */}
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <h2 className="text-xl font-black dark:text-white">Chiudi Appuntamento</h2>
+                <p className="text-sm text-gray-400 font-bold mt-0.5">
+                  {contacts[closingActivity.contactId]?.company ?? 'Azienda'} ·{' '}
+                  {new Date(closingActivity.date).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <button
+                onClick={() => { setClosingActivity(null); voiceClose.stop(); voiceClose.reset(); }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+              >
+                <X size={22} className="text-gray-400" />
+              </button>
+            </div>
+
+            {/* Outcome */}
+            <div className="mb-4">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Come è andata?</p>
+              <div className="grid grid-cols-2 gap-2">
+                {OUTCOME_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setCloseOutcome(opt.value)}
+                    className={`py-3 px-3 rounded-2xl border-2 font-black text-sm transition-all flex items-center gap-2 ${
+                      closeOutcome === opt.value ? opt.color + ' border-current' : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
+                    }`}
+                  >
+                    <span>{opt.emoji}</span> {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes / Resoconto */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Resoconto</p>
+                {voiceClose.isSupported && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (voiceClose.isRecording) {
+                        voiceClose.stop();
+                      } else {
+                        voiceClose.start({
+                          continuous: true,
+                          onFinal: (text) => setCloseNotes(prev => prev ? prev + ' ' + text : text),
+                        });
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                      voiceClose.isRecording
+                        ? 'bg-red-500 text-white animate-pulse'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-indigo-50 hover:text-indigo-600'
+                    }`}
+                  >
+                    {voiceClose.isRecording ? <MicOff size={12} /> : <Mic size={12} />}
+                    {voiceClose.isRecording ? 'Stop' : 'Ditta'}
+                  </button>
+                )}
+              </div>
+              <textarea
+                rows={4}
+                value={closeNotes}
+                onChange={e => setCloseNotes(e.target.value)}
+                placeholder="Descrivi come è andata la visita, cosa è stato discusso, prossimi passi..."
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-400 text-sm resize-none"
+              />
+              {voiceClose.isRecording && voiceClose.transcript && (
+                <p className="text-xs text-indigo-500 italic mt-1.5 px-1">"{voiceClose.transcript}"</p>
+              )}
+              {voiceClose.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceClose.error}</p>}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setClosingActivity(null); voiceClose.stop(); voiceClose.reset(); }}
+                className="flex-1 py-3.5 rounded-2xl font-black bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleCloseActivity}
+                className="flex-1 py-3.5 rounded-2xl font-black bg-green-500 text-white hover:bg-green-600 transition-colors"
+              >
+                Chiudi Appuntamento
+              </button>
             </div>
           </div>
         </div>

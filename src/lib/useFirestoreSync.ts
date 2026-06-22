@@ -1,10 +1,36 @@
 import { useEffect, useRef } from 'react';
-import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
 
 const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns'] as const;
+
+// Firestore WriteBatch ha un limite di 500 operazioni per batch
+const BATCH_SIZE = 400;
+
+async function flushWrites(
+  userId: string,
+  col: string,
+  changes: { id: string; data: any }[],
+  deletes: string[],
+) {
+  const allOps = [
+    ...changes.map(c => ({ type: 'set' as const, id: c.id, data: c.data })),
+    ...deletes.map(id => ({ type: 'del' as const, id, data: null })),
+  ];
+
+  for (let i = 0; i < allOps.length; i += BATCH_SIZE) {
+    const chunk = allOps.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    for (const op of chunk) {
+      const ref = doc(db, 'users', userId, col, op.id);
+      if (op.type === 'set') batch.set(ref, op.data, { merge: true });
+      else batch.delete(ref);
+    }
+    await batch.commit();
+  }
+}
 
 export function useFirestoreSync(userId: string) {
   const isLoadingRef = useRef(false);
@@ -20,14 +46,11 @@ export function useFirestoreSync(userId: string) {
         const firestoreData: Record<string, any> = {};
         snapshot.forEach((d) => { firestoreData[d.id] = d.data(); });
 
-        // Smart merge: prefer Firestore data, but keep localStorage data for items not in Firestore
         const localData = (currentState as any)[col] || {};
         const merged = { ...localData };
-
         for (const [id, data] of Object.entries(firestoreData)) {
           merged[id] = data;
         }
-
         updates[col] = merged;
 
         if (Object.keys(localData).length > 0 || Object.keys(firestoreData).length > 0) {
@@ -54,24 +77,33 @@ export function useFirestoreSync(userId: string) {
 
         if (curr === prev) continue;
 
+        const changes: { id: string; data: any; isNew: boolean }[] = [];
+        const deletes: string[] = [];
+
         for (const [id, data] of Object.entries(curr)) {
           if (curr[id] !== prev[id]) {
-            const isNew = !prev[id];
-            setDoc(doc(db, 'users', userId, col, id), data, { merge: true });
-
-            if (isNew) {
-              logAuditEvent(userId, col, id, 'CREATE', {}, data);
-            } else {
-              logAuditEvent(userId, col, id, 'UPDATE', prev[id], data);
-            }
+            changes.push({ id, data, isNew: !prev[id] });
           }
         }
-
         for (const id of Object.keys(prev)) {
-          if (!curr[id]) {
-            deleteDoc(doc(db, 'users', userId, col, id));
-            logAuditEvent(userId, col, id, 'DELETE', prev[id], {});
+          if (!curr[id]) deletes.push(id);
+        }
+
+        if (changes.length === 0 && deletes.length === 0) continue;
+
+        // Batch su Firestore (chunked per rispettare il limite 500)
+        flushWrites(userId, col, changes.map(c => ({ id: c.id, data: c.data })), deletes)
+          .catch(err => console.error(`Firestore batch write failed [${col}]:`, err));
+
+        // Audit log solo per modifiche singole (non per import massivi)
+        if (changes.length <= 5) {
+          for (const { id, data, isNew } of changes) {
+            if (isNew) logAuditEvent(userId, col, id, 'CREATE', {}, data);
+            else logAuditEvent(userId, col, id, 'UPDATE', prev[id], data);
           }
+        }
+        for (const id of deletes) {
+          logAuditEvent(userId, col, id, 'DELETE', prev[id], {});
         }
       }
     });

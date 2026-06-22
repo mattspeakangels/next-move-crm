@@ -1,17 +1,34 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
+import { useAuth } from '../lib/authContext';
 
 export const SettingsView: React.FC = () => {
   const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
-  // Lo "storico" mostrato nella pagina Storico & Pipeline vive in useStoricoStore (file Excel caricato),
-  // separato da salesTransactions. Svuotando lo storico vendite azzeriamo entrambi così la pagina si svuota davvero.
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
+  const { user, logout, resetPassword } = useAuth();
   const [newProduct, setNewProduct] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com') ?? false;
+
+  const handleResetPassword = async () => {
+    if (!user?.email) return;
+    await resetPassword(user.email);
+    setResetSent(true);
+    setTimeout(() => setResetSent(false), 5000);
+  };
+
+  const handleLogout = async () => {
+    if (!window.confirm('Vuoi uscire dal tuo account?')) return;
+    setLoggingOut(true);
+    await logout();
+  };
 
   if (!profile) return null;
 
@@ -30,6 +47,67 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
+
+      {/* Account */}
+      {user && (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+          <h3 className="font-bold flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Account</h3>
+
+          {/* Avatar + nome */}
+          <div className="flex items-center gap-4">
+            {user.photoURL
+              ? <img src={user.photoURL} alt="avatar" className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-100" />
+              : <div className="w-14 h-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                  <User size={24} className="text-indigo-500" />
+                </div>
+            }
+            <div>
+              <p className="font-black text-gray-900 dark:text-white text-sm">{user.displayName || 'Utente'}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Accesso tramite {isGoogleUser ? 'Google' : 'Email'}</p>
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl px-4 py-3">
+              <Mail size={15} className="text-gray-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{user.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl px-4 py-3">
+              <KeyRound size={15} className="text-gray-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Password</p>
+                {isGoogleUser
+                  ? <p className="text-sm text-gray-500">Gestita da Google — modifica su myaccount.google.com</p>
+                  : <div className="flex items-center gap-3 mt-0.5">
+                      <p className="text-sm font-bold text-gray-800 dark:text-white tracking-widest">••••••••</p>
+                      <button
+                        onClick={handleResetPassword}
+                        className="text-xs font-bold text-indigo-600 hover:underline"
+                      >
+                        {resetSent ? 'Email inviata ✓' : 'Cambia password'}
+                      </button>
+                    </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 font-black text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+          >
+            <LogOut size={16} />
+            {loggingOut ? 'Uscita in corso…' : 'Esci dal profilo'}
+          </button>
+        </div>
+      )}
+
       {/* Profilo */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
         <h3 className="font-bold mb-4 flex items-center gap-2"><User size={18} className="text-indigo-600"/> Profilo Personale</h3>

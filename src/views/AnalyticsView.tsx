@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { useStore } from '../store/useStore';
 import {
   selectMonthlySales, selectTopCustomers, selectTopProducts, selectSalesByStage,
@@ -79,11 +80,11 @@ export const AnalyticsView: React.FC = () => {
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
 
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    const processText = (text: string) => {
       try {
-        const text = ev.target?.result as string;
         const lines = text.split('\n').slice(1);
         let imported = 0;
 
@@ -127,10 +128,20 @@ export const AnalyticsView: React.FC = () => {
         }
         fileInputRef.current!.value = '';
       } catch (error) {
-        showToast('Errore importazione CSV', 'error');
+        showToast('Errore importazione file', 'error');
       }
     };
-    reader.readAsText(file);
+
+    if (isExcel) {
+      reader.onload = (ev) => {
+        const wb = XLSX.read(ev.target?.result, { type: 'array' });
+        processText(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]));
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = (ev) => processText(ev.target?.result as string);
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -144,9 +155,9 @@ export const AnalyticsView: React.FC = () => {
           onClick={() => fileInputRef.current?.click()}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-2xl font-bold flex items-center gap-2"
         >
-          <Upload size={16} /> Importa CSV
+          <Upload size={16} /> Importa CSV / Excel
         </button>
-        <input type="file" accept=".csv" ref={fileInputRef} onChange={handleCSVImport} className="hidden" />
+        <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSVImport} className="hidden" />
       </div>
 
       <div className="grid grid-cols-4 gap-4">

@@ -230,10 +230,15 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                       {/* Company name */}
                       <div
                         className="font-bold text-sm mb-1 truncate dark:text-white cursor-pointer hover:text-indigo-600 transition-colors"
-                        onClick={() => onNavigateToContact(deal.contactId)}
+                        onClick={() => deal.contactId ? onNavigateToContact(deal.contactId) : undefined}
                       >
-                        {contacts[deal.contactId]?.company ?? '—'}
+                        {contacts[deal.contactId]?.company ?? deal.nomeStorico ?? '—'}
                       </div>
+                      {deal.nomeStorico && !contacts[deal.contactId] && (
+                        <span className="inline-block text-[9px] font-black uppercase tracking-wide bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full mb-1.5">
+                          Da Storico
+                        </span>
+                      )}
 
                       {/* Products */}
                       {products.length > 0 && (
