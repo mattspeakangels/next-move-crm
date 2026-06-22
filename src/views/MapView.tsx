@@ -2,10 +2,26 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Search, Route, Home, CalendarCheck } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Search, Route, Home, CalendarCheck, GripVertical } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // ── Icone colorate via divIcon ─────────────────────────────────────────────────
 
@@ -124,6 +140,29 @@ const stopIcon = (n: number) => L.divIcon({
   iconSize: [28, 28], iconAnchor: [14, 14],
 });
 
+// Componente sortable per singola tappa — drag handle visibile
+const SortableTappa: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`bg-gray-50 dark:bg-gray-800 rounded-2xl px-3 py-2 flex items-center gap-2 select-none ${isDragging ? 'opacity-50 shadow-xl z-50 ring-2 ring-orange-400' : ''}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none"
+        tabIndex={-1}
+        aria-label="Trascina per riordinare"
+      >
+        <GripVertical size={15} />
+      </button>
+      {children}
+    </div>
+  );
+};
+
 // Vista fullscreen itinerario: mappa + bottom sheet
 interface ItinerarioViewProps {
   contacts: Record<string, any>;
@@ -146,6 +185,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
   const [searchItinQuery, setSearchItinQuery] = useState('');
   const [showItinResults, setShowItinResults] = useState(false);
   const [itinFlyTo, setItinFlyTo] = useState<[number, number] | null>(null);
+  const [manualOrder, setManualOrder] = useState<string[] | null>(null);
 
   const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
 
@@ -184,16 +224,49 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
     [selectedIds, contacts]
   );
 
+  // Quando selectedIds cambia, sincronizza manualOrder (aggiungi nuovi in fondo, rimuovi quelli tolti)
+  useEffect(() => {
+    if (!manualOrder) return;
+    const valid = manualOrder.filter(id => selectedIds.includes(id));
+    const newIds = selectedIds.filter(id => !manualOrder.includes(id));
+    const updated = [...valid, ...newIds];
+    setManualOrder(updated.length > 0 ? updated : null);
+  }, [selectedIds]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Route attiva: manuale (drag) oppure auto-ottimizzata
+  const activeRoute = useMemo(() => {
+    if (!manualOrder) return optimizedRoute;
+    const byId: Record<string, any> = {};
+    optimizedRoute.forEach((s: any) => { byId[s.id] = s; });
+    const ordered = manualOrder.filter(id => byId[id]).map(id => byId[id]);
+    const extras = optimizedRoute.filter((s: any) => !manualOrder.includes(s.id));
+    return [...ordered, ...extras];
+  }, [optimizedRoute, manualOrder]);
+
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const currentOrder = activeRoute.map((s: any) => s.id as string);
+    const oldIndex = currentOrder.indexOf(active.id as string);
+    const newIndex = currentOrder.indexOf(over.id as string);
+    setManualOrder(arrayMove(currentOrder, oldIndex, newIndex));
+  };
+
   const legs = useMemo(() => {
     let cum = 0, cumMins = 0, prevLat = HOME.lat, prevLng = HOME.lng;
-    return optimizedRoute.map((s: any) => {
+    return activeRoute.map((s: any) => {
       const d = calculateDistance(prevLat, prevLng, s.lat, s.lng);
       const legMins = Math.round((d / AVG_SPEED_KMH) * 60);
       cum += d; cumMins += legMins;
       prevLat = s.lat; prevLng = s.lng;
       return { stop: s, legDist: d, cumDist: cum, legMins, cumMins };
     });
-  }, [optimizedRoute]);
+  }, [activeRoute]);
 
   const totalKm = legs.length > 0 ? legs[legs.length - 1].cumDist : 0;
 
@@ -213,17 +286,17 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
   }, [legs, startTime, visitDuration, customTimes]);
 
   const routeCoords: [number, number][] = useMemo(() =>
-    optimizedRoute.length > 0
-      ? [[HOME.lat, HOME.lng], ...optimizedRoute.map((s: any) => [s.lat, s.lng] as [number, number])]
+    activeRoute.length > 0
+      ? [[HOME.lat, HOME.lng], ...activeRoute.map((s: any) => [s.lat, s.lng] as [number, number])]
       : [],
-    [optimizedRoute]
+    [activeRoute]
   );
 
   const googleMapsUrl = useMemo(() => {
-    if (optimizedRoute.length === 0) return '';
+    if (activeRoute.length === 0) return '';
     return `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/` +
-      optimizedRoute.map((s: any) => `${s.lat},${s.lng}`).join('/');
-  }, [optimizedRoute]);
+      activeRoute.map((s: any) => `${s.lat},${s.lng}`).join('/');
+  }, [activeRoute]);
 
   const addToAgenda = () => {
     const baseDate = new Date(`${date}T00:00:00`);
@@ -248,7 +321,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
 
   // Icona marker: selezionato = numero arancione, non selezionato = pallino verde/grigio
   const makeItinIcon = (contact: any) => {
-    const idx = optimizedRoute.findIndex((s: any) => s.id === contact.id);
+    const idx = activeRoute.findIndex((s: any) => s.id === contact.id);
     if (idx >= 0) {
       return stopIcon(idx + 1);
     }
@@ -274,44 +347,58 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
               <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 truncate">{HOME.label}</p>
             </div>
 
-            {/* Tappe */}
-            {legs.map(({ stop, legDist, cumDist }, i) => {
-              const c = contacts[stop.id];
-              const et = effectiveTimes[i];
-              return (
-                <div key={stop.id} className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-3 py-2 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center flex-shrink-0 text-xs font-black">{i + 1}</div>
+            {/* Tappe — drag & drop */}
+            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={legs.map(l => l.stop.id)} strategy={verticalListSortingStrategy}>
+                {legs.map(({ stop, legDist, cumDist }, i) => {
+                  const c = contacts[stop.id];
+                  const et = effectiveTimes[i];
+                  return (
+                    <SortableTappa key={stop.id} id={stop.id}>
+                      <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center flex-shrink-0 text-xs font-black">{i + 1}</div>
 
-                  {/* Orario editabile */}
-                  <div className="flex-shrink-0">
-                    <input
-                      type="time"
-                      value={et?.effective ?? ''}
-                      onChange={e => setCustomTimes(prev => ({ ...prev, [stop.id]: e.target.value }))}
-                      className={`w-[72px] text-xs font-black rounded-lg px-1.5 py-1 outline-none border transition-colors ${
-                        et?.isCustom
-                          ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-                      }`}
-                    />
-                    {et?.isCustom && (
-                      <button
-                        onClick={() => setCustomTimes(prev => { const n = { ...prev }; delete n[stop.id]; return n; })}
-                        className="block text-[9px] text-gray-400 hover:text-indigo-500 font-bold mt-0.5 pl-1"
-                      >↩ reset</button>
-                    )}
-                  </div>
+                      {/* Orario editabile */}
+                      <div className="flex-shrink-0">
+                        <input
+                          type="time"
+                          value={et?.effective ?? ''}
+                          onChange={e => setCustomTimes(prev => ({ ...prev, [stop.id]: e.target.value }))}
+                          className={`w-[72px] text-xs font-black rounded-lg px-1.5 py-1 outline-none border transition-colors ${
+                            et?.isCustom
+                              ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                          }`}
+                        />
+                        {et?.isCustom && (
+                          <button
+                            onClick={() => setCustomTimes(prev => { const n = { ...prev }; delete n[stop.id]; return n; })}
+                            className="block text-[9px] text-gray-400 hover:text-indigo-500 font-bold mt-0.5 pl-1"
+                          >↩ reset</button>
+                        )}
+                      </div>
 
-                  {/* Info cliente */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-black dark:text-white uppercase truncate">{c?.company}</p>
-                    <p className="text-[10px] text-gray-400 font-bold">+{legDist.toFixed(0)} km · {cumDist.toFixed(0)} km tot</p>
-                  </div>
+                      {/* Info cliente */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-black dark:text-white uppercase truncate">{c?.company}</p>
+                        <p className="text-[10px] text-gray-400 font-bold">+{legDist.toFixed(0)} km · {cumDist.toFixed(0)} km tot</p>
+                      </div>
 
-                  <button onClick={() => toggle(stop.id)} className="text-gray-300 hover:text-red-500 flex-shrink-0"><X size={14} /></button>
-                </div>
-              );
-            })}
+                      <button onClick={() => toggle(stop.id)} className="text-gray-300 hover:text-red-500 flex-shrink-0"><X size={14} /></button>
+                    </SortableTappa>
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
+
+            {/* Reset ordine automatico */}
+            {manualOrder && (
+              <button
+                onClick={() => setManualOrder(null)}
+                className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[10px] font-black text-indigo-500 hover:text-indigo-700 uppercase tracking-wider transition-colors"
+              >
+                <RotateCcw size={11} /> Ottimizza ordine automatico
+              </button>
+            )}
 
             {/* Impostazioni orario */}
             <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl px-4 py-3 space-y-3">
@@ -523,7 +610,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
               <Route size={14} className={selectedIds.length > 0 ? 'text-white' : 'text-orange-500'} />
               {selectedIds.length === 0
                 ? 'Nessuna tappa selezionata'
-                : `${optimizedRoute.length} tappe · ${totalKm.toFixed(0)} km · ${fmtTime(totalKm)}`}
+                : `${activeRoute.length} tappe · ${totalKm.toFixed(0)} km · ${fmtTime(totalKm)}`}
             </span>
             <span className="text-[10px] font-bold opacity-70">{sheetOpen ? '▼' : '▲'}</span>
           </button>
@@ -579,7 +666,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose }) =>
                 <p className="text-[10px] text-gray-400 font-bold">in viaggio</p>
               </div>
               <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl py-2">
-                <p className="text-xs font-black text-gray-700 dark:text-white">{optimizedRoute.length}</p>
+                <p className="text-xs font-black text-gray-700 dark:text-white">{activeRoute.length}</p>
                 <p className="text-[10px] text-gray-400 font-bold">tappe</p>
               </div>
             </div>
