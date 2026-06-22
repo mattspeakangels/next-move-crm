@@ -551,14 +551,36 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingContact?.company) return alert('Inserisci la ragione sociale');
-    if (contacts[editingContact.id]) {
-      updateContact(editingContact.id, editingContact);
-    } else {
+    const isNew = !contacts[editingContact.id];
+    if (isNew) {
       addContact(editingContact as Contact);
+    } else {
+      updateContact(editingContact.id, editingContact);
     }
     setDetailContact(null);
+
+    // Geocodifica automatica solo per nuovi clienti con almeno città o indirizzo
+    if (isNew && (editingContact.city || editingContact.province || editingContact.address)) {
+      try {
+        const params = new URLSearchParams();
+        if (editingContact.city) params.set('city', editingContact.city);
+        if (editingContact.province) params.set('province', editingContact.province);
+        if (editingContact.address) params.set('address', editingContact.address);
+        const res = await fetch(`/api/geocode?${params}`);
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const jitter = () => (Math.random() - 0.5) * 0.004;
+          updateContact(editingContact.id, {
+            lat: parseFloat(data[0].lat) + jitter(),
+            lng: parseFloat(data[0].lon) + jitter(),
+          });
+        }
+      } catch {
+        // geocoding silenzioso — non blocca il salvataggio
+      }
+    }
   };
 
   const addStakeholder = () => {

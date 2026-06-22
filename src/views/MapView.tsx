@@ -343,7 +343,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
 
   // Pannello itinerario — contenuto condiviso tra sidebar desktop e sheet mobile
   const itineraryPanel = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Scrollabile */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 min-h-0">
         {selectedIds.length === 0 ? (
@@ -633,7 +633,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
           {sheetOpen && (
             <div className="fixed inset-0 z-[800] flex flex-col justify-end" onClick={() => setSheetOpen(false)}>
               <div
-                className="bg-white dark:bg-gray-900 rounded-t-[2rem] shadow-2xl flex flex-col"
+                className="bg-white dark:bg-gray-900 rounded-t-[2rem] shadow-2xl flex flex-col overflow-hidden"
                 style={{ maxHeight: '70vh' }}
                 onClick={e => e.stopPropagation()}
               >
@@ -643,7 +643,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                   <div className="flex items-center justify-between w-full px-5 pb-2 border-b border-gray-100 dark:border-gray-800">
                     <span className="text-xs font-black uppercase text-gray-700 dark:text-white flex items-center gap-2">
                       <Route size={13} className="text-orange-500" />
-                      {optimizedRoute.length} tappe · {totalKm.toFixed(0)} km · {fmtTime(totalKm)}
+                      {activeRoute.length} tappe · {totalKm.toFixed(0)} km · {fmtTime(totalKm)}
                     </span>
                     <button onClick={() => setSheetOpen(false)} className="text-gray-400 hover:text-gray-600">
                       <X size={16} />
