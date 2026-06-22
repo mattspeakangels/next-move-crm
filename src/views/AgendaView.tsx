@@ -498,15 +498,7 @@ export const AgendaView: React.FC = () => {
     return '';
   };
 
-  const fileToBase64 = async (file: File): Promise<string> => {
-    let buf: ArrayBuffer;
-    try {
-      buf = await file.arrayBuffer();
-    } catch {
-      throw new Error(
-        'Impossibile leggere il file. Se il file è su Google Drive o iCloud, copialo prima sul Desktop e riprova da lì.'
-      );
-    }
+  const bufToBase64 = (buf: ArrayBuffer): string => {
     const bytes = new Uint8Array(buf);
     const CHUNK = 0x8000;
     let binary = '';
@@ -514,6 +506,34 @@ export const AgendaView: React.FC = () => {
       binary += String.fromCharCode(...(bytes.subarray(i, i + CHUNK) as unknown as number[]));
     }
     return btoa(binary);
+  };
+
+  const fileToBase64 = async (file: File): Promise<string> => {
+    // Metodo 1: arrayBuffer diretto
+    try {
+      return bufToBase64(await file.arrayBuffer());
+    } catch { /* prova metodo 2 */ }
+
+    // Metodo 2: blob URL (aggira restrizioni cloud sync su Safari/Chrome)
+    const blobUrl = URL.createObjectURL(file);
+    try {
+      const res = await fetch(blobUrl);
+      return bufToBase64(await res.arrayBuffer());
+    } catch { /* prova metodo 3 */ } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+
+    // Metodo 3: FileReader
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = () => {
+        try { resolve(bufToBase64(reader.result as ArrayBuffer)); } catch (e) { reject(e); }
+      };
+      reader.onerror = () => reject(new Error(
+        'File non leggibile. Verifica in Finder che il file non abbia un\'icona ☁️ (iCloud non scaricato): clic destro → "Scarica ora", poi riprova.'
+      ));
+    });
   };
 
   const handlePSTUpload = async (file: File) => {
