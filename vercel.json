@@ -2,6 +2,9 @@
   "functions": {
     "api/blaklader-enrich.ts": {
       "includeFiles": "api/blak-catalog.json"
+    },
+    "api/parse-pst.ts": {
+      "maxDuration": 30
     }
   },
   "headers": [

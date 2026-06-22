@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Search, Mic, MicOff, CheckCircle, Loader2 } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import {
@@ -460,6 +460,106 @@ export const AgendaView: React.FC = () => {
     );
   };
 
+  // ── PST Import da Outlook ──
+  const pstInputRef = useRef<HTMLInputElement>(null);
+  const [pstLoading, setPstLoading] = useState(false);
+  const [pstEvents, setPstEvents] = useState<any[]>([]);
+  const [pstSelected, setPstSelected] = useState<Set<number>>(new Set());
+  const [pstModalOpen, setPstModalOpen] = useState(false);
+
+  const inferActivityType = (subject: string, location: string): string => {
+    const s = (subject + ' ' + location).toLowerCase();
+    if (s.includes('teams') || s.includes('meet.google') || s.includes('zoom') || s.includes('call') || s.includes('remota')) return 'call-remota';
+    if (s.includes('formazione') || s.includes('corso') || s.includes('training') || s.includes('eloomi')) return 'formazione';
+    if (s.includes('demo')) return 'demo';
+    if (s.includes('sopralluogo')) return 'sopralluogo';
+    return 'visita';
+  };
+
+  const matchContact = (subject: string): string => {
+    const s = subject.toLowerCase();
+    // Estrai la parte prima del trattino (es. "ECSA - Blåkläder" → "ecsa")
+    const beforeDash = s.split(/\s*[-–]\s*/)[0].trim();
+    const allContacts = Object.values(contacts);
+    // Match esatto o parziale
+    const exact = allContacts.find((c: any) =>
+      c.company.toLowerCase() === beforeDash || s.includes(c.company.toLowerCase())
+    );
+    if (exact) return (exact as any).id;
+    // Match fuzzy: ogni parola del subject lunga >3 char
+    const words = beforeDash.split(/\s+/).filter(w => w.length > 3);
+    for (const w of words) {
+      const hit = allContacts.find((c: any) => c.company.toLowerCase().includes(w));
+      if (hit) return (hit as any).id;
+    }
+    return '';
+  };
+
+  const handlePSTUpload = async (file: File) => {
+    setPstLoading(true);
+    try {
+      const arrayBuf = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const base64 = btoa(binary);
+
+      const res = await fetch('/api/parse-pst', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: base64 }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Errore parsing PST');
+
+      const enriched = (json.events as any[]).map((ev: any, i: number) => ({
+        ...ev,
+        _idx: i,
+        _contactId: matchContact(ev.subject),
+        _type: inferActivityType(ev.subject, ev.location),
+        _duplicate: ev.start
+          ? Object.values(activities).some((a: any) =>
+              Math.abs(a.date - new Date(ev.start).getTime()) < 60000 &&
+              a.notes?.includes(ev.subject)
+            )
+          : false,
+      }));
+
+      // Pre-seleziona tutto tranne duplicati e senza data
+      const sel = new Set<number>(
+        enriched.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx)
+      );
+      setPstEvents(enriched);
+      setPstSelected(sel);
+      setPstModalOpen(true);
+    } catch (err: any) {
+      showToast(`Errore: ${err.message}`, 'error');
+    } finally {
+      setPstLoading(false);
+    }
+  };
+
+  const handlePSTImport = () => {
+    let imported = 0;
+    pstEvents.forEach((ev: any) => {
+      if (!pstSelected.has(ev._idx) || !ev.start) return;
+      const ts = new Date(ev.start).getTime();
+      addActivity({
+        id: `pst_${Date.now()}_${ev._idx}`,
+        contactId: ev._contactId || '',
+        type: ev._type as any,
+        date: ts,
+        outcome: 'da-fare',
+        notes: [ev.subject, ev.location ? `📍 ${ev.location}` : '', ev.body].filter(Boolean).join('\n').trim(),
+        createdAt: Date.now(),
+      });
+      imported++;
+    });
+    setPstModalOpen(false);
+    setPstEvents([]);
+    showToast(`${imported} appuntamenti importati da Outlook`, 'success');
+  };
+
   // ── ICS bulk export (all upcoming activities) ──
   const handleExportICS = () => {
     const upcoming = allActivities
@@ -786,6 +886,23 @@ export const AgendaView: React.FC = () => {
       <div className="flex justify-between items-center gap-3 flex-wrap">
         <h1 className="text-2xl font-black dark:text-white">Agenda</h1>
         <div className="flex items-center gap-2">
+          {/* Import da Outlook PST */}
+          <input
+            ref={pstInputRef}
+            type="file"
+            accept=".pst"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handlePSTUpload(f); e.target.value = ''; }}
+          />
+          <button
+            onClick={() => pstInputRef.current?.click()}
+            disabled={pstLoading}
+            className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors text-sm disabled:opacity-60"
+            title="Importa appuntamenti da file Outlook .pst"
+          >
+            {pstLoading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+            {pstLoading ? 'Lettura…' : 'Importa Outlook'}
+          </button>
           <button
             onClick={handleExportICS}
             className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm"
@@ -1200,6 +1317,127 @@ export const AgendaView: React.FC = () => {
               >
                 Chiudi Appuntamento
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Import PST ── */}
+      {pstModalOpen && (
+        <div className="fixed inset-0 z-[900] bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-3">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <div>
+                <h2 className="text-lg font-black dark:text-white flex items-center gap-2">
+                  <Calendar size={20} className="text-blue-500" /> Importa da Outlook
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {pstSelected.size} / {pstEvents.filter((e: any) => e.start).length} eventi selezionati
+                </p>
+              </div>
+              <button onClick={() => setPstModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Event list */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2 min-h-0">
+              {pstEvents.map((ev: any) => {
+                const sel = pstSelected.has(ev._idx);
+                const contact = ev._contactId ? (contacts as any)[ev._contactId] : null;
+                const startDate = ev.start ? new Date(ev.start) : null;
+                const hasDate = !!startDate;
+                return (
+                  <div
+                    key={ev._idx}
+                    onClick={() => {
+                      if (!hasDate) return;
+                      setPstSelected(prev => {
+                        const n = new Set(prev);
+                        if (n.has(ev._idx)) n.delete(ev._idx); else n.add(ev._idx);
+                        return n;
+                      });
+                    }}
+                    className={`flex items-start gap-3 p-3 rounded-2xl border-2 transition-all ${
+                      !hasDate ? 'opacity-40 cursor-not-allowed border-gray-100 dark:border-gray-800' :
+                      ev._duplicate ? 'border-amber-200 bg-amber-50 dark:bg-amber-900/10 cursor-pointer' :
+                      sel ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 cursor-pointer' :
+                      'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-gray-300'
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <div className={`w-5 h-5 rounded-md flex-shrink-0 mt-0.5 border-2 flex items-center justify-center ${
+                      sel && hasDate ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {sel && hasDate && <CheckCircle size={12} className="text-white" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black dark:text-white truncate">{ev.subject || '(senza titolo)'}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                        {startDate ? (
+                          <span className="text-xs font-bold text-gray-500">
+                            {startDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {' '}
+                            {startDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-red-400">Nessuna data</span>
+                        )}
+                        {ev.location && <span className="text-xs text-gray-400">📍 {ev.location}</span>}
+                      </div>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                          ev._type === 'call-remota' ? 'bg-purple-100 text-purple-600' :
+                          ev._type === 'formazione' ? 'bg-green-100 text-green-600' :
+                          'bg-indigo-100 text-indigo-600'
+                        }`}>{ev._type}</span>
+                        {contact ? (
+                          <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">
+                            ✓ {contact.company}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                            Nessun cliente abbinato
+                          </span>
+                        )}
+                        {ev._duplicate && (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                            ⚠ già presente
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex-shrink-0 gap-3">
+              <button
+                onClick={() => {
+                  const allSelectable = pstEvents.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx);
+                  setPstSelected(new Set(allSelectable));
+                }}
+                className="text-xs font-bold text-gray-500 hover:text-indigo-600 transition-colors"
+              >
+                Seleziona tutti
+              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setPstModalOpen(false)}
+                  className="px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
+                  Annulla
+                </button>
+                <button
+                  onClick={handlePSTImport}
+                  disabled={pstSelected.size === 0}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-2xl text-sm font-black transition-colors flex items-center gap-2"
+                >
+                  <CheckCircle size={15} /> Importa {pstSelected.size} eventi
+                </button>
+              </div>
             </div>
           </div>
         </div>
