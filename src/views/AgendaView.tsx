@@ -499,9 +499,16 @@ export const AgendaView: React.FC = () => {
   };
 
   const fileToBase64 = async (file: File): Promise<string> => {
-    const buf = await file.arrayBuffer();
+    let buf: ArrayBuffer;
+    try {
+      buf = await file.arrayBuffer();
+    } catch {
+      throw new Error(
+        'Impossibile leggere il file. Se il file è su Google Drive o iCloud, copialo prima sul Desktop e riprova da lì.'
+      );
+    }
     const bytes = new Uint8Array(buf);
-    const CHUNK = 0x8000; // 32KB — evita call stack overflow
+    const CHUNK = 0x8000;
     let binary = '';
     for (let i = 0; i < bytes.length; i += CHUNK) {
       binary += String.fromCharCode(...(bytes.subarray(i, i + CHUNK) as unknown as number[]));
