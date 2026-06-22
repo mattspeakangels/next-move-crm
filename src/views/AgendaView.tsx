@@ -393,12 +393,15 @@ export const AgendaView: React.FC = () => {
 
   // ── Modal helpers ──
 
+  const toLocalDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
   const openNew = (prefillDate?: Date) => {
     setEditingId(null);
     const d = prefillDate ?? new Date();
     setFormData({
       ...defaultForm(),
-      date: d.toISOString().split('T')[0],
+      date: toLocalDateStr(d),
       time: d.toTimeString().slice(0, 5),
     });
     setShowModal(true);
@@ -410,7 +413,7 @@ export const AgendaView: React.FC = () => {
     setFormData({
       contactId: activity.contactId,
       type: activity.type,
-      date: d.toISOString().split('T')[0],
+      date: toLocalDateStr(d),
       time: d.toTimeString().slice(0, 5),
       notes: activity.notes || '',
     });
@@ -495,14 +498,18 @@ export const AgendaView: React.FC = () => {
     return '';
   };
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = () => reject(new Error('Lettura file fallita'));
+    });
+
   const handlePSTUpload = async (file: File) => {
     setPstLoading(true);
     try {
-      const arrayBuf = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuf);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-      const base64 = btoa(binary);
+      const base64 = await fileToBase64(file);
 
       const res = await fetch('/api/parse-pst', {
         method: 'POST',
@@ -1050,19 +1057,54 @@ export const AgendaView: React.FC = () => {
           </div>
         )}
 
-        <div className="space-y-3">
-          {listActivities.map(activity => (
-            <ActivityCard
-              key={activity.id}
-              activity={activity}
-              companyName={contacts[activity.contactId]?.company || 'Azienda'}
-              onEdit={() => openEdit(activity)}
-              onDelete={() => setConfirmDeleteId(activity.id)}
-              onExport={() => handleExport(activity)}
-              onClose={() => openCloseModal(activity)}
-            />
-          ))}
-        </div>
+        {/* Raggruppamento per giorno con tasto elimina tutti */}
+        {(() => {
+          // Raggruppa per giorno (chiave YYYY-MM-DD locale)
+          const groups: { key: string; date: Date; items: Activity[] }[] = [];
+          listActivities.forEach(act => {
+            const d = new Date(act.date);
+            const key = toLocalDateStr(d);
+            const existing = groups.find(g => g.key === key);
+            if (existing) existing.items.push(act);
+            else groups.push({ key, date: d, items: [act] });
+          });
+
+          return groups.map(({ key, date, items }) => (
+            <div key={key} className="space-y-2">
+              {/* Header giorno */}
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  {date.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long' })}
+                  <span className="ml-2 text-gray-300 dark:text-gray-600">({items.length})</span>
+                </p>
+                {items.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Eliminare tutti i ${items.length} appuntamenti del ${date.toLocaleDateString('it-IT', { day: '2-digit', month: 'long' })}?`)) {
+                        items.forEach(a => deleteActivity(a.id));
+                      }
+                    }}
+                    className="flex items-center gap-1 text-[10px] font-black text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors uppercase tracking-wide"
+                    title="Elimina tutti gli appuntamenti di questo giorno"
+                  >
+                    <Trash2 size={10} /> Elimina tutti
+                  </button>
+                )}
+              </div>
+              {items.map(activity => (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  companyName={contacts[activity.contactId]?.company || 'Azienda'}
+                  onEdit={() => openEdit(activity)}
+                  onDelete={() => setConfirmDeleteId(activity.id)}
+                  onExport={() => handleExport(activity)}
+                  onClose={() => openCloseModal(activity)}
+                />
+              ))}
+            </div>
+          ));
+        })()}
       </div>
 
       {/* ── Add / Edit Modal ── */}
