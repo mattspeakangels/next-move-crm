@@ -498,13 +498,16 @@ export const AgendaView: React.FC = () => {
     return '';
   };
 
-  const fileToBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = () => reject(new Error('Lettura file fallita'));
-    });
+  const fileToBase64 = async (file: File): Promise<string> => {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const CHUNK = 0x8000; // 32KB — evita call stack overflow
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...(bytes.subarray(i, i + CHUNK) as unknown as number[]));
+    }
+    return btoa(binary);
+  };
 
   const handlePSTUpload = async (file: File) => {
     setPstLoading(true);
