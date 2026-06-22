@@ -37,6 +37,10 @@ export interface OrderRecord {
   amount: number;
   margin: number;
   quantity: number;
+  // Colonne aggiuntive dallo storico dettagliato "Dati uniti 2024-2026"
+  mese?: string;          // es. "Aug", "Nov" — colonna Mese
+  classe?: string;        // colonna Class
+  productModel?: string;  // colonna Product Model
 }
 
 export interface ProdottoDettagliato {

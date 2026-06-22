@@ -98,6 +98,9 @@ function detectColumns(rows: any[][]): {
   colItemName: number;
   colDate: number;
   colAnno: number;
+  colMese: number;
+  colClass: number;
+  colProductModel: number;
   yearAmountCols: number[];
   colAmount: number;
   colQuantity: number;
@@ -109,6 +112,9 @@ function detectColumns(rows: any[][]): {
     colItemName: -1,
     colDate: -1,
     colAnno: -1,
+    colMese: -1,
+    colClass: -1,
+    colProductModel: -1,
     yearAmountCols: [] as number[],
     colAmount: -1,
     colQuantity: -1,
@@ -136,6 +142,9 @@ function detectColumns(rows: any[][]): {
       if (cell === 'importo (€)' || cell === 'importo' || cell.startsWith('importo')) result.colAmount = c;
       if (cell === 'quantità' || cell === 'quantita' || cell === 'qty' || cell === 'quantity') result.colQuantity = c;
       if (cell === 'anno' || cell === 'year') result.colAnno = c;
+      if (cell === 'mese' || cell === 'month') result.colMese = c;
+      if (cell === 'class' || cell === 'classe') result.colClass = c;
+      if (cell === 'product model' || cell === 'productmodel' || cell === 'modello') result.colProductModel = c;
 
       // Data — sia inglese che italiano
       if (cell.includes('data fattura') || cell === 'data') result.colDate = c;
@@ -185,6 +194,10 @@ function parseCSVData(rows: any[][]): ClienteDettagliato[] {
     const annoRiga: number | null = cols.colAnno >= 0
       ? (typeof row[cols.colAnno] === 'number' ? row[cols.colAnno] as number : parseInt(String(row[cols.colAnno] || '')) || null)
       : null;
+    // Colonne descrittive aggiuntive (Mese / Class / Product Model)
+    const meseRiga = cols.colMese >= 0 ? String(row[cols.colMese] || '').trim() : '';
+    const classeRiga = cols.colClass >= 0 ? String(row[cols.colClass] || '').trim() : '';
+    const productModelRiga = cols.colProductModel >= 0 ? String(row[cols.colProductModel] || '').trim() : '';
 
     // Aggiorna il nome cliente corrente se presente nella riga
     if (rawCustomerName && rawCustomerName !== 'Customer name' && !rawCustomerName.toLowerCase().includes('calendar')) {
@@ -294,7 +307,12 @@ function parseCSVData(rows: any[][]): ClienteDettagliato[] {
 
     // Registra ordine se ha importo
     if (amount > 0) {
-      prodotto.ordini.push({ date: normalizedDate, year: yearFromDate, amount, margin, quantity });
+      prodotto.ordini.push({
+        date: normalizedDate, year: yearFromDate, amount, margin, quantity,
+        mese: meseRiga || undefined,
+        classe: classeRiga || undefined,
+        productModel: productModelRiga || undefined,
+      });
 
       // Aggrega per anno
       const key = `fatturato${yearFromDate}` as keyof ClienteDettagliato;
@@ -916,7 +934,8 @@ export function StoricoView() {
   const [loading, setLoading] = useState(false);
   const [firestoreLoading, setFirestoreLoading] = useState(false);
   const [budgetMode, setBudgetMode] = useState<'annuale' | 'mensile'>('annuale');
-  const [activeTab, setActiveTab] = useState<'storico' | 'budget' | 'pipeline'>('storico');
+  const [activeTab, setActiveTab] = useState<'storico' | 'riepilogo' | 'budget' | 'pipeline'>('storico');
+  const [riepilogoSearch, setRiepilogoSearch] = useState('');
   const [sortField, setSortField] = useState<'id' | 'f2023' | 'f2024' | 'delta'>('f2024');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [filterDormienti, setFilterDormienti] = useState(false);
@@ -1135,6 +1154,44 @@ export function StoricoView() {
       [`${annoCorr}`]: Math.round((((c as any)[`fatturato${annoCorr}`] as number) || 0)),
     }));
 
+  // ── RIEPILOGO PER CLIENTE ──────────────────────────────────────────────────
+  // Replica del foglio "Riepilogo per cliente": fatturato + quantità per anno,
+  // totale e variazioni %. Calcolato dai dati dettagliati (stessa fonte del foglio).
+  const riepilogoSearchNorm = riepilogoSearch.toLowerCase().trim();
+  const riepilogoRows = clienti
+    .map(c => {
+      const d = clientiDettagliati.find(x => x.nome === c.nome);
+      const qtyYear = (y: number) =>
+        d ? d.prodotti.reduce((s, p) => s + p.ordini.filter(o => o.year === y).reduce((ss, o) => ss + (o.quantity || 0), 0), 0) : 0;
+      const f2024 = c.fatturato2024 || 0;
+      const f2025 = c.fatturato2025 || 0;
+      const f2026 = c.fatturato2026 || 0;
+      return {
+        nome: c.nome || `#${c.clientId}`,
+        f2024, f2025, f2026,
+        totale: f2024 + f2025 + f2026,
+        q2024: qtyYear(2024),
+        q2025: qtyYear(2025),
+        q2026: qtyYear(2026),
+        var2425: f2024 > 0 ? (f2025 - f2024) / f2024 : null,
+        var2526: f2025 > 0 ? (f2026 - f2025) / f2025 : null,
+      };
+    })
+    .filter(r => !riepilogoSearchNorm || r.nome.toLowerCase().includes(riepilogoSearchNorm))
+    .sort((a, b) => b.totale - a.totale);
+
+  const riepilogoTotali = riepilogoRows.reduce(
+    (acc, r) => ({
+      f2024: acc.f2024 + r.f2024, f2025: acc.f2025 + r.f2025, f2026: acc.f2026 + r.f2026,
+      totale: acc.totale + r.totale,
+      q2024: acc.q2024 + r.q2024, q2025: acc.q2025 + r.q2025, q2026: acc.q2026 + r.q2026,
+    }),
+    { f2024: 0, f2025: 0, f2026: 0, totale: 0, q2024: 0, q2025: 0, q2026: 0 }
+  );
+
+  const fmtPct = (v: number | null) =>
+    v === null ? '—' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`;
+
   const toggleSort = (field: typeof sortField) => {
     if (sortField === field) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
     else { setSortField(field); setSortDir('desc'); }
@@ -1249,13 +1306,13 @@ export function StoricoView() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
-        {(['storico', 'budget', 'pipeline'] as const).map(tab => (
+        {(['storico', 'riepilogo', 'budget', 'pipeline'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-2 rounded-xl text-sm font-bold capitalize transition-all ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            {tab === 'storico' ? '📊 Storico' : tab === 'budget' ? '🎯 Budget' : '⚡ Pipeline AI'}
+            {tab === 'storico' ? '📊 Storico' : tab === 'riepilogo' ? '📋 Riepilogo Cliente' : tab === 'budget' ? '🎯 Budget' : '⚡ Pipeline AI'}
           </button>
         ))}
       </div>
@@ -1332,6 +1389,9 @@ export function StoricoView() {
                             amount: o.amount,
                             margin: o.margin,
                             quantity: o.quantity,
+                            mese: o.mese || '',
+                            classe: o.classe || '',
+                            productModel: o.productModel || '',
                           }))
                         ).sort((a, b) => {
                           // Ordina per data (più recente prima)
@@ -1382,10 +1442,11 @@ export function StoricoView() {
                                     <thead>
                                       <tr className="text-gray-400 uppercase tracking-widest font-black">
                                         <th className="text-left pb-2 pr-3">Data</th>
-                                        <th className="text-left pb-2 pr-3">Codice</th>
+                                        <th className="text-left pb-2 pr-3">Mese</th>
+                                        <th className="text-left pb-2 pr-3">Class</th>
+                                        <th className="text-left pb-2 pr-3">Product Model</th>
                                         <th className="text-left pb-2">Prodotto</th>
                                         <th className="text-right pb-2 pr-3">Importo</th>
-                                        <th className="text-right pb-2 pr-3">Margine</th>
                                         <th className="text-right pb-2">Qtà</th>
                                       </tr>
                                     </thead>
@@ -1400,10 +1461,11 @@ export function StoricoView() {
                                               'bg-purple-100 text-purple-600'
                                             }`}>{o.date}</span>
                                           </td>
-                                          <td className="py-1.5 pr-3 font-mono text-gray-400 whitespace-nowrap">{o.itemId}</td>
-                                          <td className="py-1.5 pr-3 font-medium max-w-xs truncate">{o.nome}</td>
+                                          <td className="py-1.5 pr-3 text-gray-500 whitespace-nowrap">{o.mese || '—'}</td>
+                                          <td className="py-1.5 pr-3 text-gray-500 whitespace-nowrap">{o.classe || '—'}</td>
+                                          <td className="py-1.5 pr-3 font-mono text-gray-400 whitespace-nowrap">{o.productModel || o.itemId || '—'}</td>
+                                          <td className="py-1.5 pr-3 font-medium max-w-xs truncate" title={o.nome}>{o.nome}</td>
                                           <td className="py-1.5 pr-3 text-right font-mono font-bold text-gray-800 dark:text-white">{fmtEur(o.amount)}</td>
-                                          <td className="py-1.5 pr-3 text-right font-mono text-gray-500">{o.margin > 0 ? `${o.margin.toFixed(1)}%` : '—'}</td>
                                           <td className="py-1.5 text-right font-mono text-gray-500">{o.quantity > 0 ? o.quantity : '—'}</td>
                                         </tr>
                                       ))}
@@ -1452,6 +1514,83 @@ export function StoricoView() {
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: RIEPILOGO PER CLIENTE ── */}
+      {activeTab === 'riepilogo' && (
+        <div className="space-y-6">
+          {/* Header + ricerca */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-widest">📋 Riepilogo per Cliente</h3>
+              <p className="text-xs text-gray-400 mt-1">Fatturato e quantità per cliente · 2024 · 2025 · 2026 (YTD) · {riepilogoRows.length} clienti</p>
+            </div>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={riepilogoSearch}
+                onChange={e => setRiepilogoSearch(e.target.value)}
+                placeholder="Cerca cliente…"
+                className="pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm whitespace-nowrap">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 text-xs font-black uppercase tracking-widest text-gray-400">
+                    <th className="text-left px-4 py-3">Cliente</th>
+                    <th className="text-right px-4 py-3">Fatt. 2024 (€)</th>
+                    <th className="text-right px-4 py-3">Fatt. 2025 (€)</th>
+                    <th className="text-right px-4 py-3">Fatt. 2026 YTD (€)</th>
+                    <th className="text-right px-4 py-3">Totale (€)</th>
+                    <th className="text-right px-4 py-3">Qtà 2024</th>
+                    <th className="text-right px-4 py-3">Qtà 2025</th>
+                    <th className="text-right px-4 py-3">Qtà 2026</th>
+                    <th className="text-right px-4 py-3">Var. 24→25</th>
+                    <th className="text-right px-4 py-3">Var. 25→26</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {riepilogoRows.map((r, i) => (
+                    <tr key={`${r.nome}-${i}`} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
+                      <td className="px-4 py-2.5 font-bold text-gray-900 dark:text-white max-w-[260px] truncate" title={r.nome}>{r.nome}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-gray-600 dark:text-gray-300">{r.f2024 > 0 ? fmtEur(r.f2024) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-gray-600 dark:text-gray-300">{r.f2025 > 0 ? fmtEur(r.f2025) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-gray-600 dark:text-gray-300">{r.f2026 > 0 ? fmtEur(r.f2026) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-gray-900 dark:text-white">{fmtEur(r.totale)}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-gray-500">{r.q2024 > 0 ? fmt(r.q2024) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-gray-500">{r.q2025 > 0 ? fmt(r.q2025) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-gray-500">{r.q2026 > 0 ? fmt(r.q2026) : '—'}</td>
+                      <td className={`px-4 py-2.5 text-right font-mono font-bold ${r.var2425 === null ? 'text-gray-400' : r.var2425 >= 0 ? 'text-green-600' : 'text-red-500'}`}>{fmtPct(r.var2425)}</td>
+                      <td className={`px-4 py-2.5 text-right font-mono font-bold ${r.var2526 === null ? 'text-gray-400' : r.var2526 >= 0 ? 'text-green-600' : 'text-red-500'}`}>{fmtPct(r.var2526)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 font-black text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 uppercase text-xs tracking-widest">Totale ({riepilogoRows.length})</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmtEur(riepilogoTotali.f2024)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmtEur(riepilogoTotali.f2025)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmtEur(riepilogoTotali.f2026)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmtEur(riepilogoTotali.totale)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmt(riepilogoTotali.q2024)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmt(riepilogoTotali.q2025)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{fmt(riepilogoTotali.q2026)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-400">—</td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-400">—</td>
+                  </tr>
+                </tfoot>
+              </table>
+              {riepilogoRows.length === 0 && (
+                <p className="text-center text-sm text-gray-400 py-8">Nessun cliente trovato.</p>
               )}
             </div>
           </div>
