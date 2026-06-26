@@ -68,11 +68,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setLoginError(undefined);
 
-      if (isMobile()) {
-        await signInWithRedirect(auth, provider);
-      } else {
+      try {
+        // Preferiamo il popup ovunque: il redirect cross-domain si rompe sui
+        // browser mobili (storage partitioning / ITP) lasciando l'utente bloccato
+        // sulla schermata di login pur essendo autenticato su Google.
         const result = await signInWithPopup(auth, provider);
         recordSuccessfulLogin(result.user.email).catch(console.error);
+      } catch (popupError: any) {
+        // Se il popup non è praticabile (bloccato o non supportato dal browser),
+        // su mobile ricadiamo sul redirect come ultima risorsa.
+        if (
+          isMobile() &&
+          (popupError.code === 'auth/popup-blocked' ||
+            popupError.code === 'auth/operation-not-supported-in-this-environment' ||
+            popupError.code === 'auth/cancelled-popup-request')
+        ) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        throw popupError;
       }
     } catch (error: any) {
       recordFailedLogin(undefined).catch(console.error);

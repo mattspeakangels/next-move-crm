@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import {
@@ -184,13 +184,14 @@ interface ActivityCardProps {
   onDelete: () => void;
   onExport: () => void;
   onClose: () => void;
+  onView: () => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport, onClose }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport, onClose, onView }) => {
   const isDone = activity.outcome !== 'da-fare';
   return (
     <div className={`bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border flex items-center justify-between gap-4 ${isDone ? 'border-green-100 dark:border-green-900/40 opacity-75' : 'border-gray-50 dark:border-gray-700'}`}>
-      <div className="flex gap-3 items-center flex-1 min-w-0">
+      <div className="flex gap-3 items-center flex-1 min-w-0 cursor-pointer" onClick={onView} title="Apri per vedere i dettagli">
         <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${TYPE_BG[activity.type]}`}>
           {activity.type === 'visita' ? <MapPin size={16} /> : activity.type === 'chiamata' ? <Phone size={16} /> : <span className="text-xs font-black">{TYPE_LABELS[activity.type][0]}</span>}
         </div>
@@ -225,6 +226,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
             <CheckCircle size={16} />
           </button>
         )}
+        <button onClick={onView} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Apri / vedi dettagli"><Eye size={14} /></button>
         <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
         <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
         <button onClick={onDelete} className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Elimina"><Trash2 size={14} /></button>
@@ -262,11 +264,15 @@ export const AgendaView: React.FC = () => {
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [showVoicePanel, setShowVoicePanel] = useState(false);
 
+  // ── View activity detail ──
+  const [viewActivity, setViewActivity] = useState<Activity | null>(null);
+
   // ── Close activity ──
   const [closingActivity, setClosingActivity] = useState<Activity | null>(null);
   const [closeOutcome, setCloseOutcome] = useState<ActivityOutcome>('riuscita');
   const [closeNotes, setCloseNotes] = useState('');
   const voiceClose = useVoiceInput();
+  const voiceNotes = useVoiceInput();
 
   useEffect(() => {
     if (!showContactList) return;
@@ -421,7 +427,7 @@ export const AgendaView: React.FC = () => {
     setShowModal(true);
   };
 
-  const closeModal = () => { setShowModal(false); setEditingId(null); setFormData(defaultForm()); setContactSearch(''); setShowContactList(false); };
+  const closeModal = () => { if (voiceNotes.isRecording) voiceNotes.stop(); setShowModal(false); setEditingId(null); setFormData(defaultForm()); setContactSearch(''); setShowContactList(false); };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1135,12 +1141,63 @@ export const AgendaView: React.FC = () => {
                   onDelete={() => setConfirmDeleteId(activity.id)}
                   onExport={() => handleExport(activity)}
                   onClose={() => openCloseModal(activity)}
+                  onView={() => setViewActivity(activity)}
                 />
               ))}
             </div>
           ));
         })()}
       </div>
+
+      {/* ── Detail / View Modal ── */}
+      {viewActivity && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setViewActivity(null)}>
+          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <div className="min-w-0">
+                <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || 'Azienda'}</h2>
+                <p className="text-xs text-gray-400 font-bold mt-1">
+                  {new Date(viewActivity.date).toLocaleString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <button onClick={() => setViewActivity(null)}><X size={24} className="text-gray-400" /></button>
+            </div>
+
+            <div className="flex items-center gap-1.5 mb-6">
+              <span className={`text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full ${TYPE_BG[viewActivity.type]}`}>
+                {TYPE_LABELS[viewActivity.type]}
+              </span>
+              {viewActivity.outcome !== 'da-fare' && viewActivity.outcomeType && (
+                <span className="text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                  {OUTCOME_OPTIONS.find(o => o.value === viewActivity.outcomeType)?.label ?? viewActivity.outcomeType}
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Note</label>
+                {viewActivity.notes
+                  ? <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap break-words">{viewActivity.notes}</p>
+                  : <p className="text-sm text-gray-300 dark:text-gray-600 italic">Nessuna nota</p>}
+              </div>
+              {viewActivity.results && (
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Resoconto</label>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap break-words">{viewActivity.results}</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => { const a = viewActivity; setViewActivity(null); openEdit(a); }}
+              className="mt-8 w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl transition-colors"
+            >
+              <Pencil size={16} /> Modifica
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Add / Edit Modal ── */}
       {showModal && (
@@ -1273,8 +1330,37 @@ export const AgendaView: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Note</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase block">Note</label>
+                  {voiceNotes.isSupported && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (voiceNotes.isRecording) {
+                          voiceNotes.stop();
+                        } else {
+                          voiceNotes.start({
+                            continuous: true,
+                            onFinal: (text) => setFormData(prev => ({ ...prev, notes: prev.notes ? prev.notes + ' ' + text : text })),
+                          });
+                        }
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                        voiceNotes.isRecording
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-indigo-50 hover:text-indigo-600'
+                      }`}
+                    >
+                      {voiceNotes.isRecording ? <MicOff size={12} /> : <Mic size={12} />}
+                      {voiceNotes.isRecording ? 'Stop' : 'Detta'}
+                    </button>
+                  )}
+                </div>
                 <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Obiettivo della visita, dettagli..." rows={2} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-400 text-sm resize-none" />
+                {voiceNotes.isRecording && voiceNotes.transcript && (
+                  <p className="text-xs text-indigo-500 italic mt-1.5 px-1">"{voiceNotes.transcript}"</p>
+                )}
+                {voiceNotes.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceNotes.error}</p>}
               </div>
               <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-indigo-700 transition-colors">
                 {editingId ? 'Aggiorna' : 'Salva'}
