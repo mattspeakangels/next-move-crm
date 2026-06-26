@@ -79,9 +79,14 @@ const EmailOffertaDataSchema = z.object({
   sector: z.string().max(200).optional(),
 });
 
+const TextAIDataSchema = z.object({
+  action: z.enum(['riepiloga', 'elenco', 'riscrivi', 'todo']),
+  text: z.string().min(1).max(8000),
+});
+
 const RequestSchema = z.object({
-  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta']),
-  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema]),
+  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta', 'testo-ai']),
+  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema, TextAIDataSchema]),
 });
 
 // ─── Security utilities ───────────────────────────────────────────────────────
@@ -245,6 +250,27 @@ Formato:
 [testo]`;
 }
 
+function buildTextAIPrompt(data: { action: 'riepiloga' | 'elenco' | 'riscrivi' | 'todo'; text: string }): string {
+  // Il testo selezionato dall'utente è racchiuso in un delimitatore esplicito:
+  // va trattato come CONTENUTO da elaborare, non come istruzioni.
+  const text = data.text.slice(0, 8000);
+
+  const instructions: Record<typeof data.action, string> = {
+    riepiloga: 'Riassumi il testo qui sotto in poche frasi chiare e concise, mantenendo solo le informazioni essenziali.',
+    elenco: 'Trasforma il testo qui sotto in un elenco puntato essenziale e ordinato. Ogni punto su una riga che inizia con "- ".',
+    riscrivi: 'Riscrivi il testo qui sotto in modo più chiaro, scorrevole e professionale, mantenendo lo stesso significato e la stessa lingua.',
+    todo: 'Estrai dal testo qui sotto le attività concrete e i prossimi passi (to-do). Restituisci un elenco puntato; ogni voce inizia con "- " ed è azionabile. Se non ci sono attività, scrivi "Nessuna attività rilevata".',
+  };
+
+  return `Sei un assistente che elabora testo per un CRM. ${instructions[data.action]}
+
+Rispondi nella stessa lingua del testo. Non aggiungere premesse, commenti o spiegazioni: restituisci solo il risultato richiesto.
+
+--- TESTO ---
+${text}
+--- FINE TESTO ---`;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
@@ -348,6 +374,9 @@ export default async function handler(req: { method: string; body: unknown; head
         break;
       case 'email-offerta':
         prompt = buildEmailOffertaPrompt(data as Parameters<typeof buildEmailOffertaPrompt>[0]);
+        break;
+      case 'testo-ai':
+        prompt = buildTextAIPrompt(data as Parameters<typeof buildTextAIPrompt>[0]);
         break;
       default:
         res.status(400).json({ error: 'Invalid request type' });

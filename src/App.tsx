@@ -6,6 +6,7 @@ import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Shield } from 'lucide-react';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
+import { SelectionAI } from './components/ai/SelectionAI';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 
@@ -201,6 +202,7 @@ export default function App() {
     <ToastProvider>
       <AuthGate />
       <UpdateBanner />
+      <SelectionAI />
     </ToastProvider>
   );
 }

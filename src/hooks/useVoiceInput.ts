@@ -41,7 +41,16 @@ export function useVoiceInput() {
     };
 
     rec.onerror = (e: AnyRec) => {
-      if (e.error !== 'no-speech') setError(`Errore microfono: ${e.error}`);
+      const map: Record<string, string> = {
+        'not-allowed': 'Permesso microfono negato. Abilitalo nelle impostazioni del sito e ricarica la pagina.',
+        'service-not-allowed': "Microfono non consentito dal browser. Su PWA installata prova ad aprire l'app in Chrome.",
+        'audio-capture': 'Nessun microfono disponibile sul dispositivo.',
+        'network': 'Errore di rete durante il riconoscimento vocale. Verifica la connessione.',
+        'aborted': '',
+        'no-speech': '',
+      };
+      const msg = e.error in map ? map[e.error] : `Errore microfono: ${e.error}`;
+      if (msg) setError(msg);
       setIsRecording(false);
     };
 
