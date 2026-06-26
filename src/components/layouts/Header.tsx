@@ -28,7 +28,7 @@ export const Header: React.FC = () => {
           <Settings size={20} />
         </button>
         <div className="relative" ref={menuRef}>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="bg-indigo-600 text-white w-10 h-10 rounded-full flex justify-center items-center shadow-lg">
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="bg-brand-600 hover:bg-brand-700 active:scale-95 text-white w-10 h-10 rounded-full flex justify-center items-center shadow-card transition-all">
             <Plus size={20} />
           </button>
           {isMenuOpen && (

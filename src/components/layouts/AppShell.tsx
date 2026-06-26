@@ -19,13 +19,16 @@ export const AppShell: React.FC = () => {
       {/* Menu laterale per Desktop */}
       <aside className="hidden md:flex w-[280px] flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 transition-colors">
         <div className="p-6">
-          <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-            <Zap className="fill-indigo-600 dark:fill-indigo-400" /> Next Move
+          <h2 className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand-600 text-white shadow-card">
+              <Zap size={18} className="fill-white" />
+            </span>
+            Next Move
           </h2>
         </div>
         <nav className="flex-1 px-4 space-y-1 mt-4">
           {navItems.map((item) => (
-            <NavLink key={item.path} to={item.path} className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'}`}>
+            <NavLink key={item.path} to={item.path} className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${isActive ? 'bg-brand-600 text-white font-semibold shadow-card' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'}`}>
               <item.icon size={20} />{item.label}
             </NavLink>
           ))}
@@ -50,9 +53,15 @@ export const AppShell: React.FC = () => {
       {/* Menu inferiore per Mobile */}
       <nav className="md:hidden absolute bottom-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800 px-2 py-3 pb-safe flex justify-between items-center z-30 transition-colors">
         {navItems.map((item) => (
-          <NavLink key={item.path} to={item.path} className={({ isActive }) => `flex flex-col items-center flex-1 transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
-            <item.icon size={22} className="mb-1" />
-            <span className="text-[10px] font-bold">{item.label}</span>
+          <NavLink key={item.path} to={item.path} className={({ isActive }) => `flex flex-col items-center flex-1 py-1 rounded-xl transition-all ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
+            {({ isActive }) => (
+              <>
+                <span className={`flex items-center justify-center w-10 h-7 rounded-full mb-0.5 transition-colors ${isActive ? 'bg-brand-50 dark:bg-brand-900/40' : ''}`}>
+                  <item.icon size={20} />
+                </span>
+                <span className="text-[10px] font-semibold">{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

@@ -7,11 +7,11 @@ import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
 
-const STAGES: { id: DealStage; name: string; color: string }[] = [
-  { id: 'lead', name: 'Lead', color: 'bg-blue-500' },
-  { id: 'qualificato', name: 'Qualificato', color: 'bg-purple-500' },
-  { id: 'proposta', name: 'Proposta', color: 'bg-orange-500' },
-  { id: 'negoziazione', name: 'Trattativa', color: 'bg-indigo-500' }
+const STAGES: { id: DealStage; name: string; color: string; bar: string }[] = [
+  { id: 'lead', name: 'Lead', color: 'bg-sky-500', bar: 'bg-sky-400' },
+  { id: 'qualificato', name: 'Qualificato', color: 'bg-violet-500', bar: 'bg-violet-400' },
+  { id: 'proposta', name: 'Proposta', color: 'bg-amber-500', bar: 'bg-amber-400' },
+  { id: 'negoziazione', name: 'Trattativa', color: 'bg-brand-500', bar: 'bg-brand-400' }
 ];
 
 const STAGE_LABELS: Record<string, string> = {
@@ -159,18 +159,18 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
   return (
     <div className="pb-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Pipeline</h1>
+      <div className="flex justify-between items-center mb-5">
+        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Pipeline</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={runPipelineAnalysis}
-            className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
+            className="flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-3.5 py-2.5 rounded-xl font-bold uppercase text-xs tracking-wide hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors"
           >
             <Sparkles size={14} /> <span className="hidden sm:inline">Analizza</span>
           </button>
           <button
             onClick={() => setAddDealOpen(true)}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-colors text-sm"
+            className="bg-brand-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-card hover:bg-brand-700 active:scale-[0.98] transition-all text-sm"
           >
             <Plus size={16} /> Nuovo Deal
           </button>
@@ -179,8 +179,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
 
       {/* Empty state */}
       {filteredDeals.length === 0 && (
-        <div className="text-center py-20 text-gray-300 dark:text-gray-600">
-          <p className="font-black uppercase tracking-widest text-sm">Nessun deal attivo</p>
+        <div className="text-center py-20 text-gray-400 dark:text-gray-600">
+          <p className="font-bold tracking-tight text-sm text-gray-600 dark:text-gray-400">Nessun deal attivo</p>
           <p className="text-xs mt-1">Apri una scheda azienda e aggiungi un deal</p>
         </div>
       )}
@@ -192,22 +192,24 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
           const stageTotal = stageDeals.reduce((sum, d) => sum + d.value, 0);
 
           return (
-            <div key={stage.id} className="flex-shrink-0 w-72">
+            <div key={stage.id} className="flex-shrink-0 w-72 rounded-2xl bg-gray-50 dark:bg-gray-800/40 p-2.5 overflow-hidden">
+              {/* Accento di stage */}
+              <div className={`h-1 rounded-full mb-3 ${stage.bar}`} />
               {/* Column header */}
-              <div className="flex justify-between items-center px-2 mb-3 pb-2 border-b-2 border-gray-100 dark:border-gray-700">
+              <div className="flex justify-between items-center px-1.5 mb-3 pb-2.5 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
-                  <span className={`w-3 h-3 rounded-full flex-shrink-0 ${stage.color}`} />
-                  <h3 className="font-black uppercase text-sm tracking-widest dark:text-white">{stage.name}</h3>
-                  <span className="text-xs text-gray-400 font-bold">({stageDeals.length})</span>
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${stage.color}`} />
+                  <h3 className="font-bold text-sm tracking-tight text-gray-800 dark:text-gray-100">{stage.name}</h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold tabular-nums">{stageDeals.length}</span>
                 </div>
-                <span className="font-black text-sm text-indigo-600 dark:text-indigo-400">€{(stageTotal / 1000).toFixed(0)}k</span>
+                <span className="font-bold text-sm text-brand-600 dark:text-brand-400 tabular-nums">€{(stageTotal / 1000).toFixed(0)}k</span>
               </div>
 
               {/* Deal cards */}
               <div className="space-y-3 min-h-[60px]">
                 {stageDeals.length === 0 && (
-                  <div className="text-center py-6 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-xl">
-                    <span className="text-gray-300 dark:text-gray-600 text-[10px] font-bold uppercase tracking-widest">Vuoto</span>
+                  <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
+                    <span className="text-gray-400 dark:text-gray-600 text-[10px] font-semibold uppercase tracking-widest">Vuoto</span>
                   </div>
                 )}
 
@@ -221,21 +223,21 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                   return (
                     <div
                       key={deal.id}
-                      className={`p-4 rounded-xl shadow-sm border-2 transition-all ${
+                      className={`p-4 rounded-2xl shadow-card border transition-all hover:-translate-y-0.5 ${
                         isOverdue
-                          ? 'bg-red-50 dark:bg-red-900/20 border-red-400'
-                          : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
+                          ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-800'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-700'
                       }`}
                     >
                       {/* Company name */}
                       <div
-                        className="font-bold text-sm mb-1 truncate dark:text-white cursor-pointer hover:text-indigo-600 transition-colors"
+                        className="font-semibold text-sm mb-1 truncate text-gray-900 dark:text-white cursor-pointer hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                         onClick={() => deal.contactId ? onNavigateToContact(deal.contactId) : undefined}
                       >
                         {contacts[deal.contactId]?.company ?? deal.nomeStorico ?? '—'}
                       </div>
                       {deal.nomeStorico && !contacts[deal.contactId] && (
-                        <span className="inline-block text-[9px] font-black uppercase tracking-wide bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full mb-1.5">
+                        <span className="inline-block text-[9px] font-bold uppercase tracking-wide bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full mb-1.5">
                           Da Storico
                         </span>
                       )}
@@ -251,7 +253,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                         const isPast = deal.closingDate < Date.now();
                         const daysLeft = Math.ceil((deal.closingDate - Date.now()) / (1000 * 60 * 60 * 24));
                         return (
-                          <div className={`text-[10px] font-bold mb-2 flex items-center gap-1 ${isPast ? 'text-red-500' : daysLeft <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
+                          <div className={`text-[10px] font-semibold mb-2 flex items-center gap-1 tabular-nums ${isPast ? 'text-rose-500' : daysLeft <= 7 ? 'text-amber-500' : 'text-gray-500 dark:text-gray-400'}`}>
                             <span>⏱</span>
                             <span>{isPast ? `Scaduto ${Math.abs(daysLeft)}gg fa` : `Chiusura: ${new Date(deal.closingDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}`}</span>
                           </div>
@@ -263,7 +265,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dot}`} />
                         <div className="flex-1 min-w-0">
                           {isOverdue && (
-                            <span className="inline-block bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide mr-1">
+                            <span className="inline-block bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide mr-1 tabular-nums">
                               SCADUTA {overdueDays}gg
                             </span>
                           )}
@@ -289,12 +291,12 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                         if (linkedOffer) {
                           return (
                             <div className="flex items-center gap-1 mb-2">
-                              <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 flex-1 min-w-0">
+                              <span className="bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 flex-1 min-w-0 tabular-nums">
                                 <span className="truncate">{linkedOffer.offerNumber} · €{linkedOffer.totalAmount.toLocaleString('it-IT')}</span>
                               </span>
                               <button
                                 onClick={() => updateDeal(deal.id, { offerRef: undefined })}
-                                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                className="text-gray-400 hover:text-rose-500 transition-colors flex-shrink-0"
                                 title="Scollega offerta"
                               >
                                 <X size={12} />
@@ -323,27 +325,27 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
 
                       {/* Footer */}
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-indigo-600 text-sm">
+                        <span className="font-bold text-brand-600 dark:text-brand-400 text-sm tabular-nums">
                           €{(deal.value / 1000).toFixed(0)}k
                         </span>
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleAddAction(deal)}
-                            className="p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-500 hover:bg-indigo-100 transition-colors"
+                            className="p-1.5 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors"
                             title="Imposta prossima azione"
                           >
                             <Plus size={14} />
                           </button>
                           <button
                             onClick={() => setEditDealId(deal.id)}
-                            className="p-1 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors"
+                            className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-900/30 transition-colors"
                             title="Modifica deal"
                           >
                             <Edit2 size={14} />
                           </button>
                           <button
                             onClick={() => { if (window.confirm(`Eliminare il deal di ${contacts[deal.contactId]?.company ?? ''}?`)) removeDeal(deal.id); }}
-                            className="p-1 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                            className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/30 transition-colors"
                             title="Elimina deal"
                           >
                             <Trash2 size={14} />
@@ -353,7 +355,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                               const idx = STAGES.findIndex(s => s.id === stage.id);
                               if (idx > 0) handleMove(deal.id, STAGES[idx - 1].id);
                             }}
-                            className="p-1 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                            className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             title="Fase precedente"
                           >
                             <ArrowLeft size={14} />
@@ -364,7 +366,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                               if (idx < STAGES.length - 1) handleMove(deal.id, STAGES[idx + 1].id);
                               else handleMove(deal.id, 'chiuso-vinto');
                             }}
-                            className="p-1 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                            className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 transition-colors"
                             title="Fase successiva"
                           >
                             <ArrowRight size={14} />

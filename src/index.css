@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tipografia di base: rendering nitido + kerning */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    font-feature-settings: 'cv11', 'ss01';
+    letter-spacing: -0.011em;
+  }
+}
+
+/* Numeri tabulari allineati per KPI, pipeline, importi */
+.tabular-nums,
+table,
+.font-mono-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Safe area per iOS PWA */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 16px);

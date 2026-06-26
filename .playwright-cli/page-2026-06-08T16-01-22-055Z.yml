@@ -1,0 +1,14 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - img [ref=e8]
+      - heading "Next Move" [level=1] [ref=e12]:
+        - text: Next
+        - text: Move
+    - generic [ref=e13]:
+      - paragraph [ref=e14]: Accedi per continuare
+      - button "Accesso in corso..." [disabled] [ref=e21]:
+        - img [ref=e16]
+        - text: Accesso in corso...
+  - iframe [ref=e22]:
+    
