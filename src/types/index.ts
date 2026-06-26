@@ -1,7 +1,7 @@
 export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
 export type NextActionType = 'chiama' | 'email' | 'invia-offerta' | 'fissa-visita' | 'altro';
 export type NextActionPriority = 'alta' | 'media' | 'bassa';
-export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione';
+export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio';
 export type ActivityOutcome = 'riuscita' | 'parziale' | 'nessun-contatto' | 'promessa-callback' | 'rifiuto' | 'nota';
 export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';

@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import {
   Phone, MapPin, Mail, FileText, Target, Plus, X,
   ChevronDown, ChevronUp, TrendingUp, Activity, ChevronLeft, ChevronRight,
-  Video, MonitorPlay, Wrench, GraduationCap,
+  Video, MonitorPlay, Wrench, GraduationCap, Laptop, Building2,
 } from 'lucide-react';
 import { ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
@@ -68,6 +68,8 @@ const ACTIVITY_ICON: Record<ActivityType, React.ReactNode> = {
   'call-remota': <Video size={14} />,
   sopralluogo:  <Wrench size={14} />,
   formazione:   <GraduationCap size={14} />,
+  'smart-working': <Laptop size={14} />,
+  ufficio:      <Building2 size={14} />,
 };
 
 const ACTIVITY_COLOR: Record<ActivityType, string> = {
@@ -79,6 +81,8 @@ const ACTIVITY_COLOR: Record<ActivityType, string> = {
   'call-remota': 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600',
   sopralluogo:  'bg-orange-100 dark:bg-orange-900/40 text-orange-600',
   formazione:   'bg-pink-100 dark:bg-pink-900/40 text-pink-600',
+  'smart-working': 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600',
+  ufficio:      'bg-slate-100 dark:bg-slate-700/40 text-slate-600',
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -108,10 +112,11 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
   const [type, setType] = useState<ActivityType>('visita');
   const [notes, setNotes] = useState('');
 
-  const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione'];
+  const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio'];
   const TYPE_LABELS: Record<ActivityType, string> = {
     visita: 'Visita', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
     demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
+    'smart-working': 'Smart Working', ufficio: 'Ufficio',
   };
 
   return (

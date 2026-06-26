@@ -39,7 +39,12 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   'call-remota': 'Call Remota',
   sopralluogo: 'Sopralluogo',
   formazione: 'Formazione',
+  'smart-working': 'Smart Working',
+  ufficio: 'Ufficio',
 };
+
+// Categorie che non richiedono un'azienda/contatto per essere salvate
+const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio'];
 
 const TYPE_COLORS: Record<ActivityType, string> = {
   visita: 'bg-indigo-500',
@@ -50,6 +55,8 @@ const TYPE_COLORS: Record<ActivityType, string> = {
   'call-remota': 'bg-teal-500',
   sopralluogo: 'bg-orange-500',
   formazione: 'bg-pink-500',
+  'smart-working': 'bg-cyan-500',
+  ufficio: 'bg-slate-500',
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
@@ -61,6 +68,8 @@ const TYPE_BG: Record<ActivityType, string> = {
   'call-remota': 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300',
   sopralluogo: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
   formazione: 'bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
+  'smart-working': 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300',
+  ufficio: 'bg-slate-100 dark:bg-slate-700/40 text-slate-700 dark:text-slate-300',
 };
 
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -431,13 +440,15 @@ export const AgendaView: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.contactId) { showToast("Seleziona un'azienda", 'error'); return; }
+    const noContact = NO_CONTACT_TYPES.includes(formData.type);
+    if (!noContact && !formData.contactId) { showToast("Seleziona un'azienda", 'error'); return; }
+    const contactId = noContact ? '' : formData.contactId;
     const dateTime = new Date(`${formData.date}T${formData.time}`).getTime();
     if (editingId) {
-      updateActivity(editingId, { contactId: formData.contactId, type: formData.type, date: dateTime, notes: formData.notes });
+      updateActivity(editingId, { contactId, type: formData.type, date: dateTime, notes: formData.notes });
       showToast('Attività aggiornata!', 'success');
     } else {
-      addActivity({ id: `act_${Date.now()}`, contactId: formData.contactId, type: formData.type, date: dateTime, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
+      addActivity({ id: `act_${Date.now()}`, contactId, type: formData.type, date: dateTime, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
       showToast('Attività salvata!', 'success');
     }
     closeModal();
@@ -1136,7 +1147,7 @@ export const AgendaView: React.FC = () => {
                 <ActivityCard
                   key={activity.id}
                   activity={activity}
-                  companyName={contacts[activity.contactId]?.company || 'Azienda'}
+                  companyName={contacts[activity.contactId]?.company || (NO_CONTACT_TYPES.includes(activity.type) ? TYPE_LABELS[activity.type] : 'Azienda')}
                   onEdit={() => openEdit(activity)}
                   onDelete={() => setConfirmDeleteId(activity.id)}
                   onExport={() => handleExport(activity)}
@@ -1155,7 +1166,7 @@ export const AgendaView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-6">
               <div className="min-w-0">
-                <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || 'Azienda'}</h2>
+                <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || (NO_CONTACT_TYPES.includes(viewActivity.type) ? TYPE_LABELS[viewActivity.type] : 'Azienda')}</h2>
                 <p className="text-xs text-gray-400 font-bold mt-1">
                   {new Date(viewActivity.date).toLocaleString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -1208,7 +1219,8 @@ export const AgendaView: React.FC = () => {
               <button onClick={closeModal}><X size={24} className="text-gray-400" /></button>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
-              {/* Contact picker */}
+              {/* Contact picker - nascosto per smart-working/ufficio */}
+              {!NO_CONTACT_TYPES.includes(formData.type) && (
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">
                   Cliente / Azienda
@@ -1311,6 +1323,7 @@ export const AgendaView: React.FC = () => {
                   )}
                 </div>
               </div>
+              )}
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tipo</label>
                 <div className="flex gap-2 flex-wrap">
