@@ -460,6 +460,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const fileInputRefProspect = useRef<HTMLInputElement>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'ok' | 'error'>('idle');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
   useEffect(() => {
@@ -863,6 +864,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <MapPin size={11} /> In mappa
                 </span>
               )}
+              <button
+                onClick={() => setConfirmDeleteId(editingContact?.id ?? null)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border-2 border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-black uppercase text-xs tracking-widest transition-colors"
+              >
+                <Trash2 size={13} /> Elimina
+              </button>
               <button
                 onClick={handleSave}
                 className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
@@ -1434,6 +1441,43 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           }}
         />
       )}
+
+      {/* Modal conferma eliminazione singolo contatto */}
+      {confirmDeleteId && (() => {
+        const c = contacts[confirmDeleteId];
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Trash2 size={20} className="text-red-500 shrink-0" />
+                <h4 className="font-black text-gray-800 dark:text-white">Elimina contatto</h4>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                Stai per eliminare <strong>{c?.company}</strong>.
+              </p>
+              <p className="text-xs text-red-500 mb-5">Questa azione non è reversibile.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={() => {
+                    deleteContact(confirmDeleteId);
+                    setConfirmDeleteId(null);
+                    setEditingContact(null);
+                  }}
+                  className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl"
+                >
+                  Sì, elimina
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
