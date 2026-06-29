@@ -115,10 +115,6 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
 
               <Field label="Ragione Sociale *" value={data.company} onChange={update('company')} placeholder="Nome azienda" />
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Nome Contatto" value={data.contactName} onChange={update('contactName')} placeholder="Nome referente" />
-                <Field label="Ruolo" value={data.role} onChange={update('role')} placeholder="es. Titolare" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <Field label="Telefono" value={data.phone} onChange={update('phone')} placeholder="+39 ..." />
                 <Field label="Email" value={data.email} onChange={update('email')} placeholder="info@..." />
               </div>

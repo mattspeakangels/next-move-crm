@@ -1,7 +1,5 @@
 export interface ScrapedContact {
   company: string;
-  contactName: string;
-  role: string;
   email: string;
   phone: string;
   website: string;
@@ -119,13 +117,8 @@ export async function scrapeContactFromUrl(url: string): Promise<ScrapedContact>
     doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
     '';
 
-  // ── Contact person ───────────────────────────────────────────
-  const founderRaw = ld?.founder?.name || ld?.employee?.[0]?.name || '';
-
   return {
     company: company.slice(0, 120),
-    contactName: founderRaw,
-    role: '',
     email: email.slice(0, 120),
     phone: phone.slice(0, 40),
     website: url,
