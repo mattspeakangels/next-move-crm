@@ -945,6 +945,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     <option value="Industria">Industria / Manifattura</option>
                     <option value="Idraulica">Idraulica / Termoidraulica</option>
                     <option value="Elettricista">Elettricista / Impianti Elettrici</option>
+                    <option value="Ferramenta">Ferramenta / Antinfortunistica</option>
                     <option value="Trasporti e logistica">Trasporti e Logistica</option>
                     <option value="Agricoltura">Agricoltura / Forestale</option>
                     <option value="Servizi">Servizi</option>
