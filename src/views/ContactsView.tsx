@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
@@ -457,6 +457,35 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
   const [segmentFilter, setSegmentFilter] = useState<ContactSegment | null>(null);
+  const [visibleCount, setVisibleCount] = useState(50);
+
+  // Debounce ricerca — evita filter su ogni keystroke con 9k+ contatti
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(searchTerm); setVisibleCount(50); }, 250);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  // Badge counts — memoizzati per evitare iterazione completa ad ogni render
+  const clientiCount  = useMemo(() => Object.values(contacts).filter(c => c.status === 'cliente').length,   [contacts]);
+  const prospectCount = useMemo(() => Object.values(contacts).filter(c => c.status === 'potenziale').length, [contacts]);
+
+  // Lista filtrata completa — memoizzata
+  const filteredList = useMemo(() => {
+    const statusFilter = activeTab === 'prospect' ? 'potenziale' : 'cliente';
+    const search = debouncedSearch.toLowerCase();
+    return Object.values(contacts)
+      .filter(c => c.status === statusFilter)
+      .filter(c => !segmentFilter || c.segment === segmentFilter)
+      .filter(c =>
+        !search ||
+        (c.company && c.company.toLowerCase().includes(search)) ||
+        (c.city    && c.city.toLowerCase().includes(search))
+      );
+  }, [contacts, activeTab, segmentFilter, debouncedSearch]);
+
+  // Reset paginazione quando cambia lista
+  useEffect(() => { setVisibleCount(50); }, [filteredList]);
   const fileInputRefProspect = useRef<HTMLInputElement>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'ok' | 'error'>('idle');
@@ -1210,7 +1239,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               <Users size={16} />
               Clienti
               <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 px-2 py-0.5 rounded-full font-black">
-                {Object.values(contacts).filter(c => c.status === 'cliente').length}
+                {clientiCount}
               </span>
             </button>
             <button onClick={() => setActiveTab('prospect')}
@@ -1218,7 +1247,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               <UserPlus size={16} />
               Prospect
               <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded-full font-black">
-                {Object.values(contacts).filter(c => c.status === 'potenziale').length}
+                {prospectCount}
               </span>
             </button>
           </div>
@@ -1231,13 +1260,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const accentCls = isProspect ? 'text-amber-500 border-amber-100 hover:bg-amber-50' : 'text-indigo-600 border-indigo-100 hover:bg-indigo-50';
             const btnCls    = isProspect ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700';
 
-            const list = Object.values(contacts)
-              .filter(c => c.status === statusFilter)
-              .filter(c => !segmentFilter || c.segment === segmentFilter)
-              .filter(c =>
-                (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (c.city    && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
-              );
+            const list = filteredList;
 
             return (
               <>
@@ -1321,7 +1344,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       </p>
                       <p className="text-gray-300 text-xs mt-1">Importa un CSV o aggiungi manualmente</p>
                     </div>
-                  ) : list.map(contact => (
+                  ) : list.slice(0, visibleCount).map(contact => (
                     <div key={contact.id} onClick={() => openDetail(contact)}
                       className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-all cursor-pointer ${
                         isProspect
@@ -1391,6 +1414,21 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     </div>
                   ))}
                 </div>
+
+                {/* Paginazione */}
+                {list.length > visibleCount && (
+                  <div className="flex flex-col items-center gap-2 pt-2 pb-6">
+                    <p className="text-xs text-gray-400">
+                      Mostrati <strong>{visibleCount}</strong> di <strong>{list.length}</strong>
+                    </p>
+                    <button
+                      onClick={() => setVisibleCount(v => v + 50)}
+                      className="px-6 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-black text-gray-500 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 transition-all"
+                    >
+                      Carica altri 50
+                    </button>
+                  </div>
+                )}
               </>
             );
           })()}

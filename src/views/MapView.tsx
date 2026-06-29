@@ -196,6 +196,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [showItinResults, setShowItinResults] = useState(false);
   const [itinFlyTo, setItinFlyTo] = useState<[number, number] | null>(null);
   const [manualOrder, setManualOrder] = useState<string[] | null>(null);
+  const [roadRouteCoords, setRoadRouteCoords] = useState<[number, number][]>([]);
 
   const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
 
@@ -305,6 +306,25 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     [activeRoute]
   );
 
+  // Fetch real road geometry from OSRM whenever the route changes
+  useEffect(() => {
+    if (activeRoute.length === 0) { setRoadRouteCoords([]); return; }
+    const waypoints = [[HOME.lng, HOME.lat], ...activeRoute.map((s: any) => [s.lng, s.lat])];
+    const coords = waypoints.map(([lng, lat]) => `${lng},${lat}`).join(';');
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    let cancelled = false;
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        const geom: [number, number][] = data?.routes?.[0]?.geometry?.coordinates
+          ?.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number]) ?? [];
+        setRoadRouteCoords(geom.length > 0 ? geom : routeCoords);
+      })
+      .catch(() => { if (!cancelled) setRoadRouteCoords(routeCoords); });
+    return () => { cancelled = true; };
+  }, [activeRoute]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const googleMapsUrl = useMemo(() => {
     if (activeRoute.length === 0) return '';
     return `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/` +
@@ -392,7 +412,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
 
                       {/* Info cliente */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black dark:text-white uppercase truncate">{c?.company}</p>
+                        <p className="text-xs font-black dark:text-white uppercase leading-tight break-words">{c?.company}</p>
                         <p className="text-[10px] text-gray-400 font-bold">+{legDist.toFixed(0)} km · {cumDist.toFixed(0)} km tot</p>
                       </div>
 
@@ -597,8 +617,8 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
               </Marker>
             );
           })}
-          {routeCoords.length > 1 && (
-            <Polyline positions={routeCoords} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9, dashArray: '10 6' }} />
+          {roadRouteCoords.length > 1 && (
+            <Polyline positions={roadRouteCoords} pathOptions={{ color: '#f97316', weight: 5, opacity: 0.85 }} />
           )}
         </MapContainer>
 
@@ -1050,6 +1070,9 @@ export const MapView: React.FC<MapViewProps> = ({
   const unmappedWithAddress = allContacts.filter(c => !c.lat && (c.city || c.province));
   const defaultCenter: [number, number] = userPos ?? [45.5, 9.2]; // default: Milano
 
+  const visibleMarkers = filtered;
+  const markersCapped = false;
+
   // ── FULLSCREEN MODE ─────────────────────────────────────────────────────────
   if (isFullscreen) {
     return (
@@ -1066,7 +1089,7 @@ export const MapView: React.FC<MapViewProps> = ({
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
           <DoubleClickHandler onDoubleClick={() => onExitFullscreen?.()} />
           <FlyToContact position={flyToTarget} />
-          {filtered.map(c => {
+          {visibleMarkers.map(c => {
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
@@ -1118,6 +1141,11 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="text-indigo-600">{nClienti}</span> clienti ·{' '}
             <span className="text-amber-500">{nProspect}</span> prospect
           </p>
+          {markersCapped && (
+            <p className="text-[10px] text-amber-600 font-bold mt-0.5">
+              Mostrati tutti i marker
+            </p>
+          )}
           <p className="text-[10px] text-gray-400 font-bold mt-0.5">Doppio click per uscire</p>
         </div>
       </div>
@@ -1239,6 +1267,16 @@ export const MapView: React.FC<MapViewProps> = ({
         {/* Filtri collassabili */}
         {showFilters && (
           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-3">
+            {/* Banner marker cap */}
+            {markersCapped && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2 flex items-center gap-2">
+                <AlertTriangle size={13} className="text-blue-400 flex-shrink-0" />
+                <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
+                  Mostrati tutti i marker
+                </p>
+              </div>
+            )}
+
             {/* Banner geocoding */}
             {unmappedWithAddress.length > 0 && !isGeocoding && (
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
@@ -1349,7 +1387,7 @@ export const MapView: React.FC<MapViewProps> = ({
           {onGoFullscreen && <DoubleClickHandler onDoubleClick={onGoFullscreen} />}
           <FlyToContact position={flyToTarget} />
 
-          {filtered.map(c => {
+          {visibleMarkers.map(c => {
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
