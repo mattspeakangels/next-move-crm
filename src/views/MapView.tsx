@@ -959,6 +959,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const [debugMsg, setDebugMsg]   = useState('');
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
   const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
+  const [mapProvinceFilter, setMapProvinceFilter] = useState<string>('');
   const [mobileTab, setMobileTab] = useState<MobileTab>('mappa');
   const [showFilters, setShowFilters] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -1056,7 +1057,13 @@ export const MapView: React.FC<MapViewProps> = ({
     if (mapFilter === 'prospect') return c.status === 'potenziale';
     return true;
   }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter)
+    .filter(c => !mapProvinceFilter || c.province === mapProvinceFilter)
     .filter(c => !searchNorm || c.company.toLowerCase().includes(searchNorm) || (c.city || '').toLowerCase().includes(searchNorm));
+
+  // Province disponibili nei contatti geocodificati
+  const availableProvinces = useMemo(() =>
+    [...new Set(allMapped.map(c => c.province).filter(Boolean))].sort() as string[]
+  , [allMapped]);
 
   const nearby = userPos
     ? filtered.filter(c => calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius)
@@ -1126,6 +1133,33 @@ export const MapView: React.FC<MapViewProps> = ({
             );
           })}
         </MapContainer>
+
+        {/* Overlay filtri fullscreen */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center">
+          {/* Toggle clienti/tutti/prospect */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-1 flex gap-1 shadow-lg">
+            {(['tutti', 'clienti', 'prospect'] as const).map(f => (
+              <button key={f} onClick={() => setMapFilter(f)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${mapFilter === f ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                {f === 'tutti' ? 'Tutti' : f === 'clienti' ? 'Clienti' : 'Prospect'}
+              </button>
+            ))}
+          </div>
+
+          {/* Filtro provincia */}
+          {availableProvinces.length > 0 && (
+            <select
+              value={mapProvinceFilter}
+              onChange={e => setMapProvinceFilter(e.target.value)}
+              className="bg-white/90 backdrop-blur-sm rounded-2xl px-3 py-2 text-xs font-black text-gray-700 shadow-lg border-0 outline-none cursor-pointer"
+            >
+              <option value="">Tutte le province</option>
+              {availableProvinces.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          )}
+        </div>
 
         {/* Bottone chiudi */}
         <button
@@ -1349,6 +1383,29 @@ export const MapView: React.FC<MapViewProps> = ({
                 </button>
               ))}
             </div>
+
+            {/* Filtro provincia */}
+            {availableProvinces.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Provincia</span>
+                <select
+                  value={mapProvinceFilter}
+                  onChange={e => setMapProvinceFilter(e.target.value)}
+                  className="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 border-0 outline-none cursor-pointer"
+                >
+                  <option value="">Tutte</option>
+                  {availableProvinces.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                {mapProvinceFilter && (
+                  <button onClick={() => setMapProvinceFilter('')}
+                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 whitespace-nowrap">
+                    Rimuovi
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
