@@ -57,12 +57,48 @@ function extractEmail(doc: Document, rawText: string): string {
   return m ? m[0] : '';
 }
 
+async function fetchViaProxy(url: string): Promise<string> {
+  const encoded = encodeURIComponent(url);
+
+  // Try proxies in order, return first successful HTML response
+  const proxies: Array<() => Promise<string>> = [
+    async () => {
+      const r = await fetch(`https://corsproxy.io/?${encoded}`, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error(`${r.status}`);
+      return r.text();
+    },
+    async () => {
+      const r = await fetch(`https://api.allorigins.win/raw?url=${encoded}`, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error(`${r.status}`);
+      return r.text();
+    },
+    async () => {
+      const r = await fetch(`https://api.allorigins.win/get?url=${encoded}`, { signal: AbortSignal.timeout(10000) });
+      if (!r.ok) throw new Error(`${r.status}`);
+      const j = await r.json();
+      return j.contents ?? '';
+    },
+    async () => {
+      const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encoded}`, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error(`${r.status}`);
+      return r.text();
+    },
+  ];
+
+  let lastErr: Error = new Error('All proxies failed');
+  for (const attempt of proxies) {
+    try {
+      const html = await attempt();
+      if (html && html.length > 100) return html;
+    } catch (e) {
+      lastErr = e as Error;
+    }
+  }
+  throw lastErr;
+}
+
 export async function scrapeContactFromUrl(url: string): Promise<ScrapedContact> {
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-  const res = await fetch(proxyUrl);
-  if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
-  const json = await res.json();
-  const html: string = json.contents ?? '';
+  const html = await fetchViaProxy(url);
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
