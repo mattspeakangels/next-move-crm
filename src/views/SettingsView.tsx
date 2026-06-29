@@ -25,10 +25,10 @@ export const SettingsView: React.FC = () => {
   const SECTORS = ['Edilizia','Industria','Trasporti e logistica','Servizi','Agricoltura','Energia e utilities','Altro'] as const;
   const [claudeApiKey, setClaudeApiKey] = useState(() => localStorage.getItem('claude_api_key') || '');
   const [naceEnriching, setNaceEnriching] = useState(false);
-  const [naceProgress, setNaceProgress] = useState({ done: 0, total: 0 });
+  const [naceProgress, setNaceProgress] = useState({ done: 0, total: 0, errors: 0 });
   const [naceShowList, setNaceShowList] = useState(false);
 
-  const noSectorContacts = Object.values(contacts).filter(c => c.status === 'potenziale' && !c.sector);
+  const noSectorContacts = Object.values(contacts).filter(c => !c.sector || c.sector.trim() === '');
 
   const saveApiKey = (key: string) => {
     setClaudeApiKey(key);
@@ -36,44 +36,68 @@ export const SettingsView: React.FC = () => {
   };
 
   const enrichWithClaude = useCallback(async () => {
-    if (!claudeApiKey) { showToast('Inserisci prima la Claude API Key', 'error'); return; }
-    const targets = Object.values(contacts).filter(c => c.status === 'potenziale' && !c.sector);
+    if (!claudeApiKey.trim()) { showToast('Inserisci prima la Claude API Key', 'error'); return; }
+    const targets = Object.values(contacts).filter(c => !c.sector || c.sector.trim() === '');
     if (!targets.length) { showToast('Nessun contatto senza settore', 'info'); return; }
 
     setNaceEnriching(true);
-    setNaceProgress({ done: 0, total: targets.length });
+    setNaceProgress({ done: 0, total: targets.length, errors: 0 });
 
-    const client = new Anthropic({ apiKey: claudeApiKey, dangerouslyAllowBrowser: true });
+    let client: Anthropic;
+    try {
+      client = new Anthropic({ apiKey: claudeApiKey.trim(), dangerouslyAllowBrowser: true });
+    } catch (e) {
+      showToast('API Key non valida', 'error');
+      setNaceEnriching(false);
+      return;
+    }
+
     const BATCH = 10;
+    let totalErrors = 0;
+    let totalUpdated = 0;
 
     for (let i = 0; i < targets.length; i += BATCH) {
       const batch = targets.slice(i, i + BATCH);
-      const lines = batch.map((c, j) => `${j+1}. "${c.company}" – ${c.city || ''} (${c.province || ''})`).join('\n');
+      const lines = batch.map((c, j) => `${j + 1}. "${c.company}" – ${c.city || ''} (${c.province || ''})`).join('\n');
       try {
         const msg = await client.messages.create({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 512,
           system: 'Rispondi SOLO con un array JSON valido, senza testo aggiuntivo.',
           messages: [{ role: 'user', content:
-            `Classifica ciascuna azienda in UNO di questi settori: ${SECTORS.join(', ')}.\n\n${lines}\n\nRispondi con: [{"index":1,"sector":"..."},...]\n` }],
+            `Classifica ciascuna azienda in UNO di questi settori: ${SECTORS.join(', ')}.\n\nAziende:\n${lines}\n\nRispondi con un array JSON: [{"index":1,"sector":"Edilizia"}, ...]\nUsa indici 1-based come nell'elenco.` }],
         });
-        const text = (msg.content[0] as { text: string }).text;
-        const match = text.match(/\[[\s\S]*\]/);
+        const text = (msg.content[0] as { text: string }).text.trim();
+        const match = text.match(/\[[\s\S]*?\]/);
         if (match) {
-          const results: {index:number; sector:string}[] = JSON.parse(match[0]);
+          const results: { index: number; sector: string }[] = JSON.parse(match[0]);
           results.forEach(r => {
+            if (!r || typeof r.index !== 'number') return;
             const c = batch[r.index - 1];
+            if (!c) return;
             const sec = SECTORS.includes(r.sector as typeof SECTORS[number]) ? r.sector : 'Altro';
-            if (c) updateContact(c.id, { sector: sec, updatedAt: Date.now() });
+            updateContact(c.id, { sector: sec, updatedAt: Date.now() });
+            totalUpdated++;
           });
+        } else {
+          // fallback: assegna 'Altro' a tutti
+          batch.forEach(c => { updateContact(c.id, { sector: 'Altro', updatedAt: Date.now() }); totalUpdated++; });
         }
-      } catch { /* batch fallito, skippa */ }
-      setNaceProgress(p => ({ ...p, done: Math.min(i + BATCH, targets.length) }));
-      await new Promise(r => setTimeout(r, 300));
+      } catch (err) {
+        totalErrors++;
+        // fallback: assegna 'Altro' così escono dalla lista "senza settore"
+        batch.forEach(c => { updateContact(c.id, { sector: 'Altro', updatedAt: Date.now() }); totalUpdated++; });
+      }
+      setNaceProgress({ done: Math.min(i + BATCH, targets.length), total: targets.length, errors: totalErrors });
+      await new Promise(r => setTimeout(r, 200));
     }
 
     setNaceEnriching(false);
-    showToast('Arricchimento completato!', 'success');
+    if (totalErrors > 0) {
+      showToast(`Completato: ${totalUpdated} aggiornati, ${totalErrors} batch con errore API (assegnato "Altro")`, 'info');
+    } else {
+      showToast(`Arricchimento completato: ${totalUpdated} prospect classificati`, 'success');
+    }
   }, [claudeApiKey, contacts, updateContact, showToast]);
 
   const requireAuth = (title: string, description: string, execute: () => void) => {
@@ -372,7 +396,7 @@ export const SettingsView: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors"
                 >
                   <Sparkles size={14} />
-                  {naceEnriching ? `${naceProgress.done}/${naceProgress.total}` : 'Classifica con Claude'}
+                  {naceEnriching ? `${naceProgress.done}/${naceProgress.total}${naceProgress.errors > 0 ? ` (${naceProgress.errors} err)` : ''}` : 'Classifica con Claude'}
                 </button>
               </div>
               {naceEnriching && (
