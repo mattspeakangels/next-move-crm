@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Mail, Target, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download } from 'lucide-react';
+import { PdfButton } from '../components/ui/PdfButton';
 import { useStore } from '../store/useStore';
 import { Contact, ContactSegment } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
+import { ProfilingForm } from '../components/profiling/ProfilingForm';
+import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { ContactHistoryView } from './ContactHistoryView';
 
 const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) => {
@@ -106,6 +109,46 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
   );
 };
 
+const ProfilingCollapsible: React.FC<{ contact: Contact }> = ({ contact }) => {
+  const [open, setOpen] = useState(false);
+  const badge = contact.profiling
+    ? (() => {
+        const q = contact.profiling.qualificazione;
+        const t = q.esigenzaReale + q.decisionMaker + q.aperturaFornitore + q.timeline + q.budget;
+        return t >= 20 ? 'HOT' : t >= 15 ? 'WARM' : t >= 10 ? 'COLD' : 'TRASH';
+      })()
+    : null;
+  const BADGE_STYLE: Record<string, string> = {
+    HOT: 'bg-red-500 text-white', WARM: 'bg-amber-400 text-white',
+    COLD: 'bg-green-500 text-white', TRASH: 'bg-gray-400 text-white',
+  };
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <ClipboardList size={16} /> 2. Profilazione Blaklader
+          {badge && <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>}
+          {!contact.profiling && <span className="text-[10px] font-bold text-gray-300 normal-case tracking-normal">Non compilata</span>}
+        </h3>
+        <button
+          onClick={() => setOpen(o => !o)}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all
+            ${open
+              ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-indigo-900'}`}>
+          <ClipboardList size={12} />
+          {open ? 'Chiudi' : contact.profiling ? 'Modifica' : 'Compila'}
+        </button>
+      </div>
+      {open && (
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-5 border border-gray-100 dark:border-gray-700">
+          <ProfilingForm contact={contact} key={contact.id} />
+        </div>
+      )}
+    </section>
+  );
+};
+
 const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
   const { offers, products, deals, addOffer, updateOffer, updateDeal } = useStore();
   const [showForm, setShowForm] = useState(false);
@@ -113,6 +156,58 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
   const [formDelivery, setFormDelivery] = useState('');
   const [formShipping, setFormShipping] = useState(0);
   const [formDealId, setFormDealId] = useState('');
+  const [uploadingPdfId, setUploadingPdfId] = useState<string | null>(null);
+  const [showPdfQuick, setShowPdfQuick] = useState(false);
+  const [quickPdfFile, setQuickPdfFile] = useState<File | null>(null);
+  const [quickPdfUploading, setQuickPdfUploading] = useState(false);
+  const existingPdfRef = useRef<HTMLInputElement>(null);
+  const pendingPdfOfferId = useRef<string | null>(null);
+
+  const handleExistingPdfChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const offerId = pendingPdfOfferId.current;
+    if (!file || !offerId) return;
+    e.target.value = '';
+    setUploadingPdfId(offerId);
+    try {
+      const { uploadOfferPdf } = await import('../lib/uploadPdf');
+      const { url, name } = await uploadOfferPdf(offerId, file);
+      updateOffer(offerId, { pdfUrl: url, pdfName: name });
+    } catch (err: any) {
+      alert(err?.message ?? 'Errore caricamento PDF');
+    } finally {
+      setUploadingPdfId(null);
+    }
+  };
+
+  const handleQuickPdfSave = async () => {
+    if (!quickPdfFile) return;
+    setQuickPdfUploading(true);
+    try {
+      const { uploadOfferPdf } = await import('../lib/uploadPdf');
+      const offerId = `off_${Date.now()}`;
+      const offerNumber = `OFF-${Object.keys(offers).length + 101}`;
+      const { url, name } = await uploadOfferPdf(offerId, quickPdfFile);
+      addOffer({
+        id: offerId,
+        contactId,
+        offerNumber,
+        date: Date.now(),
+        items: [],
+        status: 'inviata',
+        totalAmount: 0,
+        followUpDate: Date.now() + 14 * 24 * 60 * 60 * 1000,
+        pdfUrl: url,
+        pdfName: name,
+      });
+      setShowPdfQuick(false);
+      setQuickPdfFile(null);
+    } catch (err: any) {
+      alert(err?.message ?? 'Errore caricamento PDF');
+    } finally {
+      setQuickPdfUploading(false);
+    }
+  };
 
   const contactOffers = Object.values(offers).filter(o => o.contactId === contactId).sort((a, b) => b.date - a.date);
   const openDeals = Object.values(deals).filter(d => d.contactId === contactId && !['chiuso-vinto', 'chiuso-perso'].includes(d.stage));
@@ -170,10 +265,51 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
 
   return (
     <section>
-      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-        <FileText size={16} /> 7. Offerte
-        <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactOffers.length}</span>
-      </h3>
+      {/* Hidden input for attaching PDF to existing offer */}
+      <input ref={existingPdfRef} type="file" accept="application/pdf" className="hidden" onChange={handleExistingPdfChange} />
+
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <FileText size={16} /> 7. Offerte
+          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactOffers.length}</span>
+        </h3>
+        <button
+          onClick={() => { setShowPdfQuick(v => !v); setShowForm(false); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-[10px] uppercase tracking-wide hover:bg-orange-100 transition-colors"
+        >
+          <Upload size={12} /> Carica PDF
+        </button>
+      </div>
+
+      {/* Quick PDF upload panel */}
+      {showPdfQuick && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-2xl p-4 mb-3 space-y-3">
+          <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Nuova offerta da PDF</p>
+          <label className={`flex items-center gap-3 w-full border-2 border-dashed rounded-xl px-4 py-4 cursor-pointer transition-colors ${quickPdfFile ? 'border-orange-400 bg-white dark:bg-gray-800' : 'border-orange-200 hover:border-orange-400'}`}>
+            <FileText size={20} className={quickPdfFile ? 'text-orange-500' : 'text-orange-300'} />
+            <div className="flex-1 min-w-0">
+              {quickPdfFile
+                ? <span className="text-xs font-black text-orange-700 dark:text-orange-300 break-all">{quickPdfFile.name}</span>
+                : <span className="text-xs font-bold text-orange-400">Clicca per selezionare il PDF...</span>
+              }
+            </div>
+            <input type="file" accept="application/pdf" className="hidden" onChange={e => setQuickPdfFile(e.target.files?.[0] || null)} />
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={handleQuickPdfSave}
+              disabled={!quickPdfFile || quickPdfUploading}
+              className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl font-black text-xs uppercase tracking-wide hover:bg-orange-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              {quickPdfUploading
+                ? <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" /> Caricamento...</>
+                : <><Upload size={13} /> Crea Offerta</>
+              }
+            </button>
+            <button onClick={() => { setShowPdfQuick(false); setQuickPdfFile(null); }} className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
+          </div>
+        </div>
+      )}
 
       {contactOffers.length > 0 && (
         <div className="space-y-2 mb-3">
@@ -200,6 +336,23 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
                   <option value="accettata">Accettata</option>
                   <option value="rifiutata">Rifiutata</option>
                 </select>
+                {offer.pdfUrl && (
+                  <PdfButton pdfUrl={offer.pdfUrl} pdfName={offer.pdfName}
+                    className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-500 hover:bg-orange-100 transition-colors">
+                    <Download size={12} />
+                  </PdfButton>
+                )}
+                <button
+                  title={offer.pdfUrl ? 'Sostituisci PDF' : 'Allega PDF'}
+                  disabled={uploadingPdfId === offer.id}
+                  onClick={() => { pendingPdfOfferId.current = offer.id; existingPdfRef.current?.click(); }}
+                  className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-orange-50 hover:text-orange-500 transition-colors disabled:opacity-40"
+                >
+                  {uploadingPdfId === offer.id
+                    ? <span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" />
+                    : <Upload size={12} />
+                  }
+                </button>
               </div>
             </div>
           ))}
@@ -298,9 +451,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
   const [detailContact, setDetailContact] = useState<any>(null);
   const [editingContact, setEditingContact] = useState<any>(null);
-  const [tagInputProd, setTagInputProd] = useState('');
-  const [tagInputComp, setTagInputComp] = useState('');
   const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
+  const [pendingDeleteAll, setPendingDeleteAll] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
@@ -614,48 +766,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   };
 
-  const addStakeholder = () => {
-    setEditingContact((prev: any) => ({
-      ...prev,
-      stakeholders: [...(prev.stakeholders || []), { id: Date.now().toString(), name: '', role: 'Altro', email: '', phone: '' }]
-    }));
-  };
-
-  const updateStakeholder = (id: string, field: string, value: string) => {
-    setEditingContact((prev: any) => ({
-      ...prev,
-      stakeholders: prev.stakeholders.map((sh: any) => sh.id === id ? { ...sh, [field]: value } : sh)
-    }));
-  };
-
-  const removeStakeholder = (id: string) => {
-    setEditingContact((prev: any) => ({
-      ...prev,
-      stakeholders: prev.stakeholders.filter((sh: any) => sh.id !== id)
-    }));
-  };
-
-  const handleAddTag = (type: 'products' | 'competitors', value: string) => {
-    if (!value.trim() || !editingContact) return;
-    const currentTags = editingContact.intelligence?.[type] || [];
-    if (!currentTags.includes(value.trim())) {
-      setEditingContact({
-        ...editingContact,
-        intelligence: { ...editingContact.intelligence, [type]: [...currentTags, value.trim()] }
-      });
-    }
-    if (type === 'products') setTagInputProd('');
-    else setTagInputComp('');
-  };
-
-  const removeTag = (type: 'products' | 'competitors', value: string) => {
-    setEditingContact((prev: any) => ({
-      ...prev,
-      intelligence: { ...prev.intelligence, [type]: prev.intelligence[type].filter((t: string) => t !== value) }
-    }));
-  };
-
-  const defaultIntelligence = { products: [], competitors: [], pricesAndPayments: '', logisticsAndService: '' };
 
   // ── Storico Clienti sub-page ──
   if (historyContact) {
@@ -790,6 +900,26 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 </div>
 
                 <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Settore di Riferimento</label>
+                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.sector || ''} onChange={e => setEditingContact({...editingContact, sector: e.target.value})}>
+                    <option value="">— Seleziona settore —</option>
+                    <option value="Edilizia">Edilizia / Costruzioni</option>
+                    <option value="Industria">Industria / Manifattura</option>
+                    <option value="Idraulica">Idraulica / Termoidraulica</option>
+                    <option value="Elettricista">Elettricista / Impianti Elettrici</option>
+                    <option value="Trasporti e logistica">Trasporti e Logistica</option>
+                    <option value="Agricoltura">Agricoltura / Forestale</option>
+                    <option value="Servizi">Servizi</option>
+                    <option value="Energia e utilities">Energia e Utilities</option>
+                    <option value="Altro">Altro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Partita IVA</label>
+                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all font-mono" placeholder="es. 01234567890" value={editingContact?.vatNumber || ''} onChange={e => setEditingContact({...editingContact, vatNumber: e.target.value})} />
+                </div>
+
+                <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Telefono Gen.</label>
                   <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.phone || ''} onChange={e => setEditingContact({...editingContact, phone: e.target.value})} />
                 </div>
@@ -819,129 +949,109 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               </div>
             </section>
 
-            {/* SEZIONE 2 */}
-            <section>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Users size={16}/> 2. Stakeholder (Referenti)</h3>
-                <button onClick={addStakeholder} className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-indigo-100 transition-colors"><UserPlus size={12}/> Aggiungi Referente</button>
-              </div>
+            {/* SEZIONE 1B - Persone di Riferimento */}
+            {(() => {
+              const allSh: typeof editingContact.stakeholders = editingContact?.stakeholders || [];
+              const titolare = allSh.find((s: any) => s.role === 'Titolare');
+              const altre = allSh.filter((s: any) => s.role !== 'Titolare');
 
-              <div className="space-y-3">
-                {(!editingContact?.stakeholders || editingContact.stakeholders.length === 0) && (
-                  <div className="text-center py-6 bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                    <p className="text-xs font-bold text-gray-400 uppercase">Nessun referente inserito</p>
-                  </div>
-                )}
-                {editingContact?.stakeholders?.map((sh: any) => (
-                  <div key={sh.id} className="grid grid-cols-12 gap-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 p-3 rounded-2xl items-center relative">
-                    <div className="col-span-12 md:col-span-3">
-                      <input type="text" placeholder="Nome Cognome" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white" value={sh.name} onChange={e => updateStakeholder(sh.id, 'name', e.target.value)} />
-                    </div>
-                    <div className="col-span-12 md:col-span-3">
-                      <select className="w-full bg-gray-50 dark:bg-gray-900 rounded-lg p-2 font-bold outline-none text-xs dark:text-white text-gray-600" value={sh.role} onChange={e => updateStakeholder(sh.id, 'role', e.target.value)}>
-                        <option value="Titolare">Titolare / CEO</option>
-                        <option value="Responsabile Acquisti">Resp. Acquisti</option>
-                        <option value="Responsabile Tecnico">Resp. Tecnico / Prod.</option>
-                        <option value="Altro">Altro</option>
-                      </select>
-                    </div>
-                    <div className="col-span-12 md:col-span-3 flex items-center gap-2">
-                      <Mail size={14} className="text-gray-400"/>
-                      <input type="email" placeholder="Email" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white" value={sh.email} onChange={e => updateStakeholder(sh.id, 'email', e.target.value)} />
-                    </div>
-                    <div className="col-span-10 md:col-span-2 flex items-center gap-2">
-                      <Phone size={14} className="text-gray-400"/>
-                      <input type="text" placeholder="Telefono" className="w-full bg-transparent font-bold outline-none text-sm dark:text-white" value={sh.phone} onChange={e => updateStakeholder(sh.id, 'phone', e.target.value)} />
-                    </div>
-                    <div className="col-span-2 md:col-span-1 flex justify-end">
-                      <button onClick={() => removeStakeholder(sh.id)} className="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={16}/></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+              const setTitolare = (field: string, val: string) => {
+                if (titolare) {
+                  setEditingContact({ ...editingContact, stakeholders: allSh.map((s: any) => s.role === 'Titolare' ? { ...s, [field]: val } : s) });
+                } else {
+                  setEditingContact({ ...editingContact, stakeholders: [{ id: `sh_titolare_${Date.now()}`, role: 'Titolare', firstName: '', lastName: '', email: '', phone: '', [field]: val }, ...altre] });
+                }
+              };
 
-            {/* SEZIONE 3 */}
-            <section>
-              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Target size={16}/> 3. Commercial Intelligence</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-3xl border border-indigo-50 dark:border-indigo-900/30">
+              const updateAltra = (id: string, field: string, val: string) => {
+                setEditingContact({ ...editingContact, stakeholders: allSh.map((s: any) => s.id === id ? { ...s, [field]: val } : s) });
+              };
 
-                <div>
-                  <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-2">Cosa Comprano? (Tag liberi)</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {editingContact?.intelligence?.products?.map((tag: string, i: number) => (
-                      <span key={i} className="text-[10px] font-black bg-indigo-600 text-white px-2 py-1 rounded-md uppercase flex items-center gap-1">
-                        {tag} <button onClick={() => removeTag('products', tag)}><X size={10} className="hover:text-red-300"/></button>
-                      </span>
+              const addAltra = () => {
+                const titItem = titolare ? [titolare] : [];
+                setEditingContact({ ...editingContact, stakeholders: [...titItem, ...altre, { id: `sh_${Date.now()}`, role: '', firstName: '', lastName: '', email: '', phone: '' }] });
+              };
+
+              const removeAltra = (id: string) => {
+                setEditingContact({ ...editingContact, stakeholders: allSh.filter((s: any) => s.id !== id) });
+              };
+
+              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all text-sm";
+              const labelCls = "text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1";
+
+              return (
+                <section>
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Users size={16}/> 1b. Persone di Riferimento
+                  </h3>
+                  <div className="space-y-4">
+                    {/* Titolare */}
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-indigo-100 dark:border-indigo-900/40">
+                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Titolare</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelCls}>Nome</label>
+                          <input type="text" className={inputCls} placeholder="Nome" value={titolare?.firstName || ''} onChange={e => setTitolare('firstName', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Cognome</label>
+                          <input type="text" className={inputCls} placeholder="Cognome" value={titolare?.lastName || ''} onChange={e => setTitolare('lastName', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Email</label>
+                          <input type="email" className={inputCls} placeholder="email@azienda.it" value={titolare?.email || ''} onChange={e => setTitolare('email', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Cellulare</label>
+                          <input type="tel" className={inputCls} placeholder="+39 333 000 0000" value={titolare?.phone || ''} onChange={e => setTitolare('phone', e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Altre figure */}
+                    {altre.map((s: any) => (
+                      <div key={s.id} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-gray-100 dark:border-gray-700 relative">
+                        <button onClick={() => removeAltra(s.id)} className="absolute top-4 right-4 p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                          <Trash2 size={14} />
+                        </button>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Figura di Riferimento</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls}>Nome</label>
+                            <input type="text" className={inputCls} placeholder="Nome" value={s.firstName || ''} onChange={e => updateAltra(s.id, 'firstName', e.target.value)} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Cognome</label>
+                            <input type="text" className={inputCls} placeholder="Cognome" value={s.lastName || ''} onChange={e => updateAltra(s.id, 'lastName', e.target.value)} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Email</label>
+                            <input type="email" className={inputCls} placeholder="email@azienda.it" value={s.email || ''} onChange={e => updateAltra(s.id, 'email', e.target.value)} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Cellulare</label>
+                            <input type="tel" className={inputCls} placeholder="+39 333 000 0000" value={s.phone || ''} onChange={e => updateAltra(s.id, 'phone', e.target.value)} />
+                          </div>
+                          <div className="col-span-2">
+                            <label className={labelCls}>Ruolo in Azienda</label>
+                            <input type="text" className={inputCls} placeholder="es. Responsabile Acquisti, Ufficio Tecnico…" value={s.role || ''} onChange={e => updateAltra(s.id, 'role', e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
                     ))}
+
+                    <button onClick={addAltra} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2">
+                      <Plus size={14} /> Aggiungi Figura di Riferimento
+                    </button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Scrivi e premi Invio..."
-                    className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none text-sm"
-                    value={tagInputProd}
-                    onChange={e => setTagInputProd(e.target.value)}
-                    onKeyDown={e => { if(e.key === 'Enter' || e.key === ',') { e.preventDefault(); handleAddTag('products', tagInputProd); }}}
-                  />
-                </div>
+                </section>
+              );
+            })()}
 
-                <div>
-                  <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-2">Competitors attuali (Tag liberi)</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {editingContact?.intelligence?.competitors?.map((tag: string, i: number) => (
-                      <span key={i} className="text-[10px] font-black bg-orange-500 text-white px-2 py-1 rounded-md uppercase flex items-center gap-1">
-                        {tag} <button onClick={() => removeTag('competitors', tag)}><X size={10} className="hover:text-red-900"/></button>
-                      </span>
-                    ))}
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Scrivi e premi Invio..."
-                    className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none text-sm"
-                    value={tagInputComp}
-                    onChange={e => setTagInputComp(e.target.value)}
-                    onKeyDown={e => { if(e.key === 'Enter' || e.key === ',') { e.preventDefault(); handleAddTag('competitors', tagInputComp); }}}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-2">Prezzi e Pagamenti</label>
-                  <textarea
-                    placeholder="Es. Pagano a 60gg, sono sensibili al prezzo sul prodotto base..."
-                    className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none text-sm min-h-[80px] resize-none"
-                    value={editingContact?.intelligence?.pricesAndPayments || ''}
-                    onChange={e => setEditingContact({
-                      ...editingContact,
-                      intelligence: {...(editingContact.intelligence || defaultIntelligence), pricesAndPayments: e.target.value}
-                    })}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-2">Logistica e Servizio</label>
-                  <textarea
-                    placeholder="Es. Ordinano spesso all'ultimo minuto, esigono consegna in 24h..."
-                    className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none text-sm min-h-[80px] resize-none"
-                    value={editingContact?.intelligence?.logisticsAndService || ''}
-                    onChange={e => setEditingContact({
-                      ...editingContact,
-                      intelligence: {...(editingContact.intelligence || defaultIntelligence), logisticsAndService: e.target.value}
-                    })}
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* SEZIONE 4 */}
-            <section>
-              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">4. Note Generali</h3>
-              <textarea
-                placeholder="Informazioni aggiuntive..."
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none resize-none min-h-[100px] shadow-sm"
-                value={editingContact?.notes || ''}
-                onChange={e => setEditingContact({...editingContact, notes: e.target.value})}
-              />
-            </section>
+            {/* SEZIONE 2 - Profilazione Blaklader (collassabile) */}
+            {editingContact?.id && contacts[editingContact.id] && (
+              <ProfilingCollapsible contact={contacts[editingContact.id]} />
+            )}
 
             {/* SEZIONE 5 - Programma Attività (solo in modifica) */}
             {editingContact?.id && contacts[editingContact.id] && (
@@ -1059,6 +1169,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               <InlineOfferSection contactId={editingContact.id} />
             )}
 
+
           </div>
         </div>
       ) : (
@@ -1076,7 +1187,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </button>
                 )}
                 {Object.values(contacts).length > 0 && (
-                  <button onClick={() => { if (window.confirm('🗑️ Elimina TUTTI i contatti dal database? Questa azione non è reversibile!')) deleteAllContacts(); }}
+                  <button onClick={() => setPendingDeleteAll(true)}
                     className="flex items-center gap-1 text-red-600 font-black uppercase text-[10px] tracking-widest bg-red-50 px-2 py-1 rounded-md hover:bg-red-100 transition-colors">
                     <Trash2 size={12} /> Pulisci DB
                   </button>
@@ -1284,6 +1395,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         <AddDealModal
           initialContactId={addDealForContact}
           onClose={() => setAddDealForContact(null)}
+        />
+      )}
+
+      {/* DeviceAuth — Pulisci DB */}
+      {pendingDeleteAll && (
+        <DeviceAuthModal
+          title="Elimina tutti i contatti"
+          description={`Stai per eliminare ${Object.values(contacts).length} contatti dal database. Questa azione non è reversibile.`}
+          onConfirm={() => { deleteAllContacts(); setPendingDeleteAll(false); }}
+          onCancel={() => setPendingDeleteAll(false)}
         />
       )}
 

@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, ChevronDown } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
+import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
+import Anthropic from '@anthropic-ai/sdk';
+
+type PendingAction = { title: string; description: string; execute: () => void } | null;
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold } = useStore();
+  const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, updateContact } = useStore();
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -14,6 +18,66 @@ export const SettingsView: React.FC = () => {
   const [newProduct, setNewProduct] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+
+  // ── Arricchimento settori NACE ───────────────────────────────────────────────
+  const SECTORS = ['Edilizia','Industria','Trasporti e logistica','Servizi','Agricoltura','Energia e utilities','Altro'] as const;
+  const [claudeApiKey, setClaudeApiKey] = useState(() => localStorage.getItem('claude_api_key') || '');
+  const [naceEnriching, setNaceEnriching] = useState(false);
+  const [naceProgress, setNaceProgress] = useState({ done: 0, total: 0 });
+  const [naceShowList, setNaceShowList] = useState(false);
+
+  const noSectorContacts = Object.values(contacts).filter(c => c.status === 'potenziale' && !c.sector);
+
+  const saveApiKey = (key: string) => {
+    setClaudeApiKey(key);
+    localStorage.setItem('claude_api_key', key);
+  };
+
+  const enrichWithClaude = useCallback(async () => {
+    if (!claudeApiKey) { showToast('Inserisci prima la Claude API Key', 'error'); return; }
+    const targets = Object.values(contacts).filter(c => c.status === 'potenziale' && !c.sector);
+    if (!targets.length) { showToast('Nessun contatto senza settore', 'info'); return; }
+
+    setNaceEnriching(true);
+    setNaceProgress({ done: 0, total: targets.length });
+
+    const client = new Anthropic({ apiKey: claudeApiKey, dangerouslyAllowBrowser: true });
+    const BATCH = 10;
+
+    for (let i = 0; i < targets.length; i += BATCH) {
+      const batch = targets.slice(i, i + BATCH);
+      const lines = batch.map((c, j) => `${j+1}. "${c.company}" – ${c.city || ''} (${c.province || ''})`).join('\n');
+      try {
+        const msg = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 512,
+          system: 'Rispondi SOLO con un array JSON valido, senza testo aggiuntivo.',
+          messages: [{ role: 'user', content:
+            `Classifica ciascuna azienda in UNO di questi settori: ${SECTORS.join(', ')}.\n\n${lines}\n\nRispondi con: [{"index":1,"sector":"..."},...]\n` }],
+        });
+        const text = (msg.content[0] as { text: string }).text;
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) {
+          const results: {index:number; sector:string}[] = JSON.parse(match[0]);
+          results.forEach(r => {
+            const c = batch[r.index - 1];
+            const sec = SECTORS.includes(r.sector as typeof SECTORS[number]) ? r.sector : 'Altro';
+            if (c) updateContact(c.id, { sector: sec, updatedAt: Date.now() });
+          });
+        }
+      } catch { /* batch fallito, skippa */ }
+      setNaceProgress(p => ({ ...p, done: Math.min(i + BATCH, targets.length) }));
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    setNaceEnriching(false);
+    showToast('Arricchimento completato!', 'success');
+  }, [claudeApiKey, contacts, updateContact, showToast]);
+
+  const requireAuth = (title: string, description: string, execute: () => void) => {
+    setPendingAction({ title, description, execute });
+  };
 
   const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com') ?? false;
 
@@ -209,12 +273,11 @@ export const SettingsView: React.FC = () => {
           {' '}· <span className="text-blue-600 font-bold">{Object.values(contacts).filter(c => c.status === 'potenziale').length} prospect</span>)
         </p>
         <button
-          onClick={() => {
-            if (window.confirm(`Sei sicuro di voler eliminare tutti i ${Object.keys(contacts).length} contatti?\nQuesta azione non è reversibile.`)) {
-              deleteAllContacts();
-              showToast('Rubrica svuotata', 'success');
-            }
-          }}
+          onClick={() => requireAuth(
+            'Svuota tutti i contatti',
+            `Stai per eliminare ${Object.keys(contacts).length} contatti. Questa azione non è reversibile e cancellerà anche deal, offerte e attività associate.`,
+            () => { deleteAllContacts(); showToast('Rubrica svuotata', 'success'); }
+          )}
           className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <Trash2 size={15} /> Svuota tutti i contatti
@@ -228,12 +291,11 @@ export const SettingsView: React.FC = () => {
           Attualmente hai <span className="font-black text-indigo-600">{Object.keys(products).length}</span> articoli nel catalogo
         </p>
         <button
-          onClick={() => {
-            if (window.confirm(`Eliminare tutti i ${Object.keys(products).length} articoli del catalogo? Questa azione non è reversibile.`)) {
-              clearProducts();
-              showToast('Catalogo prodotti svuotato', 'success');
-            }
-          }}
+          onClick={() => requireAuth(
+            'Svuota catalogo prodotti',
+            `Stai per eliminare ${Object.keys(products).length} articoli dal catalogo. Questa azione non è reversibile.`,
+            () => { clearProducts(); showToast('Catalogo prodotti svuotato', 'success'); }
+          )}
           className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <Trash2 size={15} /> Svuota catalogo prodotti
@@ -247,11 +309,11 @@ export const SettingsView: React.FC = () => {
           onClick={() => {
             const nTransazioni = Object.keys(salesTransactions).length;
             const nStorico = storicoClienti.length;
-            if (window.confirm(`Eliminare tutto lo storico vendite (${nStorico} clienti caricati da Excel + ${nTransazioni} transazioni)? I clienti CRM e i deal non verranno toccati.`)) {
-              clearSalesTransactions();
-              resetStorico();
-              showToast('Storico vendite svuotato', 'success');
-            }
+            requireAuth(
+              'Svuota storico vendite',
+              `Stai per eliminare ${nStorico} clienti da Excel e ${nTransazioni} transazioni. I clienti CRM e i deal non verranno toccati.`,
+              () => { clearSalesTransactions(); resetStorico(); showToast('Storico vendite svuotato', 'success'); }
+            );
           }}
           className="flex items-center gap-2 text-orange-500 text-sm font-bold border border-orange-200 dark:border-orange-800 px-4 py-2 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
         >
@@ -262,17 +324,106 @@ export const SettingsView: React.FC = () => {
       {/* Azioni Pericolose */}
       <div className="p-6 border-t border-gray-100 dark:border-gray-700">
         <button
-          onClick={() => {
-            if (window.confirm('Sei sicuro? Verranno eliminati TUTTI i dati (clienti, deal, offerte, attività). Questa azione non è reversibile.')) {
-              localStorage.removeItem('next-move-storage');
-              window.location.reload();
-            }
-          }}
+          onClick={() => requireAuth(
+            'Resetta tutti i dati',
+            'Verranno eliminati TUTTI i dati: clienti, deal, offerte, attività, prodotti, storico. Il tuo account rimarrà attivo ma il database sarà completamente azzerato.',
+            () => { localStorage.removeItem('next-move-storage'); window.location.reload(); }
+          )}
           className="flex items-center gap-2 text-red-500 text-sm font-bold opacity-70 hover:opacity-100 transition-opacity"
         >
           <Trash2 size={16} /> Resetta tutti i dati dell'App
         </button>
       </div>
+
+      {/* ── Arricchimento Settori NACE ─────────────────────────────────── */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-amber-500" />
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Arricchimento Settori NACE</h3>
+          </div>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${noSectorContacts.length > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'}`}>
+            {noSectorContacts.length} senza settore
+          </span>
+        </div>
+
+        {noSectorContacts.length === 0 ? (
+          <p className="text-sm text-green-600 dark:text-green-400 font-medium">✅ Tutti i prospect hanno un settore assegnato.</p>
+        ) : (
+          <div className="space-y-4">
+            {/* API Key */}
+            <div>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Claude API Key</label>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={claudeApiKey}
+                  onChange={e => saveApiKey(e.target.value)}
+                  placeholder="sk-ant-..."
+                  className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 dark:text-white font-mono"
+                />
+                <button
+                  onClick={enrichWithClaude}
+                  disabled={naceEnriching || !claudeApiKey}
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors"
+                >
+                  <Sparkles size={14} />
+                  {naceEnriching ? `${naceProgress.done}/${naceProgress.total}` : 'Classifica con Claude'}
+                </button>
+              </div>
+              {naceEnriching && (
+                <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 transition-all duration-300"
+                    style={{ width: `${naceProgress.total ? (naceProgress.done / naceProgress.total) * 100 : 0}%` }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Lista contatti senza settore */}
+            <div>
+              <button
+                onClick={() => setNaceShowList(v => !v)}
+                className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                <ChevronDown size={14} className={`transition-transform ${naceShowList ? 'rotate-180' : ''}`} />
+                {naceShowList ? 'Nascondi lista' : `Mostra ${noSectorContacts.length} contatti`}
+              </button>
+
+              {naceShowList && (
+                <div className="mt-2 max-h-64 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-lg divide-y divide-gray-50 dark:divide-gray-700">
+                  {noSectorContacts.map(c => (
+                    <div key={c.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{c.company}</p>
+                        <p className="text-[10px] text-gray-400">{c.city} {c.province ? `(${c.province})` : ''}</p>
+                      </div>
+                      <select
+                        value={c.sector || ''}
+                        onChange={e => updateContact(c.id, { sector: e.target.value, updatedAt: Date.now() })}
+                        className="ml-3 text-xs border border-gray-200 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">— scegli —</option>
+                        {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {pendingAction && (
+        <DeviceAuthModal
+          title={pendingAction.title}
+          description={pendingAction.description}
+          onConfirm={() => { pendingAction.execute(); setPendingAction(null); }}
+          onCancel={() => setPendingAction(null)}
+        />
+      )}
     </div>
   );
 };
