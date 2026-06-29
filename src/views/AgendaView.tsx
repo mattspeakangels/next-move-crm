@@ -194,9 +194,10 @@ interface ActivityCardProps {
   onExport: () => void;
   onClose: () => void;
   onView: () => void;
+  onNavigateToContact?: (contactId: string) => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport, onClose, onView }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport, onClose, onView, onNavigateToContact }) => {
   const isDone = activity.outcome !== 'da-fare';
   return (
     <div className={`bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border flex items-center justify-between gap-4 ${isDone ? 'border-green-100 dark:border-green-900/40 opacity-75' : 'border-gray-50 dark:border-gray-700'}`}>
@@ -205,7 +206,15 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
           {activity.type === 'visita' ? <MapPin size={16} /> : activity.type === 'chiamata' ? <Phone size={16} /> : <span className="text-xs font-black">{TYPE_LABELS[activity.type][0]}</span>}
         </div>
         <div className="min-w-0">
-          <p className="font-black text-sm dark:text-white truncate">{companyName}</p>
+          {onNavigateToContact && activity.contactId ? (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onNavigateToContact(activity.contactId); }}
+              className="font-black text-sm text-indigo-600 dark:text-indigo-400 truncate hover:underline text-left"
+            >{companyName}</button>
+          ) : (
+            <p className="font-black text-sm dark:text-white truncate">{companyName}</p>
+          )}
           <p className="text-xs text-gray-400 font-bold">
             {new Date(activity.date).toLocaleString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </p>
@@ -246,7 +255,11 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const AgendaView: React.FC = () => {
+interface AgendaViewProps {
+  onNavigateToContact?: (contactId: string) => void;
+}
+
+export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
   const { activities, addActivity, updateActivity, deleteActivity, contacts } = useStore();
   const { showToast } = useToast();
 
@@ -1153,6 +1166,7 @@ export const AgendaView: React.FC = () => {
                   onExport={() => handleExport(activity)}
                   onClose={() => openCloseModal(activity)}
                   onView={() => setViewActivity(activity)}
+                  onNavigateToContact={onNavigateToContact}
                 />
               ))}
             </div>
@@ -1166,7 +1180,15 @@ export const AgendaView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-6">
               <div className="min-w-0">
-                <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || (NO_CONTACT_TYPES.includes(viewActivity.type) ? TYPE_LABELS[viewActivity.type] : 'Azienda')}</h2>
+                {onNavigateToContact && viewActivity.contactId ? (
+                  <button
+                    type="button"
+                    onClick={() => { setViewActivity(null); onNavigateToContact(viewActivity.contactId); }}
+                    className="text-xl font-black text-indigo-600 dark:text-indigo-400 truncate hover:underline text-left"
+                  >{contacts[viewActivity.contactId]?.company || 'Azienda'}</button>
+                ) : (
+                  <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || (NO_CONTACT_TYPES.includes(viewActivity.type) ? TYPE_LABELS[viewActivity.type] : 'Azienda')}</h2>
+                )}
                 <p className="text-xs text-gray-400 font-bold mt-1">
                   {new Date(viewActivity.date).toLocaleString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>

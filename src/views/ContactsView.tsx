@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { useStore } from '../store/useStore';
 import { Contact, ContactSegment } from '../types';
@@ -8,6 +8,7 @@ import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
 import { ProfilingForm } from '../components/profiling/ProfilingForm';
+import { ImportFromUrlModal } from '../components/contacts/ImportFromUrlModal';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { ContactHistoryView } from './ContactHistoryView';
 
@@ -455,6 +456,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [pendingDeleteAll, setPendingDeleteAll] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
   const [segmentFilter, setSegmentFilter] = useState<ContactSegment | null>(null);
   const [visibleCount, setVisibleCount] = useState(50);
@@ -1284,6 +1286,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}>
                     <Upload size={18} /> <span className="hidden md:inline">Importa CSV</span>
                   </button>
+                  <button onClick={() => setShowImportModal(true)}
+                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
+                    title="Crea contatto da sito web">
+                    <Link size={18} /> <span className="hidden md:inline">Da URL</span>
+                  </button>
                   <button onClick={() => {
                     const newContact = {
                       id: `c_${Date.now()}`,
@@ -1516,6 +1523,42 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           </div>
         );
       })()}
+
+      {/* Import da URL */}
+      {showImportModal && (
+        <ImportFromUrlModal
+          onClose={() => setShowImportModal(false)}
+          onImport={scraped => {
+            const now = Date.now();
+            const newContact = {
+              id: `c_${now}`,
+              company: scraped.company,
+              contactName: scraped.contactName,
+              role: scraped.role,
+              email: scraped.email,
+              phone: scraped.phone,
+              website: scraped.website,
+              vatNumber: scraped.vatNumber,
+              address: scraped.address,
+              city: scraped.city,
+              zipCode: scraped.zipCode,
+              province: scraped.province,
+              country: scraped.country || 'IT',
+              sector: scraped.sector,
+              notes: scraped.notes,
+              region: '',
+              customerType: 'end-user' as const,
+              status: 'potenziale' as const,
+              stakeholders: [],
+              intelligence: { products: [], competitors: [], pricesAndPayments: '', logisticsAndService: '' },
+              createdAt: now,
+              updatedAt: now,
+            };
+            setDetailContact(newContact);
+            setEditingContact(newContact);
+          }}
+        />
+      )}
 
     </div>
   );

@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { useAuth } from './lib/authContext';
 import { useFirestoreSync } from './lib/useFirestoreSync';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { LoginView } from './views/LoginView';
-import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, MoreHorizontal, X, BarChart3, TrendingUp, Shield, ChevronLeft } from 'lucide-react';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
 import { SelectionAI } from './components/ai/SelectionAI';
@@ -37,19 +37,29 @@ function AppContent() {
   );
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const historyRef = useRef<NavView[]>([]);
   const { theme, profile } = useStore();
 
   useInitializeProducts();
 
-  const navigateToContact = (contactId: string) => {
-    setSelectedContactId(contactId);
-    setCurrentView('contacts');
-  };
-
   const goTo = (view: NavView) => {
+    historyRef.current = [...historyRef.current, currentView];
     setCurrentView(view);
     localStorage.setItem('nm_last_view', view);
     setMobileMenuOpen(false);
+  };
+
+  const goBack = () => {
+    const prev = historyRef.current.pop();
+    if (prev) {
+      setCurrentView(prev);
+      localStorage.setItem('nm_last_view', prev);
+    }
+  };
+
+  const navigateToContact = (contactId: string) => {
+    setSelectedContactId(contactId);
+    goTo('contacts');
   };
 
   useEffect(() => {
@@ -69,7 +79,7 @@ function AppContent() {
       case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
       case 'deals': return <PipelineView onNavigateToContact={navigateToContact} />;
       case 'offers': return <OffersView />;
-      case 'agenda': return <AgendaView />;
+      case 'agenda': return <AgendaView onNavigateToContact={navigateToContact} />;
       case 'products': return <ProductsView />;
       case 'map': return <MapView onNavigateToContact={navigateToContact} onGoFullscreen={() => goTo('map-full')} />;
       case 'map-full': return <MapView onNavigateToContact={navigateToContact} isFullscreen onExitFullscreen={() => goTo('map')} />;
@@ -111,6 +121,11 @@ function AppContent() {
           <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Next<br/>Move</h1>
         </div>
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
+          {historyRef.current.length > 0 && (
+            <button onClick={goBack} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:hover:text-white mb-2 border border-gray-100 dark:border-gray-700">
+              <ChevronLeft size={20} /> Indietro
+            </button>
+          )}
           {navItems.map(({ id, icon: Icon, label }) => (
             <button key={id} onClick={() => goTo(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all ${currentView === id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:hover:text-white'}`}>
               <Icon size={20} />{label}
@@ -122,6 +137,14 @@ function AppContent() {
       {/* ── MAIN CONTENT ── */}
       <main className="md:pl-64 min-h-screen pb-20 md:pb-0 bg-gray-50 dark:bg-gray-900">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
+          {historyRef.current.length > 0 && (
+            <button
+              onClick={goBack}
+              className="md:hidden flex items-center gap-1.5 text-sm font-black text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-4 transition-colors"
+            >
+              <ChevronLeft size={18} /> Indietro
+            </button>
+          )}
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>
