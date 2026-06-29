@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn } from '../types';
+import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
   contacts: Record<string, Contact>;
@@ -29,6 +30,7 @@ interface StoreState {
   addContactsBatch: (contacts: Contact[]) => void;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   deleteContact: (id: string) => void;
+  deleteContactsBatch: (ids: string[]) => void;
   deleteAllContacts: () => void;
 
   // Trattative, Offerte, Prodotti
@@ -106,6 +108,11 @@ export const useStore = create<StoreState>()(
       deleteContact: (id) => set((state) => {
         const newContacts = { ...state.contacts };
         delete newContacts[id];
+        return { contacts: newContacts };
+      }),
+      deleteContactsBatch: (ids) => set((state) => {
+        const newContacts = { ...state.contacts };
+        ids.forEach(id => delete newContacts[id]);
         return { contacts: newContacts };
       }),
       deleteAllContacts: () => set({ contacts: {} }),
@@ -196,6 +203,7 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'next-move-storage',
+      storage: createJSONStorage(() => idbStorage),
       partialize: (state) => ({
         contacts: state.contacts,
         deals: state.deals,

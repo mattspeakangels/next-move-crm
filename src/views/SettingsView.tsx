@@ -6,6 +6,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import Anthropic from '@anthropic-ai/sdk';
+import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
 
@@ -334,6 +335,9 @@ export const SettingsView: React.FC = () => {
           <Trash2 size={16} /> Resetta tutti i dati dell'App
         </button>
       </div>
+
+      {/* ── Pulizia Territorio ─────────────────────────────────────────── */}
+      <PuliziaTerritorio />
 
       {/* ── Arricchimento Settori NACE ─────────────────────────────────── */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
