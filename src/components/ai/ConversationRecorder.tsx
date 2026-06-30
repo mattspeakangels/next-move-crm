@@ -254,6 +254,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const isDealer = contact.customerType === 'dealer' || contact.segment === 'dealer';
 
   const [phase, setPhase] = useState<'idle' | 'recording' | 'manual' | 'analyzing' | 'done'>('idle');
+  const [srStatus, setSrStatus] = useState<'connecting' | 'listening' | 'sound' | 'speech'>('connecting');
   const [transcript, setTranscript] = useState('');
   const [interim, setInterim] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -265,12 +266,20 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const srRef = useRef<any>(null);
   const shouldRecordRef = useRef(false);
   const fullTranscriptRef = useRef('');
+  const noResultsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isSupported =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   // ── SpeechRecognition ──────────────────────────────────────────────────────
+
+  const clearNoResultsTimer = () => {
+    if (noResultsTimerRef.current) {
+      clearTimeout(noResultsTimerRef.current);
+      noResultsTimerRef.current = null;
+    }
+  };
 
   const startSR = useCallback(() => {
     const w = window as any;
@@ -282,7 +291,24 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     sr.continuous = true;
     sr.interimResults = true;
 
+    setSrStatus('connecting');
+
+    sr.onstart = () => {
+      setSrStatus('listening');
+      // Se non arriva nulla entro 18s dall'avvio, mostra avviso
+      noResultsTimerRef.current = setTimeout(() => {
+        if (shouldRecordRef.current && fullTranscriptRef.current === '') {
+          setError('Nessun testo rilevato. Verifica che il microfono sia attivo e parla vicino al telefono. Puoi anche scrivere il testo manualmente.');
+        }
+      }, 18000);
+    };
+
+    sr.onaudiostart = () => setSrStatus('sound');
+    sr.onspeechstart = () => setSrStatus('speech');
+    sr.onspeechend = () => setSrStatus('listening');
+
     sr.onresult = (e: any) => {
+      clearNoResultsTimer();
       let final = '';
       let int = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -292,6 +318,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       if (final) {
         fullTranscriptRef.current += final;
         setTranscript(fullTranscriptRef.current);
+        setError(null);
       }
       setInterim(int);
     };
@@ -299,17 +326,42 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     sr.onend = () => {
       setInterim('');
       if (shouldRecordRef.current) {
-        setTimeout(() => { if (shouldRecordRef.current) startSR(); }, 400);
+        setTimeout(() => {
+          if (shouldRecordRef.current) startSR();
+        }, 400);
       }
     };
 
     sr.onerror = (e: any) => {
-      if (e.error === 'aborted' || e.error === 'no-speech') return;
-      if (e.error === 'not-allowed') {
-        setError('Permesso microfono negato. Abilita il microfono nelle impostazioni del browser.');
+      if (e.error === 'aborted') return;
+      if (e.error === 'no-speech') {
+        // normale — SR si riavvia da onend
+        return;
+      }
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        setError('Permesso microfono negato. Abilita il microfono nelle impostazioni del browser, poi riprova.');
         shouldRecordRef.current = false;
         setPhase('idle');
+        clearNoResultsTimer();
+        return;
       }
+      if (e.error === 'network') {
+        setError('Errore di rete: il riconoscimento vocale richiede una connessione internet. Verifica la connessione o usa la scrittura manuale.');
+        shouldRecordRef.current = false;
+        setPhase('manual');
+        clearNoResultsTimer();
+        return;
+      }
+      if (e.error === 'audio-capture') {
+        setError('Microfono non rilevato. Verifica che il dispositivo abbia un microfono attivo.');
+        shouldRecordRef.current = false;
+        setPhase('idle');
+        clearNoResultsTimer();
+        return;
+      }
+      // Errore sconosciuto — log + offri manuale
+      console.warn('[SR] error:', e.error);
+      setError(`Errore riconoscimento vocale (${e.error}). Puoi scrivere il testo manualmente.`);
     };
 
     sr.start();
@@ -322,6 +374,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     setTranscript('');
     setInterim('');
     setError(null);
+    clearNoResultsTimer();
 
     if (!isSupported) {
       setPhase('manual');
@@ -335,7 +388,17 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     shouldRecordRef.current = false;
     srRef.current?.stop();
     setInterim('');
+    clearNoResultsTimer();
     setPhase('idle');
+  };
+
+  const switchToManual = () => {
+    shouldRecordRef.current = false;
+    srRef.current?.stop();
+    setInterim('');
+    clearNoResultsTimer();
+    setError(null);
+    setPhase('manual');
   };
 
   // ── Claude Analysis ────────────────────────────────────────────────────────
@@ -476,23 +539,37 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
           {/* ── RECORDING ── */}
           {phase === 'recording' && (
             <div className="space-y-4">
+              {/* Status bar */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-sm font-black text-red-600 dark:text-red-400">Registrazione in corso...</span>
+                  <span className="text-sm font-black text-red-600 dark:text-red-400">
+                    {srStatus === 'connecting' && 'Connessione microfono...'}
+                    {srStatus === 'listening' && 'In ascolto...'}
+                    {srStatus === 'sound' && '🔊 Audio rilevato'}
+                    {srStatus === 'speech' && '🗣️ Voce rilevata'}
+                  </span>
                 </div>
-                <button
-                  onClick={stopRecording}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-black hover:bg-gray-200 transition-colors"
-                >
-                  <Square size={12} /> Stop
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={switchToManual}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-black text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    ✏️ Scrivi
+                  </button>
+                  <button
+                    onClick={stopRecording}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-black hover:bg-gray-200 transition-colors"
+                  >
+                    <Square size={12} /> Stop
+                  </button>
+                </div>
               </div>
 
               {/* Transcript box */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 min-h-[160px] max-h-[300px] overflow-y-auto text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {transcript || <span className="text-gray-300 dark:text-gray-600 italic">Parla... la trascrizione apparirà qui</span>}
-                {interim && <span className="text-gray-400 dark:text-gray-500 italic"> {interim}</span>}
+                {transcript || <span className="text-gray-300 dark:text-gray-600 italic">Parla vicino al microfono... il testo apparirà qui</span>}
+                {interim && <span className="text-indigo-400 italic"> {interim}</span>}
               </div>
 
               <button
@@ -668,9 +745,19 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
           {error && (
             <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-2xl p-4">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-red-700 dark:text-red-300 font-bold">{error}</p>
-                <button onClick={() => setError(null)} className="text-xs text-red-400 hover:text-red-600 mt-1">Chiudi</button>
+                <div className="flex items-center gap-3 mt-2">
+                  {phase !== 'manual' && (
+                    <button
+                      onClick={switchToManual}
+                      className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      ✏️ Scrivi manualmente
+                    </button>
+                  )}
+                  <button onClick={() => setError(null)} className="text-xs text-red-400 hover:text-red-600">Chiudi</button>
+                </div>
               </div>
             </div>
           )}
