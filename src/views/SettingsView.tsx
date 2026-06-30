@@ -1,13 +1,96 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
+
+// ── Claude API Key Section ──────────────────────────────────────────────────
+
+const ClaudeApiKeySection: React.FC = () => {
+  const [key, setKey] = useState(() => localStorage.getItem('claude_api_key') || '');
+  const [show, setShow] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    localStorage.setItem('claude_api_key', key.trim());
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleClear = () => {
+    localStorage.removeItem('claude_api_key');
+    setKey('');
+    setSaved(false);
+  };
+
+  const isValid = key.trim().startsWith('sk-ant-');
+  const hasKey = !!localStorage.getItem('claude_api_key');
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+      <div className="flex items-center gap-2">
+        <Sparkles size={16} className="text-indigo-500" />
+        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Claude AI — API Key</h2>
+        {hasKey && (
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
+            <CheckCircle2 size={10} /> Attiva
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Necessaria per la registrazione conversazioni, analisi resoconto e altre funzionalità AI.
+        Ottienila su <span className="font-mono">console.anthropic.com</span>.
+      </p>
+
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type={show ? 'text' : 'password'}
+            value={key}
+            onChange={e => { setKey(e.target.value); setSaved(false); }}
+            placeholder="sk-ant-api03-..."
+            className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2.5 pr-10 bg-gray-50 dark:bg-gray-700 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <button
+            type="button"
+            onClick={() => setShow(v => !v)}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            {show ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={!key.trim() || (!isValid && key.trim().length > 0)}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-black transition-colors"
+        >
+          {saved ? <><CheckCircle2 size={15} /> Salvata!</> : 'Salva API Key'}
+        </button>
+        {hasKey && (
+          <button
+            onClick={handleClear}
+            className="px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-black transition-colors"
+          >
+            Rimuovi
+          </button>
+        )}
+      </div>
+
+      {key.trim().length > 5 && !isValid && (
+        <p className="text-xs text-red-500 font-medium">La chiave deve iniziare con <span className="font-mono">sk-ant-</span></p>
+      )}
+    </div>
+  );
+};
 
 export const SettingsView: React.FC = () => {
   const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
@@ -283,6 +366,9 @@ export const SettingsView: React.FC = () => {
 
       {/* ── Pulizia Territorio ─────────────────────────────────────────── */}
       <PuliziaTerritorio />
+
+      {/* ── Claude API Key ─────────────────────────────────────────────── */}
+      <ClaudeApiKeySection />
 
       {/* ── Footer personalizzabile ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
