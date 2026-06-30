@@ -465,7 +465,7 @@ export const SettingsView: React.FC = () => {
             { id: 'storico',    label: 'Storico'      },
             { id: 'assets',     label: 'Asset'        },
           ];
-          const current: import('../types').NavView[] = footerTabs && footerTabs.length === 4 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts'];
+          const current: import('../types').NavView[] = footerTabs && footerTabs.length > 0 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts'];
           const toggle = (id: import('../types').NavView) => {
             if (current.includes(id)) {
               if (current.length > 1) setFooterTabs(current.filter(t => t !== id));

@@ -125,7 +125,7 @@ function AppContent() {
   ];
 
   // Mobile bottom bar: usa footerTabs dallo store, fallback ai primi 4
-  const activeTabs = (footerTabs && footerTabs.length === 4 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts']) as NavView[];
+  const activeTabs = (footerTabs && footerTabs.length > 0 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts']) as NavView[];
   const mobileMain = navItems.filter(n => activeTabs.includes(n.id));
 
   return (
