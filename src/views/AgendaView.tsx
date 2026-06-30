@@ -1607,10 +1607,11 @@ Regole:
       {/* ── Chiudi Appuntamento Modal ── */}
       {closingActivity && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 w-full sm:max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 w-full sm:max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[92vh]">
 
-            {/* Header */}
-            <div className="flex justify-between items-start mb-5">
+            {/* Header — sticky */}
+            <div className="flex justify-between items-start px-6 pt-6 pb-4 sm:px-8 sm:pt-8 flex-shrink-0 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex justify-between items-start w-full mb-0">
               <div>
                 <h2 className="text-xl font-black dark:text-white">Chiudi Appuntamento</h2>
                 <p className="text-sm text-gray-400 font-bold mt-0.5">
@@ -1625,6 +1626,10 @@ Regole:
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 px-6 pb-6 sm:px-8 sm:pb-8 pt-5 space-y-4">
 
             {/* Visit type */}
             <div className="mb-4">
@@ -1806,6 +1811,8 @@ Regole:
                 Chiudi Appuntamento
               </button>
             </div>
+
+            </div>{/* end scrollable body */}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
-  CheckSquare, Square, Plus, Trash2, Filter, ChevronDown,
-  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar,
+  CheckSquare, Square, Plus, Trash2, Filter, ChevronDown, ChevronRight,
+  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView } from '../types';
@@ -293,6 +293,8 @@ export const TodoView: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<TodoStatus | 'tutti'>('tutti');
   const [filterTipo, setFilterTipo] = useState<TodoTipo | 'tutti'>('tutti');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'lista' | 'cliente'>('cliente');
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set(['__none__']));
 
   const allTodos = Object.values(todos);
 
@@ -311,6 +313,48 @@ export const TodoView: React.FC = () => {
         return b.createdAt - a.createdAt;
       });
   }, [todos, filterStatus, filterTipo]);
+
+  // Raggruppamento per cliente
+  const byClient = useMemo(() => {
+    const base = allTodos
+      .filter(t => filterStatus === 'tutti' || t.status === filterStatus)
+      .filter(t => filterTipo === 'tutti' || t.tipo === filterTipo);
+
+    const map = new Map<string, { name: string; todos: typeof base }>();
+    const sortTodos = (arr: typeof base) =>
+      [...arr].sort((a, b) => {
+        const p = { alta: 0, media: 1, bassa: 2 };
+        const d = p[a.priorita] - p[b.priorita];
+        if (d !== 0) return d;
+        if (a.scadenza && b.scadenza) return a.scadenza.localeCompare(b.scadenza);
+        return a.scadenza ? -1 : b.scadenza ? 1 : 0;
+      });
+
+    for (const t of base) {
+      const key = t.contactId || '__none__';
+      if (!map.has(key)) {
+        const name = t.contactId ? (contacts[t.contactId]?.company || 'Cliente sconosciuto') : 'Senza cliente';
+        map.set(key, { name, todos: [] });
+      }
+      map.get(key)!.todos.push(t);
+    }
+
+    return [...map.entries()]
+      .map(([key, val]) => ({ key, name: val.name, todos: sortTodos(val.todos) }))
+      .sort((a, b) => {
+        if (a.key === '__none__') return 1;
+        if (b.key === '__none__') return -1;
+        return a.name.localeCompare(b.name, 'it');
+      });
+  }, [todos, contacts, filterStatus, filterTipo]);
+
+  const toggleClient = (key: string) => {
+    setExpandedClients(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   // Contatori
   const daFare = allTodos.filter(t => t.status === 'da-fare').length;
@@ -341,12 +385,29 @@ export const TodoView: React.FC = () => {
             </p>
           )}
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
-        >
-          <Plus size={16} /> Aggiungi
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Toggle vista */}
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
+            <button
+              onClick={() => setViewMode('cliente')}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'cliente' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+            >
+              <Users size={12} /> Clienti
+            </button>
+            <button
+              onClick={() => setViewMode('lista')}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'lista' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+            >
+              <List size={12} /> Lista
+            </button>
+          </div>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
+          >
+            <Plus size={15} />
+          </button>
+        </div>
       </div>
 
       {/* Status tabs */}
@@ -406,33 +467,86 @@ export const TodoView: React.FC = () => {
         </div>
       )}
 
-      {/* Lista */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <CheckSquare size={24} className="text-gray-300 dark:text-gray-600" />
+      {/* Vista per Cliente */}
+      {viewMode === 'cliente' && (
+        byClient.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <CheckSquare size={24} className="text-gray-300 dark:text-gray-600" />
+            </div>
+            <p className="text-sm font-bold text-gray-400">Nessuna attività. Aggiungine una o completa una visita!</p>
           </div>
-          <p className="text-sm font-bold text-gray-400">
-            {filterStatus === 'tutti' && filterTipo === 'tutti'
-              ? 'Nessuna attività. Aggiungine una o completa una visita!'
-              : 'Nessuna attività con questi filtri'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {filtered.map(todo => (
-            <TodoCard
-              key={todo.id}
-              todo={todo}
-              contactName={todo.contactId ? contacts[todo.contactId]?.company : undefined}
-              onToggle={status => updateTodo(todo.id, {
-                status,
-                completedAt: status === 'fatto' ? Date.now() : undefined,
-              })}
-              onDelete={() => deleteTodo(todo.id)}
-            />
-          ))}
-        </div>
+        ) : (
+          <div className="space-y-3">
+            {byClient.map(({ key, name, todos: clientTodos }) => {
+              const open = expandedClients.has(key);
+              const scadutiClient = clientTodos.filter(t => t.status !== 'fatto' && isOverdue(t.scadenza)).length;
+              const daFareClient = clientTodos.filter(t => t.status === 'da-fare').length;
+              return (
+                <div key={key} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+                  {/* Client header */}
+                  <button
+                    onClick={() => toggleClient(key)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+                      <Building2 size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-sm font-black text-gray-800 dark:text-white truncate">{name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-bold text-gray-400">{clientTodos.length} {clientTodos.length === 1 ? 'attività' : 'attività'}</span>
+                        {daFareClient > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">{daFareClient} da fare</span>}
+                        {scadutiClient > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 flex items-center gap-0.5"><AlertCircle size={8} />{scadutiClient} scad.</span>}
+                      </div>
+                    </div>
+                    {open ? <ChevronDown size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />}
+                  </button>
+                  {/* Todos */}
+                  {open && (
+                    <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700/50 px-3 pb-3 pt-1 space-y-1.5">
+                      {clientTodos.map(todo => (
+                        <div key={todo.id} className="pt-1.5">
+                          <TodoCard
+                            todo={todo}
+                            onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
+                            onDelete={() => deleteTodo(todo.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {/* Vista Lista */}
+      {viewMode === 'lista' && (
+        filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <CheckSquare size={24} className="text-gray-300 dark:text-gray-600" />
+            </div>
+            <p className="text-sm font-bold text-gray-400">
+              {filterStatus === 'tutti' && filterTipo === 'tutti' ? 'Nessuna attività.' : 'Nessuna attività con questi filtri'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {filtered.map(todo => (
+              <TodoCard
+                key={todo.id}
+                todo={todo}
+                contactName={todo.contactId ? contacts[todo.contactId]?.company : undefined}
+                onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
+                onDelete={() => deleteTodo(todo.id)}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {/* Add modal */}
