@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare } from 'lucide-react';
-import { Activity, ActivityType, ActivityOutcome } from '../types';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle } from 'lucide-react';
+import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita } from '../types';
+import Anthropic from '@anthropic-ai/sdk';
 import { useToast } from '../components/ui/ToastContext';
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
@@ -295,6 +296,20 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const [closingActivity, setClosingActivity] = useState<Activity | null>(null);
   const [closeOutcome, setCloseOutcome] = useState<ActivityOutcome>('riuscita');
   const [closeNotes, setCloseNotes] = useState('');
+
+  // AI Todo extraction
+  interface AiExtractedTodo {
+    titolo: string;
+    tipo: TodoTipo;
+    priorita: TodoPriorita;
+    dataEsecuzione: string;
+    scadenza: string;
+    note: string;
+    selected: boolean;
+  }
+  const [aiTodos, setAiTodos] = useState<AiExtractedTodo[]>([]);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const voiceClose = useVoiceInput();
   const voiceNotes = useVoiceInput();
 
@@ -386,6 +401,89 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     voiceClose.reset();
   };
 
+  const analyzeResoconto = async () => {
+    if (!closeNotes.trim()) return;
+    const apiKey = localStorage.getItem('claude_api_key');
+    if (!apiKey) { setAiError('Inserisci la Claude API Key nelle Impostazioni.'); return; }
+
+    setAiAnalyzing(true);
+    setAiError(null);
+    setAiTodos([]);
+
+    const today = new Date().toISOString().split('T')[0];
+    const contactName = closingActivity?.contactId ? contacts[closingActivity.contactId]?.company ?? '' : '';
+
+    try {
+      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+      const msg = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: `Sei un assistente per un agente commerciale Blaklader (workwear premium).
+Data oggi: ${today}. Cliente: "${contactName}".
+
+Dal seguente resoconto di visita, estrai TUTTE le azioni concrete da fare.
+Per ogni azione specifica una data di esecuzione (quando farlo) e una scadenza massima, basandoti sulle urgenze menzionate nel testo.
+
+RESOCONTO:
+---
+${closeNotes}
+---
+
+Rispondi SOLO con un array JSON valido:
+[
+  {
+    "titolo": "descrizione concisa dell'azione",
+    "tipo": "offerta"|"scheda-tecnica"|"email-info"|"chiamata-follow"|"campionatura"|"demo"|"visita"|"altro",
+    "priorita": "alta"|"media"|"bassa",
+    "dataEsecuzione": "YYYY-MM-DD",
+    "scadenza": "YYYY-MM-DD",
+    "note": "dettaglio utile (opzionale, stringa vuota se non necessario)"
+  }
+]
+
+Regole:
+- "alta" se c'è urgenza esplicita (entro oggi/domani/48h/fine settimana)
+- "media" se entro 1-2 settimane
+- "bassa" se non c'è urgenza definita
+- dataEsecuzione = quando iniziare; scadenza = deadline massima
+- Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
+- Includi SOLO azioni concrete, non osservazioni generiche`,
+        }],
+      });
+
+      const raw = (msg.content[0] as { text: string }).text.trim();
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('Risposta non valida');
+      const parsed: Omit<AiExtractedTodo, 'selected'>[] = JSON.parse(match[0]);
+      setAiTodos(parsed.map(t => ({ ...t, selected: true })));
+    } catch (err: any) {
+      setAiError(err.message ?? 'Errore analisi. Riprova.');
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
+  const confirmAiTodos = () => {
+    const selected = aiTodos.filter(t => t.selected);
+    for (const t of selected) {
+      addTodo({
+        titolo: t.titolo,
+        tipo: t.tipo,
+        priorita: t.priorita,
+        scadenza: t.scadenza || undefined,
+        note: (t.note || undefined),
+        contactId: closingActivity?.contactId || undefined,
+        status: 'da-fare',
+        source: 'visita',
+        sourceActivityId: closingActivity?.id,
+      });
+    }
+    if (selected.length > 0) showToast(`${selected.length} attività aggiunte al To Do`, 'success');
+    setAiTodos([]);
+  };
+
   const handleCloseActivity = () => {
     if (!closingActivity) return;
     updateActivity(closingActivity.id, {
@@ -435,6 +533,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     showToast('Appuntamento chiuso!', 'success');
     setClosingActivity(null);
     setCloseNotes('');
+    setAiTodos([]);
+    setAiError(null);
   };
 
   const allActivities = Object.values(activities);
@@ -1572,10 +1672,89 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
               {voiceClose.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceClose.error}</p>}
             </div>
 
+            {/* AI Analysis */}
+            {closeNotes.trim().length > 20 && (
+              <div className="space-y-3">
+                <button
+                  onClick={analyzeResoconto}
+                  disabled={aiAnalyzing}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-black hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors disabled:opacity-50"
+                >
+                  {aiAnalyzing
+                    ? <><Loader2 size={13} className="animate-spin" /> Analisi in corso...</>
+                    : <><Sparkles size={13} /> Analizza resoconto e genera To Do</>}
+                </button>
+
+                {aiError && (
+                  <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
+                    <AlertCircle size={13} className="text-red-500 flex-shrink-0" />
+                    <p className="text-xs text-red-600 dark:text-red-400">{aiError}</p>
+                  </div>
+                )}
+
+                {aiTodos.length > 0 && (
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-4 space-y-3 border border-indigo-100 dark:border-indigo-800">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                        <Sparkles size={10} className="inline mr-1" />
+                        {aiTodos.filter(t => t.selected).length} attività estratte
+                      </p>
+                      <button
+                        onClick={() => { const allSel = aiTodos.every(t => t.selected); setAiTodos(ts => ts.map(t => ({ ...t, selected: !allSel }))); }}
+                        className="text-[9px] font-black text-indigo-400 hover:text-indigo-600 uppercase tracking-wide"
+                      >
+                        {aiTodos.every(t => t.selected) ? 'Deseleziona tutte' : 'Seleziona tutte'}
+                      </button>
+                    </div>
+
+                    {aiTodos.map((todo, i) => (
+                      <div key={i} className={`bg-white dark:bg-gray-800 rounded-xl p-3 border-2 transition-all ${todo.selected ? 'border-indigo-300 dark:border-indigo-600' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
+                        <div className="flex items-start gap-2">
+                          <input type="checkbox" checked={todo.selected}
+                            onChange={() => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, selected: !t.selected } : t))}
+                            className="mt-0.5 flex-shrink-0 accent-indigo-600" />
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-red-100 text-red-600' : todo.priorita === 'media' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
+                                {todo.priorita}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <div>
+                                <label className="text-[9px] text-gray-400 font-bold uppercase block mb-0.5">Esecuzione</label>
+                                <input type="date" value={todo.dataEsecuzione}
+                                  onChange={e => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, dataEsecuzione: e.target.value } : t))}
+                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-indigo-400" />
+                              </div>
+                              <div>
+                                <label className="text-[9px] text-gray-400 font-bold uppercase block mb-0.5">Scadenza</label>
+                                <input type="date" value={todo.scadenza}
+                                  onChange={e => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, scadenza: e.target.value } : t))}
+                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-indigo-400" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={confirmAiTodos}
+                      disabled={!aiTodos.some(t => t.selected)}
+                      className="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs hover:bg-indigo-700 transition-colors disabled:opacity-40"
+                    >
+                      Aggiungi {aiTodos.filter(t => t.selected).length} attività al To Do
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3">
               <button
-                onClick={() => { setClosingActivity(null); voiceClose.stop(); voiceClose.reset(); }}
+                onClick={() => { setClosingActivity(null); voiceClose.stop(); voiceClose.reset(); setAiTodos([]); setAiError(null); }}
                 className="flex-1 py-3.5 rounded-2xl font-black bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
               >
                 Annulla
