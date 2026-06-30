@@ -1,17 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, ChevronDown } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
-import Anthropic from '@anthropic-ai/sdk';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, updateContact, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -21,84 +20,6 @@ export const SettingsView: React.FC = () => {
   const [resetSent, setResetSent] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
-  // ── Arricchimento settori NACE ───────────────────────────────────────────────
-  const SECTORS = ['Edilizia','Industria','Trasporti e logistica','Servizi','Agricoltura','Energia e utilities','Altro'] as const;
-  const [claudeApiKey, setClaudeApiKey] = useState(() => localStorage.getItem('claude_api_key') || '');
-  const [naceEnriching, setNaceEnriching] = useState(false);
-  const [naceProgress, setNaceProgress] = useState({ done: 0, total: 0, errors: 0 });
-  const [naceShowList, setNaceShowList] = useState(false);
-
-  const noSectorContacts = Object.values(contacts).filter(c => !c.sector || c.sector.trim() === '');
-
-  const saveApiKey = (key: string) => {
-    setClaudeApiKey(key);
-    localStorage.setItem('claude_api_key', key);
-  };
-
-  const enrichWithClaude = useCallback(async () => {
-    if (!claudeApiKey.trim()) { showToast('Inserisci prima la Claude API Key', 'error'); return; }
-    const targets = Object.values(contacts).filter(c => !c.sector || c.sector.trim() === '');
-    if (!targets.length) { showToast('Nessun contatto senza settore', 'info'); return; }
-
-    setNaceEnriching(true);
-    setNaceProgress({ done: 0, total: targets.length, errors: 0 });
-
-    let client: Anthropic;
-    try {
-      client = new Anthropic({ apiKey: claudeApiKey.trim(), dangerouslyAllowBrowser: true });
-    } catch (e) {
-      showToast('API Key non valida', 'error');
-      setNaceEnriching(false);
-      return;
-    }
-
-    const BATCH = 10;
-    let totalErrors = 0;
-    let totalUpdated = 0;
-
-    for (let i = 0; i < targets.length; i += BATCH) {
-      const batch = targets.slice(i, i + BATCH);
-      const lines = batch.map((c, j) => `${j + 1}. "${c.company}" – ${c.city || ''} (${c.province || ''})`).join('\n');
-      try {
-        const msg = await client.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 512,
-          system: 'Rispondi SOLO con un array JSON valido, senza testo aggiuntivo.',
-          messages: [{ role: 'user', content:
-            `Classifica ciascuna azienda in UNO di questi settori: ${SECTORS.join(', ')}.\n\nAziende:\n${lines}\n\nRispondi con un array JSON: [{"index":1,"sector":"Edilizia"}, ...]\nUsa indici 1-based come nell'elenco.` }],
-        });
-        const text = (msg.content[0] as { text: string }).text.trim();
-        const match = text.match(/\[[\s\S]*?\]/);
-        if (match) {
-          const results: { index: number; sector: string }[] = JSON.parse(match[0]);
-          results.forEach(r => {
-            if (!r || typeof r.index !== 'number') return;
-            const c = batch[r.index - 1];
-            if (!c) return;
-            const sec = SECTORS.includes(r.sector as typeof SECTORS[number]) ? r.sector : 'Altro';
-            updateContact(c.id, { sector: sec, updatedAt: Date.now() });
-            totalUpdated++;
-          });
-        } else {
-          // fallback: assegna 'Altro' a tutti
-          batch.forEach(c => { updateContact(c.id, { sector: 'Altro', updatedAt: Date.now() }); totalUpdated++; });
-        }
-      } catch (err) {
-        totalErrors++;
-        // fallback: assegna 'Altro' così escono dalla lista "senza settore"
-        batch.forEach(c => { updateContact(c.id, { sector: 'Altro', updatedAt: Date.now() }); totalUpdated++; });
-      }
-      setNaceProgress({ done: Math.min(i + BATCH, targets.length), total: targets.length, errors: totalErrors });
-      await new Promise(r => setTimeout(r, 200));
-    }
-
-    setNaceEnriching(false);
-    if (totalErrors > 0) {
-      showToast(`Completato: ${totalUpdated} aggiornati, ${totalErrors} batch con errore API (assegnato "Altro")`, 'info');
-    } else {
-      showToast(`Arricchimento completato: ${totalUpdated} prospect classificati`, 'success');
-    }
-  }, [claudeApiKey, contacts, updateContact, showToast]);
 
   const requireAuth = (title: string, description: string, execute: () => void) => {
     setPendingAction({ title, description, execute });
@@ -362,87 +283,6 @@ export const SettingsView: React.FC = () => {
 
       {/* ── Pulizia Territorio ─────────────────────────────────────────── */}
       <PuliziaTerritorio />
-
-      {/* ── Arricchimento Settori NACE ─────────────────────────────────── */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-amber-500" />
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Arricchimento Settori NACE</h3>
-          </div>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${noSectorContacts.length > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'}`}>
-            {noSectorContacts.length} senza settore
-          </span>
-        </div>
-
-        {noSectorContacts.length === 0 ? (
-          <p className="text-sm text-green-600 dark:text-green-400 font-medium">✅ Tutti i prospect hanno un settore assegnato.</p>
-        ) : (
-          <div className="space-y-4">
-            {/* API Key */}
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Claude API Key</label>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={claudeApiKey}
-                  onChange={e => saveApiKey(e.target.value)}
-                  placeholder="sk-ant-..."
-                  className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 dark:text-white font-mono"
-                />
-                <button
-                  onClick={enrichWithClaude}
-                  disabled={naceEnriching || !claudeApiKey}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors"
-                >
-                  <Sparkles size={14} />
-                  {naceEnriching ? `${naceProgress.done}/${naceProgress.total}${naceProgress.errors > 0 ? ` (${naceProgress.errors} err)` : ''}` : 'Classifica con Claude'}
-                </button>
-              </div>
-              {naceEnriching && (
-                <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-500 transition-all duration-300"
-                    style={{ width: `${naceProgress.total ? (naceProgress.done / naceProgress.total) * 100 : 0}%` }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Lista contatti senza settore */}
-            <div>
-              <button
-                onClick={() => setNaceShowList(v => !v)}
-                className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-              >
-                <ChevronDown size={14} className={`transition-transform ${naceShowList ? 'rotate-180' : ''}`} />
-                {naceShowList ? 'Nascondi lista' : `Mostra ${noSectorContacts.length} contatti`}
-              </button>
-
-              {naceShowList && (
-                <div className="mt-2 max-h-64 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-lg divide-y divide-gray-50 dark:divide-gray-700">
-                  {noSectorContacts.map(c => (
-                    <div key={c.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{c.company}</p>
-                        <p className="text-[10px] text-gray-400">{c.city} {c.province ? `(${c.province})` : ''}</p>
-                      </div>
-                      <select
-                        value={c.sector || ''}
-                        onChange={e => updateContact(c.id, { sector: e.target.value, updatedAt: Date.now() })}
-                        className="ml-3 text-xs border border-gray-200 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="">— scegli —</option>
-                        {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* ── Footer personalizzabile ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
