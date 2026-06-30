@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
@@ -16,6 +16,8 @@ interface StoreState {
   theme: 'light' | 'dark';
   targets: Record<string, any>;
   discountApprovalThreshold: number;
+  todos: Record<string, TodoItem>;
+  footerTabs: NavView[];
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -63,6 +65,12 @@ interface StoreState {
   deleteSalesTransaction: (id: string) => void;
   clearSalesTransactions: () => void;
 
+  // Todo
+  addTodo: (todo: Omit<TodoItem, 'id' | 'createdAt'>) => void;
+  updateTodo: (id: string, updates: Partial<TodoItem>) => void;
+  deleteTodo: (id: string) => void;
+  setFooterTabs: (tabs: NavView[]) => void;
+
   // Check-in Geolocalizzazione
   addCheckIn: (checkIn: CheckIn) => void;
 
@@ -84,6 +92,8 @@ export const useStore = create<StoreState>()(
       profile: null,
       theme: 'light',
       discountApprovalThreshold: 20,
+      todos: {},
+      footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -170,6 +180,20 @@ export const useStore = create<StoreState>()(
       updateTarget: (target) => set((state) => ({
         targets: { ...state.targets, [target.id]: target }
       })),
+
+      addTodo: (todo) => set((state) => {
+        const id = crypto.randomUUID();
+        return { todos: { ...state.todos, [id]: { ...todo, id, createdAt: Date.now() } } };
+      }),
+      updateTodo: (id, updates) => set((state) => ({
+        todos: { ...state.todos, [id]: { ...state.todos[id], ...updates } }
+      })),
+      deleteTodo: (id) => set((state) => {
+        const newTodos = { ...state.todos };
+        delete newTodos[id];
+        return { todos: newTodos };
+      }),
+      setFooterTabs: (tabs) => set({ footerTabs: tabs }),
 
       addAsset: (asset) => set((state) => ({ assets: { ...state.assets, [asset.id]: asset } })),
       updateAsset: (id, updates) => set((state) => ({

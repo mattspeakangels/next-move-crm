@@ -8,8 +8,27 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
-// AGGIUNTO 'map' ALLA NAVIGAZIONE
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo';
+
+export type TodoTipo = 'offerta' | 'scheda-tecnica' | 'email-info' | 'chiamata-follow' | 'campionatura' | 'demo' | 'visita' | 'altro';
+export type TodoPriorita = 'alta' | 'media' | 'bassa';
+export type TodoStatus = 'da-fare' | 'in-corso' | 'fatto';
+
+export interface TodoItem {
+  id: string;
+  contactId?: string;
+  dealId?: string;
+  titolo: string;
+  note?: string;
+  tipo: TodoTipo;
+  scadenza?: string;
+  priorita: TodoPriorita;
+  status: TodoStatus;
+  createdAt: number;
+  completedAt?: number;
+  source: 'manuale' | 'visita' | 'ai';
+  sourceActivityId?: string;
+}
 
 export type CustomerType = 'dealer' | 'end-user';
 export type ContactSegment = 'dealer' | 'industria' | 'edilizia' | 'end-user';

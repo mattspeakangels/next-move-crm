@@ -261,7 +261,7 @@ interface AgendaViewProps {
 }
 
 export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
-  const { activities, addActivity, updateActivity, deleteActivity, contacts, updateContact } = useStore();
+  const { activities, addActivity, updateActivity, deleteActivity, contacts, updateContact, addTodo } = useStore();
   const { showToast } = useToast();
 
   const today = new Date();
@@ -393,6 +393,45 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
       outcomeType: closeOutcome,
       results: closeNotes || undefined,
     });
+
+    // Auto-generazione Todo dai next step della profilazione
+    const contact = closingActivity.contactId ? contacts[closingActivity.contactId] : null;
+    const profiling = contact?.profiling;
+    if (profiling?.nextStepAzioni?.length) {
+      const MAP: Record<string, { tipo: import('../types').TodoTipo; priorita: import('../types').TodoPriorita }> = {
+        'Email entro 24h con scheda tecnica / campionatura': { tipo: 'email-info',      priorita: 'alta'  },
+        'Demo B2B Webshop':                                 { tipo: 'demo',             priorita: 'media' },
+        'Demo Webshop B2B':                                 { tipo: 'demo',             priorita: 'media' },
+        'Visita formazione venditori':                      { tipo: 'visita',           priorita: 'media' },
+        'Proposta commerciale':                             { tipo: 'offerta',          priorita: 'alta'  },
+        'Co-presenza fiera / evento':                       { tipo: 'visita',           priorita: 'bassa' },
+        'Campionatura 30 giorni su cantiere':               { tipo: 'campionatura',     priorita: 'media' },
+        'Riunione RSPP + Acquisti':                         { tipo: 'visita',           priorita: 'alta'  },
+        'Schede EN per DVR':                                { tipo: 'scheda-tecnica',   priorita: 'media' },
+        'Calcolo TCO condiviso':                            { tipo: 'altro',            priorita: 'bassa' },
+      };
+      let created = 0;
+      for (const azione of profiling.nextStepAzioni) {
+        if (azione === 'Archivia') continue;
+        const cfg = MAP[azione] ?? { tipo: 'altro' as const, priorita: 'media' as const };
+        addTodo({
+          titolo: azione,
+          tipo: cfg.tipo,
+          priorita: cfg.priorita,
+          scadenza: profiling.nextStepData || undefined,
+          contactId: closingActivity.contactId || undefined,
+          note: profiling.nextStepNote || undefined,
+          status: 'da-fare',
+          source: 'visita',
+          sourceActivityId: closingActivity.id,
+        });
+        created++;
+      }
+      if (created > 0) {
+        showToast(`${created} attività aggiunte al To Do`, 'success');
+      }
+    }
+
     showToast('Appuntamento chiuso!', 'success');
     setClosingActivity(null);
     setCloseNotes('');
