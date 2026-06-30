@@ -15,10 +15,18 @@ const ClaudeApiKeySection: React.FC = () => {
   const [key, setKey] = useState(() => localStorage.getItem('claude_api_key') || '');
   const [show, setShow] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [testError, setTestError] = useState('');
+
+  const storedKey = localStorage.getItem('claude_api_key') || '';
+  const storedPreview = storedKey.length > 10
+    ? `${storedKey.slice(0, 14)}...${storedKey.slice(-4)}`
+    : '';
 
   const handleSave = () => {
     localStorage.setItem('claude_api_key', key.trim());
     setSaved(true);
+    setTestStatus('idle');
     setTimeout(() => setSaved(false), 2500);
   };
 
@@ -26,26 +34,75 @@ const ClaudeApiKeySection: React.FC = () => {
     localStorage.removeItem('claude_api_key');
     setKey('');
     setSaved(false);
+    setTestStatus('idle');
+  };
+
+  const handleTest = async () => {
+    const k = (localStorage.getItem('claude_api_key') || '').trim();
+    if (!k) { setTestStatus('fail'); setTestError('Nessuna chiave salvata'); return; }
+    setTestStatus('testing');
+    setTestError('');
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': k,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 10,
+          messages: [{ role: 'user', content: 'ping' }],
+        }),
+      });
+      if (res.ok) {
+        setTestStatus('ok');
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setTestStatus('fail');
+        setTestError(body?.error?.message || `HTTP ${res.status}`);
+      }
+    } catch (e: any) {
+      setTestStatus('fail');
+      setTestError(e.message || 'Errore di rete');
+    }
   };
 
   const isValid = key.trim().startsWith('sk-ant-');
-  const hasKey = !!localStorage.getItem('claude_api_key');
+  const hasKey = !!storedKey;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles size={16} className="text-indigo-500" />
         <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Claude AI — API Key</h2>
-        {hasKey && (
+        {hasKey && testStatus === 'idle' && (
           <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
-            <CheckCircle2 size={10} /> Attiva
+            <CheckCircle2 size={10} /> Salvata
+          </span>
+        )}
+        {testStatus === 'ok' && (
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
+            <CheckCircle2 size={10} /> Valida ✓
+          </span>
+        )}
+        {testStatus === 'fail' && (
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            ✗ Non valida
           </span>
         )}
       </div>
 
+      {storedPreview && (
+        <p className="text-[11px] text-gray-400 font-mono bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-1.5">
+          Salvata: <span className="text-gray-600 dark:text-gray-300">{storedPreview}</span>
+        </p>
+      )}
+
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        Necessaria per la registrazione conversazioni, analisi resoconto e altre funzionalità AI.
-        Ottienila su <span className="font-mono">console.anthropic.com</span>.
+        Necessaria per registrazione conversazioni, analisi resoconto e funzionalità AI.
+        Ottienila su <span className="font-mono text-indigo-500">console.anthropic.com</span>.
       </p>
 
       <div className="flex gap-2">
@@ -53,7 +110,7 @@ const ClaudeApiKeySection: React.FC = () => {
           <input
             type={show ? 'text' : 'password'}
             value={key}
-            onChange={e => { setKey(e.target.value); setSaved(false); }}
+            onChange={e => { setKey(e.target.value); setSaved(false); setTestStatus('idle'); }}
             placeholder="sk-ant-api03-..."
             className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2.5 pr-10 bg-gray-50 dark:bg-gray-700 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
@@ -73,17 +130,28 @@ const ClaudeApiKeySection: React.FC = () => {
           disabled={!key.trim() || (!isValid && key.trim().length > 0)}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-black transition-colors"
         >
-          {saved ? <><CheckCircle2 size={15} /> Salvata!</> : 'Salva API Key'}
+          {saved ? <><CheckCircle2 size={15} /> Salvata!</> : 'Salva'}
+        </button>
+        <button
+          onClick={handleTest}
+          disabled={!hasKey || testStatus === 'testing'}
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-black transition-colors"
+        >
+          {testStatus === 'testing' ? '...' : 'Testa'}
         </button>
         {hasKey && (
           <button
             onClick={handleClear}
             className="px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-black transition-colors"
           >
-            Rimuovi
+            <X size={15} />
           </button>
         )}
       </div>
+
+      {testStatus === 'fail' && testError && (
+        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{testError}</p>
+      )}
 
       {key.trim().length > 5 && !isValid && (
         <p className="text-xs text-red-500 font-medium">La chiave deve iniziare con <span className="font-mono">sk-ant-</span></p>
