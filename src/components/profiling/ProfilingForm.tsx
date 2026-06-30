@@ -1,14 +1,34 @@
 import React, { useState, useCallback } from 'react';
 import {
   ClipboardList, ChevronDown, ChevronUp, FileText, FileSpreadsheet,
-  Info, Star, AlertCircle, CheckSquare, Package, Target, Users, ArrowRight
+  Info, Star, AlertCircle, CheckSquare, Package, Target, Users, ArrowRight, MessageSquare, Trash2
 } from 'lucide-react';
 import type {
   Contact, DealerProfiling, EndUserProfiling, ProfilingData,
-  QualificationCriteria, QualificationScore, BlakladerBrand
+  QualificationCriteria, QualificationScore, BlakladerBrand, Obiezione
 } from '../../types';
 import { useStore } from '../../store/useStore';
 import { exportProfilingPDF, exportProfilingXLS, calcQualBadge, calcQualTotal } from '../../utils/profilingExport';
+
+const CAT_BADGE: Record<Obiezione['categoria'], string> = {
+  prezzo: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  'fornitore-attuale': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  qualita: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  timing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  brand: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  logistica: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
+  altro: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+};
+
+const CAT_LABEL: Record<Obiezione['categoria'], string> = {
+  prezzo: 'Prezzo',
+  'fornitore-attuale': 'Fornitore attuale',
+  qualita: 'Qualità',
+  timing: 'Timing',
+  brand: 'Brand',
+  logistica: 'Logistica',
+  altro: 'Altro',
+};
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -746,6 +766,54 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                   onChange={v => upE({ nextStepNote: v })} multiline placeholder="Qualsiasi nota utile..." />
               </div>
             </Section>
+          </div>
+        );
+      })()}
+
+      {/* Obiezioni estratte da AI */}
+      {form.obiezioni && form.obiezioni.length > 0 && (() => {
+        const ob = form.obiezioni!;
+        return (
+          <div className="border-2 border-red-100 dark:border-red-900/40 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-900/20">
+              <span className="flex items-center gap-2 text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest">
+                <MessageSquare size={13} />
+                Obiezioni Cliente ({ob.length})
+              </span>
+              <span className="text-[9px] text-red-400 font-bold">estratte via AI</span>
+            </div>
+            <div className="p-4 space-y-3 bg-white dark:bg-gray-900">
+              {ob.map((o, i) => (
+                <div key={i} className="border border-gray-100 dark:border-gray-700 rounded-xl p-3 space-y-1.5 group">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${CAT_BADGE[o.categoria]}`}>
+                        {CAT_LABEL[o.categoria]}
+                      </span>
+                      <p className="text-xs font-bold text-gray-800 dark:text-gray-200">&ldquo;{o.testo}&rdquo;</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newOb = ob.filter((_, j) => j !== i);
+                        isDealer
+                          ? upD({ obiezioni: newOb } as any)
+                          : upE({ obiezioni: newOb } as any);
+                      }}
+                      className="p-1 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all flex-shrink-0"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  {o.risposta && (
+                    <div className="flex gap-2 items-start pl-1">
+                      <span className="text-green-500 mt-0.5 flex-shrink-0 text-xs">→</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">{o.risposta}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         );
       })()}

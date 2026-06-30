@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Search, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import {
@@ -9,6 +9,7 @@ import {
   useDroppable, useDraggable,
 } from '@dnd-kit/core';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { ConversationRecorder, mergeProfilingPatch } from '../components/ai/ConversationRecorder';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -260,7 +261,7 @@ interface AgendaViewProps {
 }
 
 export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
-  const { activities, addActivity, updateActivity, deleteActivity, contacts } = useStore();
+  const { activities, addActivity, updateActivity, deleteActivity, contacts, updateContact } = useStore();
   const { showToast } = useToast();
 
   const today = new Date();
@@ -288,6 +289,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
 
   // ── View activity detail ──
   const [viewActivity, setViewActivity] = useState<Activity | null>(null);
+  const [showRecorder, setShowRecorder] = useState(false);
 
   // ── Close activity ──
   const [closingActivity, setClosingActivity] = useState<Activity | null>(null);
@@ -1207,6 +1209,36 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
               )}
             </div>
 
+            {/* Conversation Recorder Button */}
+            {viewActivity.contactId && contacts[viewActivity.contactId] &&
+              ['visita', 'chiamata', 'demo', 'call-remota', 'sopralluogo'].includes(viewActivity.type) && (
+              <div className="mb-5">
+                {viewActivity.transcript ? (
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-3 border border-indigo-100 dark:border-indigo-800">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                        <MessageSquare size={10} /> Conversazione registrata
+                      </span>
+                      <button
+                        onClick={() => setShowRecorder(true)}
+                        className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wide"
+                      >
+                        Analizza di nuovo
+                      </button>
+                    </div>
+                    <p className="text-xs text-indigo-700 dark:text-indigo-300 line-clamp-2">{viewActivity.transcript}</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowRecorder(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-black hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                  >
+                    <MessageSquare size={14} /> Registra Conversazione con Cliente
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="space-y-5">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Note</label>
@@ -1652,6 +1684,27 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
             </div>
           </div>
         </div>
+      )}
+
+      {/* Conversation Recorder Modal */}
+      {showRecorder && viewActivity && viewActivity.contactId && contacts[viewActivity.contactId] && (
+        <ConversationRecorder
+          contact={contacts[viewActivity.contactId]}
+          onClose={() => setShowRecorder(false)}
+          onSave={(transcript, result) => {
+            updateActivity(viewActivity.id, { transcript });
+            const contact = contacts[viewActivity.contactId];
+            const isDealer = contact.customerType === 'dealer' || contact.segment === 'dealer';
+            const existingProfiling = contact.profiling ?? (isDealer
+              ? { type: 'dealer' as const, dataVisita: new Date().toISOString().split('T')[0], segmento: '', numDipendenti: '', fatturatoEst: '', canaleVendita: [], modelloOrdini: [], clienteFinale: [], percWorkwear: '', brandAttuali: [], brandAltro: '', brandDominante: '', dpiCatIII: '', dpiParziale: '', reclamiResi: '', reclamiMotivo: '', processoRiordino: [], painPoints: [], painAltro: '', painPrioritario: '', fraseEsatta: '', prodottiInteresse: [], prodottiAltro: '', campionaturaLasciata: '', qualificazione: { esigenzaReale: 1, decisionMaker: 1, aperturaFornitore: 1, timeline: 1, budget: 1 }, noteQualificazione: '', competitor: [], nextStepAzioni: [], nextStepData: '', nextStepNote: '' }
+              : { type: 'end-user' as const, dataVisita: new Date().toISOString().split('T')[0], rsppNome: '', respAcquisti: '', segmentoEdilizia: '', segmentoIndustria: '', numDipendentiTotali: '', numDipendentiDPI: '', fatturatoStimato: '', certificazioni: [], obiettiviESG: '', livelloDPI: '', rischiSpecifici: [], dvrAggiornato: '', ispezioniRecenti: '', ispezioniEsito: '', schedeEN: '', fornitoreAttuale: '', canaleAcquisto: [], frequenzaRinnovo: '', durataMediaCapo: '', spesaDipAnno: '', lamenteleLavoratori: '', chiGestisceLogistica: [], painPoints: [], painAltro: '', painPrioritario: '', fraseEsatta: '', tcoCostoCapo: '', tcoDurataMesi: '', tcoNumDipendenti: '', tcoCostoFlotta: '', tcoNote: '', prodottiInteresse: [], prodottiAltro: '', campionaturaLasciata: '', qualificazione: { esigenzaReale: 1, decisionMaker: 1, aperturaFornitore: 1, timeline: 1, budget: 1 }, noteQualificazione: '', nextStepAzioni: [], nextStepData: '', nextStepNote: '' }
+            );
+            const merged = mergeProfilingPatch(existingProfiling, result.profiling as any, result.obiezioni);
+            updateContact(contact.id, { profiling: merged, updatedAt: Date.now() });
+            setShowRecorder(false);
+            showToast(`Profilazione aggiornata: ${result.obiezioni.length > 0 ? `${result.obiezioni.length} obiezioni salvate` : 'dati estratti applicati'}`, 'success');
+          }}
+        />
       )}
     </div>
   );

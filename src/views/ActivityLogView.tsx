@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ActivityType } from '../types';
 import { useToast } from '../components/ui/ToastContext';
+import { PdfButton } from '../components/ui/PdfButton';
 
 // ─── Tipi evento ──────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ interface LogEvent {
   offerNumber?: string;
   offerStatus?: string;
   offerTotal?: number;
+  offerPdfUrl?: string;
+  offerPdfName?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -220,6 +223,8 @@ export const ActivityLogView: React.FC = () => {
       offerNumber: o.offerNumber,
       offerStatus: o.status,
       offerTotal: o.totalAmount,
+      offerPdfUrl: o.pdfUrl,
+      offerPdfName: o.pdfName,
     });
   });
 
@@ -518,6 +523,12 @@ export const ActivityLogView: React.FC = () => {
                                         {event.offerStatus}
                                       </span>
                                       <span className="text-xs font-black text-indigo-600">€{(event.offerTotal ?? 0).toLocaleString('it-IT')}</span>
+                                      {event.offerPdfUrl && (
+                                        <PdfButton pdfUrl={event.offerPdfUrl} pdfName={event.offerPdfName}
+                                          className="p-1 rounded-md bg-orange-50 dark:bg-orange-900/20 text-orange-500 hover:bg-orange-100 transition-colors flex-shrink-0">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                        </PdfButton>
+                                      )}
                                     </>
                                   )}
                                 </div>

@@ -17,8 +17,11 @@ export type StakeholderRole = 'Titolare' | 'Responsabile Acquisti' | 'Responsabi
 
 export interface Stakeholder {
   id: string;
-  name: string;
-  role: StakeholderRole;
+  /** Legacy single-name field — kept for backward compat */
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
   email: string;
   phone: string;
 }
@@ -58,6 +61,7 @@ export interface Contact {
   notes?: string;
   intelligence?: CompanyIntelligence;
   stakeholders?: Stakeholder[];
+  profiling?: ProfilingData;
   createdAt: number;
   updatedAt: number;
 }
@@ -76,13 +80,15 @@ export interface Offer {
   id: string;
   contactId: string;
   offerNumber: string;
-  date: number; 
+  date: number;
   items: OfferItem[];
   status: OfferStatus;
   totalAmount: number;
   followUpDate: number;
-  deliveryTime?: string; 
-  shippingCost?: number; 
+  deliveryTime?: string;
+  shippingCost?: number;
+  pdfUrl?: string;
+  pdfName?: string;
 }
 
 export type ProductCategory = 'giacche' | 'felpe' | 'pantaloni' | 'hivis' | 'tshirt' | 'accessori';
@@ -138,6 +144,13 @@ export interface Activity {
   outcomeType?: ActivityOutcome;
   results?: string;
   createdAt?: number;
+  transcript?: string;
+}
+
+export interface Obiezione {
+  testo: string;
+  categoria: 'prezzo' | 'fornitore-attuale' | 'qualita' | 'timing' | 'brand' | 'logistica' | 'altro';
+  risposta: string;
 }
 
 export interface Target {
@@ -222,3 +235,124 @@ export interface CheckIn {
   notes?: string;
   createdAt: number;
 }
+
+// ─── PROFILAZIONE BLAKLADER ───────────────────────────────────────────────────
+
+export type BlakladerBrand =
+  | 'Diadora' | 'U-Power' | 'Snickers' | 'E.Strauss' | 'Cofra' | 'Kapriol'
+  | 'Sparco' | 'Mascot' | 'Fristads' | 'Portwest' | 'Clique' | 'Helly Hansen'
+  | 'Altro';
+
+export type QualificationScore = 1 | 2 | 3 | 4 | 5;
+export type QualificationBadge = 'HOT' | 'WARM' | 'COLD' | 'TRASH';
+
+export interface QualificationCriteria {
+  esigenzaReale: QualificationScore;
+  decisionMaker: QualificationScore;
+  aperturaFornitore: QualificationScore;
+  timeline: QualificationScore;
+  budget: QualificationScore;
+}
+
+export interface CompetitorNote {
+  brand: string;
+  tone: string;
+}
+
+export interface DealerProfiling {
+  type: 'dealer';
+  dataVisita: string; // ISO date
+  // Sezione 2
+  segmento: 'A1' | 'A2' | 'A3' | 'A4' | '';
+  numDipendenti: string;
+  fatturatoEst: string;
+  canaleVendita: string[];
+  modelloOrdini: string[];
+  clienteFinale: string[];
+  percWorkwear: string;
+  // Sezione 3
+  brandAttuali: BlakladerBrand[];
+  brandAltro: string;
+  brandDominante: string;
+  dpiCatIII: 'no' | 'soloScarpe' | 'siParziale' | 'siCompleto' | '';
+  dpiParziale: string;
+  reclamiResi: 'no' | 'si' | '';
+  reclamiMotivo: string;
+  processoRiordino: string[];
+  // Sezione 4
+  painPoints: string[];
+  painAltro: string;
+  painPrioritario: string;
+  fraseEsatta: string;
+  // Sezione 5
+  prodottiInteresse: string[];
+  prodottiAltro: string;
+  campionaturaLasciata: string;
+  // Sezione 6
+  qualificazione: QualificationCriteria;
+  noteQualificazione: string;
+  // Sezione 7
+  competitor: CompetitorNote[];
+  // Sezione 8
+  nextStepAzioni: string[];
+  nextStepData: string;
+  nextStepNote: string;
+  // AI
+  obiezioni?: Obiezione[];
+}
+
+export interface EndUserProfiling {
+  type: 'end-user';
+  dataVisita: string;
+  rsppNome: string;
+  respAcquisti: string;
+  // Sezione 2
+  segmentoEdilizia: 'B1' | 'B2' | 'B3' | 'B4' | '';
+  segmentoIndustria: 'C1' | 'C2' | 'C3' | 'C4' | '';
+  numDipendentiTotali: string;
+  numDipendentiDPI: string;
+  fatturatoStimato: string;
+  certificazioni: string[];
+  obiettiviESG: string;
+  // Sezione 3
+  livelloDPI: 'catI' | 'catII' | 'catIII' | 'nonSanno' | '';
+  rischiSpecifici: string[];
+  dvrAggiornato: 'si' | 'no' | 'nonSa' | '';
+  ispezioniRecenti: 'no' | 'si' | '';
+  ispezioniEsito: string;
+  schedeEN: 'siCompleto' | 'soloRziale' | 'no' | 'nonSa' | '';
+  // Sezione 4
+  fornitoreAttuale: string;
+  canaleAcquisto: string[];
+  frequenzaRinnovo: string;
+  durataMediaCapo: string;
+  spesaDipAnno: string;
+  lamenteleLavoratori: string;
+  chiGestisceLogistica: string[];
+  // Sezione 5
+  painPoints: string[];
+  painAltro: string;
+  painPrioritario: string;
+  fraseEsatta: string;
+  // Sezione 6 - TCO note
+  tcoCostoCapo: string;
+  tcoDurataMesi: string;
+  tcoNumDipendenti: string;
+  tcoCostoFlotta: string;
+  tcoNote: string;
+  // Sezione 7
+  prodottiInteresse: string[];
+  prodottiAltro: string;
+  campionaturaLasciata: string;
+  // Sezione 8
+  qualificazione: QualificationCriteria;
+  noteQualificazione: string;
+  // Sezione 9
+  nextStepAzioni: string[];
+  nextStepData: string;
+  nextStepNote: string;
+  // AI
+  obiezioni?: Obiezione[];
+}
+
+export type ProfilingData = DealerProfiling | EndUserProfiling;

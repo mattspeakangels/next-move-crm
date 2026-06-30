@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
-import { ArrowRight, ArrowLeft, Plus, X, Sparkles, Trash2, Edit2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, X, Sparkles, Trash2, Edit2, Columns, CalendarDays, Lightbulb } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
+import { MonthlyOrdersView } from '../components/pipeline/MonthlyOrdersView';
+import { SuggestedDealsView } from '../components/pipeline/SuggestedDealsView';
 
 const STAGES: { id: DealStage; name: string; color: string; bar: string }[] = [
   { id: 'lead', name: 'Lead', color: 'bg-sky-500', bar: 'bg-sky-400' },
@@ -41,6 +43,7 @@ interface PipelineViewProps {
 export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact }) => {
   const { deals, contacts, offers, updateDeal, removeDeal, addActivity } = useStore();
 
+  const [activeTab, setActiveTab] = useState<'kanban' | 'mensile' | 'suggeriti'>('kanban');
   const [addDealOpen, setAddDealOpen] = useState(false);
   const [editDealId, setEditDealId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -159,23 +162,54 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
   return (
     <div className="pb-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Pipeline</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={runPipelineAnalysis}
-            className="flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-3.5 py-2.5 rounded-xl font-bold uppercase text-xs tracking-wide hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors"
-          >
-            <Sparkles size={14} /> <span className="hidden sm:inline">Analizza</span>
-          </button>
-          <button
-            onClick={() => setAddDealOpen(true)}
-            className="bg-brand-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-card hover:bg-brand-700 active:scale-[0.98] transition-all text-sm"
-          >
-            <Plus size={16} /> Nuovo Deal
-          </button>
-        </div>
+        {activeTab === 'kanban' && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={runPipelineAnalysis}
+              className="flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-3.5 py-2.5 rounded-xl font-bold uppercase text-xs tracking-wide hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors"
+            >
+              <Sparkles size={14} /> <span className="hidden sm:inline">Analizza</span>
+            </button>
+            <button
+              onClick={() => setAddDealOpen(true)}
+              className="bg-brand-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-card hover:bg-brand-700 active:scale-[0.98] transition-all text-sm"
+            >
+              <Plus size={16} /> Nuovo Deal
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl mb-5 w-fit">
+        {([
+          { id: 'kanban', label: 'Deals', icon: Columns },
+          { id: 'mensile', label: 'Per Mese', icon: CalendarDays },
+          { id: 'suggeriti', label: 'Suggeriti', icon: Lightbulb },
+        ] as const).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all
+              ${activeTab === id
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'}`}
+          >
+            <Icon size={13} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Monthly view */}
+      {activeTab === 'mensile' && <MonthlyOrdersView />}
+
+      {/* Suggested deals */}
+      {activeTab === 'suggeriti' && <SuggestedDealsView />}
+
+      {/* Kanban — only when activeTab === kanban */}
+      {activeTab === 'kanban' && <>
 
       {/* Empty state */}
       {filteredDeals.length === 0 && (
@@ -363,8 +397,23 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                           <button
                             onClick={() => {
                               const idx = STAGES.findIndex(s => s.id === stage.id);
-                              if (idx < STAGES.length - 1) handleMove(deal.id, STAGES[idx + 1].id);
-                              else handleMove(deal.id, 'chiuso-vinto');
+                              const nextStage = idx < STAGES.length - 1 ? STAGES[idx + 1].id : 'chiuso-vinto';
+                              if (nextStage === 'chiuso-vinto') {
+                                handleMove(deal.id, 'chiuso-vinto');
+                              } else {
+                                const oldStage = deal.stage;
+                                updateDeal(deal.id, { stage: nextStage });
+                                addActivity({
+                                  id: `act_stage_${Date.now()}`,
+                                  contactId: deal.contactId,
+                                  dealId: deal.id,
+                                  type: 'nota',
+                                  date: Date.now(),
+                                  outcome: 'avanzamento-pipeline',
+                                  notes: `Pipeline: ${STAGE_LABELS[oldStage]} → ${STAGE_LABELS[nextStage as DealStage]}`,
+                                  createdAt: Date.now(),
+                                });
+                              }
                             }}
                             className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 transition-colors"
                             title="Fase successiva"
@@ -403,6 +452,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
           onRetry={runPipelineAnalysis}
         />
       )}
+      </>}
     </div>
   );
 };
