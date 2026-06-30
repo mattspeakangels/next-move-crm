@@ -411,8 +411,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     }
 
     const apiKey = (localStorage.getItem('claude_api_key') || '').trim();
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
-      setError('API Key non valida o assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.');
+    if (!apiKey) {
+      setError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.');
       return;
     }
 

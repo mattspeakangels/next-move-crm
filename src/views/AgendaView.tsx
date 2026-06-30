@@ -410,7 +410,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const analyzeResoconto = async () => {
     if (!closeNotes.trim()) return;
     const apiKey = (localStorage.getItem('claude_api_key') || '').trim();
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) { setAiError('API Key non valida o assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.'); return; }
+    if (!apiKey) { setAiError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.'); return; }
 
     setAiAnalyzing(true);
     setAiError(null);

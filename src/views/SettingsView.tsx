@@ -64,7 +64,6 @@ const ClaudeApiKeySection: React.FC = () => {
     }
   };
 
-  const isValid = key.trim().startsWith('sk-ant-');
   const hasKey = !!storedKey;
 
   return (
@@ -122,7 +121,7 @@ const ClaudeApiKeySection: React.FC = () => {
       <div className="flex gap-2">
         <button
           onClick={handleSave}
-          disabled={!key.trim() || (!isValid && key.trim().length > 0)}
+          disabled={!key.trim()}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-black transition-colors"
         >
           {saved ? <><CheckCircle2 size={15} /> Salvata!</> : 'Salva'}
@@ -148,9 +147,6 @@ const ClaudeApiKeySection: React.FC = () => {
         <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{testError}</p>
       )}
 
-      {key.trim().length > 5 && !isValid && (
-        <p className="text-xs text-red-500 font-medium">La chiave deve iniziare con <span className="font-mono">sk-ant-</span></p>
-      )}
     </div>
   );
 };
