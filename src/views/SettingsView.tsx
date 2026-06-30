@@ -6,6 +6,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
+import Anthropic from '@anthropic-ai/sdk';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
 
@@ -43,29 +44,23 @@ const ClaudeApiKeySection: React.FC = () => {
     setTestStatus('testing');
     setTestError('');
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': k,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 10,
-          messages: [{ role: 'user', content: 'ping' }],
-        }),
+      const client = new Anthropic({ apiKey: k, dangerouslyAllowBrowser: true });
+      await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: 'ping' }],
       });
-      if (res.ok) {
-        setTestStatus('ok');
-      } else {
-        const body = await res.json().catch(() => ({}));
-        setTestStatus('fail');
-        setTestError(body?.error?.message || `HTTP ${res.status}`);
-      }
+      setTestStatus('ok');
     } catch (e: any) {
       setTestStatus('fail');
-      setTestError(e.message || 'Errore di rete');
+      const msg: string = e.message || '';
+      if (msg.includes('401') || msg.includes('authentication') || msg.includes('invalid x-api-key')) {
+        setTestError('Chiave non valida. Genera una nuova key su console.anthropic.com');
+      } else if (msg.includes('Failed to fetch') || msg.includes('network')) {
+        setTestError('Errore di rete. Verifica la connessione internet.');
+      } else {
+        setTestError(msg || 'Errore sconosciuto');
+      }
     }
   };
 
