@@ -261,6 +261,8 @@ interface AgendaViewProps {
   onNavigateToContact?: (contactId: string) => void;
 }
 
+type CloseVisitType = 'prima-visita' | 'follow-up' | 'offerta' | 'chiamata';
+
 export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
   const { activities, addActivity, updateActivity, deleteActivity, contacts, updateContact, addTodo } = useStore();
   const { showToast } = useToast();
@@ -296,6 +298,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const [closingActivity, setClosingActivity] = useState<Activity | null>(null);
   const [closeOutcome, setCloseOutcome] = useState<ActivityOutcome>('riuscita');
   const [closeNotes, setCloseNotes] = useState('');
+  const [closeVisitType, setCloseVisitType] = useState<CloseVisitType>('prima-visita');
 
   // AI Todo extraction
   interface AiExtractedTodo {
@@ -398,6 +401,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     setClosingActivity(activity);
     setCloseOutcome('riuscita');
     setCloseNotes('');
+    setCloseVisitType('prima-visita');
+    setAiTodos([]);
+    setAiError(null);
     voiceClose.reset();
   };
 
@@ -413,6 +419,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     const today = new Date().toISOString().split('T')[0];
     const contactName = closingActivity?.contactId ? contacts[closingActivity.contactId]?.company ?? '' : '';
 
+    const visitContext: Record<CloseVisitType, string> = {
+      'prima-visita': `prima visita commerciale / demo prodotto. Estrai tutte le azioni concrete emerse (offerte, campionature, schede tecniche, appuntamenti di follow-up, ecc.). Presta attenzione a eventuali impegni presi con il cliente.`,
+      'follow-up': `visita di follow-up / ricontatto. Estrai le azioni di continuità: invii promessi, conferme, appuntamenti successivi, eventuali offerte da aggiornare.`,
+      'offerta': `visita per presentazione/consegna offerta o quotazione. Estrai le azioni legate alla trattativa: follow-up sull'offerta, richieste di modifica prezzi, date di risposta attese dal cliente.`,
+      'chiamata': `chiamata telefonica o email. Estrai solo le azioni concrete emerse: risposte da dare, materiali da inviare, appuntamenti da fissare.`,
+    };
+
     try {
       const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
       const msg = await client.messages.create({
@@ -422,8 +435,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
           role: 'user',
           content: `Sei un assistente per un agente commerciale Blaklader (workwear premium).
 Data oggi: ${today}. Cliente: "${contactName}".
+Tipo di contatto: ${visitContext[closeVisitType]}
 
-Dal seguente resoconto di visita, estrai TUTTE le azioni concrete da fare.
+Dal seguente resoconto, estrai TUTTE le azioni concrete da fare.
 Per ogni azione specifica una data di esecuzione (quando farlo) e una scadenza massima, basandoti sulle urgenze menzionate nel testo.
 
 RESOCONTO:
@@ -1612,6 +1626,32 @@ Regole:
               </button>
             </div>
 
+            {/* Visit type */}
+            <div className="mb-4">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo di contatto</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: 'prima-visita', emoji: '🤝', label: 'Prima visita / Demo' },
+                  { value: 'follow-up',    emoji: '🔄', label: 'Follow-up' },
+                  { value: 'offerta',      emoji: '💼', label: 'Offerta / Quotazione' },
+                  { value: 'chiamata',     emoji: '📞', label: 'Chiamata / Email' },
+                ] as { value: CloseVisitType; emoji: string; label: string }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setCloseVisitType(opt.value)}
+                    className={`py-2.5 px-3 rounded-2xl border-2 font-black text-xs transition-all flex items-center gap-1.5 ${
+                      closeVisitType === opt.value
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                        : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
+                    }`}
+                  >
+                    <span>{opt.emoji}</span> {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Outcome */}
             <div className="mb-4">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Come è andata?</p>
@@ -1673,16 +1713,17 @@ Regole:
             </div>
 
             {/* AI Analysis */}
-            {closeNotes.trim().length > 20 && (
-              <div className="space-y-3">
+            <div className="space-y-3">
                 <button
                   onClick={analyzeResoconto}
-                  disabled={aiAnalyzing}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-black hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors disabled:opacity-50"
+                  disabled={aiAnalyzing || !closeNotes.trim()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-black hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {aiAnalyzing
                     ? <><Loader2 size={13} className="animate-spin" /> Analisi in corso...</>
-                    : <><Sparkles size={13} /> Analizza resoconto e genera To Do</>}
+                    : closeVisitType === 'prima-visita'
+                      ? <><Sparkles size={13} /> Analizza con AI — profilazione + To Do</>
+                      : <><Sparkles size={13} /> Analizza con AI — genera To Do</>}
                 </button>
 
                 {aiError && (
@@ -1749,7 +1790,6 @@ Regole:
                   </div>
                 )}
               </div>
-            )}
 
             {/* Actions */}
             <div className="flex gap-3">
