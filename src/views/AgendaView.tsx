@@ -1760,7 +1760,16 @@ Regole:
                             onChange={() => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, selected: !t.selected } : t))}
                             className="mt-0.5 flex-shrink-0 accent-indigo-600" />
                           <div className="flex-1 min-w-0 space-y-2">
-                            <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
+                            <div className="flex items-start justify-between gap-1">
+                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
+                              <button
+                                onClick={() => setAiTodos(ts => ts.filter((_, j) => j !== i))}
+                                className="p-0.5 flex-shrink-0 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                title="Rimuovi"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
                             <div className="flex flex-wrap gap-1.5">
                               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-red-100 text-red-600' : todo.priorita === 'media' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
                                 {todo.priorita}

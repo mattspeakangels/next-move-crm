@@ -234,9 +234,9 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
             </p>
             <button
               onClick={onDelete}
-              className="p-1 flex-shrink-0 text-gray-200 dark:text-gray-700 hover:text-red-400 dark:hover:text-red-400 transition-colors rounded-lg"
+              className="p-1 flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
             >
-              <Trash2 size={13} />
+              <Trash2 size={14} />
             </button>
           </div>
 
