@@ -160,7 +160,7 @@ export const AnalyticsView: React.FC = () => {
         <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSVImport} className="hidden" />
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Fatturato</p>

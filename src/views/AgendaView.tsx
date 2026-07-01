@@ -1096,7 +1096,7 @@ Regole:
       {/* Header */}
       <div className="flex justify-between items-center gap-3 flex-wrap">
         <h1 className="text-2xl font-black dark:text-white">Agenda</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           {/* Import da Outlook PST */}
           <input
             ref={pstInputRef}
@@ -1108,18 +1108,18 @@ Regole:
           <button
             onClick={() => pstInputRef.current?.click()}
             disabled={pstLoading}
-            className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors text-sm disabled:opacity-60"
+            className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors text-sm disabled:opacity-60"
             title="Importa appuntamenti da file Outlook .pst"
           >
             {pstLoading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-            {pstLoading ? 'Lettura…' : 'Importa Outlook'}
+            <span className="hidden sm:inline">{pstLoading ? 'Lettura…' : 'Importa Outlook'}</span>
           </button>
           <button
             onClick={handleExportICS}
-            className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm"
+            className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm"
             title="Esporta tutti gli appuntamenti futuri come file .ics"
           >
-            <Download size={15} /> Esporta .ics
+            <Download size={15} /> <span className="hidden sm:inline">Esporta .ics</span>
           </button>
           {voiceSched.isSupported && (
             <button

@@ -109,8 +109,8 @@ export const AppShell: React.FC = () => {
       {/* ── Area principale ── */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Header onBurgerClick={() => setDrawerOpen(true)} />
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-8">
-          <div key={location.pathname} className="animate-fade-in h-full">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 pb-8">
+          <div key={location.pathname} className="animate-fade-in h-full min-w-0">
             <Outlet />
           </div>
         </main>

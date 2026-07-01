@@ -428,12 +428,12 @@ export const OffersView: React.FC = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte</h1>
           <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Gestione Preventivi</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => setShowPdfModal(true)} className="bg-orange-500 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-orange-600 transition-all">
             <Upload size={18} /> Carica PDF
           </button>
@@ -647,10 +647,10 @@ export const OffersView: React.FC = () => {
       })()}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-4xl rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black uppercase dark:text-white">{editingId ? 'Modifica Preventivo' : 'Nuovo Preventivo'}</h2>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-4xl rounded-t-[2rem] md:rounded-[2.5rem] p-5 md:p-8 max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h2 className="text-lg md:text-2xl font-black uppercase dark:text-white">{editingId ? 'Modifica Preventivo' : 'Nuovo Preventivo'}</h2>
               <button onClick={() => setShowModal(false)}><X size={24} className="text-gray-400"/></button>
             </div>
             
@@ -776,7 +776,7 @@ export const OffersView: React.FC = () => {
                       </div>
 
                       {/* Description + Sizes */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Descrizione *</label>
                           <input
@@ -800,7 +800,7 @@ export const OffersView: React.FC = () => {
                       </div>
 
                       {/* Qty + Price + Discount + Total */}
-                      <div className="grid grid-cols-4 gap-3 items-end">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
                         <div>
                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Q.tà</label>
                           <input
@@ -856,9 +856,9 @@ export const OffersView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-6 border-t dark:border-gray-700 flex justify-between items-center">
-                <div className="text-3xl font-black dark:text-white text-indigo-600">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
-                <button onClick={saveOffer} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Salva</button>
+              <div className="pt-6 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <div className="text-2xl md:text-3xl font-black dark:text-white text-indigo-600">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                <button onClick={saveOffer} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Salva</button>
               </div>
             </div>
           </div>

@@ -1246,12 +1246,12 @@ export const ProductsView: React.FC = () => {
   return (
     <div className="space-y-4 pb-6">
       {/* ── Header ── */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
           <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Prodotti</h1>
           <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">{productList.length} articoli</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSV} className="hidden" />
           <button onClick={() => fileInputRef.current?.click()}
             className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-indigo-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all">

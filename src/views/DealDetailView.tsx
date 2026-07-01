@@ -35,25 +35,25 @@ export const DealDetailView: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500"><ArrowLeft size={20}/> Torna indietro</button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border dark:border-gray-700">
-        <div className="flex justify-between items-start mb-6">
-          <div>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-8 shadow-sm border dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
+          <div className="min-w-0">
             <span className="text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-3 inline-block">
               {deal.stage.replace('-', ' ')}
             </span>
-            <h1 className="text-3xl font-black dark:text-white">{contact.company}</h1>
+            <h1 className="text-2xl sm:text-3xl font-black dark:text-white break-words">{contact.company}</h1>
             <p className="text-gray-500">Referente: {contact.contactName}</p>
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-black text-indigo-600">€ {deal.value.toLocaleString()}</div>
-            <div className="flex items-center gap-2 justify-end text-sm text-gray-400">
+          <div className="sm:text-right flex-shrink-0">
+            <div className="text-2xl sm:text-3xl font-black text-indigo-600">€ {deal.value.toLocaleString()}</div>
+            <div className="flex items-center gap-2 sm:justify-end text-sm text-gray-400">
               <Target size={14}/> Probabilità: {deal.probability}%
             </div>
           </div>
         </div>
 
         {/* Sezione Offerta */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl mb-8 flex items-center justify-between">
+        <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl mb-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm"><Package size={20} className="text-indigo-600"/></div>
                 <div>

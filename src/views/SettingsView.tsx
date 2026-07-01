@@ -459,7 +459,7 @@ export const SettingsView: React.FC = () => {
             }
           };
           return (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {ALL_TABS.map(({ id, label }) => {
                 const active = current.includes(id);
                 const idx = current.indexOf(id);

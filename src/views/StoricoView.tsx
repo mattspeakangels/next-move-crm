@@ -1024,7 +1024,7 @@ export function StoricoView() {
           onDrop={onDrop}
           onDragOver={e => e.preventDefault()}
           onClick={() => !firestoreLoading && fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-16 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all group"
+          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-8 sm:p-16 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all group"
         >
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.numbers" className="hidden" onChange={onFileChange} />
           {(loading || firestoreLoading)
@@ -1045,7 +1045,7 @@ export function StoricoView() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           {[
             { icon: BarChart3, label: 'Analisi storico per cliente', color: 'text-indigo-500' },
             { icon: Target, label: 'Budget mensile configurabile', color: 'text-green-500' },
@@ -1110,12 +1110,12 @@ export function StoricoView() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-full sm:w-fit overflow-x-auto scrollbar-hide">
         {(['storico', 'riepilogo', 'budget', 'pipeline'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-xl text-sm font-bold capitalize transition-all ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-shrink-0 px-5 py-2 rounded-xl text-sm font-bold capitalize transition-all ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}
           >
             {tab === 'storico' ? '📊 Storico' : tab === 'riepilogo' ? '📋 Riepilogo Cliente' : tab === 'budget' ? '🎯 Budget' : '⚡ Pipeline AI'}
           </button>
