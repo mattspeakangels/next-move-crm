@@ -6,6 +6,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { saveStoricoToFirestore, loadStoricoFromFirestore, deleteStoricoFromFirestore } from '../lib/storicoFirestore';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 import {
   Upload, TrendingUp, TrendingDown, Target, Zap, AlertTriangle,
   ChevronDown, ChevronUp, Euro, BarChart3,
@@ -932,10 +933,9 @@ export function StoricoView() {
   const gapBudget = Math.max(0, budgetAnnuale - tot2024);
 
   // Sort clienti
-  const searchNorm = searchQuery.toLowerCase().trim();
   const clientiSorted = [...clienti]
     .filter(c => !filterDormienti || ((((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) === 0))
-    .filter(c => !searchNorm || (c.nome || '').toLowerCase().includes(searchNorm))
+    .filter(c => matchSearch(searchQuery, [c.nome]))
     .sort((a, b) => {
       let va = 0, vb = 0;
       if (sortField === 'id') { va = a.clientId; vb = b.clientId; }
@@ -965,7 +965,6 @@ export function StoricoView() {
   // ── RIEPILOGO PER CLIENTE ──────────────────────────────────────────────────
   // Replica del foglio "Riepilogo per cliente": fatturato + quantità per anno,
   // totale e variazioni %. Calcolato dai dati dettagliati (stessa fonte del foglio).
-  const riepilogoSearchNorm = riepilogoSearch.toLowerCase().trim();
   const riepilogoRows = clienti
     .map(c => {
       const d = clientiDettagliati.find(x => x.nome === c.nome);
@@ -985,7 +984,7 @@ export function StoricoView() {
         var2526: f2025 > 0 ? (f2026 - f2025) / f2025 : null,
       };
     })
-    .filter(r => !riepilogoSearchNorm || r.nome.toLowerCase().includes(riepilogoSearchNorm))
+    .filter(r => matchSearch(riepilogoSearch, [r.nome]))
     .sort((a, b) => b.totale - a.totale);
 
   const riepilogoTotali = riepilogoRows.reduce(
@@ -1091,8 +1090,8 @@ export function StoricoView() {
         onSelect={c => { setSearchQuery(c.nome || `#${c.clientId}`); setPage(0); }}
         placeholder="Cerca cliente…"
         inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors'}
-        results={(searchNorm
-          ? clienti.filter(c => (c.nome || '').toLowerCase().includes(searchNorm)).slice(0, 8)
+        results={(searchQuery.trim()
+          ? clienti.filter(c => matchSearch(searchQuery, [c.nome])).slice(0, 8)
           : []
         ).map(c => ({
           key: String(c.clientId),

@@ -12,6 +12,7 @@ import { ProfilingForm } from '../components/profiling/ProfilingForm';
 import { ImportFromUrlModal } from '../components/contacts/ImportFromUrlModal';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { ContactHistoryView } from './ContactHistoryView';
+import { matchSearch } from '../utils/search';
 
 const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) => {
   const { activities, addActivity, deleteActivity } = useStore();
@@ -476,15 +477,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   // Lista filtrata completa — memoizzata
   const filteredList = useMemo(() => {
     const statusFilter = activeTab === 'prospect' ? 'potenziale' : 'cliente';
-    const search = debouncedSearch.toLowerCase();
     return Object.values(contacts)
       .filter(c => c.status === statusFilter)
       .filter(c => !segmentFilter || c.segment === segmentFilter)
-      .filter(c =>
-        !search ||
-        (c.company && c.company.toLowerCase().includes(search)) ||
-        (c.city    && c.city.toLowerCase().includes(search))
-      );
+      .filter(c => matchSearch(debouncedSearch, [
+        c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
+      ]));
   }, [contacts, activeTab, segmentFilter, debouncedSearch]);
 
   // Reset paginazione quando cambia lista
@@ -1269,10 +1267,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const searchPreview = searchTerm.trim()
               ? Object.values(contacts)
                   .filter(c => c.status === statusFilter)
-                  .filter(c =>
-                    (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (c.city && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
-                  )
+                  .filter(c => matchSearch(searchTerm, [
+                    c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
+                  ]))
                   .slice(0, 8)
               : [];
 
@@ -1283,14 +1280,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     className="flex-1"
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    onSelect={c => setSearchTerm(c.company)}
-                    placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} o città…`}
+                    onSelect={c => setSearchTerm(c.company || c.contactName)}
+                    placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} per nome, azienda, città, email, telefono…`}
                     inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all shadow-sm text-sm'}
                     results={searchPreview.map(c => ({
                       key: c.id,
                       item: c,
-                      label: c.company,
-                      sublabel: c.city || undefined,
+                      label: c.company || c.contactName,
+                      sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
                       badge: {
                         text: c.status === 'cliente' ? 'Cliente' : 'Prospect',
                         className: c.status === 'cliente'

@@ -7,6 +7,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 import {
   DndContext,
   closestCenter,
@@ -200,14 +201,13 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
 
   const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
 
-  const searchItinNorm = useMemo(() => searchItinQuery.toLowerCase().trim(), [searchItinQuery]);
+  const searchItinNorm = useMemo(() => searchItinQuery.trim(), [searchItinQuery]);
   const itinSearchResults = useMemo(() =>
     searchItinNorm.length >= 1
       ? allContactsList
           .filter((c: any) =>
             c.lat && c.lng &&
-            (c.company.toLowerCase().includes(searchItinNorm) ||
-             (c.city || '').toLowerCase().includes(searchItinNorm))
+            matchSearch(searchItinNorm, [c.company, c.contactName, c.city, c.province])
           )
           .slice(0, 6)
       : [],
@@ -1019,13 +1019,10 @@ export const MapView: React.FC<MapViewProps> = ({
   const nClienti     = allMapped.filter(c => c.status === 'cliente').length;
   const nProspect    = allMapped.filter(c => c.status === 'potenziale').length;
 
-  const searchNorm = searchQuery.toLowerCase().trim();
+  const searchNorm = searchQuery.trim();
   const searchResults = searchNorm.length >= 1
     ? allContacts
-        .filter(c =>
-          c.company.toLowerCase().includes(searchNorm) ||
-          (c.city || '').toLowerCase().includes(searchNorm)
-        )
+        .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]))
         .slice(0, 7)
     : [];
 
@@ -1035,7 +1032,7 @@ export const MapView: React.FC<MapViewProps> = ({
     return true;
   }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter)
     .filter(c => !mapProvinceFilter || c.province === mapProvinceFilter)
-    .filter(c => !searchNorm || c.company.toLowerCase().includes(searchNorm) || (c.city || '').toLowerCase().includes(searchNorm));
+    .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]));
 
   // Province disponibili nei contatti geocodificati
   const availableProvinces = useMemo(() =>

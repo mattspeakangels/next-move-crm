@@ -5,6 +5,7 @@ import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita } from 
 import Anthropic from '@anthropic-ai/sdk';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
   PointerSensor, TouchSensor, useSensor, useSensors,
@@ -543,13 +544,8 @@ Regole:
 
   // Filtered contacts for picker — computed outside JSX for reliability
   const filteredContacts = useMemo(() => {
-    const q = contactSearch.toLowerCase().trim();
     return Object.values(contacts)
-      .filter(c =>
-        !q ||
-        (c.company ?? '').toLowerCase().includes(q) ||
-        (c.contactName ?? '').toLowerCase().includes(q)
-      )
+      .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.phone, c.email]))
       .sort((a, b) => (a.company ?? '').localeCompare(b.company ?? ''));
   }, [contacts, contactSearch]);
 

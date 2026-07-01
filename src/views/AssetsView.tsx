@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -217,10 +218,10 @@ export const AssetsView: React.FC = () => {
   // Filter
   const filtered = allAssets.filter(a => {
     if (filterStatus !== 'all' && a.status !== filterStatus) return false;
-    const company = contacts[a.contactId]?.company ?? '';
-    if (search && !a.description.toLowerCase().includes(search.toLowerCase()) &&
-        !company.toLowerCase().includes(search.toLowerCase()) &&
-        !(a.serialNumber ?? '').toLowerCase().includes(search.toLowerCase())) return false;
+    const contact = contacts[a.contactId];
+    if (search && !matchSearch(search, [
+      a.description, a.serialNumber, contact?.company, contact?.contactName, contact?.city,
+    ])) return false;
     return true;
   });
 

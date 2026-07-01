@@ -10,6 +10,7 @@ import {
 import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type LayoutVariant = 'compact' | 'visual' | 'grid';
@@ -1046,14 +1047,12 @@ export const ProductsView: React.FC = () => {
   const productList = useMemo(() => Object.values(products) as Product[], [products]);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
     return productList.filter(p => {
-      const matchSearch = !q ||
-        pName(p).toLowerCase().includes(q) ||
-        p.code.toLowerCase().includes(q) ||
-        (p.line?.toLowerCase().includes(q) ?? false);
+      const matchesQuery = matchSearch(search, [
+        pName(p), p.code, p.line, p.description, p.category, ...(p.colors ?? []),
+      ]);
       const matchCat = catFilter === 'all' || normCat(p.category) === catFilter;
-      return matchSearch && matchCat;
+      return matchesQuery && matchCat;
     });
   }, [productList, search, catFilter]);
 
@@ -1322,13 +1321,12 @@ export const ProductsView: React.FC = () => {
         value={search}
         onChange={setSearch}
         onSelect={p => setSearch(pName(p))}
-        placeholder="Cerca codice, nome o linea..."
+        placeholder="Cerca per nome, codice, linea, categoria, colore..."
         inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-medium dark:text-white outline-none focus-within:border-indigo-400 transition-colors'}
         results={(search.trim()
-          ? productList.filter(p => {
-              const q = search.toLowerCase();
-              return pName(p).toLowerCase().includes(q) || p.code.toLowerCase().includes(q) || (p.line?.toLowerCase().includes(q) ?? false);
-            }).slice(0, 8)
+          ? productList.filter(p => matchSearch(search, [
+              pName(p), p.code, p.line, p.description, p.category, ...(p.colors ?? []),
+            ])).slice(0, 8)
           : []
         ).map(p => ({
           key: p.id,
