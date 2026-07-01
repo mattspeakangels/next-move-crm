@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles, ChevronDown, ChevronUp, CheckCircle, XCircle, Upload, Download } from 'lucide-react';
 import { uploadOfferPdf, openOfferPdf } from '../lib/uploadPdf';
 import { PdfButton } from '../components/ui/PdfButton';
-import { Offer, OfferItem, OfferStatus } from '../types';
+import { Offer, OfferContactMode, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
@@ -102,6 +102,8 @@ export const OffersView: React.FC = () => {
   };
   
   const [selectedContact, setSelectedContact] = useState('');
+  const [contactMode, setContactMode] = useState<OfferContactMode>('end-user');
+  const [selectedEndUserContact, setSelectedEndUserContact] = useState('');
   const [items, setItems] = useState<OfferItem[]>([]);
   const [deliveryTime, setDeliveryTime] = useState('');
   const [shippingCost, setShippingCost] = useState(0);
@@ -110,12 +112,16 @@ export const OffersView: React.FC = () => {
     if (offer) {
       setEditingId(offer.id);
       setSelectedContact(offer.contactId);
+      setContactMode(offer.contactMode || 'end-user');
+      setSelectedEndUserContact(offer.endUserContactId || '');
       setItems(offer.items);
       setDeliveryTime(offer.deliveryTime || '');
       setShippingCost(offer.shippingCost || 0);
     } else {
       setEditingId(null);
       setSelectedContact('');
+      setContactMode('end-user');
+      setSelectedEndUserContact('');
       setItems([]);
       setDeliveryTime('');
       setShippingCost(0);
@@ -166,6 +172,11 @@ export const OffersView: React.FC = () => {
       return;
     }
 
+    if (contactMode === 'dealer+end-user' && !selectedEndUserContact) {
+      showToast('Seleziona anche il cliente finale (End User)', 'error');
+      return;
+    }
+
     // Validate offer items (business logic)
     for (const item of items) {
       if (item.discount < 0) {
@@ -194,6 +205,8 @@ export const OffersView: React.FC = () => {
     const offerData: Offer = {
       id: editingId || `off_${Date.now()}`,
       contactId: selectedContact,
+      contactMode,
+      endUserContactId: contactMode === 'dealer+end-user' ? selectedEndUserContact : undefined,
       offerNumber: editingId ? offers[editingId].offerNumber : `OFF-${Object.keys(offers).length + 101}`,
       date: editingId ? offers[editingId].date : Date.now(),
       items: items,
@@ -436,6 +449,7 @@ export const OffersView: React.FC = () => {
 
         const OfferCard = ({ offer }: { offer: typeof allOffers[0] }) => {
           const contact = contacts[offer.contactId];
+          const endUserContact = offer.contactMode === 'dealer+end-user' ? contacts[offer.endUserContactId || ''] : undefined;
           return (
             <div className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-colors ${
               offer.status === 'inviata' ? 'border-blue-200 dark:border-blue-800' : 'border-gray-100 dark:border-gray-700'
@@ -445,7 +459,13 @@ export const OffersView: React.FC = () => {
                   <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
                     {offer.offerNumber}
                   </span>
-                  <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
+                  {endUserContact ? (
+                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">
+                      {contact?.company || 'Dealer'} <span className="text-gray-300 dark:text-gray-600">→</span> {endUserContact.company}
+                    </h3>
+                  ) : (
+                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
+                  )}
                   <p className="text-xs text-gray-400 font-bold mt-0.5">
                     {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
                   </p>
@@ -628,12 +648,46 @@ export const OffersView: React.FC = () => {
             
             <div className="space-y-6">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
-                <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
-                  <option value="">Seleziona Cliente...</option>
-                  {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Tipo cliente</label>
+                <select
+                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
+                  value={contactMode}
+                  onChange={(e) => setContactMode(e.target.value as OfferContactMode)}
+                >
+                  <option value="dealer">Dealer</option>
+                  <option value="end-user">End User</option>
+                  <option value="dealer+end-user">Dealer + End User</option>
                 </select>
               </div>
+
+              {contactMode === 'dealer+end-user' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Dealer (rivenditore)</label>
+                    <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
+                      <option value="">Seleziona Dealer...</option>
+                      {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente finale (End User)</label>
+                    <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedEndUserContact} onChange={(e) => setSelectedEndUserContact(e.target.value)}>
+                      <option value="">Seleziona Cliente Finale...</option>
+                      {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+                    {contactMode === 'dealer' ? 'Dealer' : 'Cliente'}
+                  </label>
+                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
+                    <option value="">Seleziona Cliente...</option>
+                    {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
+                  </select>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">

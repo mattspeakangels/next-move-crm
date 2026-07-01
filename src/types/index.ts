@@ -95,9 +95,15 @@ export interface OfferItem {
   discount: number;
 }
 
+export type OfferContactMode = 'dealer' | 'end-user' | 'dealer+end-user';
+
 export interface Offer {
   id: string;
   contactId: string;
+  /** Modalità cliente: chi acquista direttamente (dealer o end user) o entrambi se la vendita passa dal rivenditore al cliente finale. Assente = legacy, trattata come 'end-user'. */
+  contactMode?: OfferContactMode;
+  /** Cliente finale, valorizzato solo quando contactMode === 'dealer+end-user' (contactId resta il dealer) */
+  endUserContactId?: string;
   offerNumber: string;
   date: number;
   items: OfferItem[];
