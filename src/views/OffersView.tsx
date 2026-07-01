@@ -7,6 +7,8 @@ import { Offer, OfferContactMode, OfferItem, OfferStatus } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 
 export const OffersView: React.FC = () => {
   const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile } = useStore();
@@ -104,6 +106,8 @@ export const OffersView: React.FC = () => {
   const [selectedContact, setSelectedContact] = useState('');
   const [contactMode, setContactMode] = useState<OfferContactMode>('end-user');
   const [selectedEndUserContact, setSelectedEndUserContact] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
+  const [endUserContactSearch, setEndUserContactSearch] = useState('');
   const [items, setItems] = useState<OfferItem[]>([]);
   const [deliveryTime, setDeliveryTime] = useState('');
   const [shippingCost, setShippingCost] = useState(0);
@@ -112,16 +116,20 @@ export const OffersView: React.FC = () => {
     if (offer) {
       setEditingId(offer.id);
       setSelectedContact(offer.contactId);
+      setContactSearch(contacts[offer.contactId]?.company || '');
       setContactMode(offer.contactMode || 'end-user');
       setSelectedEndUserContact(offer.endUserContactId || '');
+      setEndUserContactSearch(contacts[offer.endUserContactId || '']?.company || '');
       setItems(offer.items);
       setDeliveryTime(offer.deliveryTime || '');
       setShippingCost(offer.shippingCost || 0);
     } else {
       setEditingId(null);
       setSelectedContact('');
+      setContactSearch('');
       setContactMode('end-user');
       setSelectedEndUserContact('');
+      setEndUserContactSearch('');
       setItems([]);
       setDeliveryTime('');
       setShippingCost(0);
@@ -664,17 +672,41 @@ export const OffersView: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Dealer (rivenditore)</label>
-                    <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
-                      <option value="">Seleziona Dealer...</option>
-                      {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
-                    </select>
+                    <SearchDropdown
+                      value={contactSearch}
+                      onChange={v => { setContactSearch(v); if (selectedContact) setSelectedContact(''); }}
+                      placeholder="Cerca dealer per nome, azienda, città..."
+                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+                      results={(contactSearch.trim()
+                        ? Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])).slice(0, 8)
+                        : Object.values(contacts).slice(0, 8)
+                      ).map(c => ({
+                        key: c.id,
+                        item: c,
+                        label: c.company || c.contactName,
+                        sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+                      }))}
+                      onSelect={c => { setSelectedContact(c.id); setContactSearch(c.company || c.contactName); }}
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente finale (End User)</label>
-                    <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedEndUserContact} onChange={(e) => setSelectedEndUserContact(e.target.value)}>
-                      <option value="">Seleziona Cliente Finale...</option>
-                      {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
-                    </select>
+                    <SearchDropdown
+                      value={endUserContactSearch}
+                      onChange={v => { setEndUserContactSearch(v); if (selectedEndUserContact) setSelectedEndUserContact(''); }}
+                      placeholder="Cerca cliente finale per nome, azienda, città..."
+                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+                      results={(endUserContactSearch.trim()
+                        ? Object.values(contacts).filter(c => matchSearch(endUserContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])).slice(0, 8)
+                        : Object.values(contacts).slice(0, 8)
+                      ).map(c => ({
+                        key: c.id,
+                        item: c,
+                        label: c.company || c.contactName,
+                        sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+                      }))}
+                      onSelect={c => { setSelectedEndUserContact(c.id); setEndUserContactSearch(c.company || c.contactName); }}
+                    />
                   </div>
                 </div>
               ) : (
@@ -682,10 +714,22 @@ export const OffersView: React.FC = () => {
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
                     {contactMode === 'dealer' ? 'Dealer' : 'Cliente'}
                   </label>
-                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none" value={selectedContact} onChange={(e) => setSelectedContact(e.target.value)}>
-                    <option value="">Seleziona Cliente...</option>
-                    {Object.values(contacts).map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
-                  </select>
+                  <SearchDropdown
+                    value={contactSearch}
+                    onChange={v => { setContactSearch(v); if (selectedContact) setSelectedContact(''); }}
+                    placeholder="Cerca per nome, azienda, città, email, telefono..."
+                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+                    results={(contactSearch.trim()
+                      ? Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])).slice(0, 8)
+                      : Object.values(contacts).slice(0, 8)
+                    ).map(c => ({
+                      key: c.id,
+                      item: c,
+                      label: c.company || c.contactName,
+                      sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+                    }))}
+                    onSelect={c => { setSelectedContact(c.id); setContactSearch(c.company || c.contactName); }}
+                  />
                 </div>
               )}
 
