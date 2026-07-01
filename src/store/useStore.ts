@@ -241,6 +241,8 @@ export const useStore = create<StoreState>()(
         theme: state.theme,
         profile: state.profile,
         discountApprovalThreshold: state.discountApprovalThreshold,
+        todos: state.todos,
+        footerTabs: state.footerTabs,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
