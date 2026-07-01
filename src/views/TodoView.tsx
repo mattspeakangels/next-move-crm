@@ -194,14 +194,25 @@ interface TodoCardProps {
   contactName?: string;
   onToggle: (status: TodoStatus) => void;
   onDelete: () => void;
+  onUpdate: (updates: Partial<TodoItem>) => void;
   onNavigate?: (view: NavView, contactId: string) => void;
 }
 
-const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDelete }) => {
+const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDelete, onUpdate }) => {
   const isDone = todo.status === 'fatto';
   const overdue = !isDone && isOverdue(todo.scadenza);
   const tipo = TIPO_CONFIG[todo.tipo];
   const priorita = PRIORITA_CONFIG[todo.priorita];
+
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(todo.titolo);
+
+  const commitTitle = () => {
+    const trimmed = titleDraft.trim();
+    if (trimmed && trimmed !== todo.titolo) onUpdate({ titolo: trimmed });
+    else setTitleDraft(todo.titolo);
+    setEditingTitle(false);
+  };
 
   const nextStatus: TodoStatus = todo.status === 'da-fare' ? 'in-corso' : todo.status === 'in-corso' ? 'fatto' : 'da-fare';
 
@@ -229,9 +240,26 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className={`text-sm font-bold leading-snug ${isDone ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-              {todo.titolo}
-            </p>
+            {editingTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitTitle();
+                  if (e.key === 'Escape') { setTitleDraft(todo.titolo); setEditingTitle(false); }
+                }}
+                className="flex-1 text-sm font-bold leading-snug bg-transparent border-b-2 border-indigo-400 outline-none text-gray-900 dark:text-white"
+              />
+            ) : (
+              <p
+                onClick={() => !isDone && setEditingTitle(true)}
+                className={`text-sm font-bold leading-snug ${isDone ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white cursor-text hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-0.5 -mx-0.5'}`}
+              >
+                {todo.titolo}
+              </p>
+            )}
             <button
               onClick={onDelete}
               className="p-1 flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -247,9 +275,17 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
             </span>
 
             {/* Priorità */}
-            <span className="flex items-center gap-1 text-[9px] font-black text-gray-400">
+            <span className="flex items-center gap-1">
               <span className={`w-1.5 h-1.5 rounded-full ${priorita.dot}`} />
-              {priorita.label}
+              <select
+                value={todo.priorita}
+                onChange={(e) => onUpdate({ priorita: e.target.value as TodoItem['priorita'] })}
+                className="text-[9px] font-black text-gray-400 bg-transparent border-none outline-none cursor-pointer appearance-none"
+              >
+                {Object.entries(PRIORITA_CONFIG).map(([key, cfg]) => (
+                  <option key={key} value={key}>{cfg.label}</option>
+                ))}
+              </select>
             </span>
 
             {/* Scadenza */}
@@ -511,6 +547,7 @@ export const TodoView: React.FC = () => {
                             todo={todo}
                             onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
                             onDelete={() => deleteTodo(todo.id)}
+                            onUpdate={updates => updateTodo(todo.id, updates)}
                           />
                         </div>
                       ))}
@@ -543,6 +580,7 @@ export const TodoView: React.FC = () => {
                 contactName={todo.contactId ? contacts[todo.contactId]?.company : undefined}
                 onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
                 onDelete={() => deleteTodo(todo.id)}
+                onUpdate={updates => updateTodo(todo.id, updates)}
               />
             ))}
           </div>
