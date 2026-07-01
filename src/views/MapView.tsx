@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Search, Route, Home, CalendarCheck, GripVertical } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
 import {
   DndContext,
   closestCenter,
@@ -193,7 +194,6 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [savedToAgenda, setSavedToAgenda] = useState(false);
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({});
   const [searchItinQuery, setSearchItinQuery] = useState('');
-  const [showItinResults, setShowItinResults] = useState(false);
   const [itinFlyTo, setItinFlyTo] = useState<[number, number] | null>(null);
   const [manualOrder, setManualOrder] = useState<string[] | null>(null);
   const [roadRouteCoords, setRoadRouteCoords] = useState<[number, number][]>([]);
@@ -536,61 +536,39 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
           )}
 
           {/* Barra di ricerca cliente */}
-          <div className="relative w-full mt-1">
-            <div className="flex items-center gap-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl px-3 py-2.5 shadow-lg focus-within:ring-2 focus-within:ring-orange-400 transition-all">
-              <Search size={14} className="text-gray-400 flex-shrink-0" />
-              <input
-                type="text"
-                value={searchItinQuery}
-                onChange={e => { setSearchItinQuery(e.target.value); setShowItinResults(true); }}
-                onFocus={() => setShowItinResults(true)}
-                onBlur={() => setTimeout(() => setShowItinResults(false), 150)}
-                placeholder="Cerca cliente per nome o città…"
-                className="flex-1 bg-transparent text-sm font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none"
-              />
-              {searchItinQuery && (
-                <button onClick={() => { setSearchItinQuery(''); setShowItinResults(false); }} className="text-gray-400 hover:text-gray-600">
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-
-            {showItinResults && itinSearchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[800] overflow-hidden">
-                {itinSearchResults.map((c: any) => {
-                  const already = selectedIds.includes(c.id);
-                  const isCliente = c.status === 'cliente';
-                  return (
-                    <button
-                      key={c.id}
-                      onMouseDown={() => {
-                        if (!already) {
-                          setSelectedIds(prev => [...prev, c.id]);
-                          setSheetOpen(true);
-                        }
-                        setItinFlyTo([c.lat, c.lng]);
-                        setSearchItinQuery('');
-                        setShowItinResults(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0"
-                    >
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'}`}>
-                        <Building2 size={14} />
-                      </div>
-                      <div className="text-left min-w-0 flex-1">
-                        <p className="text-sm font-black text-gray-900 dark:text-white truncate">{c.company}</p>
-                        <p className="text-xs text-gray-400 font-bold">{c.city || '—'} · {isCliente ? 'Cliente' : 'Prospect'}</p>
-                      </div>
-                      {already
-                        ? <span className="text-[9px] font-black text-orange-500 flex-shrink-0">in itinerario</span>
-                        : <span className="text-[9px] font-black text-gray-300 flex-shrink-0">+ aggiungi</span>
-                      }
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <SearchDropdown
+            className="w-full mt-1"
+            value={searchItinQuery}
+            onChange={setSearchItinQuery}
+            placeholder="Cerca cliente per nome o città…"
+            inputWrapperClassName={() => 'flex items-center gap-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl px-3 py-2.5 shadow-lg focus-within:ring-2 focus-within:ring-orange-400 transition-all'}
+            dropdownClassName="z-[800]"
+            onSelect={(c: any) => {
+              const already = selectedIds.includes(c.id);
+              if (!already) {
+                setSelectedIds(prev => [...prev, c.id]);
+                setSheetOpen(true);
+              }
+              setItinFlyTo([c.lat, c.lng]);
+              setSearchItinQuery('');
+            }}
+            results={itinSearchResults.map((c: any) => {
+              const already = selectedIds.includes(c.id);
+              const isCliente = c.status === 'cliente';
+              return {
+                key: c.id,
+                item: c,
+                label: c.company,
+                sublabel: c.city || '—',
+                badge: {
+                  text: already ? 'in itinerario' : `${isCliente ? 'Cliente' : 'Prospect'}`,
+                  className: already
+                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300'
+                    : isCliente ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
+                },
+              };
+            })}
+          />
         </div>
 
         {/* Mappa */}
@@ -966,7 +944,6 @@ export const MapView: React.FC<MapViewProps> = ({
   const [showItinerario, setShowItinerario] = useState(false);
   const [itinerarioEverOpened, setItinerarioEverOpened] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearchResults, setShowSearchResults] = useState(false);
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
 
   const applyAISuggestions = (suggestions: CatalogSuggestion[]) => {
@@ -1240,63 +1217,40 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
 
         {/* ── Barra di ricerca ── */}
-        <div className="relative mt-3">
-          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors">
-            <Search size={15} className="text-gray-400 flex-shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => { setSearchQuery(e.target.value); setShowSearchResults(true); }}
-              onFocus={() => setShowSearchResults(true)}
-              onBlur={() => setTimeout(() => setShowSearchResults(false), 150)}
-              placeholder="Cerca cliente o prospect…"
-              className="flex-1 bg-transparent text-sm font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none"
-            />
-            {searchQuery && (
-              <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* Dropdown risultati */}
-          {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl z-[500] overflow-hidden">
-              {searchResults.map(c => {
-                const isCliente = c.status === 'cliente';
-                const hasPinned = !!(c.lat && c.lng);
-                return (
-                  <button
-                    key={c.id}
-                    onMouseDown={() => {
-                      setSearchQuery(c.company);
-                      setShowSearchResults(false);
-                      if (hasPinned) {
-                        setFlyToTarget([c.lat!, c.lng!]);
-                        setMobileTab('mappa');
-                      } else {
-                        onNavigateToContact(c.id);
-                      }
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0"
-                  >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'}`}>
-                      <Building2 size={14} />
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="text-sm font-black text-gray-900 dark:text-white truncate">{c.company}</p>
-                      <p className="text-xs text-gray-400 font-bold">{c.city || '—'} · {isCliente ? 'Cliente' : 'Prospect'}</p>
-                    </div>
-                    {hasPinned
-                      ? <MapPin size={13} className="text-indigo-400 flex-shrink-0" />
-                      : <span className="text-[9px] text-gray-300 font-bold flex-shrink-0">no pin</span>
-                    }
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <SearchDropdown
+          className="mt-3"
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Cerca cliente o prospect…"
+          inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors'}
+          dropdownClassName="z-[500]"
+          onSelect={c => {
+            setSearchQuery(c.company);
+            const hasPinned = !!(c.lat && c.lng);
+            if (hasPinned) {
+              setFlyToTarget([c.lat!, c.lng!]);
+              setMobileTab('mappa');
+            } else {
+              onNavigateToContact(c.id);
+            }
+          }}
+          results={searchResults.map(c => {
+            const isCliente = c.status === 'cliente';
+            const hasPinned = !!(c.lat && c.lng);
+            return {
+              key: c.id,
+              item: c,
+              label: c.company,
+              sublabel: c.city || '—',
+              badge: {
+                text: hasPinned ? (isCliente ? 'Cliente' : 'Prospect') : 'no pin',
+                className: hasPinned
+                  ? (isCliente ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300')
+                  : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-400',
+              },
+            };
+          })}
+        />
 
         {/* Filtri collassabili */}
         {showFilters && (

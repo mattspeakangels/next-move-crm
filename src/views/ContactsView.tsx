@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Search, Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useStore } from '../store/useStore';
 import { Contact, ContactSegment } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
@@ -1265,16 +1266,39 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
             const list = filteredList;
 
+            const searchPreview = searchTerm.trim()
+              ? Object.values(contacts)
+                  .filter(c => c.status === statusFilter)
+                  .filter(c =>
+                    (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (c.city && c.city.toLowerCase().includes(searchTerm.toLowerCase()))
+                  )
+                  .slice(0, 8)
+              : [];
+
             return (
               <>
                 <div className="flex flex-col md:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input type="text"
-                      placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} o città…`}
-                      className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-sm"
-                      value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                  </div>
+                  <SearchDropdown
+                    className="flex-1"
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    onSelect={c => setSearchTerm(c.company)}
+                    placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} o città…`}
+                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all shadow-sm text-sm'}
+                    results={searchPreview.map(c => ({
+                      key: c.id,
+                      item: c,
+                      label: c.company,
+                      sublabel: c.city || undefined,
+                      badge: {
+                        text: c.status === 'cliente' ? 'Cliente' : 'Prospect',
+                        className: c.status === 'cliente'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                      },
+                    }))}
+                  />
 
                   {/* CSV input — clienti */}
                   <input type="file" accept=".csv,.xlsx,.xls" className="hidden" ref={fileInputRef}

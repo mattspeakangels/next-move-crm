@@ -3,12 +3,13 @@ import { blakladerUrl, enrichProduct } from '../lib/blaklader';
 import * as XLSX from 'xlsx';
 import { useStore } from '../store/useStore';
 import {
-  Plus, Upload, Search, X, MoreHorizontal, Package,
+  Plus, Upload, X, MoreHorizontal, Package,
   LayoutList, LayoutGrid, Rows3, ShoppingBag, Check, Trash2, Copy, Pencil, RefreshCw,
   Tag, Ruler, Layers, Sparkles, Loader2, ExternalLink
 } from 'lucide-react';
 import { Product } from '../types';
 import { useToast } from '../components/ui/ToastContext';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type LayoutVariant = 'compact' | 'visual' | 'grid';
@@ -1317,17 +1318,25 @@ export const ProductsView: React.FC = () => {
       </div>
 
       {/* ── Search ── */}
-      <div className="relative">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Cerca codice, nome o linea..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-medium dark:text-white outline-none focus:border-indigo-400 transition-colors"
-        />
-        {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X size={16} /></button>}
-      </div>
+      <SearchDropdown
+        value={search}
+        onChange={setSearch}
+        onSelect={p => setSearch(pName(p))}
+        placeholder="Cerca codice, nome o linea..."
+        inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-medium dark:text-white outline-none focus-within:border-indigo-400 transition-colors'}
+        results={(search.trim()
+          ? productList.filter(p => {
+              const q = search.toLowerCase();
+              return pName(p).toLowerCase().includes(q) || p.code.toLowerCase().includes(q) || (p.line?.toLowerCase().includes(q) ?? false);
+            }).slice(0, 8)
+          : []
+        ).map(p => ({
+          key: p.id,
+          item: p,
+          label: pName(p),
+          sublabel: [p.code, p.line].filter(Boolean).join(' · '),
+        }))}
+      />
 
       {/* ── Category chips ── */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">

@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { saveStoricoToFirestore, loadStoricoFromFirestore, deleteStoricoFromFirestore } from '../lib/storicoFirestore';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
 import {
   Upload, TrendingUp, TrendingDown, Target, Zap, AlertTriangle,
   ChevronDown, ChevronUp, Euro, BarChart3,
@@ -1084,24 +1085,22 @@ export function StoricoView() {
       </div>
 
       {/* Barra di ricerca */}
-      <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors">
-        <Search size={15} className="text-gray-400 flex-shrink-0" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={e => { setSearchQuery(e.target.value); setPage(0); }}
-          placeholder="Cerca cliente…"
-          className="flex-1 bg-transparent text-sm font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none"
-        />
-        {searchQuery && (
-          <button onClick={() => { setSearchQuery(''); setPage(0); }} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={14} />
-          </button>
-        )}
-        {searchNorm && (
-          <span className="text-xs font-bold text-indigo-500 flex-shrink-0">{clientiSorted.length} risultati</span>
-        )}
-      </div>
+      <SearchDropdown
+        value={searchQuery}
+        onChange={v => { setSearchQuery(v); setPage(0); }}
+        onSelect={c => { setSearchQuery(c.nome || `#${c.clientId}`); setPage(0); }}
+        placeholder="Cerca cliente…"
+        inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors'}
+        results={(searchNorm
+          ? clienti.filter(c => (c.nome || '').toLowerCase().includes(searchNorm)).slice(0, 8)
+          : []
+        ).map(c => ({
+          key: String(c.clientId),
+          item: c,
+          label: c.nome || `#${c.clientId}`,
+          sublabel: `${fmtEur((((c as any)[`fatturato${annoCorr}`] as number) || 0))} (${annoCorr})`,
+        }))}
+      />
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

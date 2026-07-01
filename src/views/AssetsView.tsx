@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Asset, AssetStatus } from '../types';
 import {
-  Package, Plus, X, Pencil, Trash2, Search, AlertTriangle, CheckCircle,
+  Package, Plus, X, Pencil, Trash2, AlertTriangle, CheckCircle,
   Clock, Archive, ChevronDown, ChevronUp, Calendar, Hash, Euro,
 } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -308,16 +309,29 @@ export const AssetsView: React.FC = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Cerca asset, seriale, cliente..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold text-sm outline-none focus:border-indigo-400"
-          />
-        </div>
+        <SearchDropdown
+          className="flex-1 min-w-[200px]"
+          value={search}
+          onChange={setSearch}
+          onSelect={a => setSearch(a.description)}
+          placeholder="Cerca asset, seriale, cliente..."
+          inputWrapperClassName={() => 'flex items-center gap-2 pl-3.5 pr-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold text-sm outline-none focus-within:border-indigo-400'}
+          results={(search.trim()
+            ? allAssets.filter(a => {
+                const q = search.toLowerCase();
+                const company = contacts[a.contactId]?.company ?? '';
+                return a.description.toLowerCase().includes(q) ||
+                  company.toLowerCase().includes(q) ||
+                  (a.serialNumber ?? '').toLowerCase().includes(q);
+              }).slice(0, 8)
+            : []
+          ).map(a => ({
+            key: a.id,
+            item: a,
+            label: a.description,
+            sublabel: [contacts[a.contactId]?.company, a.serialNumber].filter(Boolean).join(' · '),
+          }))}
+        />
         <div className="flex gap-1 bg-white dark:bg-gray-800 rounded-2xl p-1 border border-gray-100 dark:border-gray-700">
           <button onClick={() => setFilterStatus('all')}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${filterStatus === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-600'}`}>
