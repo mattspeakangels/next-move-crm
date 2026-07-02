@@ -240,16 +240,192 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
 
 // ─── Todo Card ────────────────────────────────────────────────────────────────
 
+interface EditTodoModalProps {
+  todo: TodoItem;
+  onClose: () => void;
+  onSave: (updates: Partial<TodoItem>) => void;
+  contacts: Record<string, Contact>;
+}
+
+const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, contacts }) => {
+  const [titolo, setTitolo] = useState(todo.titolo);
+  const [tipo, setTipo] = useState<TodoTipo>(todo.tipo);
+  const [priorita, setPriority] = useState<TodoPriorita>(todo.priorita);
+  const [scadenza, setScadenza] = useState(todo.scadenza || '');
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(
+    todo.contactId ? contacts[todo.contactId] || null : null
+  );
+  const [contactSearch, setContactSearch] = useState('');
+  const [note, setNote] = useState(todo.note || '');
+
+  const filteredContacts = useMemo(() => {
+    return Object.values(contacts)
+      .filter(c => c.id !== selectedContact?.id)
+      .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.phone, c.email]))
+      .sort((a, b) => a.company.localeCompare(b.company));
+  }, [contacts, contactSearch, selectedContact]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!titolo.trim()) return;
+    onSave({
+      titolo: titolo.trim(),
+      tipo,
+      priorita,
+      scadenza: scadenza || undefined,
+      note: note.trim() || undefined,
+      contactId: selectedContact?.id,
+    });
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black text-gray-900 dark:text-white">Modifica To Do</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Attività *</label>
+          <input
+            type="text"
+            value={titolo}
+            onChange={e => setTitolo(e.target.value)}
+            placeholder="Es. Inviare offerta a Rossi Srl"
+            required
+            autoFocus
+            className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Tipo</label>
+            <select
+              value={tipo}
+              onChange={e => setTipo(e.target.value as TodoTipo)}
+              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
+            >
+              {Object.entries(TIPO_CONFIG).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Priorità</label>
+            <select
+              value={priorita}
+              onChange={e => setPriority(e.target.value as TodoPriorita)}
+              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
+            >
+              <option value="alta">Alta</option>
+              <option value="media">Media</option>
+              <option value="bassa">Bassa</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Scadenza</label>
+            <input
+              type="date"
+              value={scadenza}
+              onChange={e => setScadenza(e.target.value)}
+              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Cliente</label>
+            {selectedContact ? (
+              <span className="flex items-center justify-between gap-1 text-[11px] font-bold pl-2.5 pr-1.5 py-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                <span className="truncate">{selectedContact.company || '(senza nome)'}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedContact(null)}
+                  className="p-0.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 flex-shrink-0"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            ) : (
+              <SearchDropdown
+                value={contactSearch}
+                onChange={setContactSearch}
+                onSelect={c => { setSelectedContact(c); setContactSearch(''); }}
+                results={filteredContacts.map(c => ({
+                  key: c.id,
+                  item: c,
+                  label: c.company || '(senza nome)',
+                  sublabel: c.contactName || undefined,
+                }))}
+                totalCount={Object.keys(contacts).length}
+                showWhenEmpty
+                placeholder={`Scrivi il nome... (${Object.keys(contacts).length} contatti)`}
+                emptyTitle={Object.keys(contacts).length === 0 ? '📋 Rubrica vuota' : '🔍 Nessun risultato'}
+                emptySubtitle={Object.keys(contacts).length === 0 ? 'Aggiungi contatti dalla sezione Clienti' : 'Prova con un termine diverso'}
+                inputWrapperClassName={open =>
+                  `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${
+                    open ? 'border-indigo-400' : 'border-gray-100 dark:border-gray-700'
+                  }`
+                }
+              />
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Note</label>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Dettagli aggiuntivi..."
+            rows={2}
+            className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none resize-none focus:border-indigo-400"
+          />
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <button
+            type="submit"
+            className="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors"
+          >
+            Salva modifiche
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors"
+          >
+            Annulla
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 interface TodoCardProps {
   todo: TodoItem;
   contactName?: string;
   onToggle: (status: TodoStatus) => void;
   onDelete: () => void;
   onUpdate: (updates: Partial<TodoItem>) => void;
+  onEdit: () => void;
   onNavigate?: (view: NavView, contactId: string) => void;
 }
 
-const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDelete, onUpdate }) => {
+const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDelete, onUpdate, onEdit }) => {
   const isDone = todo.status === 'fatto';
   const overdue = !isDone && isOverdue(todo.scadenza);
   const tipo = TIPO_CONFIG[todo.tipo];
@@ -312,15 +488,13 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
               </p>
             )}
             <div className="flex items-center flex-shrink-0">
-              {isDone && (
-                <button
-                  onClick={() => setEditingTitle(true)}
-                  title="Modifica attività completata"
-                  className="p-1 text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-                >
-                  <Pencil size={14} />
-                </button>
-              )}
+              <button
+                onClick={onEdit}
+                title="Modifica attività"
+                className="p-1 text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+              >
+                <Pencil size={14} />
+              </button>
               <button
                 onClick={onDelete}
                 className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -388,6 +562,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 export const TodoView: React.FC = () => {
   const { todos, contacts, addTodo, updateTodo, deleteTodo } = useStore();
   const [showAdd, setShowAdd] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<TodoStatus | 'tutti'>('tutti');
   const [filterTipo, setFilterTipo] = useState<TodoTipo | 'tutti'>('tutti');
   const [showFilters, setShowFilters] = useState(false);
@@ -612,6 +787,7 @@ export const TodoView: React.FC = () => {
                             onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
                             onDelete={() => deleteTodo(todo.id)}
                             onUpdate={updates => updateTodo(todo.id, updates)}
+                            onEdit={() => setEditingTodo(todo)}
                           />
                         </div>
                       ))}
@@ -645,6 +821,7 @@ export const TodoView: React.FC = () => {
                 onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
                 onDelete={() => deleteTodo(todo.id)}
                 onUpdate={updates => updateTodo(todo.id, updates)}
+                onEdit={() => setEditingTodo(todo)}
               />
             ))}
           </div>
@@ -656,6 +833,16 @@ export const TodoView: React.FC = () => {
         <AddTodoModal
           onClose={() => setShowAdd(false)}
           onAdd={addTodo}
+          contacts={contacts}
+        />
+      )}
+
+      {/* Edit modal */}
+      {editingTodo && (
+        <EditTodoModal
+          todo={editingTodo}
+          onClose={() => setEditingTodo(null)}
+          onSave={updates => updateTodo(editingTodo.id, updates)}
           contacts={contacts}
         />
       )}
