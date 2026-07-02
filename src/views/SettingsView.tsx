@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -148,6 +148,92 @@ const ClaudeApiKeySection: React.FC = () => {
         <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{testError}</p>
       )}
 
+    </div>
+  );
+};
+
+// ── Microphone Permission Section ───────────────────────────────────────────
+
+type MicPermState = 'unknown' | 'granted' | 'denied' | 'unsupported';
+
+const MicrophonePermissionSection: React.FC = () => {
+  const [status, setStatus] = useState<MicPermState>('unknown');
+  const [checking, setChecking] = useState(false);
+
+  const refreshStatus = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStatus('unsupported');
+      return;
+    }
+    if (navigator.permissions?.query) {
+      try {
+        const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        setStatus(result.state === 'granted' ? 'granted' : result.state === 'denied' ? 'denied' : 'unknown');
+        return;
+      } catch {
+        // Safari non supporta la query 'microphone': resta 'unknown' finché l'utente non testa
+      }
+    }
+  };
+
+  React.useEffect(() => { refreshStatus(); }, []);
+
+  const handleEnable = async () => {
+    setChecking(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      setStatus('granted');
+    } catch {
+      setStatus('denied');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+      <div className="flex items-center gap-2">
+        <Mic size={16} className="text-indigo-500" />
+        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Microfono</h2>
+        {status === 'granted' && (
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
+            <CheckCircle2 size={10} /> Abilitato
+          </span>
+        )}
+        {status === 'denied' && (
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 flex items-center gap-1">
+            <MicOff size={10} /> Bloccato
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Serve per registrare e trascrivere le conversazioni con l'AI (Agenda, resoconto visita). Il permesso è legato al browser/dispositivo: va abilitato su ogni device.
+      </p>
+
+      {status === 'unsupported' && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 flex items-center gap-2">
+          <AlertTriangle size={13} /> Questo browser non supporta la registrazione audio.
+        </p>
+      )}
+
+      {status === 'denied' && (
+        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+          Il microfono è bloccato per questo sito. Abilitalo dalle impostazioni del browser (icona lucchetto/informazioni nella barra indirizzi, oppure Impostazioni → Siti web → Microfono) e poi premi di nuovo il pulsante.
+        </p>
+      )}
+
+      {status !== 'unsupported' && (
+        <button
+          onClick={handleEnable}
+          disabled={checking}
+          className="w-full px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white text-sm font-black transition-colors flex items-center justify-center gap-2"
+        >
+          <Mic size={15} />
+          {checking ? 'Verifica in corso…' : status === 'granted' ? 'Testa di nuovo' : 'Abilita microfono'}
+        </button>
+      )}
     </div>
   );
 };
@@ -429,6 +515,7 @@ export const SettingsView: React.FC = () => {
 
       {/* ── Claude API Key ─────────────────────────────────────────────── */}
       <ClaudeApiKeySection />
+      <MicrophonePermissionSection />
 
       {/* ── Footer personalizzabile ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
