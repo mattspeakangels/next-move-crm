@@ -56,29 +56,38 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
   const [tipo, setTipo] = useState<TodoTipo>('altro');
   const [priorita, setPriority] = useState<TodoPriorita>('media');
   const [scadenza, setScadenza] = useState('');
-  const [contactId, setContactId] = useState('');
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
   const [contactSearch, setContactSearch] = useState('');
   const [note, setNote] = useState('');
 
   const filteredContacts = useMemo(() => {
+    const selectedIds = new Set(selectedContacts.map(c => c.id));
     return Object.values(contacts)
+      .filter(c => !selectedIds.has(c.id))
       .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.phone, c.email]))
       .sort((a, b) => a.company.localeCompare(b.company));
-  }, [contacts, contactSearch]);
+  }, [contacts, contactSearch, selectedContacts]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!titolo.trim()) return;
-    onAdd({
+    const base = {
       titolo: titolo.trim(),
       tipo,
       priorita,
       scadenza: scadenza || undefined,
-      contactId: contactId || undefined,
       note: note.trim() || undefined,
-      status: 'da-fare',
-      source: 'manuale',
-    });
+      status: 'da-fare' as const,
+      source: 'manuale' as const,
+    };
+    // Un cliente selezionato = un To Do; con piu' clienti si crea la stessa
+    // attivita' per ciascuno, cosi' compare in tutti i rispettivi gruppi
+    // nella vista "Clienti" senza dover cambiare il modello dati.
+    if (selectedContacts.length === 0) {
+      onAdd({ ...base, contactId: undefined });
+    } else {
+      for (const c of selectedContacts) onAdd({ ...base, contactId: c.id });
+    }
     onClose();
   };
 
@@ -150,20 +159,14 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
           </div>
           <div>
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">
-              Cliente
-              {contactId && (
-                <span className="ml-2 normal-case font-bold text-indigo-600">✓ selezionato</span>
-              )}
+              Cliente{selectedContacts.length > 0 ? ` · ${selectedContacts.length} selezionati` : ''}
             </label>
             <SearchDropdown
               value={contactSearch}
-              onChange={v => {
-                setContactSearch(v);
-                if (contactId) setContactId('');
-              }}
+              onChange={setContactSearch}
               onSelect={c => {
-                setContactId(c.id);
-                setContactSearch(c.company || '(senza nome)');
+                setSelectedContacts(prev => prev.some(x => x.id === c.id) ? prev : [...prev, c]);
+                setContactSearch('');
               }}
               results={filteredContacts.map(c => ({
                 key: c.id,
@@ -182,6 +185,25 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
                 }`
               }
             />
+            {selectedContacts.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedContacts.map(c => (
+                  <span
+                    key={c.id}
+                    className="flex items-center gap-1 text-[11px] font-bold pl-2.5 pr-1.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+                  >
+                    {c.company || '(senza nome)'}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))}
+                      className="p-0.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -437,41 +459,43 @@ export const TodoView: React.FC = () => {
   return (
     <div className="space-y-5 pb-6">
 
-      {/* Header */}
-      <div className="flex items-center justify-between pt-1">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-            <CheckSquare size={24} className="text-indigo-600" />
-            To Do
-          </h1>
-          {scaduti > 0 && (
-            <p className="text-xs text-red-500 font-bold mt-0.5 flex items-center gap-1">
-              <AlertCircle size={11} /> {scaduti} {scaduti === 1 ? 'attività scaduta' : 'attività scadute'}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Toggle vista */}
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
+      {/* Header (fisso in cima durante lo scroll, resta la lista sottostante a muoversi) */}
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
+              <CheckSquare size={24} className="text-indigo-600" />
+              To Do
+            </h1>
+            {scaduti > 0 && (
+              <p className="text-xs text-red-500 font-bold mt-0.5 flex items-center gap-1">
+                <AlertCircle size={11} /> {scaduti} {scaduti === 1 ? 'attività scaduta' : 'attività scadute'}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Toggle vista */}
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
+              <button
+                onClick={() => setViewMode('cliente')}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'cliente' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+              >
+                <Users size={12} /> Clienti
+              </button>
+              <button
+                onClick={() => setViewMode('lista')}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'lista' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+              >
+                <List size={12} /> Lista
+              </button>
+            </div>
             <button
-              onClick={() => setViewMode('cliente')}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'cliente' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
             >
-              <Users size={12} /> Clienti
-            </button>
-            <button
-              onClick={() => setViewMode('lista')}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'lista' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
-            >
-              <List size={12} /> Lista
+              <Plus size={15} />
             </button>
           </div>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
-          >
-            <Plus size={15} />
-          </button>
         </div>
       </div>
 
