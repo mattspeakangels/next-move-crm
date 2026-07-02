@@ -331,9 +331,9 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ClipboardList size={16} className="text-indigo-600" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <ClipboardList size={16} className="text-indigo-600 flex-shrink-0" />
           <span className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             Profilazione {isDealer ? 'Dealer' : 'End User'}
           </span>
@@ -341,7 +341,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
             {badge} · {total}/25
           </span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button type="button" onClick={() => exportProfilingPDF(contact, form)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 text-[10px] font-black uppercase tracking-wide hover:bg-red-100 transition-all">
             <FileText size={12} /> PDF
