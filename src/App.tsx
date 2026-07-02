@@ -184,7 +184,7 @@ function AppContent() {
         </div>
       </main>
 
-      {/* ── MOBILE BOTTOM NAV (4 tab personalizzabili) ── */}
+      {/* ── MOBILE BOTTOM NAV (5 tab personalizzabili) ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-around px-1 h-16 safe-area-inset-bottom">
         {mobileMain.map(({ id, icon: Icon, label }) => (
           <button

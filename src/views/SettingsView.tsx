@@ -522,7 +522,7 @@ export const SettingsView: React.FC = () => {
         <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
           <span>📱</span> Barra navigazione mobile
         </h2>
-        <p className="text-xs text-gray-400">Seleziona esattamente 4 sezioni da mostrare nella barra in basso.</p>
+        <p className="text-xs text-gray-400">Seleziona fino a 5 sezioni da mostrare nella barra in basso.</p>
         {(() => {
           const ALL_TABS: { id: import('../types').NavView; label: string }[] = [
             { id: 'dashboard',  label: 'Dashboard'    },
@@ -543,7 +543,7 @@ export const SettingsView: React.FC = () => {
             if (current.includes(id)) {
               if (current.length > 1) setFooterTabs(current.filter(t => t !== id));
             } else {
-              if (current.length < 4) setFooterTabs([...current, id]);
+              if (current.length < 5) setFooterTabs([...current, id]);
             }
           };
           return (
@@ -555,11 +555,11 @@ export const SettingsView: React.FC = () => {
                   <button
                     key={id}
                     onClick={() => toggle(id)}
-                    disabled={active && current.length <= 4 && current.length === 4 && !active}
+                    disabled={!active && current.length >= 5}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
                       active
                         ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                        : current.length >= 4
+                        : current.length >= 5
                           ? 'border-gray-100 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed'
                           : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-indigo-200'
                     }`}
@@ -577,7 +577,7 @@ export const SettingsView: React.FC = () => {
           );
         })()}
         <p className="text-[10px] text-gray-400 text-center">
-          {(footerTabs ?? []).length}/4 sezioni selezionate
+          {(footerTabs ?? []).length}/5 sezioni selezionate
         </p>
       </div>
 
