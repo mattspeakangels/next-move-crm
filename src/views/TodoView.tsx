@@ -4,7 +4,9 @@ import {
   AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView } from '../types';
+import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView, Contact } from '../types';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,7 +48,7 @@ function formatDate(iso?: string): string {
 interface AddTodoModalProps {
   onClose: () => void;
   onAdd: (todo: Omit<TodoItem, 'id' | 'createdAt'>) => void;
-  contacts: Record<string, { company: string }>;
+  contacts: Record<string, Contact>;
 }
 
 const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts }) => {
@@ -55,7 +57,14 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
   const [priorita, setPriority] = useState<TodoPriorita>('media');
   const [scadenza, setScadenza] = useState('');
   const [contactId, setContactId] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
   const [note, setNote] = useState('');
+
+  const filteredContacts = useMemo(() => {
+    return Object.values(contacts)
+      .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.phone, c.email]))
+      .sort((a, b) => a.company.localeCompare(b.company));
+  }, [contacts, contactSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,8 +81,6 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
     });
     onClose();
   };
-
-  const contactList = Object.values(contacts).sort((a, b) => a.company.localeCompare(b.company));
 
   return (
     <div
@@ -142,17 +149,39 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Cliente</label>
-            <select
-              value={contactId}
-              onChange={e => setContactId(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
-            >
-              <option value="">— Nessuno —</option>
-              {contactList.map(c => (
-                <option key={(c as any).id} value={(c as any).id}>{c.company}</option>
-              ))}
-            </select>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">
+              Cliente
+              {contactId && (
+                <span className="ml-2 normal-case font-bold text-indigo-600">✓ selezionato</span>
+              )}
+            </label>
+            <SearchDropdown
+              value={contactSearch}
+              onChange={v => {
+                setContactSearch(v);
+                if (contactId) setContactId('');
+              }}
+              onSelect={c => {
+                setContactId(c.id);
+                setContactSearch(c.company || '(senza nome)');
+              }}
+              results={filteredContacts.map(c => ({
+                key: c.id,
+                item: c,
+                label: c.company || '(senza nome)',
+                sublabel: c.contactName || undefined,
+              }))}
+              totalCount={Object.keys(contacts).length}
+              showWhenEmpty
+              placeholder={`Scrivi il nome... (${Object.keys(contacts).length} contatti)`}
+              emptyTitle={Object.keys(contacts).length === 0 ? '📋 Rubrica vuota' : '🔍 Nessun risultato'}
+              emptySubtitle={Object.keys(contacts).length === 0 ? 'Aggiungi contatti dalla sezione Clienti' : 'Prova con un termine diverso'}
+              inputWrapperClassName={open =>
+                `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${
+                  open ? 'border-indigo-400' : 'border-gray-100 dark:border-gray-700'
+                }`
+              }
+            />
           </div>
         </div>
 
