@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -9,6 +9,89 @@ import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 import Anthropic from '@anthropic-ai/sdk';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
+
+// ── Aggiornamento App Section ─────────────────────────────────────────────────
+
+const AppUpdateSection: React.FC = () => {
+  const [status, setStatus] = useState<'idle' | 'checking' | 'updating' | 'latest' | 'unavailable'>('idle');
+
+  const checkForUpdate = async () => {
+    if (!('serviceWorker' in navigator)) {
+      setStatus('unavailable');
+      return;
+    }
+    setStatus('checking');
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        setStatus('unavailable');
+        return;
+      }
+      await reg.update();
+      // Se c'è una nuova versione, il nuovo SW passa a "waiting" entro pochi
+      // secondi dall'update(): attendi fino a 10s prima di dichiarare "aggiornata".
+      const waiting = await new Promise<ServiceWorker | null>(resolve => {
+        if (reg.waiting) return resolve(reg.waiting);
+        const timeout = setTimeout(() => { clearInterval(poll); resolve(null); }, 10000);
+        const poll = setInterval(() => {
+          if (reg.waiting) { clearInterval(poll); clearTimeout(timeout); resolve(reg.waiting); }
+        }, 300);
+      });
+      if (!waiting) {
+        setStatus('latest');
+        setTimeout(() => setStatus('idle'), 5000);
+        return;
+      }
+      setStatus('updating');
+      navigator.serviceWorker.addEventListener(
+        'controllerchange',
+        () => window.location.reload(),
+        { once: true }
+      );
+      waiting.postMessage({ type: 'SKIP_WAITING' });
+    } catch {
+      setStatus('unavailable');
+    }
+  };
+
+  const buildDate = new Date(__BUILD_DATE__);
+  const busy = status === 'checking' || status === 'updating';
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+      <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+        <RefreshCw size={14} /> Aggiornamento App
+      </h2>
+      <p className="text-xs text-gray-400">
+        Versione installata: build del{' '}
+        <strong>
+          {buildDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}{' '}
+          {buildDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+        </strong>
+      </p>
+      <button
+        onClick={checkForUpdate}
+        disabled={busy}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-all disabled:opacity-60"
+      >
+        <RefreshCw size={15} className={busy ? 'animate-spin' : ''} />
+        {status === 'checking' && 'Controllo aggiornamenti...'}
+        {status === 'updating' && 'Nuova versione trovata, aggiorno...'}
+        {(status === 'idle' || status === 'latest' || status === 'unavailable') && 'Cerca aggiornamenti'}
+      </button>
+      {status === 'latest' && (
+        <p className="text-xs font-bold text-green-600 dark:text-green-400 flex items-center gap-1.5">
+          <CheckCircle2 size={13} /> Hai già l'ultima versione.
+        </p>
+      )}
+      {status === 'unavailable' && (
+        <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+          Controllo non disponibile su questo browser. Se l'app sembra vecchia, disinstalla e reinstalla la PWA.
+        </p>
+      )}
+    </div>
+  );
+};
 
 // ── Claude API Key Section ──────────────────────────────────────────────────
 
@@ -516,6 +599,9 @@ export const SettingsView: React.FC = () => {
       {/* ── Claude API Key ─────────────────────────────────────────────── */}
       <ClaudeApiKeySection />
       <MicrophonePermissionSection />
+
+      {/* ── Aggiornamento App ─────────────────────────────────────────── */}
+      <AppUpdateSection />
 
       {/* ── Footer personalizzabile ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">

@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  define: {
+    // Timestamp di build, mostrato in Impostazioni → Aggiornamento App per
+    // capire quale versione è effettivamente installata sul device.
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     VitePWA({

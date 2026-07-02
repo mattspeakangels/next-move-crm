@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { collection, getDocs, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
@@ -12,6 +12,32 @@ const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'foote
 
 // Firestore WriteBatch ha un limite di 500 operazioni per batch
 const BATCH_SIZE = 400;
+
+// Firestore rifiuta i valori `undefined` (es. TodoItem con completedAt/scadenza
+// non impostati): un solo campo undefined faceva fallire l'intero batch della
+// collezione, silenziosamente. Nei campi top-level undefined diventa
+// deleteField() (con merge:true rimuove il campo remoto); nei nested viene tolto.
+function stripUndefinedDeep(value: any): any {
+  if (Array.isArray(value)) {
+    return value.filter(v => v !== undefined).map(stripUndefinedDeep);
+  }
+  if (value && typeof value === 'object' && value.constructor === Object) {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (v !== undefined) out[k] = stripUndefinedDeep(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+function sanitizeForFirestore(data: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(data)) {
+    out[k] = v === undefined ? deleteField() : stripUndefinedDeep(v);
+  }
+  return out;
+}
 
 async function flushWrites(
   userId: string,
@@ -29,7 +55,7 @@ async function flushWrites(
     const batch = writeBatch(db);
     for (const op of chunk) {
       const ref = doc(db, 'users', userId, col, op.id);
-      if (op.type === 'set') batch.set(ref, op.data, { merge: true });
+      if (op.type === 'set') batch.set(ref, sanitizeForFirestore(op.data), { merge: true });
       else batch.delete(ref);
     }
     await batch.commit();
@@ -132,7 +158,7 @@ export function useFirestoreSync(userId: string) {
       }
       if (Object.keys(changedSettings).length > 0) {
         const settingsRef = doc(db, 'users', userId, 'settings', 'app');
-        setDoc(settingsRef, changedSettings, { merge: true })
+        setDoc(settingsRef, sanitizeForFirestore(changedSettings), { merge: true })
           .catch(err => console.error('Firestore settings write failed:', err));
       }
     });
