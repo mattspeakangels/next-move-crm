@@ -815,22 +815,30 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         // FULL SCREEN DETAIL
         <div className="min-h-screen -m-4 md:-m-8 bg-gray-50 dark:bg-gray-900">
           {/* Sticky header */}
-          <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 md:px-8 py-4 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setDetailContact(null)}
-                className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h2 className="font-black text-lg dark:text-white uppercase tracking-tight">
-                  {editingContact?.company || 'Nuova Azienda'}
-                </h2>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Scheda Azienda</p>
+          <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 md:px-8 py-4 flex flex-col gap-3 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  onClick={() => setDetailContact(null)}
+                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 flex-shrink-0"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="min-w-0">
+                  <h2 className="font-black text-lg dark:text-white uppercase tracking-tight truncate">
+                    {editingContact?.company || 'Nuova Azienda'}
+                  </h2>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Scheda Azienda</p>
+                </div>
               </div>
+              <button
+                onClick={handleSave}
+                className="flex-shrink-0 bg-indigo-600 text-white px-5 sm:px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
+              >
+                Salva
+              </button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {editingContact?.id && contacts[editingContact.id] && (
                 <button
                   onClick={() => {
@@ -899,12 +907,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border-2 border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-black uppercase text-xs tracking-widest transition-colors"
               >
                 <Trash2 size={13} /> Elimina
-              </button>
-              <button
-                onClick={handleSave}
-                className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
-              >
-                Salva
               </button>
             </div>
           </div>
