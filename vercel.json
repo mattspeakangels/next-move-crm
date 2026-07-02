@@ -5,6 +5,9 @@
     },
     "api/parse-pst.ts": {
       "maxDuration": 30
+    },
+    "api/transcribe.ts": {
+      "maxDuration": 30
     }
   },
   "headers": [

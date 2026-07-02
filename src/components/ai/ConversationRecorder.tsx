@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   Mic, Square, Sparkles, X, CheckCircle, AlertCircle,
@@ -270,9 +270,32 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const sessionFinalRef = useRef('');        // finale della sessione SR corrente (ricostruito ad ogni evento)
   const noResultsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isSupported =
+  // MediaRecorder (percorso primario: registrazione audio + trascrizione server)
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const activeRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastChunkDoneRef = useRef<(() => void) | null>(null);
+  const transcribeQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const [pendingChunks, setPendingChunks] = useState(0);
+  const [recSeconds, setRecSeconds] = useState(0);
+  const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Google STT (v1) accetta WEBM_OPUS: disponibile su Chrome/Android e desktop.
+  // Su Safari iOS MediaRecorder produce mp4/aac → fallback alla Web Speech API.
+  const RECORDER_MIME = 'audio/webm;codecs=opus';
+  const CHUNK_MS = 45_000; // sotto il limite di 60s del recognize sincrono di Google
+
+  const mediaSupported =
+    typeof window !== 'undefined' &&
+    !!navigator.mediaDevices?.getUserMedia &&
+    typeof MediaRecorder !== 'undefined' &&
+    MediaRecorder.isTypeSupported(RECORDER_MIME);
+
+  const srSupported =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+  const isSupported = mediaSupported || srSupported;
 
   // ── SpeechRecognition ──────────────────────────────────────────────────────
 
@@ -377,6 +400,117 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     srRef.current = sr;
   }, []);
 
+  // ── MediaRecorder + trascrizione server (/api/transcribe) ─────────────────
+
+  const transcribeChunk = useCallback((blob: Blob) => {
+    if (blob.size < 2000) return; // chunk vuoto/troppo corto, niente da trascrivere
+    setPendingChunks(n => n + 1);
+    // Coda sequenziale: i chunk vengono appesi al trascritto nell'ordine di
+    // registrazione anche se le risposte del server arrivano fuori ordine.
+    transcribeQueueRef.current = transcribeQueueRef.current.then(async () => {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve((fr.result as string).split(',')[1] ?? '');
+          fr.onerror = () => reject(fr.error);
+          fr.readAsDataURL(blob);
+        });
+        const res = await fetch('/api/transcribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_ADMIN_API_TOKEN}`,
+          },
+          body: JSON.stringify({ audio: base64 }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error((data as { error?: string }).error || `HTTP ${res.status}`);
+        }
+        const text = ((data as { text?: string }).text ?? '').trim();
+        if (text) {
+          fullTranscriptRef.current += text + ' ';
+          setTranscript(fullTranscriptRef.current);
+          setError(null);
+        }
+      } catch (err) {
+        console.warn('[transcribe] chunk failed:', err);
+        setError('Un tratto di audio non è stato trascritto (problema di rete o server). La registrazione continua.');
+      } finally {
+        setPendingChunks(n => n - 1);
+      }
+    });
+  }, []);
+
+  const startChunk = useCallback((stream: MediaStream) => {
+    const rec = new MediaRecorder(stream, {
+      mimeType: RECORDER_MIME,
+      audioBitsPerSecond: 32_000,
+    });
+    const parts: Blob[] = [];
+    rec.ondataavailable = e => { if (e.data.size > 0) parts.push(e.data); };
+    rec.onstop = () => {
+      transcribeChunk(new Blob(parts, { type: RECORDER_MIME }));
+      lastChunkDoneRef.current?.();
+      lastChunkDoneRef.current = null;
+      if (shouldRecordRef.current && stream.active) {
+        startChunk(stream);
+      }
+    };
+    rec.start();
+    activeRecorderRef.current = rec;
+    chunkTimerRef.current = setTimeout(() => {
+      if (rec.state === 'recording') rec.stop();
+    }, CHUNK_MS);
+  }, [transcribeChunk]);
+
+  /** Ferma recorder e microfono; risolve quando l'ultimo chunk è in coda di trascrizione. */
+  const finishMediaRecording = useCallback((): Promise<void> => {
+    shouldRecordRef.current = false;
+    if (chunkTimerRef.current) { clearTimeout(chunkTimerRef.current); chunkTimerRef.current = null; }
+    if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
+
+    const rec = activeRecorderRef.current;
+    const stopStream = () => {
+      mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+      mediaStreamRef.current = null;
+      activeRecorderRef.current = null;
+    };
+
+    if (!rec || rec.state !== 'recording') {
+      stopStream();
+      return Promise.resolve();
+    }
+    return new Promise<void>(resolve => {
+      lastChunkDoneRef.current = () => { stopStream(); resolve(); };
+      rec.stop();
+    });
+  }, []);
+
+  const startMediaRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      mediaStreamRef.current = stream;
+      shouldRecordRef.current = true;
+      setPhase('recording');
+      setSrStatus('speech');
+      setRecSeconds(0);
+      recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
+      startChunk(stream);
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        setError('Permesso microfono negato. Abilita il microfono nelle impostazioni del browser/app, poi riprova.');
+      } else if (err?.name === 'NotFoundError') {
+        setError('Microfono non rilevato. Verifica che il dispositivo abbia un microfono attivo.');
+      } else {
+        setError(`Impossibile avviare la registrazione (${err?.name ?? 'errore'}). Puoi scrivere il testo manualmente.`);
+      }
+      setPhase('idle');
+    }
+  };
+
   const startRecording = () => {
     shouldRecordRef.current = true;
     fullTranscriptRef.current = '';
@@ -386,7 +520,11 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     setError(null);
     clearNoResultsTimer();
 
-    if (!isSupported) {
+    if (mediaSupported) {
+      void startMediaRecording();
+      return;
+    }
+    if (!srSupported) {
       setPhase('manual');
       return;
     }
@@ -397,6 +535,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const stopRecording = () => {
     shouldRecordRef.current = false;
     srRef.current?.stop();
+    void finishMediaRecording();
     setInterim('');
     clearNoResultsTimer();
     setPhase('idle');
@@ -405,21 +544,26 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const switchToManual = () => {
     shouldRecordRef.current = false;
     srRef.current?.stop();
+    void finishMediaRecording();
     setInterim('');
     clearNoResultsTimer();
     setError(null);
     setPhase('manual');
   };
 
+  // Rilascia microfono e recorder se il modale viene chiuso durante la registrazione
+  useEffect(() => () => {
+    shouldRecordRef.current = false;
+    srRef.current?.stop();
+    if (chunkTimerRef.current) clearTimeout(chunkTimerRef.current);
+    if (recTimerRef.current) clearInterval(recTimerRef.current);
+    if (activeRecorderRef.current?.state === 'recording') activeRecorderRef.current.stop();
+    mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+  }, []);
+
   // ── Claude Analysis ────────────────────────────────────────────────────────
 
   const analyze = async () => {
-    const text = phase === 'manual' ? transcript : (transcript + (interim ? ' ' + interim : ''));
-    if (!text.trim()) {
-      setError('Nessun testo da analizzare. Registra o scrivi la conversazione prima.');
-      return;
-    }
-
     const apiKey = useStore.getState().claudeApiKey.trim();
     if (!apiKey) {
       setError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.');
@@ -428,9 +572,24 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
     shouldRecordRef.current = false;
     srRef.current?.stop();
-    setInterim('');
+    clearNoResultsTimer();
     setPhase('analyzing');
     setError(null);
+
+    // Modalità MediaRecorder: chiudi l'ultimo chunk e attendi che tutte le
+    // trascrizioni in coda siano completate prima di comporre il testo.
+    await finishMediaRecording();
+    await transcribeQueueRef.current;
+
+    const text = phase === 'manual'
+      ? transcript
+      : (fullTranscriptRef.current + sessionFinalRef.current + (interim ? ' ' + interim : ''));
+    if (!text.trim()) {
+      setError('Nessun testo da analizzare. Registra o scrivi la conversazione prima.');
+      setPhase(phase === 'manual' ? 'manual' : 'idle');
+      return;
+    }
+    setInterim('');
 
     try {
       const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
@@ -554,11 +713,22 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                   <span className="text-sm font-black text-red-600 dark:text-red-400">
-                    {srStatus === 'connecting' && 'Connessione microfono...'}
-                    {srStatus === 'listening' && 'In ascolto...'}
-                    {srStatus === 'sound' && '🔊 Audio rilevato'}
-                    {srStatus === 'speech' && '🗣️ Voce rilevata'}
+                    {mediaSupported ? (
+                      <>REC {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}</>
+                    ) : (
+                      <>
+                        {srStatus === 'connecting' && 'Connessione microfono...'}
+                        {srStatus === 'listening' && 'In ascolto...'}
+                        {srStatus === 'sound' && '🔊 Audio rilevato'}
+                        {srStatus === 'speech' && '🗣️ Voce rilevata'}
+                      </>
+                    )}
                   </span>
+                  {pendingChunks > 0 && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-500">
+                      <Loader2 size={10} className="animate-spin" /> trascrizione…
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -578,13 +748,19 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
               {/* Transcript box */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 min-h-[160px] max-h-[300px] overflow-y-auto text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {transcript || <span className="text-gray-300 dark:text-gray-600 italic">Parla vicino al microfono... il testo apparirà qui</span>}
+                {transcript || (
+                  <span className="text-gray-300 dark:text-gray-600 italic">
+                    {mediaSupported
+                      ? 'Sto registrando... il testo trascritto appare a blocchi, circa ogni 45 secondi'
+                      : 'Parla vicino al microfono... il testo apparirà qui'}
+                  </span>
+                )}
                 {interim && <span className="text-indigo-400 italic"> {interim}</span>}
               </div>
 
               <button
                 onClick={analyze}
-                disabled={!transcript && !interim}
+                disabled={mediaSupported ? recSeconds < 3 : (!transcript && !interim)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles size={16} /> Stop e Analizza con Claude AI
@@ -623,8 +799,14 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                 <Loader2 size={24} className="text-indigo-600 animate-spin" />
               </div>
               <div className="text-center">
-                <p className="font-black text-gray-900 dark:text-white text-sm">Analisi in corso...</p>
-                <p className="text-xs text-gray-400 mt-1">Claude sta estraendo profilazione e obiezioni</p>
+                <p className="font-black text-gray-900 dark:text-white text-sm">
+                  {pendingChunks > 0 ? 'Trascrizione in corso...' : 'Analisi in corso...'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {pendingChunks > 0
+                    ? 'Sto completando la trascrizione dell’audio registrato'
+                    : 'Claude sta estraendo profilazione e obiezioni'}
+                </p>
               </div>
             </div>
           )}
