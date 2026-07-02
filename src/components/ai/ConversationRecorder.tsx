@@ -266,7 +266,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
   const srRef = useRef<any>(null);
   const shouldRecordRef = useRef(false);
-  const fullTranscriptRef = useRef('');
+  const fullTranscriptRef = useRef('');      // testo finalizzato dalle sessioni SR già concluse
+  const sessionFinalRef = useRef('');        // testo finale della sessione SR corrente (ricostruito ad ogni evento)
   const noResultsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
 
@@ -311,7 +312,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       setSrStatus('listening');
       // Se non arriva nulla entro 18s dall'avvio, mostra avviso
       noResultsTimerRef.current = setTimeout(() => {
-        if (shouldRecordRef.current && fullTranscriptRef.current === '') {
+        if (shouldRecordRef.current && fullTranscriptRef.current === '' && sessionFinalRef.current === '') {
           setError('Nessun testo rilevato. Verifica che il microfono sia attivo e parla vicino al telefono. Puoi anche scrivere il testo manualmente.');
         }
       }, 18000);
@@ -323,21 +324,29 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
     sr.onresult = (e: any) => {
       clearNoResultsTimer();
-      let final = '';
+      // Su Android Chrome (continuous) ogni evento contiene TUTTI i risultati
+      // della sessione: ricostruiamo il testo finale da zero invece di
+      // accumulare i delta, altrimenti le stesse parole vengono aggiunte più
+      // volte (bug "parole doppie").
+      let sessionFinal = '';
       let int = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
-        else int += e.results[i][0].transcript;
+      for (let i = 0; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) sessionFinal += r[0].transcript + ' ';
+        else int += r[0].transcript;
       }
-      if (final) {
-        fullTranscriptRef.current += final;
-        setTranscript(fullTranscriptRef.current);
-        setError(null);
-      }
+      sessionFinalRef.current = sessionFinal;
+      const combined = fullTranscriptRef.current + sessionFinal;
+      setTranscript(combined);
+      if (sessionFinal) setError(null);
       setInterim(int);
     };
 
     sr.onend = () => {
+      // Consolida il finale di questa sessione prima di riavviare, così il
+      // prossimo evento onresult (che riparte da zero) non lo riscrive.
+      fullTranscriptRef.current += sessionFinalRef.current;
+      sessionFinalRef.current = '';
       setInterim('');
       if (shouldRecordRef.current) {
         setTimeout(() => {
@@ -392,6 +401,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const startRecording = async () => {
     shouldRecordRef.current = true;
     fullTranscriptRef.current = '';
+    sessionFinalRef.current = '';
     setTranscript('');
     setInterim('');
     setError(null);
@@ -409,7 +419,11 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     // getUserMedia stabilisce la pipeline audio e sblocca SpeechRecognition.
     try {
       if (navigator.mediaDevices?.getUserMedia) {
-        micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Ci serve solo a stabilire/confermare il permesso: rilasciamo subito lo
+        // stream così SpeechRecognition è l'unico consumatore del microfono
+        // (una doppia cattura causava eco e parole duplicate su alcuni device).
+        stream.getTracks().forEach((t) => t.stop());
       }
     } catch (err: any) {
       shouldRecordRef.current = false;
