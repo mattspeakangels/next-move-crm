@@ -66,47 +66,88 @@ export function useFirestoreSync(userId: string) {
   const isLoadingRef = useRef(false);
 
   useEffect(() => {
+    if (!userId) return;
+
     async function loadFromFirestore() {
       isLoadingRef.current = true;
-      const updates: Record<string, any> = {};
-      const currentState = useStore.getState();
+      // Snapshot pre-caricamento: serve solo per capire, alla fine, quali dati
+      // locali sono cambiati NEL FRATTEMPO (mentre le fetch qui sotto erano in
+      // volo) cosi' da non perderli nel merge finale.
+      const preLoadState = useStore.getState();
+      const firestoreByCol: Record<string, Record<string, any>> = {};
 
       for (const col of COLLECTIONS) {
         const snapshot = await getDocs(collection(db, 'users', userId, col));
         const firestoreData: Record<string, any> = {};
         snapshot.forEach((d) => { firestoreData[d.id] = d.data(); });
+        firestoreByCol[col] = firestoreData;
 
-        const localData = (currentState as any)[col] || {};
-        const merged = { ...localData };
-        for (const [id, data] of Object.entries(firestoreData)) {
-          merged[id] = data;
-        }
-        updates[col] = merged;
-
+        const localData = (preLoadState as any)[col] || {};
         if (Object.keys(localData).length > 0 || Object.keys(firestoreData).length > 0) {
           console.log(`Firestore sync ${col}:`, {
             local: Object.keys(localData).length,
             firestore: Object.keys(firestoreData).length,
-            merged: Object.keys(merged).length,
           });
         }
       }
 
+      const settingsUpdates: Record<string, any> = {};
       const settingsRef = doc(db, 'users', userId, 'settings', 'app');
       const settingsSnap = await getDoc(settingsRef);
       if (settingsSnap.exists()) {
         const remote = settingsSnap.data();
         for (const field of SETTINGS_FIELDS) {
-          if (remote[field] !== undefined) updates[field] = remote[field];
+          if (remote[field] !== undefined) settingsUpdates[field] = remote[field];
         }
       } else {
         const localSettings: Record<string, any> = {};
-        for (const field of SETTINGS_FIELDS) localSettings[field] = (currentState as any)[field];
+        for (const field of SETTINGS_FIELDS) localSettings[field] = (preLoadState as any)[field];
         await setDoc(settingsRef, localSettings, { merge: true });
+      }
+
+      // Il caricamento sopra e' asincrono (una getDocs per collezione, in
+      // sequenza): se l'utente aggiunge/modifica/cancella qualcosa mentre e'
+      // in corso, quella modifica va confrontata con lo stato PIU' RECENTE
+      // (non quello pre-caricamento), altrimenti il merge con Firestore la
+      // sovrascrive e il dato inserito sparisce silenziosamente.
+      const liveState = useStore.getState();
+      const updates: Record<string, any> = { ...settingsUpdates };
+      const pendingLocalChanges: { col: string; changes: { id: string; data: any }[]; deletes: string[] }[] = [];
+
+      for (const col of COLLECTIONS) {
+        const preLoad = (preLoadState as any)[col] || {};
+        const live = (liveState as any)[col] || {};
+        const firestoreData = firestoreByCol[col];
+        const merged: Record<string, any> = { ...live };
+
+        for (const [id, data] of Object.entries(firestoreData)) {
+          // Se il dato locale non e' cambiato durante il caricamento, vince Firestore.
+          // Se e' cambiato (aggiunto/modificato dall'utente nel frattempo), vince il locale.
+          if (live[id] === preLoad[id]) merged[id] = data;
+        }
+        updates[col] = merged;
+
+        const changes: { id: string; data: any }[] = [];
+        const deletes: string[] = [];
+        for (const [id, data] of Object.entries(live)) {
+          if (data !== preLoad[id]) changes.push({ id, data });
+        }
+        for (const id of Object.keys(preLoad)) {
+          if (!live[id]) deletes.push(id);
+        }
+        if (changes.length > 0 || deletes.length > 0) pendingLocalChanges.push({ col, changes, deletes });
       }
 
       useStore.setState(updates);
       isLoadingRef.current = false;
+
+      // Le modifiche fatte durante il caricamento non sono state scritte su
+      // Firestore (il subscribe qui sotto le ignora finche' isLoadingRef e'
+      // true): le flushiamo ora esplicitamente.
+      for (const { col, changes, deletes } of pendingLocalChanges) {
+        flushWrites(userId, col, changes, deletes)
+          .catch(err => console.error(`Firestore batch write failed [${col}]:`, err));
+      }
     }
 
     loadFromFirestore();
