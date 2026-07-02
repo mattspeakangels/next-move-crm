@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   CheckSquare, Square, Plus, Trash2, Filter, ChevronDown, ChevronRight,
-  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users,
+  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users, Pencil,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView, Contact } from '../types';
@@ -305,18 +305,29 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
               />
             ) : (
               <p
-                onClick={() => !isDone && setEditingTitle(true)}
-                className={`text-sm font-bold leading-snug ${isDone ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white cursor-text hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-0.5 -mx-0.5'}`}
+                onClick={() => setEditingTitle(true)}
+                className={`text-sm font-bold leading-snug cursor-text rounded px-0.5 -mx-0.5 ${isDone ? 'line-through text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50' : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
               >
                 {todo.titolo}
               </p>
             )}
-            <button
-              onClick={onDelete}
-              className="p-1 flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <Trash2 size={14} />
-            </button>
+            <div className="flex items-center flex-shrink-0">
+              {isDone && (
+                <button
+                  onClick={() => setEditingTitle(true)}
+                  title="Modifica attività completata"
+                  className="p-1 text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                >
+                  <Pencil size={14} />
+                </button>
+              )}
+              <button
+                onClick={onDelete}
+                className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
