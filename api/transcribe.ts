@@ -10,7 +10,7 @@
  * ADMIN_API_TOKEN (stesso token bearer delle altre funzioni AI).
  */
 
-import { applyCors, handleCorsPreFlight } from './cors';
+import { applyCors, handleCorsPreFlight } from './cors.js';
 
 const UPSTASH_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
