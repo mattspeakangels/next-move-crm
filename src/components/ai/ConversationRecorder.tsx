@@ -5,6 +5,7 @@ import {
   ChevronDown, ChevronUp, MessageSquare, Loader2, ClipboardList,
 } from 'lucide-react';
 import type { Contact, ProfilingData, Obiezione } from '../../types';
+import { useStore } from '../../store/useStore';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -410,7 +411,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       return;
     }
 
-    const apiKey = (localStorage.getItem('claude_api_key') || '').trim();
+    const apiKey = useStore.getState().claudeApiKey.trim();
     if (!apiKey) {
       setError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.');
       return;

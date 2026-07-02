@@ -13,33 +13,34 @@ type PendingAction = { title: string; description: string; execute: () => void }
 // ── Claude API Key Section ──────────────────────────────────────────────────
 
 const ClaudeApiKeySection: React.FC = () => {
-  const [key, setKey] = useState(() => localStorage.getItem('claude_api_key') || '');
+  const storedKey = useStore(s => s.claudeApiKey);
+  const setClaudeApiKey = useStore(s => s.setClaudeApiKey);
+  const [key, setKey] = useState(storedKey);
   const [show, setShow] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [testError, setTestError] = useState('');
 
-  const storedKey = localStorage.getItem('claude_api_key') || '';
   const storedPreview = storedKey.length > 10
     ? `${storedKey.slice(0, 14)}...${storedKey.slice(-4)}`
     : '';
 
   const handleSave = () => {
-    localStorage.setItem('claude_api_key', key.trim());
+    setClaudeApiKey(key.trim());
     setSaved(true);
     setTestStatus('idle');
     setTimeout(() => setSaved(false), 2500);
   };
 
   const handleClear = () => {
-    localStorage.removeItem('claude_api_key');
+    setClaudeApiKey('');
     setKey('');
     setSaved(false);
     setTestStatus('idle');
   };
 
   const handleTest = async () => {
-    const k = (localStorage.getItem('claude_api_key') || '').trim();
+    const k = storedKey.trim();
     if (!k) { setTestStatus('fail'); setTestError('Nessuna chiave salvata'); return; }
     setTestStatus('testing');
     setTestError('');

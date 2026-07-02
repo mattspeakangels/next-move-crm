@@ -18,6 +18,7 @@ interface StoreState {
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
   footerTabs: NavView[];
+  claudeApiKey: string;
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -26,6 +27,7 @@ interface StoreState {
   toggleTheme: () => void;
   resetAll: () => void;
   setDiscountApprovalThreshold: (value: number) => void;
+  setClaudeApiKey: (key: string) => void;
 
   // Aziende
   addContact: (contact: Contact) => void;
@@ -94,6 +96,7 @@ export const useStore = create<StoreState>()(
       discountApprovalThreshold: 20,
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
+      claudeApiKey: '',
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -103,6 +106,7 @@ export const useStore = create<StoreState>()(
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
+      setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
       addContact: (contact) => set((state) => ({
         contacts: { ...state.contacts, [contact.id]: contact }
@@ -243,6 +247,7 @@ export const useStore = create<StoreState>()(
         discountApprovalThreshold: state.discountApprovalThreshold,
         todos: state.todos,
         footerTabs: state.footerTabs,
+        claudeApiKey: state.claudeApiKey,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
