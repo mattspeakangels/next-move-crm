@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   Mic, Square, Sparkles, X, CheckCircle, AlertCircle,
@@ -268,6 +268,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const shouldRecordRef = useRef(false);
   const fullTranscriptRef = useRef('');
   const noResultsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   const isSupported =
     typeof window !== 'undefined' &&
@@ -281,6 +282,18 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       noResultsTimerRef.current = null;
     }
   };
+
+  // Rilascia microfono e riconoscimento vocale allo smontaggio (es. chiusura modale)
+  useEffect(() => {
+    return () => {
+      shouldRecordRef.current = false;
+      try { srRef.current?.stop(); } catch { /* noop */ }
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach((t) => t.stop());
+        micStreamRef.current = null;
+      }
+    };
+  }, []);
 
   const startSR = useCallback(() => {
     const w = window as any;
@@ -369,7 +382,14 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     srRef.current = sr;
   }, []);
 
-  const startRecording = () => {
+  const releaseMic = () => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
+  };
+
+  const startRecording = async () => {
     shouldRecordRef.current = true;
     fullTranscriptRef.current = '';
     setTranscript('');
@@ -381,6 +401,35 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       setPhase('manual');
       return;
     }
+
+    // Acquisisce esplicitamente il microfono PRIMA di avviare il riconoscimento
+    // vocale. Su molti Android (soprattutto device economici/rugged) la Web Speech
+    // API lancia 'not-allowed' anche col permesso del sito concesso, perché la
+    // grant hardware del microfono viene tracciata separatamente: forzare
+    // getUserMedia stabilisce la pipeline audio e sblocca SpeechRecognition.
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    } catch (err: any) {
+      shouldRecordRef.current = false;
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        setError('Permesso microfono negato. Abilita il microfono per questo sito nelle impostazioni del browser, poi riprova.');
+        setPhase('idle');
+      } else if (err?.name === 'NotFoundError' || err?.name === 'NotReadableError') {
+        setError('Microfono non disponibile o già in uso da un\'altra app. Chiudi le altre app che usano il microfono e riprova.');
+        setPhase('idle');
+      } else {
+        setError('Impossibile accedere al microfono. Puoi scrivere il testo manualmente.');
+        setPhase('manual');
+      }
+      return;
+    }
+
+    if (!shouldRecordRef.current) {
+      releaseMic();
+      return;
+    }
     setPhase('recording');
     startSR();
   };
@@ -388,6 +437,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const stopRecording = () => {
     shouldRecordRef.current = false;
     srRef.current?.stop();
+    releaseMic();
     setInterim('');
     clearNoResultsTimer();
     setPhase('idle');
@@ -396,6 +446,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const switchToManual = () => {
     shouldRecordRef.current = false;
     srRef.current?.stop();
+    releaseMic();
     setInterim('');
     clearNoResultsTimer();
     setError(null);
@@ -419,6 +470,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
     shouldRecordRef.current = false;
     srRef.current?.stop();
+    releaseMic();
     setInterim('');
     setPhase('analyzing');
     setError(null);
