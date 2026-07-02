@@ -266,7 +266,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
   const srRef = useRef<any>(null);
   const shouldRecordRef = useRef(false);
-  const fullTranscriptRef = useRef('');
+  const fullTranscriptRef = useRef('');      // testo finalizzato dalle sessioni SR già concluse
+  const sessionFinalRef = useRef('');        // finale della sessione SR corrente (ricostruito ad ogni evento)
   const noResultsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isSupported =
@@ -298,7 +299,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       setSrStatus('listening');
       // Se non arriva nulla entro 18s dall'avvio, mostra avviso
       noResultsTimerRef.current = setTimeout(() => {
-        if (shouldRecordRef.current && fullTranscriptRef.current === '') {
+        if (shouldRecordRef.current && fullTranscriptRef.current === '' && sessionFinalRef.current === '') {
           setError('Nessun testo rilevato. Verifica che il microfono sia attivo e parla vicino al telefono. Puoi anche scrivere il testo manualmente.');
         }
       }, 18000);
@@ -310,21 +311,28 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
     sr.onresult = (e: any) => {
       clearNoResultsTimer();
-      let final = '';
+      // Su Android Chrome (continuous) ogni evento onresult contiene TUTTI i
+      // risultati della sessione corrente: ricostruiamo il finale da zero ad
+      // ogni evento invece di accumulare i delta, altrimenti le stesse parole
+      // vengono aggiunte più volte (bug "parole doppie/quadruple").
+      let sessionFinal = '';
       let int = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
-        else int += e.results[i][0].transcript;
+      for (let i = 0; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) sessionFinal += r[0].transcript + ' ';
+        else int += r[0].transcript;
       }
-      if (final) {
-        fullTranscriptRef.current += final;
-        setTranscript(fullTranscriptRef.current);
-        setError(null);
-      }
+      sessionFinalRef.current = sessionFinal;
+      setTranscript(fullTranscriptRef.current + sessionFinal);
+      if (sessionFinal) setError(null);
       setInterim(int);
     };
 
     sr.onend = () => {
+      // Consolida il finale di questa sessione prima del riavvio, così il
+      // prossimo evento (che riparte da zero) non lo riscrive.
+      fullTranscriptRef.current += sessionFinalRef.current;
+      sessionFinalRef.current = '';
       setInterim('');
       if (shouldRecordRef.current) {
         setTimeout(() => {
@@ -372,6 +380,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const startRecording = () => {
     shouldRecordRef.current = true;
     fullTranscriptRef.current = '';
+    sessionFinalRef.current = '';
     setTranscript('');
     setInterim('');
     setError(null);
