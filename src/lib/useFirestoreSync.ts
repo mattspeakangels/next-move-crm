@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { collection, getDocs, doc, getDoc, setDoc, writeBatch, deleteField } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
@@ -63,97 +63,115 @@ async function flushWrites(
 }
 
 export function useFirestoreSync(userId: string) {
-  const isLoadingRef = useRef(false);
+  // true mentre applichiamo allo store dati appena arrivati da Firestore: il
+  // subscribe piu' sotto lo controlla per non "rispedire" al cloud dati che
+  // arrivano dal cloud stesso (eco inutile, non un'azione dell'utente).
+  const isApplyingRemoteRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
 
-    async function loadFromFirestore() {
-      isLoadingRef.current = true;
-      // Snapshot pre-caricamento: serve solo per capire, alla fine, quali dati
-      // locali sono cambiati NEL FRATTEMPO (mentre le fetch qui sotto erano in
-      // volo) cosi' da non perderli nel merge finale.
-      const preLoadState = useStore.getState();
-      const firestoreByCol: Record<string, Record<string, any>> = {};
+    const unsubscribers: Array<() => void> = [];
 
-      for (const col of COLLECTIONS) {
-        const snapshot = await getDocs(collection(db, 'users', userId, col));
-        const firestoreData: Record<string, any> = {};
-        snapshot.forEach((d) => { firestoreData[d.id] = d.data(); });
-        firestoreByCol[col] = firestoreData;
+    // Sync in tempo reale (onSnapshot, non piu' una getDocs una tantum): senza
+    // questo, un To Do/contatto/deal aggiunto su un device non compariva su un
+    // altro device gia' aperto finche' non lo si riavviava. Ora ogni modifica
+    // scritta da un device viene ricevuta dagli altri device connessi entro
+    // pochi secondi.
+    for (const col of COLLECTIONS) {
+      // "Ultima versione remota conosciuta" per id: serve a distinguere, quando
+      // arriva un nuovo snapshot, se il dato locale e' rimasto invariato da
+      // allora (vince il remoto) oppure e' stato modificato nel frattempo su
+      // QUESTO device (vince il locale, verra' scritto dal subscribe sotto).
+      let lastRemote: Record<string, any> = (useStore.getState() as any)[col] || {};
 
-        const localData = (preLoadState as any)[col] || {};
-        if (Object.keys(localData).length > 0 || Object.keys(firestoreData).length > 0) {
-          console.log(`Firestore sync ${col}:`, {
-            local: Object.keys(localData).length,
-            firestore: Object.keys(firestoreData).length,
-          });
-        }
-      }
+      const unsub = onSnapshot(
+        collection(db, 'users', userId, col),
+        snapshot => {
+          // Eco della nostra stessa scrittura ottimistica (fase cache-locale
+          // prima della conferma server): lo stato locale la riflette gia'.
+          if (snapshot.metadata.hasPendingWrites) return;
 
-      const settingsUpdates: Record<string, any> = {};
-      const settingsRef = doc(db, 'users', userId, 'settings', 'app');
-      const settingsSnap = await getDoc(settingsRef);
-      if (settingsSnap.exists()) {
-        const remote = settingsSnap.data();
-        for (const field of SETTINGS_FIELDS) {
-          if (remote[field] !== undefined) settingsUpdates[field] = remote[field];
-        }
-      } else {
-        const localSettings: Record<string, any> = {};
-        for (const field of SETTINGS_FIELDS) localSettings[field] = (preLoadState as any)[field];
-        await setDoc(settingsRef, localSettings, { merge: true });
-      }
+          const remoteData: Record<string, any> = {};
+          snapshot.forEach(d => { remoteData[d.id] = d.data(); });
 
-      // Il caricamento sopra e' asincrono (una getDocs per collezione, in
-      // sequenza): se l'utente aggiunge/modifica/cancella qualcosa mentre e'
-      // in corso, quella modifica va confrontata con lo stato PIU' RECENTE
-      // (non quello pre-caricamento), altrimenti il merge con Firestore la
-      // sovrascrive e il dato inserito sparisce silenziosamente.
-      const liveState = useStore.getState();
-      const updates: Record<string, any> = { ...settingsUpdates };
-      const pendingLocalChanges: { col: string; changes: { id: string; data: any }[]; deletes: string[] }[] = [];
+          const localState = (useStore.getState() as any)[col] || {};
+          const merged: Record<string, any> = { ...localState };
+          let changed = false;
 
-      for (const col of COLLECTIONS) {
-        const preLoad = (preLoadState as any)[col] || {};
-        const live = (liveState as any)[col] || {};
-        const firestoreData = firestoreByCol[col];
-        const merged: Record<string, any> = { ...live };
+          for (const [id, data] of Object.entries(remoteData)) {
+            if (localState[id] === lastRemote[id] && merged[id] !== data) {
+              merged[id] = data;
+              changed = true;
+            }
+          }
+          for (const id of Object.keys(lastRemote)) {
+            if (!(id in remoteData) && id in merged && localState[id] === lastRemote[id]) {
+              delete merged[id];
+              changed = true;
+            }
+          }
 
-        for (const [id, data] of Object.entries(firestoreData)) {
-          // Se il dato locale non e' cambiato durante il caricamento, vince Firestore.
-          // Se e' cambiato (aggiunto/modificato dall'utente nel frattempo), vince il locale.
-          if (live[id] === preLoad[id]) merged[id] = data;
-        }
-        updates[col] = merged;
+          lastRemote = remoteData;
 
-        const changes: { id: string; data: any }[] = [];
-        const deletes: string[] = [];
-        for (const [id, data] of Object.entries(live)) {
-          if (data !== preLoad[id]) changes.push({ id, data });
-        }
-        for (const id of Object.keys(preLoad)) {
-          if (!live[id]) deletes.push(id);
-        }
-        if (changes.length > 0 || deletes.length > 0) pendingLocalChanges.push({ col, changes, deletes });
-      }
-
-      useStore.setState(updates);
-      isLoadingRef.current = false;
-
-      // Le modifiche fatte durante il caricamento non sono state scritte su
-      // Firestore (il subscribe qui sotto le ignora finche' isLoadingRef e'
-      // true): le flushiamo ora esplicitamente.
-      for (const { col, changes, deletes } of pendingLocalChanges) {
-        flushWrites(userId, col, changes, deletes)
-          .catch(err => console.error(`Firestore batch write failed [${col}]:`, err));
-      }
+          if (changed) {
+            isApplyingRemoteRef.current = true;
+            useStore.setState({ [col]: merged } as any);
+            isApplyingRemoteRef.current = false;
+          }
+        },
+        err => console.error(`Firestore listen failed [${col}]:`, err),
+      );
+      unsubscribers.push(unsub);
     }
 
-    loadFromFirestore();
+    const settingsRef = doc(db, 'users', userId, 'settings', 'app');
+    let lastRemoteSettings: Record<string, any> = {};
+    for (const field of SETTINGS_FIELDS) lastRemoteSettings[field] = (useStore.getState() as any)[field];
+    let settingsSeen = false;
 
-    const unsubscribe = useStore.subscribe((state, prevState) => {
-      if (isLoadingRef.current) return;
+    const unsubSettings = onSnapshot(
+      settingsRef,
+      snap => {
+        if (snap.metadata.hasPendingWrites) return;
+
+        if (!snap.exists()) {
+          if (!settingsSeen) {
+            settingsSeen = true;
+            const localSettings: Record<string, any> = {};
+            for (const field of SETTINGS_FIELDS) localSettings[field] = (useStore.getState() as any)[field];
+            setDoc(settingsRef, sanitizeForFirestore(localSettings), { merge: true })
+              .catch(err => console.error('Firestore settings write failed:', err));
+          }
+          return;
+        }
+        settingsSeen = true;
+
+        const remote = snap.data();
+        const localState = useStore.getState();
+        const updates: Record<string, any> = {};
+        let changed = false;
+        for (const field of SETTINGS_FIELDS) {
+          if (remote[field] === undefined) continue;
+          if ((localState as any)[field] === lastRemoteSettings[field]) {
+            if ((localState as any)[field] !== remote[field]) changed = true;
+            updates[field] = remote[field];
+          }
+        }
+        lastRemoteSettings = { ...lastRemoteSettings, ...remote };
+
+        if (changed) {
+          isApplyingRemoteRef.current = true;
+          useStore.setState(updates);
+          isApplyingRemoteRef.current = false;
+        }
+      },
+      err => console.error('Firestore settings listen failed:', err),
+    );
+    unsubscribers.push(unsubSettings);
+
+    const unsubscribeStore = useStore.subscribe((state, prevState) => {
+      if (isApplyingRemoteRef.current) return;
 
       for (const col of COLLECTIONS) {
         const curr = (state as any)[col] as Record<string, any>;
@@ -198,12 +216,14 @@ export function useFirestoreSync(userId: string) {
         if (curr !== prev) changedSettings[field] = curr;
       }
       if (Object.keys(changedSettings).length > 0) {
-        const settingsRef = doc(db, 'users', userId, 'settings', 'app');
         setDoc(settingsRef, sanitizeForFirestore(changedSettings), { merge: true })
           .catch(err => console.error('Firestore settings write failed:', err));
       }
     });
+    unsubscribers.push(unsubscribeStore);
 
-    return unsubscribe;
+    return () => {
+      unsubscribers.forEach(u => u());
+    };
   }, [userId]);
 }
