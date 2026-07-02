@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
 
-const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns'] as const;
+const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets'] as const;
+
+// Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
+// cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
+const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs'] as const;
 
 // Firestore WriteBatch ha un limite di 500 operazioni per batch
 const BATCH_SIZE = 400;
@@ -62,6 +66,19 @@ export function useFirestoreSync(userId: string) {
         }
       }
 
+      const settingsRef = doc(db, 'users', userId, 'settings', 'app');
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        const remote = settingsSnap.data();
+        for (const field of SETTINGS_FIELDS) {
+          if (remote[field] !== undefined) updates[field] = remote[field];
+        }
+      } else {
+        const localSettings: Record<string, any> = {};
+        for (const field of SETTINGS_FIELDS) localSettings[field] = (currentState as any)[field];
+        await setDoc(settingsRef, localSettings, { merge: true });
+      }
+
       useStore.setState(updates);
       isLoadingRef.current = false;
     }
@@ -105,6 +122,18 @@ export function useFirestoreSync(userId: string) {
         for (const id of deletes) {
           logAuditEvent(userId, col, id, 'DELETE', prev[id], {});
         }
+      }
+
+      const changedSettings: Record<string, any> = {};
+      for (const field of SETTINGS_FIELDS) {
+        const curr = (state as any)[field];
+        const prev = (prevState as any)[field];
+        if (curr !== prev) changedSettings[field] = curr;
+      }
+      if (Object.keys(changedSettings).length > 0) {
+        const settingsRef = doc(db, 'users', userId, 'settings', 'app');
+        setDoc(settingsRef, changedSettings, { merge: true })
+          .catch(err => console.error('Firestore settings write failed:', err));
       }
     });
 
