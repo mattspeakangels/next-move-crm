@@ -1162,7 +1162,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   // ── NORMAL MODE ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+    <div className="flex flex-col h-[calc(100dvh-168px)] md:h-[calc(100vh-120px)]">
 
       {/* ── Header compatto ── */}
       <div className="bg-white dark:bg-gray-800 rounded-[1.5rem] px-4 py-3 shadow-sm border border-gray-50 dark:border-gray-700 mb-3 flex-shrink-0">
