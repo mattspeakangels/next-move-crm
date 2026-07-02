@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   Mic, Square, Sparkles, X, CheckCircle, AlertCircle,
@@ -266,10 +266,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
   const srRef = useRef<any>(null);
   const shouldRecordRef = useRef(false);
-  const fullTranscriptRef = useRef('');      // testo finalizzato dalle sessioni SR già concluse
-  const sessionFinalRef = useRef('');        // testo finale della sessione SR corrente (ricostruito ad ogni evento)
+  const fullTranscriptRef = useRef('');
   const noResultsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
 
   const isSupported =
     typeof window !== 'undefined' &&
@@ -283,18 +281,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       noResultsTimerRef.current = null;
     }
   };
-
-  // Rilascia microfono e riconoscimento vocale allo smontaggio (es. chiusura modale)
-  useEffect(() => {
-    return () => {
-      shouldRecordRef.current = false;
-      try { srRef.current?.stop(); } catch { /* noop */ }
-      if (micStreamRef.current) {
-        micStreamRef.current.getTracks().forEach((t) => t.stop());
-        micStreamRef.current = null;
-      }
-    };
-  }, []);
 
   const startSR = useCallback(() => {
     const w = window as any;
@@ -312,7 +298,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       setSrStatus('listening');
       // Se non arriva nulla entro 18s dall'avvio, mostra avviso
       noResultsTimerRef.current = setTimeout(() => {
-        if (shouldRecordRef.current && fullTranscriptRef.current === '' && sessionFinalRef.current === '') {
+        if (shouldRecordRef.current && fullTranscriptRef.current === '') {
           setError('Nessun testo rilevato. Verifica che il microfono sia attivo e parla vicino al telefono. Puoi anche scrivere il testo manualmente.');
         }
       }, 18000);
@@ -324,29 +310,21 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
     sr.onresult = (e: any) => {
       clearNoResultsTimer();
-      // Su Android Chrome (continuous) ogni evento contiene TUTTI i risultati
-      // della sessione: ricostruiamo il testo finale da zero invece di
-      // accumulare i delta, altrimenti le stesse parole vengono aggiunte più
-      // volte (bug "parole doppie").
-      let sessionFinal = '';
+      let final = '';
       let int = '';
-      for (let i = 0; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) sessionFinal += r[0].transcript + ' ';
-        else int += r[0].transcript;
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+        else int += e.results[i][0].transcript;
       }
-      sessionFinalRef.current = sessionFinal;
-      const combined = fullTranscriptRef.current + sessionFinal;
-      setTranscript(combined);
-      if (sessionFinal) setError(null);
+      if (final) {
+        fullTranscriptRef.current += final;
+        setTranscript(fullTranscriptRef.current);
+        setError(null);
+      }
       setInterim(int);
     };
 
     sr.onend = () => {
-      // Consolida il finale di questa sessione prima di riavviare, così il
-      // prossimo evento onresult (che riparte da zero) non lo riscrive.
-      fullTranscriptRef.current += sessionFinalRef.current;
-      sessionFinalRef.current = '';
       setInterim('');
       if (shouldRecordRef.current) {
         setTimeout(() => {
@@ -391,17 +369,9 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     srRef.current = sr;
   }, []);
 
-  const releaseMic = () => {
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((t) => t.stop());
-      micStreamRef.current = null;
-    }
-  };
-
-  const startRecording = async () => {
+  const startRecording = () => {
     shouldRecordRef.current = true;
     fullTranscriptRef.current = '';
-    sessionFinalRef.current = '';
     setTranscript('');
     setInterim('');
     setError(null);
@@ -411,39 +381,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       setPhase('manual');
       return;
     }
-
-    // Acquisisce esplicitamente il microfono PRIMA di avviare il riconoscimento
-    // vocale. Su molti Android (soprattutto device economici/rugged) la Web Speech
-    // API lancia 'not-allowed' anche col permesso del sito concesso, perché la
-    // grant hardware del microfono viene tracciata separatamente: forzare
-    // getUserMedia stabilisce la pipeline audio e sblocca SpeechRecognition.
-    try {
-      if (navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Ci serve solo a stabilire/confermare il permesso: rilasciamo subito lo
-        // stream così SpeechRecognition è l'unico consumatore del microfono
-        // (una doppia cattura causava eco e parole duplicate su alcuni device).
-        stream.getTracks().forEach((t) => t.stop());
-      }
-    } catch (err: any) {
-      shouldRecordRef.current = false;
-      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
-        setError('Permesso microfono negato. Abilita il microfono per questo sito nelle impostazioni del browser, poi riprova.');
-        setPhase('idle');
-      } else if (err?.name === 'NotFoundError' || err?.name === 'NotReadableError') {
-        setError('Microfono non disponibile o già in uso da un\'altra app. Chiudi le altre app che usano il microfono e riprova.');
-        setPhase('idle');
-      } else {
-        setError('Impossibile accedere al microfono. Puoi scrivere il testo manualmente.');
-        setPhase('manual');
-      }
-      return;
-    }
-
-    if (!shouldRecordRef.current) {
-      releaseMic();
-      return;
-    }
     setPhase('recording');
     startSR();
   };
@@ -451,7 +388,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const stopRecording = () => {
     shouldRecordRef.current = false;
     srRef.current?.stop();
-    releaseMic();
     setInterim('');
     clearNoResultsTimer();
     setPhase('idle');
@@ -460,7 +396,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const switchToManual = () => {
     shouldRecordRef.current = false;
     srRef.current?.stop();
-    releaseMic();
     setInterim('');
     clearNoResultsTimer();
     setError(null);
@@ -484,7 +419,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
     shouldRecordRef.current = false;
     srRef.current?.stop();
-    releaseMic();
     setInterim('');
     setPhase('analyzing');
     setError(null);
