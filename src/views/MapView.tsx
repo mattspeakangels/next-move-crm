@@ -1166,8 +1166,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* ── Header compatto ── */}
       <div className="bg-white dark:bg-gray-800 rounded-[1.5rem] px-4 py-3 shadow-sm border border-gray-50 dark:border-gray-700 mb-3 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div className="min-w-0">
             <h1 className="text-lg font-black dark:text-white uppercase tracking-tighter flex items-center gap-2">
               <Navigation className="text-indigo-600" size={20} /> Radar Clienti
             </h1>
@@ -1176,7 +1176,7 @@ export const MapView: React.FC<MapViewProps> = ({
               <span className="text-amber-500 font-black">{nProspect}</span> prospect · {allMapped.length}/{allContacts.length} mappati
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Itinerario */}
             <button
               onClick={() => { setShowItinerario(true); setItinerarioEverOpened(true); }}

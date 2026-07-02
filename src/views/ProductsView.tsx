@@ -1355,9 +1355,9 @@ export const ProductsView: React.FC = () => {
 
       {/* ── Selection action bar ── */}
       {selected.size > 0 && (
-        <div className="sticky top-2 z-20 bg-indigo-600 text-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-xl shadow-indigo-200 dark:shadow-indigo-900/40">
-          <span className="font-bold text-sm">{selected.size} selezionati</span>
-          <div className="flex items-center gap-2">
+        <div className="sticky top-2 z-20 bg-indigo-600 text-white rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-xl shadow-indigo-200 dark:shadow-indigo-900/40">
+          <span className="font-bold text-sm flex-shrink-0">{selected.size} selezionati</span>
+          <div className="flex items-center gap-2 flex-wrap">
             <button onClick={handleAddToOffer} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all">
               <ShoppingBag size={13} /> Aggiungi a offerta
             </button>
