@@ -388,8 +388,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   // ── Close activity ──
   const openCloseModal = (activity: Activity) => {
     setClosingActivity(activity);
-    setCloseOutcome('riuscita');
-    setCloseNotes('');
+    setCloseNotes(activity.results || '');
+    setCloseOutcome((activity.outcome === 'fatto' && activity.outcomeType ? activity.outcomeType : 'riuscita') as ActivityOutcome);
     setCloseVisitType('prima-visita');
     setAiTodos([]);
     setAiError(null);
@@ -1385,7 +1385,15 @@ Regole:
               </div>
               {viewActivity.results && (
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Resoconto</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase block">Resoconto</label>
+                    <button
+                      onClick={() => { setViewActivity(null); openCloseModal(viewActivity); }}
+                      className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wide"
+                    >
+                      Modifica
+                    </button>
+                  </div>
                   <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap break-words">{viewActivity.results}</p>
                 </div>
               )}
