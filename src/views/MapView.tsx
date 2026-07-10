@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
@@ -81,6 +81,42 @@ const FlyToContact = ({ position }: { position: [number, number] | null }) => {
   }, [position]);
   return null;
 };
+
+// Bottone "trova la mia posizione" — overlay condiviso dalle tre mappe
+const LocateButton: React.FC<{ locating: boolean; onClick: () => void; className?: string }> = ({ locating, onClick, className }) => (
+  <button
+    onClick={onClick}
+    title="Mostra la mia posizione"
+    className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-lg text-indigo-600 dark:text-indigo-400 active:scale-95 transition-all ${className ?? ''}`}
+  >
+    <LocateFixed size={18} className={locating ? 'animate-pulse' : ''} />
+  </button>
+);
+
+function requestPosition(
+  onOk: (pos: [number, number]) => void,
+  onErr: (msg: string) => void,
+  setLocating: (v: boolean) => void,
+) {
+  if (!navigator.geolocation) {
+    onErr('GPS non disponibile su questo dispositivo/browser.');
+    return;
+  }
+  setLocating(true);
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      setLocating(false);
+      onOk([pos.coords.latitude, pos.coords.longitude]);
+    },
+    err => {
+      setLocating(false);
+      onErr(err.code === 1
+        ? 'Permesso posizione negato. Abilita il GPS per questo sito nelle impostazioni del browser.'
+        : 'Posizione non disponibile. Verifica che il GPS sia attivo e riprova.');
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
+  );
+}
 
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371;
@@ -194,6 +230,24 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [itinFlyTo, setItinFlyTo] = useState<[number, number] | null>(null);
   const [manualOrder, setManualOrder] = useState<string[] | null>(null);
   const [roadRouteCoords, setRoadRouteCoords] = useState<[number, number][]>([]);
+  const [itinUserPos, setItinUserPos] = useState<[number, number] | null>(null);
+  const [itinLocating, setItinLocating] = useState(false);
+  const [itinGeoMsg, setItinGeoMsg] = useState('');
+
+  const locateItin = () => {
+    setItinGeoMsg('');
+    requestPosition(
+      p => {
+        setItinUserPos(p);
+        setItinFlyTo([...p] as [number, number]);
+      },
+      msg => {
+        setItinGeoMsg(msg);
+        setTimeout(() => setItinGeoMsg(''), 6000);
+      },
+      setItinLocating,
+    );
+  };
 
   const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
 
@@ -566,6 +620,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
           <Marker position={[HOME.lat, HOME.lng]} icon={homeIcon}>
             <Popup><strong>Partenza — {HOME.label}</strong></Popup>
           </Marker>
+          {itinUserPos && <Marker position={itinUserPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {visible.map((c: any) => {
             const selected = selectedIds.includes(c.id);
             const stopIdx = activeRoute.findIndex((s: any) => s.id === c.id);
@@ -596,6 +651,14 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             <Polyline positions={roadRouteCoords} pathOptions={{ color: '#f97316', weight: 5, opacity: 0.85 }} />
           )}
         </MapContainer>
+
+        {/* Geolocalizzazione */}
+        <div className="absolute bottom-20 right-4 z-[700] flex flex-col items-end gap-2">
+          {itinGeoMsg && (
+            <div className="bg-red-600 text-white text-[10px] font-bold rounded-xl px-3 py-2 max-w-[230px] shadow-lg">{itinGeoMsg}</div>
+          )}
+          <LocateButton locating={itinLocating} onClick={locateItin} />
+        </div>
 
         {/* Hint iniziale */}
         {selectedIds.length === 0 && (
@@ -942,6 +1005,23 @@ export const MapView: React.FC<MapViewProps> = ({
   const [itinerarioEverOpened, setItinerarioEverOpened] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [geoMsg, setGeoMsg] = useState('');
+
+  const locateMe = () => {
+    setGeoMsg('');
+    requestPosition(
+      p => {
+        setUserPos(p);
+        setFlyToTarget([...p] as [number, number]);
+      },
+      msg => {
+        setGeoMsg(msg);
+        setTimeout(() => setGeoMsg(''), 6000);
+      },
+      setIsLocating,
+    );
+  };
 
   const applyAISuggestions = (suggestions: CatalogSuggestion[]) => {
     suggestions.forEach(s => {
@@ -1140,6 +1220,14 @@ export const MapView: React.FC<MapViewProps> = ({
         >
           <X size={16} /> Chiudi
         </button>
+
+        {/* Geolocalizzazione */}
+        <div className="absolute bottom-4 right-4 z-[1000] flex flex-col items-end gap-2">
+          {geoMsg && (
+            <div className="bg-red-600 text-white text-[10px] font-bold rounded-xl px-3 py-2 max-w-[230px] shadow-lg">{geoMsg}</div>
+          )}
+          <LocateButton locating={isLocating} onClick={locateMe} />
+        </div>
 
         {/* Info overlay */}
         <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2.5 shadow-lg">
@@ -1443,6 +1531,14 @@ export const MapView: React.FC<MapViewProps> = ({
             </p>
           </div>
         )}
+
+        {/* Geolocalizzazione */}
+        <div className="absolute bottom-14 right-3 z-[400] flex flex-col items-end gap-2">
+          {geoMsg && (
+            <div className="bg-red-600 text-white text-[10px] font-bold rounded-xl px-3 py-2 max-w-[230px] shadow-lg">{geoMsg}</div>
+          )}
+          <LocateButton locating={isLocating} onClick={locateMe} />
+        </div>
 
         {/* Legenda colori */}
         <div className="absolute top-3 left-3 z-[400] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow pointer-events-none">

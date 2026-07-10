@@ -587,6 +587,14 @@ export const TodoView: React.FC = () => {
       });
   }, [todos, filterStatus, filterTipo]);
 
+  // Vista Lista con "Tutti": i task sono raggruppati per stato, così cambiando
+  // stato dal checkbox la card si sposta di sezione (Da fare → In corso → Fatto)
+  const byStatus = useMemo(() => ({
+    'da-fare':  filtered.filter(t => t.status === 'da-fare'),
+    'in-corso': filtered.filter(t => t.status === 'in-corso'),
+    'fatto':    filtered.filter(t => t.status === 'fatto'),
+  }), [filtered]);
+
   // Raggruppamento per cliente
   const byClient = useMemo(() => {
     const base = allTodos
@@ -596,6 +604,11 @@ export const TodoView: React.FC = () => {
     const map = new Map<string, { name: string; todos: typeof base }>();
     const sortTodos = (arr: typeof base) =>
       [...arr].sort((a, b) => {
+        // Prima per stato (da fare → in corso → fatto), così il task "scende"
+        // nel gruppo man mano che avanza; poi priorità e scadenza
+        const st = { 'da-fare': 0, 'in-corso': 1, fatto: 2 };
+        const sDiff = st[a.status] - st[b.status];
+        if (sDiff !== 0) return sDiff;
         const p = { alta: 0, media: 1, bassa: 2 };
         const d = p[a.priorita] - p[b.priorita];
         if (d !== 0) return d;
@@ -811,7 +824,7 @@ export const TodoView: React.FC = () => {
               {filterStatus === 'tutti' && filterTipo === 'tutti' ? 'Nessuna attività.' : 'Nessuna attività con questi filtri'}
             </p>
           </div>
-        ) : (
+        ) : filterStatus !== 'tutti' ? (
           <div className="space-y-2.5">
             {filtered.map(todo => (
               <TodoCard
@@ -823,6 +836,41 @@ export const TodoView: React.FC = () => {
                 onUpdate={updates => updateTodo(todo.id, updates)}
                 onEdit={() => setEditingTodo(todo)}
               />
+            ))}
+          </div>
+        ) : (
+          /* Filtro "Tutti": colonne di stato in sequenza — il task si sposta di
+             sezione quando cambia stato (Da fare → In corso → Fatto) */
+          <div className="space-y-6">
+            {([
+              { status: 'da-fare' as const,  label: 'Da fare',  dot: 'bg-red-500',   badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+              { status: 'in-corso' as const, label: 'In corso', dot: 'bg-amber-400', badge: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
+              { status: 'fatto' as const,    label: 'Fatto',    dot: 'bg-green-500', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
+            ]).map(({ status, label, dot, badge }) => (
+              <div key={status}>
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className={`w-2 h-2 rounded-full ${dot}`} />
+                  <span className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">{label}</span>
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${badge}`}>{byStatus[status].length}</span>
+                </div>
+                {byStatus[status].length === 0 ? (
+                  <p className="text-xs text-gray-300 dark:text-gray-600 italic px-1 py-2">Nessuna attività</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {byStatus[status].map(todo => (
+                      <TodoCard
+                        key={todo.id}
+                        todo={todo}
+                        contactName={todo.contactId ? contacts[todo.contactId]?.company : undefined}
+                        onToggle={s => updateTodo(todo.id, { status: s, completedAt: s === 'fatto' ? Date.now() : undefined })}
+                        onDelete={() => deleteTodo(todo.id)}
+                        onUpdate={updates => updateTodo(todo.id, updates)}
+                        onEdit={() => setEditingTodo(todo)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )
