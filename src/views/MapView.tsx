@@ -50,15 +50,20 @@ const contactMarkerStyle = (status: string, segment?: string) => ({
 // sfocate/illeggibili sugli schermi ad alta densità dei telefoni.
 const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 const TILE_ATTRIBUTION = '© OpenStreetMap © CARTO';
+// Posizione utente: stella verde con contorno giallo, lampeggiante — ben
+// distinguibile dai marker circolari di clienti e prospect
 const userIcon = L.divIcon({
   className: '',
-  html: `<div style="
-    width:20px; height:20px; border-radius:50%;
-    background:#ef4444; border:3px solid white;
-    box-shadow:0 2px 8px rgba(0,0,0,0.3);
-  "></div>`,
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  html: `<style>@keyframes nm-user-blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.85)}}</style>
+  <div style="width:38px;height:38px;animation:nm-user-blink 1.2s ease-in-out infinite;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.45));">
+    <svg viewBox="0 0 24 24" width="38" height="38">
+      <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z"
+        fill="#22c55e" stroke="#facc15" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+  </div>`,
+  iconSize: [38, 38],
+  iconAnchor: [19, 19],
+  popupAnchor: [0, -20],
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
