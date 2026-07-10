@@ -31,13 +31,19 @@ export function useVoiceInput() {
     finalRef.current = '';
 
     rec.onresult = (event: AnyRec) => {
+      // Su Android Chrome ogni evento onresult può ricontenere TUTTI i
+      // risultati della sessione (resultIndex inaffidabile): il testo finale
+      // va ricostruito da zero ad ogni evento invece di accumulare i delta,
+      // altrimenti le stesse parole vengono ripetute più volte.
+      let final = '';
       let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const r = event.results[i];
-        if (r.isFinal) finalRef.current += r[0].transcript + ' ';
+        if (r.isFinal) final += r[0].transcript + ' ';
         else interim += r[0].transcript;
       }
-      setTranscript((finalRef.current + interim).trim());
+      finalRef.current = final;
+      setTranscript((final + interim).trim());
     };
 
     rec.onerror = (e: AnyRec) => {

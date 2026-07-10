@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
 import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical } from 'lucide-react';
@@ -27,33 +27,29 @@ import { CSS } from '@dnd-kit/utilities';
 
 // ── Icone colorate via divIcon ─────────────────────────────────────────────────
 
-const makeIcon = (color: string) =>
-  L.divIcon({
-    className: '',
-    html: `<div style="
-      width:28px; height:28px; border-radius:50% 50% 50% 0;
-      background:${color}; border:3px solid white;
-      transform:rotate(-45deg); box-shadow:0 2px 8px rgba(0,0,0,0.3);
-    "></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30],
-  });
-
 // Cliente = verde | Prospect Dealer = celeste | Edilizia = giallo | Industria = arancione
-const clienteIcon         = makeIcon('#22c55e');   // verde
-const prospectDealerIcon  = makeIcon('#38bdf8');   // celeste
-const prospectEdiliziaIcon= makeIcon('#eab308');   // giallo
-const prospectIndustriaIcon= makeIcon('#f87171');  // arancione
-const prospectDefaultIcon = makeIcon('#94a3b8');   // grigio (nessun segmento)
-
-function getContactIcon(status: string, segment?: string) {
-  if (status === 'cliente') return clienteIcon;
-  if (segment === 'dealer')    return prospectDealerIcon;
-  if (segment === 'edilizia')  return prospectEdiliziaIcon;
-  if (segment === 'industria') return prospectIndustriaIcon;
-  return prospectDefaultIcon;
+function getContactColor(status: string, segment?: string) {
+  if (status === 'cliente') return '#22c55e';
+  if (segment === 'dealer')    return '#38bdf8';
+  if (segment === 'edilizia')  return '#eab308';
+  if (segment === 'industria') return '#f87171';
+  return '#94a3b8';
 }
+
+// I marker dei contatti sono CircleMarker disegnati su canvas (preferCanvas):
+// con centinaia di punti i divIcon DOM rendono la mappa inutilizzabile su
+// smartphone.
+const contactMarkerStyle = (status: string, segment?: string) => ({
+  color: '#ffffff',
+  weight: 2.5,
+  fillColor: getContactColor(status, segment),
+  fillOpacity: 1,
+});
+
+// Tile CARTO Voyager con supporto retina ({r}): le tile OSM standard risultano
+// sfocate/illeggibili sugli schermi ad alta densità dei telefoni.
+const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const TILE_ATTRIBUTION = '© OpenStreetMap © CARTO';
 const userIcon = L.divIcon({
   className: '',
   html: `<div style="
@@ -352,15 +348,6 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     setTimeout(() => setSavedToAgenda(false), 3000);
   };
 
-  // Icona marker: selezionato = numero arancione, non selezionato = pallino verde/grigio
-  const makeItinIcon = (contact: any) => {
-    const idx = activeRoute.findIndex((s: any) => s.id === contact.id);
-    if (idx >= 0) {
-      return stopIcon(idx + 1);
-    }
-    return getContactIcon(contact.status, contact.segment);
-  };
-
   // Pannello itinerario — contenuto condiviso tra sidebar desktop e sheet mobile
   const itineraryPanel = (
     <div className="flex flex-col flex-1 min-h-0">
@@ -572,8 +559,8 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
         </div>
 
         {/* Mappa */}
-        <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap" />
+        <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false} preferCanvas>
+          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
           <SizeInvalidator isVisible={isVisible} />
           <FlyToContact position={itinFlyTo} />
           <Marker position={[HOME.lat, HOME.lng]} icon={homeIcon}>
@@ -581,18 +568,28 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
           </Marker>
           {visible.map((c: any) => {
             const selected = selectedIds.includes(c.id);
-            return (
-              <Marker key={c.id} position={[c.lat, c.lng]} icon={makeItinIcon(c)} eventHandlers={{ click: () => toggle(c.id) }}>
-                <Popup minWidth={90} maxWidth={160} className="compact-popup">
-                  <div style={{ padding: '2px 0', lineHeight: 1.2 }}>
-                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company}</p>
-                    <button onClick={() => toggle(c.id)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, width: '100%', padding: '3px 6px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', background: selected ? '#fee2e2' : '#f97316', color: selected ? '#dc2626' : '#fff', border: 'none', cursor: 'pointer' }}>
-                      {selected ? '− Rimuovi' : '+ Aggiungi'}
-                    </button>
-                  </div>
-                </Popup>
+            const stopIdx = activeRoute.findIndex((s: any) => s.id === c.id);
+            const popup = (
+              <Popup minWidth={90} maxWidth={160} className="compact-popup">
+                <div style={{ padding: '2px 0', lineHeight: 1.2 }}>
+                  <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company}</p>
+                  <button onClick={() => toggle(c.id)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, width: '100%', padding: '3px 6px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', background: selected ? '#fee2e2' : '#f97316', color: selected ? '#dc2626' : '#fff', border: 'none', cursor: 'pointer' }}>
+                    {selected ? '− Rimuovi' : '+ Aggiungi'}
+                  </button>
+                </div>
+              </Popup>
+            );
+            // Tappe selezionate: marker DOM numerato (poche unità). Il resto:
+            // CircleMarker su canvas, veloce anche con centinaia di contatti.
+            return stopIdx >= 0 ? (
+              <Marker key={c.id} position={[c.lat, c.lng]} icon={stopIcon(stopIdx + 1)} eventHandlers={{ click: () => toggle(c.id) }}>
+                {popup}
               </Marker>
+            ) : (
+              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)} eventHandlers={{ click: () => toggle(c.id) }}>
+                {popup}
+              </CircleMarker>
             );
           })}
           {roadRouteCoords.length > 1 && (
@@ -1063,8 +1060,9 @@ export const MapView: React.FC<MapViewProps> = ({
           zoom={userPos ? 8 : 6}
           style={{ height: '100%', width: '100%' }}
           doubleClickZoom={false}
+          preferCanvas
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
+          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
@@ -1074,7 +1072,7 @@ export const MapView: React.FC<MapViewProps> = ({
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={getContactIcon(c.status, c.segment)}>
+              <CircleMarker key={c.id} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -1103,7 +1101,7 @@ export const MapView: React.FC<MapViewProps> = ({
                     )}
                   </div>
                 </Popup>
-              </Marker>
+              </CircleMarker>
             );
           })}
         </MapContainer>
@@ -1387,8 +1385,9 @@ export const MapView: React.FC<MapViewProps> = ({
           zoom={userPos ? 8 : 6}
           style={{ height: '100%', width: '100%' }}
           doubleClickZoom={false}
+          preferCanvas
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
+          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
@@ -1399,7 +1398,7 @@ export const MapView: React.FC<MapViewProps> = ({
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <Marker key={c.id} position={[c.lat!, c.lng!]} icon={getContactIcon(c.status, c.segment)}>
+              <CircleMarker key={c.id} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -1430,7 +1429,7 @@ export const MapView: React.FC<MapViewProps> = ({
                     </div>
                   </div>
                 </Popup>
-              </Marker>
+              </CircleMarker>
             );
           })}
 
