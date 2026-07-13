@@ -52,10 +52,9 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
     setData(prev => prev ? { ...prev, [field]: v } : prev);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div
         className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2rem] shadow-2xl max-h-[90vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
