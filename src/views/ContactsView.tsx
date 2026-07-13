@@ -1557,6 +1557,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const newContact = {
               id: `c_${now}`,
               company: scraped.company,
+              customerType: 'end-user',
+              status: 'potenziale',
               contactName: '',
               role: '',
               email: scraped.email,
