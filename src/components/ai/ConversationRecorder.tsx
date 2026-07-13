@@ -254,7 +254,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 }) => {
   const isDealer = contact.customerType === 'dealer' || contact.segment === 'dealer';
 
-  const [phase, setPhase] = useState<'idle' | 'recording' | 'stopped' | 'transcribing' | 'manual' | 'analyzing' | 'done'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'recording' | 'stopped' | 'manual' | 'analyzing' | 'done'>('idle');
   const [srStatus, setSrStatus] = useState<'connecting' | 'listening' | 'sound' | 'speech'>('connecting');
   const [transcript, setTranscript] = useState('');
   const [interim, setInterim] = useState('');
@@ -263,6 +263,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const [showObiezioni, setShowObiezioni] = useState(true);
   const [showProfiling, setShowProfiling] = useState(true);
   const [appliedFields, setAppliedFields] = useState<string[]>([]);
+  const [liveStats, setLiveStats] = useState({ transcribed: 0, pending: 0, failed: 0, processing: false });
+  const [recoveredDraft, setRecoveredDraft] = useState(false);
 
   const srRef = useRef<any>(null);
   const shouldRecordRef = useRef(false);
@@ -274,11 +276,18 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const activeRecorderRef = useRef<MediaRecorder | null>(null);
   const lastChunkDoneRef = useRef<(() => void) | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
   const recStartRef = useRef(0);
   const [recSeconds, setRecSeconds] = useState(0);
   const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [transcribeProgress, setTranscribeProgress] = useState({ done: 0, total: 0 });
+
+  // Coda di trascrizione "live": ogni chunk audio viene trascritto non appena pronto,
+  // durante la registrazione stessa, invece di aspettare lo Stop — così se qualcosa va
+  // storto (reload, crash, tab chiusa) si perde al massimo l'ultimo blocco non ancora
+  // processato, non l'intera conversazione.
+  const pendingChunksRef = useRef<Blob[]>([]);
+  const failedChunksRef = useRef<Blob[]>([]);
+  const processingRef = useRef(false);
+  const draftKey = `nm_conv_draft_${contact.id}`;
 
   // Google STT (v1) accetta WEBM_OPUS: disponibile su Chrome/Android e desktop.
   // Su Safari iOS MediaRecorder produce mp4/aac → fallback alla Web Speech API.
@@ -428,6 +437,78 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     return ((data as { text?: string }).text ?? '').trim();
   };
 
+  const persistDraft = useCallback((text: string) => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ transcript: text, updatedAt: Date.now() }));
+    } catch {
+      // storage pieno o non disponibile: non blocchiamo la trascrizione per questo
+    }
+  }, [draftKey]);
+
+  const clearDraft = useCallback(() => {
+    try { localStorage.removeItem(draftKey); } catch { /* ignora */ }
+  }, [draftKey]);
+
+  const transcribeBlobWithRetry = async (blob: Blob, maxAttempts = 3): Promise<string> => {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        return await transcribeBlob(blob);
+      } catch (err) {
+        lastErr = err;
+        if (attempt < maxAttempts - 1) {
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
+      }
+    }
+    throw lastErr;
+  };
+
+  /** Processa in sequenza i chunk in coda, trascrivendoli e accodando il testo man mano
+   * che arriva. Il testo viene salvato subito in localStorage: se la sessione si interrompe
+   * a metà, alla riapertura si ritrova quanto già trascritto invece di perderlo. */
+  const processQueue = useCallback(async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setLiveStats(s => ({ ...s, processing: true }));
+    while (pendingChunksRef.current.length > 0) {
+      const blob = pendingChunksRef.current.shift()!;
+      try {
+        const t = await transcribeBlobWithRetry(blob);
+        if (t) {
+          setTranscript(prev => {
+            const next = (prev + (prev ? ' ' : '') + t).trim();
+            fullTranscriptRef.current = next;
+            persistDraft(next);
+            return next;
+          });
+        }
+        setLiveStats(s => ({ ...s, transcribed: s.transcribed + 1, pending: pendingChunksRef.current.length }));
+      } catch (err) {
+        console.warn('[ConversationRecorder] chunk non trascritto dopo 3 tentativi:', err);
+        failedChunksRef.current.push(blob);
+        setLiveStats(s => ({ ...s, failed: s.failed + 1, pending: pendingChunksRef.current.length }));
+      }
+    }
+    processingRef.current = false;
+    setLiveStats(s => ({ ...s, processing: false }));
+  }, [persistDraft]);
+
+  const enqueueChunk = useCallback((blob: Blob) => {
+    pendingChunksRef.current.push(blob);
+    setLiveStats(s => ({ ...s, pending: pendingChunksRef.current.length }));
+    void processQueue();
+  }, [processQueue]);
+
+  const retryFailedChunks = useCallback(() => {
+    if (failedChunksRef.current.length === 0) return;
+    const toRetry = failedChunksRef.current;
+    failedChunksRef.current = [];
+    pendingChunksRef.current.push(...toRetry);
+    setLiveStats(s => ({ ...s, failed: 0, pending: pendingChunksRef.current.length }));
+    void processQueue();
+  }, [processQueue]);
+
   const startChunk = useCallback((stream: MediaStream) => {
     const rec = new MediaRecorder(stream, {
       mimeType: RECORDER_MIME,
@@ -442,7 +523,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     };
     rec.onstop = () => {
       const blob = new Blob(parts, { type: RECORDER_MIME });
-      if (blob.size >= 2000) recordedChunksRef.current.push(blob);
+      if (blob.size >= 2000) enqueueChunk(blob);
       lastChunkDoneRef.current?.();
       lastChunkDoneRef.current = null;
       if (shouldRecordRef.current && stream.active) {
@@ -451,7 +532,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     };
     rec.start(SLICE_MS);
     activeRecorderRef.current = rec;
-  }, []);
+  }, [enqueueChunk]);
 
   /** Ferma recorder e microfono; risolve quando l'ultimo chunk è stato salvato. */
   const finishMediaRecording = useCallback((): Promise<void> => {
@@ -482,7 +563,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       });
       mediaStreamRef.current = stream;
       shouldRecordRef.current = true;
-      recordedChunksRef.current = [];
       setPhase('recording');
       setSrStatus('speech');
       setRecSeconds(0);
@@ -514,6 +594,11 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     setInterim('');
     setError(null);
     clearNoResultsTimer();
+    pendingChunksRef.current = [];
+    failedChunksRef.current = [];
+    setLiveStats({ transcribed: 0, pending: 0, failed: 0, processing: false });
+    setRecoveredDraft(false);
+    clearDraft();
 
     if (mediaSupported) {
       void startMediaRecording();
@@ -542,36 +627,31 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     }
   };
 
-  /** Trascrive in sequenza tutti i chunk registrati (tasto "Trascrivi"). */
-  const transcribeAll = async () => {
-    const chunks = recordedChunksRef.current;
-    if (chunks.length === 0) {
-      setError('Nessun audio registrato. Riprova o scrivi il testo manualmente.');
+  // La trascrizione dei chunk avviene già "live" durante la registrazione (enqueueChunk).
+  // Quando si preme Stop restano al più uno o due chunk in coda: appena la coda si svuota
+  // si passa automaticamente alla fase di revisione manuale del testo.
+  useEffect(() => {
+    if (phase === 'stopped' && liveStats.pending === 0 && !liveStats.processing) {
       setPhase('manual');
-      return;
     }
-    setPhase('transcribing');
-    setError(null);
-    setTranscribeProgress({ done: 0, total: chunks.length });
-    let text = '';
-    let failed = 0;
-    for (let i = 0; i < chunks.length; i++) {
-      try {
-        const t = await transcribeBlob(chunks[i]);
-        if (t) text += t + ' ';
-      } catch (err) {
-        console.warn('[transcribe] chunk failed:', err);
-        failed++;
+  }, [phase, liveStats.pending, liveStats.processing]);
+
+  // Recupera automaticamente una trascrizione rimasta a metà per un'interruzione precedente
+  // (reload, crash, chiusura accidentale) — salvata in localStorage man mano che arriva.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft?.transcript) {
+          setTranscript(draft.transcript);
+          fullTranscriptRef.current = draft.transcript;
+          setRecoveredDraft(true);
+        }
       }
-      setTranscribeProgress({ done: i + 1, total: chunks.length });
-    }
-    setTranscript(text.trim());
-    fullTranscriptRef.current = text;
-    if (failed > 0) {
-      setError(`${failed} ${failed === 1 ? 'tratto audio non è stato trascritto' : 'tratti audio non sono stati trascritti'} (problema di rete o server). Controlla il testo e integra a mano se serve.`);
-    }
-    setPhase('manual');
-  };
+    } catch { /* ignora */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const switchToManual = () => {
     shouldRecordRef.current = false;
@@ -667,6 +747,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
   const handleApply = () => {
     if (!result) return;
+    clearDraft();
     onSave(transcript || interim, result);
   };
 
@@ -726,8 +807,26 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               </button>
               {transcript && (
                 <div className="mt-4 bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 text-left">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trascritto precedente</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                    {recoveredDraft ? 'Trascrizione recuperata da un\'interruzione precedente' : 'Trascritto precedente'}
+                  </p>
                   <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{transcript}</p>
+                  {recoveredDraft && (
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        onClick={() => setPhase('manual')}
+                        className="text-xs font-black text-indigo-600 hover:text-indigo-700 transition-colors"
+                      >
+                        Continua a modificare →
+                      </button>
+                      <button
+                        onClick={() => { clearDraft(); setTranscript(''); fullTranscriptRef.current = ''; setRecoveredDraft(false); }}
+                        className="text-xs font-black text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        Elimina bozza
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -742,7 +841,14 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                   <span className="text-sm font-black text-red-600 dark:text-red-400">
                     {mediaSupported ? (
-                      <>REC {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}</>
+                      <>
+                        REC {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}
+                        {(liveStats.transcribed > 0 || liveStats.pending > 0) && (
+                          <span className="ml-2 text-[10px] font-bold text-gray-400 normal-case">
+                            {liveStats.transcribed} trascritti{liveStats.pending > 0 ? ` · ${liveStats.pending} in coda` : ''}
+                          </span>
+                        )}
+                      </>
                     ) : (
                       <>
                         {srStatus === 'connecting' && 'Connessione microfono...'}
@@ -774,7 +880,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                 {transcript || (
                   <span className="text-gray-300 dark:text-gray-600 italic">
                     {mediaSupported
-                      ? 'Sto registrando l’audio. Puoi spegnere lo schermo o mettere il telefono in tasca: la registrazione continua. La trascrizione partirà dopo lo Stop.'
+                      ? 'Sto registrando l’audio. Puoi spegnere lo schermo o mettere il telefono in tasca: la registrazione continua. La trascrizione appare qui man mano, blocco per blocco.'
                       : 'Parla vicino al microfono... il testo apparirà qui'}
                   </span>
                 )}
@@ -801,24 +907,25 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
             </div>
           )}
 
-          {/* ── STOPPED — registrazione terminata, in attesa di trascrizione ── */}
+          {/* ── STOPPED — registrazione terminata: la trascrizione avviene già live durante
+              la registrazione, qui si aspetta solo che si svuoti la coda residua ── */}
           {phase === 'stopped' && (
             <div className="text-center space-y-4 py-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-                <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                <Loader2 size={24} className="text-indigo-600 animate-spin" />
               </div>
               <div>
-                <p className="font-black text-gray-900 dark:text-white text-sm">Registrazione terminata</p>
+                <p className="font-black text-gray-900 dark:text-white text-sm">Completamento trascrizione…</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Durata {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')} · {recordedChunksRef.current.length} {recordedChunksRef.current.length === 1 ? 'blocco audio' : 'blocchi audio'}
+                  Durata {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}
+                  {liveStats.pending > 0 && ` · ${liveStats.pending} ${liveStats.pending === 1 ? 'blocco rimasto' : 'blocchi rimasti'}`}
                 </p>
+                {liveStats.failed > 0 && (
+                  <p className="text-xs text-amber-500 font-bold mt-1">
+                    {liveStats.failed} {liveStats.failed === 1 ? 'blocco non trascritto' : 'blocchi non trascritti'} — riprova disponibile nel testo
+                  </p>
+                )}
               </div>
-              <button
-                onClick={transcribeAll}
-                className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black text-base hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
-              >
-                <Sparkles size={20} /> Trascrivi
-              </button>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={startRecording}
@@ -827,7 +934,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                   🎙 Registra di nuovo
                 </button>
                 <button
-                  onClick={() => { recordedChunksRef.current = []; setPhase('idle'); }}
+                  onClick={() => { pendingChunksRef.current = []; failedChunksRef.current = []; clearDraft(); setPhase('idle'); }}
                   className="text-xs font-black text-gray-400 hover:text-red-500 transition-colors"
                 >
                   Scarta
@@ -836,30 +943,23 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
             </div>
           )}
 
-          {/* ── TRANSCRIBING ── */}
-          {phase === 'transcribing' && (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                <Loader2 size={24} className="text-indigo-600 animate-spin" />
-              </div>
-              <div className="text-center w-full px-6">
-                <p className="font-black text-gray-900 dark:text-white text-sm">Trascrizione in corso…</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Blocco {Math.min(transcribeProgress.done + 1, transcribeProgress.total)} di {transcribeProgress.total}
-                </p>
-                <div className="h-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-full overflow-hidden mt-3">
-                  <div
-                    className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-                    style={{ width: `${transcribeProgress.total > 0 ? Math.round((transcribeProgress.done / transcribeProgress.total) * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* ── MANUAL ── */}
           {phase === 'manual' && (
             <div className="space-y-4">
+              {liveStats.failed > 0 && (
+                <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-900/20 rounded-2xl px-4 py-3">
+                  <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                    {liveStats.failed} {liveStats.failed === 1 ? 'blocco audio non trascritto' : 'blocchi audio non trascritti'}
+                  </p>
+                  <button
+                    onClick={retryFailedChunks}
+                    disabled={liveStats.processing}
+                    className="text-xs font-black text-amber-600 hover:text-amber-700 transition-colors disabled:opacity-40"
+                  >
+                    {liveStats.processing ? 'Riprovo...' : 'Riprova →'}
+                  </button>
+                </div>
+              )}
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
                   Trascrivi o riassumi la conversazione
