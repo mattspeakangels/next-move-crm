@@ -765,6 +765,25 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   };
 
+  const geocodeOne = async (city?: string, province?: string, address?: string) => {
+    if (!city && !province && !address) return null;
+    try {
+      const params = new URLSearchParams();
+      if (city) params.set('city', city);
+      if (province) params.set('province', province);
+      if (address) params.set('address', address);
+      const res = await fetch(`/api/geocode?${params}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const jitter = () => (Math.random() - 0.5) * 0.004;
+        return { lat: parseFloat(data[0].lat) + jitter(), lng: parseFloat(data[0].lon) + jitter() };
+      }
+    } catch {
+      // geocoding silenzioso — non blocca il salvataggio
+    }
+    return null;
+  };
+
   const handleSave = async () => {
     if (!editingContact?.company) return alert('Inserisci la ragione sociale');
     const isNew = !contacts[editingContact.id];
@@ -775,25 +794,33 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
     setDetailContact(null);
 
+    const contactId = editingContact.id;
+    const updates: Record<string, any> = {};
+
     // Geocodifica automatica solo per nuovi clienti con almeno città o indirizzo
     if (isNew && (editingContact.city || editingContact.province || editingContact.address)) {
-      try {
-        const params = new URLSearchParams();
-        if (editingContact.city) params.set('city', editingContact.city);
-        if (editingContact.province) params.set('province', editingContact.province);
-        if (editingContact.address) params.set('address', editingContact.address);
-        const res = await fetch(`/api/geocode?${params}`);
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const jitter = () => (Math.random() - 0.5) * 0.004;
-          updateContact(editingContact.id, {
-            lat: parseFloat(data[0].lat) + jitter(),
-            lng: parseFloat(data[0].lon) + jitter(),
-          });
-        }
-      } catch {
-        // geocoding silenzioso — non blocca il salvataggio
-      }
+      const coords = await geocodeOne(editingContact.city, editingContact.province, editingContact.address);
+      if (coords) Object.assign(updates, coords);
+    }
+
+    // Geocodifica automatica delle sedi aggiuntive che non hanno ancora coordinate
+    const locations: any[] = editingContact.locations || [];
+    const toGeocode = locations.filter(l => (l.city || l.province || l.address) && !(l.lat && l.lng));
+    if (toGeocode.length > 0) {
+      const geocoded = await Promise.all(
+        toGeocode.map(l => geocodeOne(l.city, l.province, l.address))
+      );
+      const newLocations = locations.map(l => {
+        const idx = toGeocode.findIndex(t => t.id === l.id);
+        if (idx === -1) return l;
+        const coords = geocoded[idx];
+        return coords ? { ...l, ...coords } : l;
+      });
+      updates.locations = newLocations;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateContact(contactId, updates);
     }
   };
 

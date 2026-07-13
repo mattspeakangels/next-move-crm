@@ -1133,7 +1133,24 @@ export const MapView: React.FC<MapViewProps> = ({
   const unmappedWithAddress = allContacts.filter(c => !c.lat && (c.city || c.province));
   const defaultCenter: [number, number] = userPos ?? [45.5, 9.2]; // default: Milano
 
-  const visibleMarkers = filtered;
+  // Marker principali + un marker per ogni sede secondaria geocodificata (locations[])
+  const visibleMarkers = useMemo(() => {
+    const primary = filtered.map((c: any) => ({ ...c, markerKey: c.id, sedeLabel: null }));
+    const secondary = filtered.flatMap((c: any) =>
+      (c.locations || [])
+        .filter((l: any) => l.lat && l.lng)
+        .map((l: any) => ({
+          ...c,
+          markerKey: `${c.id}__${l.id}`,
+          lat: l.lat,
+          lng: l.lng,
+          address: l.address || c.address,
+          city: l.city || c.city,
+          sedeLabel: l.label || 'Sede secondaria',
+        }))
+    );
+    return [...primary, ...secondary];
+  }, [filtered]);
   const markersCapped = false;
 
   // ── FULLSCREEN MODE ─────────────────────────────────────────────────────────
@@ -1157,13 +1174,14 @@ export const MapView: React.FC<MapViewProps> = ({
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <CircleMarker key={c.id} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
                         {isCliente ? '● Cliente' : '◆ Prospect'}
                       </span>
+                      {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
                       {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
                     </div>
                     <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
@@ -1491,13 +1509,14 @@ export const MapView: React.FC<MapViewProps> = ({
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <CircleMarker key={c.id} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
                         {isCliente ? '● Cliente' : '◆ Prospect'}
                       </span>
+                      {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
                       {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
                     </div>
                     <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
