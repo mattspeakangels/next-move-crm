@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
@@ -235,6 +235,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [itinFlyTo, setItinFlyTo] = useState<[number, number] | null>(null);
   const [manualOrder, setManualOrder] = useState<string[] | null>(null);
   const [roadRouteCoords, setRoadRouteCoords] = useState<[number, number][]>([]);
+  const loadedItinDateRef = useRef<string | null>(null);
   const [itinUserPos, setItinUserPos] = useState<[number, number] | null>(null);
   const [itinLocating, setItinLocating] = useState(false);
   const [itinGeoMsg, setItinGeoMsg] = useState('');
@@ -301,6 +302,31 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     const updated = [...valid, ...newIds];
     setManualOrder(updated.length > 0 ? updated : null);
   }, [selectedIds]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Ripristina l'itinerario già salvato in Agenda per la data corrente (es. dopo un ricaricamento
+  // dell'app o quando i dati arrivano da Firestore in un secondo momento), così l'utente lo ritrova
+  // pronto da modificare invece di dover ricostruirlo da zero. Non sovrascrive modifiche già in corso:
+  // una volta caricato per una data, resta "fermo" finché la data non cambia.
+  useEffect(() => {
+    if (loadedItinDateRef.current === date) return;
+    const prefix = `act_itin_${date}_`;
+    const saved = Object.values(activities)
+      .filter((a: any) => a.id.startsWith(prefix))
+      .sort((a: any, b: any) => a.date - b.date);
+    if (saved.length === 0) return; // magari Firestore non ha ancora sincronizzato: riprova al prossimo update
+
+    const ids = saved.map((a: any) => a.contactId as string);
+    setSelectedIds(ids);
+    setManualOrder(ids);
+    const times: Record<string, string> = {};
+    saved.forEach((a: any) => {
+      const d = new Date(a.date);
+      times[a.contactId] = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    });
+    setCustomTimes(times);
+    setSheetOpen(true);
+    loadedItinDateRef.current = date;
+  }, [date, activities]);
 
   // Route attiva: manuale (drag) oppure auto-ottimizzata
   const activeRoute = useMemo(() => {
@@ -554,7 +580,14 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
 
             <div className="flex-1 flex items-center gap-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-lg">
               <Route size={14} className="text-orange-500 flex-shrink-0" />
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              <input type="date" value={date} onChange={e => {
+              const newDate = e.target.value;
+              setDate(newDate);
+              setSelectedIds([]);
+              setManualOrder(null);
+              setCustomTimes({});
+              loadedItinDateRef.current = null;
+            }}
                 className="flex-1 bg-transparent text-sm font-black text-gray-800 dark:text-white outline-none" />
             </div>
 
