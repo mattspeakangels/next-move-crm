@@ -219,7 +219,7 @@ interface ItinerarioViewProps {
 }
 
 const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVisible }) => {
-  const { addActivity } = useStore();
+  const { addActivity, deleteActivity, activities } = useStore();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -389,12 +389,20 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const addToAgenda = () => {
     const baseDate = new Date(`${date}T00:00:00`);
     const label = new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    // Rimuove le voci di un salvataggio precedente dello stesso itinerario (stessa data)
+    // per evitare doppioni quando si preme più volte "Aggiungi all'Agenda"
+    const prefix = `act_itin_${date}_`;
+    Object.keys(activities)
+      .filter(id => id.startsWith(prefix))
+      .forEach(id => deleteActivity(id));
+
     effectiveTimes.forEach(({ stopId, effective }) => {
       const [h, m] = effective.split(':').map(Number);
       const visitDate = new Date(baseDate);
       visitDate.setHours(h, m, 0, 0);
       addActivity({
-        id: `act_itin_${Date.now()}_${stopId}`,
+        id: `${prefix}${stopId}`,
         contactId: stopId,
         type: 'visita',
         date: visitDate.getTime(),
