@@ -137,6 +137,12 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 const HOME = { lat: 45.5386, lng: 9.0667, label: 'Casa — Via Don Bianchi, Rho' };
 const AVG_SPEED_KMH = 70; // velocità media stradale stimata
 
+// Chiave YYYY-MM-DD in orario locale, per confrontare un timestamp con il valore di un <input type="date">
+function dateKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function fmtTime(km: number): string {
   const mins = Math.round((km / AVG_SPEED_KMH) * 60);
   if (mins < 60) return `${mins} min`;
@@ -309,9 +315,11 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   // una volta caricato per una data, resta "fermo" finché la data non cambia.
   useEffect(() => {
     if (loadedItinDateRef.current === date) return;
-    const prefix = `act_itin_${date}_`;
+    // Match sulla data reale dell'attività (non sulla data nell'id): se l'appuntamento è stato
+    // spostato di giorno dall'Agenda, l'id resta quello originale ma va comunque a comparire
+    // nell'itinerario del nuovo giorno, non di quello in cui era stato creato.
     const saved = Object.values(activities)
-      .filter((a: any) => a.id.startsWith(prefix))
+      .filter((a: any) => a.id.startsWith('act_itin_') && dateKey(a.date) === date)
       .sort((a: any, b: any) => a.date - b.date);
     if (saved.length === 0) return; // magari Firestore non ha ancora sincronizzato: riprova al prossimo update
 
@@ -416,13 +424,15 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     const baseDate = new Date(`${date}T00:00:00`);
     const label = new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
 
-    // Rimuove le voci di un salvataggio precedente dello stesso itinerario (stessa data)
-    // per evitare doppioni quando si preme più volte "Aggiungi all'Agenda"
-    const prefix = `act_itin_${date}_`;
-    Object.keys(activities)
-      .filter(id => id.startsWith(prefix))
-      .forEach(id => deleteActivity(id));
+    // Rimuove le voci di un salvataggio precedente dello stesso itinerario per questo giorno,
+    // per evitare doppioni quando si preme più volte "Aggiungi all'Agenda". Si basa sulla data
+    // reale dell'attività (non sul prefisso dell'id): se una tappa è stata spostata ad un altro
+    // giorno dall'Agenda, il suo id resta quello originale ma non va cancellata da qui.
+    Object.values(activities)
+      .filter((a: any) => a.id.startsWith('act_itin_') && dateKey(a.date) === date)
+      .forEach((a: any) => deleteActivity(a.id));
 
+    const prefix = `act_itin_${date}_`;
     effectiveTimes.forEach(({ stopId, effective }) => {
       const [h, m] = effective.split(':').map(Number);
       const visitDate = new Date(baseDate);
