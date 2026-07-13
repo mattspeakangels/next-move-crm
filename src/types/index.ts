@@ -52,6 +52,15 @@ export interface CompanyIntelligence {
   logisticsAndService: string;
 }
 
+export interface BiDocument {
+  id: string;
+  name: string;
+  url: string;
+  contentType: string;
+  size: number;
+  uploadedAt: number;
+}
+
 export interface ContactLocation {
   id: string;
   label?: string;
@@ -96,6 +105,7 @@ export interface Contact {
   intelligence?: CompanyIntelligence;
   stakeholders?: Stakeholder[];
   profiling?: ProfilingData;
+  biDocuments?: BiDocument[];
   createdAt: number;
   updatedAt: number;
 }
