@@ -996,7 +996,15 @@ export const MapView: React.FC<MapViewProps> = ({
   onExitFullscreen,
 }) => {
   const { contacts, updateContact } = useStore();
-  const [userPos, setUserPos]     = useState<[number, number] | null>(null);
+  const [userPos, setUserPos]     = useState<[number, number] | null>(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('nextmove_last_userpos') || 'null');
+      if (cached && Array.isArray(cached.pos) && Date.now() - cached.ts < 30 * 60 * 1000) {
+        return cached.pos;
+      }
+    } catch {}
+    return null;
+  });
   const [radius, setRadius]       = useState(50);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [debugMsg, setDebugMsg]   = useState('');
@@ -1013,11 +1021,18 @@ export const MapView: React.FC<MapViewProps> = ({
   const [isLocating, setIsLocating] = useState(false);
   const [geoMsg, setGeoMsg] = useState('');
 
+  const saveUserPos = (p: [number, number]) => {
+    setUserPos(p);
+    try {
+      localStorage.setItem('nextmove_last_userpos', JSON.stringify({ pos: p, ts: Date.now() }));
+    } catch {}
+  };
+
   const locateMe = () => {
     setGeoMsg('');
     requestPosition(
       p => {
-        setUserPos(p);
+        saveUserPos(p);
         setFlyToTarget([...p] as [number, number]);
       },
       msg => {
@@ -1035,10 +1050,27 @@ export const MapView: React.FC<MapViewProps> = ({
   };
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      pos => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      ()  => setDebugMsg('GPS non autorizzato')
-    );
+    // Se abbiamo già una posizione recente (cache locale) non richiediamo di nuovo il permesso al browser
+    if (userPos) return;
+
+    const fetchPosition = () => {
+      navigator.geolocation.getCurrentPosition(
+        pos => saveUserPos([pos.coords.latitude, pos.coords.longitude]),
+        () => setDebugMsg('GPS non autorizzato'),
+        { maximumAge: 10 * 60 * 1000, timeout: 10000 }
+      );
+    };
+
+    // Se il browser espone lo stato del permesso, evitiamo di richiamare l'API quando è già negato
+    if (navigator.permissions?.query) {
+      navigator.permissions.query({ name: 'geolocation' as PermissionName })
+        .then(status => {
+          if (status.state !== 'denied') fetchPosition();
+        })
+        .catch(fetchPosition);
+    } else {
+      fetchPosition();
+    }
   }, []);
 
   const geocodeContacts = async () => {
