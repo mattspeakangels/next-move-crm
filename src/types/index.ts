@@ -52,6 +52,18 @@ export interface CompanyIntelligence {
   logisticsAndService: string;
 }
 
+export interface ContactLocation {
+  id: string;
+  label?: string;
+  address?: string;
+  city?: string;
+  zipCode?: string;
+  province?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
+}
+
 export interface Contact {
   id: string;
   company: string;
@@ -71,6 +83,9 @@ export interface Contact {
   // NUOVI CAMPI PER LA MAPPA
   lat?: number;
   lng?: number;
+
+  // Sedi aggiuntive (secondi negozi, altri indirizzi operativi)
+  locations?: ContactLocation[];
 
   status: ContactStatus;
   segment?: ContactSegment;
