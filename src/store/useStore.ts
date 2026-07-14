@@ -187,11 +187,25 @@ export const useStore = create<StoreState>()(
 
       addTodo: (todo) => set((state) => {
         const id = crypto.randomUUID();
-        return { todos: { ...state.todos, [id]: { ...todo, id, createdAt: Date.now() } } };
+        const createdAt = Date.now();
+        return { todos: { ...state.todos, [id]: { ...todo, id, createdAt, statusHistory: [{ status: todo.status, at: createdAt }] } } };
       }),
-      updateTodo: (id, updates) => set((state) => ({
-        todos: { ...state.todos, [id]: { ...state.todos[id], ...updates } }
-      })),
+      updateTodo: (id, updates) => set((state) => {
+        const current = state.todos[id];
+        const statusChanged = updates.status && updates.status !== current.status;
+        return {
+          todos: {
+            ...state.todos,
+            [id]: {
+              ...current,
+              ...updates,
+              statusHistory: statusChanged
+                ? [...(current.statusHistory || []), { status: updates.status!, at: Date.now() }]
+                : current.statusHistory,
+            },
+          },
+        };
+      }),
       deleteTodo: (id) => set((state) => {
         const newTodos = { ...state.todos };
         delete newTodos[id];
@@ -264,7 +278,13 @@ export const useStore = create<StoreState>()(
           if (stuckTodos.length > 0) {
             const fixedTodos = { ...state.todos };
             for (const t of stuckTodos) {
-              fixedTodos[t.id] = { ...t, status: 'fatto', completedAt: t.completedAt ?? Date.now() };
+              const at = t.completedAt ?? Date.now();
+              fixedTodos[t.id] = {
+                ...t,
+                status: 'fatto',
+                completedAt: at,
+                statusHistory: [...(t.statusHistory || []), { status: 'fatto', at }],
+              };
             }
             state.todos = fixedTodos;
             console.log(`Migrazione todo: ${stuckTodos.length} task "in corso" segnati come "fatto"`);

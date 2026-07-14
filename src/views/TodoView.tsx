@@ -43,6 +43,17 @@ function formatDate(iso?: string): string {
   return new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short' }).format(new Date(iso));
 }
 
+function formatDateTime(ts?: number): string {
+  if (!ts) return '';
+  return new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ts));
+}
+
+const STATUS_LABEL: Record<TodoStatus, string> = {
+  'da-fare': 'Da fare',
+  'in-corso': 'In corso',
+  fatto: 'Fatto',
+};
+
 // ─── Add Todo Modal ───────────────────────────────────────────────────────────
 
 interface AddTodoModalProps {
@@ -532,6 +543,12 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
               </span>
             )}
 
+            {/* Data apertura */}
+            <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400" title={`Aperto il ${formatDateTime(todo.createdAt)}`}>
+              <Clock size={9} />
+              Aperto {formatDateTime(todo.createdAt)}
+            </span>
+
             {/* Contatto */}
             {contactName && (
               <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400">
@@ -550,6 +567,18 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
           {todo.note && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">{todo.note}</p>
+          )}
+
+          {/* Storico avanzamento: data di ogni cambio di step */}
+          {todo.statusHistory && todo.statusHistory.length > 1 && (
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1.5 text-[9px] text-gray-400">
+              {todo.statusHistory.map((h, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <ChevronRight size={9} />}
+                  <span title={formatDateTime(h.at)}>{STATUS_LABEL[h.status]} {formatDateTime(h.at)}</span>
+                </React.Fragment>
+              ))}
+            </div>
           )}
         </div>
       </div>

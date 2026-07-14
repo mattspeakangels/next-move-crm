@@ -26,6 +26,7 @@ export interface TodoItem {
   status: TodoStatus;
   createdAt: number;
   completedAt?: number;
+  statusHistory?: { status: TodoStatus; at: number }[];
   source: 'manuale' | 'visita' | 'ai';
   sourceActivityId?: string;
 }
