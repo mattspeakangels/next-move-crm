@@ -441,7 +441,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
     setEditingTitle(false);
   };
 
-  const nextStatus: TodoStatus = todo.status === 'da-fare' ? 'in-corso' : todo.status === 'in-corso' ? 'fatto' : 'da-fare';
+  const nextStatus: TodoStatus = isDone ? 'da-fare' : 'fatto';
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 transition-all ${
