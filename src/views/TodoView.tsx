@@ -593,6 +593,7 @@ export const TodoView: React.FC = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<TodoStatus | 'tutti'>('tutti');
+  const [showDoneInTutti, setShowDoneInTutti] = useState(false);
   const [filterTipo, setFilterTipo] = useState<TodoTipo | 'tutti'>('tutti');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'lista' | 'cliente'>('cliente');
@@ -876,13 +877,17 @@ export const TodoView: React.FC = () => {
               { status: 'in-corso' as const, label: 'In corso', dot: 'bg-amber-400', badge: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
               { status: 'fatto' as const,    label: 'Fatto',    dot: 'bg-green-500', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
             ]).map(({ status, label, dot, badge }) => (
-              <div key={status}>
-                <div className="flex items-center gap-2 mb-2 px-1">
+              <div key={status} className={status === 'fatto' ? 'opacity-70' : undefined}>
+                <div
+                  className={`flex items-center gap-2 mb-2 px-1 ${status === 'fatto' ? 'cursor-pointer select-none' : ''}`}
+                  onClick={status === 'fatto' ? () => setShowDoneInTutti(v => !v) : undefined}
+                >
+                  {status === 'fatto' && (showDoneInTutti ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />)}
                   <span className={`w-2 h-2 rounded-full ${dot}`} />
                   <span className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">{label}</span>
                   <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${badge}`}>{byStatus[status].length}</span>
                 </div>
-                {byStatus[status].length === 0 ? (
+                {status === 'fatto' && !showDoneInTutti ? null : byStatus[status].length === 0 ? (
                   <p className="text-xs text-gray-300 dark:text-gray-600 italic px-1 py-2">Nessuna attività</p>
                 ) : (
                   <div className="space-y-2.5">
