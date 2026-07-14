@@ -257,6 +257,18 @@ export const useStore = create<StoreState>()(
             contactCount: Object.keys(state.contacts || {}).length,
             productCount: Object.keys(state.products || {}).length,
           });
+
+          // Migrazione una tantum: i task rimasti su "in-corso" erano bloccati lì
+          // dal vecchio bug del checkbox a 3 stati (vedi TodoView) e andavano segnati come fatti.
+          const stuckTodos = Object.values(state.todos || {}).filter((t) => t.status === 'in-corso');
+          if (stuckTodos.length > 0) {
+            const fixedTodos = { ...state.todos };
+            for (const t of stuckTodos) {
+              fixedTodos[t.id] = { ...t, status: 'fatto', completedAt: t.completedAt ?? Date.now() };
+            }
+            state.todos = fixedTodos;
+            console.log(`Migrazione todo: ${stuckTodos.length} task "in corso" segnati come "fatto"`);
+          }
         }
       }
     }
