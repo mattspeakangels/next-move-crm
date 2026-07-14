@@ -274,7 +274,7 @@ export const useStore = create<StoreState>()(
 
           // Migrazione una tantum: i task rimasti su "in-corso" erano bloccati lì
           // dal vecchio bug del checkbox a 3 stati (vedi TodoView) e andavano segnati come fatti.
-          const stuckTodos = Object.values(state.todos || {}).filter((t) => t.status === 'in-corso');
+          const stuckTodos = Object.values(state.todos || {}).filter((t) => (t.status as string) === 'in-corso');
           if (stuckTodos.length > 0) {
             const fixedTodos = { ...state.todos };
             for (const t of stuckTodos) {

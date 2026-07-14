@@ -12,7 +12,7 @@ export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' |
 
 export type TodoTipo = 'offerta' | 'scheda-tecnica' | 'email-info' | 'chiamata-follow' | 'campionatura' | 'demo' | 'visita' | 'altro';
 export type TodoPriorita = 'alta' | 'media' | 'bassa';
-export type TodoStatus = 'da-fare' | 'in-corso' | 'fatto';
+export type TodoStatus = 'da-fare' | 'fatto';
 
 export interface TodoItem {
   id: string;

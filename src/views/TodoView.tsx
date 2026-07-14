@@ -50,7 +50,6 @@ function formatDateTime(ts?: number): string {
 
 const STATUS_LABEL: Record<TodoStatus, string> = {
   'da-fare': 'Da fare',
-  'in-corso': 'In corso',
   fatto: 'Fatto',
 };
 
@@ -470,9 +469,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
         >
           {isDone
             ? <CheckCircle2 size={20} className="text-green-500" />
-            : todo.status === 'in-corso'
-              ? <Clock size={20} className="text-amber-500" />
-              : <Square size={20} />
+            : <Square size={20} />
           }
         </button>
 
@@ -618,10 +615,9 @@ export const TodoView: React.FC = () => {
   }, [todos, filterStatus, filterTipo]);
 
   // Vista Lista con "Tutti": i task sono raggruppati per stato, così cambiando
-  // stato dal checkbox la card si sposta di sezione (Da fare → In corso → Fatto)
+  // stato dal checkbox la card si sposta di sezione (Da fare → Fatto)
   const byStatus = useMemo(() => ({
     'da-fare':  filtered.filter(t => t.status === 'da-fare'),
-    'in-corso': filtered.filter(t => t.status === 'in-corso'),
     'fatto':    filtered.filter(t => t.status === 'fatto'),
   }), [filtered]);
 
@@ -636,7 +632,7 @@ export const TodoView: React.FC = () => {
       [...arr].sort((a, b) => {
         // Prima per stato (da fare → in corso → fatto), così il task "scende"
         // nel gruppo man mano che avanza; poi priorità e scadenza
-        const st = { 'da-fare': 0, 'in-corso': 1, fatto: 2 };
+        const st = { 'da-fare': 0, fatto: 1 };
         const sDiff = st[a.status] - st[b.status];
         if (sDiff !== 0) return sDiff;
         const p = { alta: 0, media: 1, bassa: 2 };
@@ -674,14 +670,12 @@ export const TodoView: React.FC = () => {
 
   // Contatori
   const daFare = allTodos.filter(t => t.status === 'da-fare').length;
-  const inCorso = allTodos.filter(t => t.status === 'in-corso').length;
   const fatto = allTodos.filter(t => t.status === 'fatto').length;
   const scaduti = allTodos.filter(t => t.status !== 'fatto' && isOverdue(t.scadenza)).length;
 
   const sections: { status: TodoStatus | 'tutti'; label: string; count: number; color: string }[] = [
     { status: 'tutti',    label: 'Tutti',    count: allTodos.length, color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' },
     { status: 'da-fare',  label: 'Da fare',  count: daFare,          color: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
-    { status: 'in-corso', label: 'In corso', count: inCorso,         color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
     { status: 'fatto',    label: 'Fatto',    count: fatto,           color: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
   ];
 
@@ -870,11 +864,10 @@ export const TodoView: React.FC = () => {
           </div>
         ) : (
           /* Filtro "Tutti": colonne di stato in sequenza — il task si sposta di
-             sezione quando cambia stato (Da fare → In corso → Fatto) */
+             sezione quando cambia stato (Da fare → Fatto) */
           <div className="space-y-6">
             {([
               { status: 'da-fare' as const,  label: 'Da fare',  dot: 'bg-red-500',   badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
-              { status: 'in-corso' as const, label: 'In corso', dot: 'bg-amber-400', badge: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
               { status: 'fatto' as const,    label: 'Fatto',    dot: 'bg-green-500', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
             ]).map(({ status, label, dot, badge }) => (
               <div key={status} className={status === 'fatto' ? 'opacity-70' : undefined}>
