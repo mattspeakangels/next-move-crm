@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useStore } from '../store/useStore';
@@ -567,6 +567,145 @@ const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) => {
   );
 };
 
+const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
+  const { contacts, updateContact } = useStore();
+  const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{ photo: any; fullUrl: string | null; loading: boolean } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const contact = contacts[contactId];
+  const photos = (contact?.photos ?? []).slice().sort((a, b) => b.uploadedAt - a.uploadedAt);
+
+  const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const { uploadContactPhoto } = await import('../lib/uploadPhoto');
+      for (const file of files) {
+        const photo = await uploadContactPhoto(contactId, file);
+        const current = contacts[contactId]?.photos ?? [];
+        updateContact(contactId, { photos: [...current, photo] });
+      }
+    } catch (err: any) {
+      alert(err?.message ?? 'Errore caricamento foto');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const openViewer = async (photo: any) => {
+    setViewer({ photo, fullUrl: null, loading: true });
+    try {
+      const { getContactPhotoFullDataUrl } = await import('../lib/uploadPhoto');
+      const fullUrl = await getContactPhotoFullDataUrl(photo);
+      setViewer({ photo, fullUrl, loading: false });
+    } catch (err: any) {
+      alert(err?.message ?? 'Errore apertura foto');
+      setViewer(null);
+    }
+  };
+
+  const handleDelete = async (photoId: string) => {
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return;
+    setDeletingId(photoId);
+    try {
+      const { deleteContactPhoto } = await import('../lib/uploadPhoto');
+      await deleteContactPhoto(photo);
+      const current = contacts[contactId]?.photos ?? [];
+      updateContact(contactId, { photos: current.filter(p => p.id !== photoId) });
+      setViewer(null);
+    } catch (err: any) {
+      alert(err?.message ?? 'Errore eliminazione foto');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <section>
+      <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" className="hidden" onChange={handleFilesChange} />
+
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <ImageIcon size={16} /> 9. Foto Punto Vendita / Assortimento
+          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{photos.length}</span>
+        </h3>
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-[10px] uppercase tracking-wide hover:bg-orange-100 transition-colors disabled:opacity-40"
+        >
+          {uploading
+            ? <><span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" /> Caricamento...</>
+            : <><Upload size={12} /> Carica Foto</>
+          }
+        </button>
+      </div>
+
+      {photos.length === 0 && (
+        <p className="text-xs text-gray-400 font-bold italic">Nessuna foto caricata per questo cliente</p>
+      )}
+
+      {photos.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+          {photos.map(photo => (
+            <button
+              key={photo.id}
+              onClick={() => openViewer(photo)}
+              className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm group"
+            >
+              <img src={photo.thumb} alt={photo.name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                <ZoomIn size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {viewer && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
+          <div className="max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
+              <div className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+                {viewer.loading
+                  ? <span className="animate-spin inline-block w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full" />
+                  : <img src={viewer.fullUrl ?? viewer.photo.thumb} alt={viewer.photo.name} className="w-full h-full object-contain" />
+                }
+              </div>
+              <div className="p-3 flex items-center justify-between gap-2">
+                <p className="text-[10px] text-gray-400 font-bold truncate">
+                  {new Date(viewer.photo.uploadedAt).toLocaleDateString('it-IT')} · {fmtFileSize(viewer.photo.size)}
+                </p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleDelete(viewer.photo.id)}
+                    disabled={deletingId === viewer.photo.id}
+                    className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
+                  >
+                    {deletingId === viewer.photo.id
+                      ? <span className="animate-spin inline-block w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full" />
+                      : <Trash2 size={12} />
+                    }
+                  </button>
+                  <button onClick={() => setViewer(null)} className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors">
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
 interface ContactsViewProps {
   initialSearch?: string;
   onClearFilter?: () => void;
@@ -993,6 +1132,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               </button>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              {editingContact?.id && contacts[editingContact.id] && (
+                <button
+                  onClick={() => setHistoryContact(contacts[editingContact.id])}
+                  className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
+                >
+                  <History size={14} /> <span className="hidden sm:inline">Storico</span>
+                </button>
+              )}
               {editingContact?.id && contacts[editingContact.id] && (
                 <button
                   onClick={() => {
@@ -1426,6 +1573,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             {/* SEZIONE 8 - Business Intelligence (solo in modifica) */}
             {editingContact?.id && contacts[editingContact.id] && (
               <InlineBiSection contactId={editingContact.id} />
+            )}
+
+            {/* SEZIONE 9 - Foto Punto Vendita / Assortimento (solo in modifica) */}
+            {editingContact?.id && contacts[editingContact.id] && (
+              <InlinePhotoSection contactId={editingContact.id} />
             )}
 
           </div>

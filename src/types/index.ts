@@ -62,6 +62,17 @@ export interface BiDocument {
   uploadedAt: number;
 }
 
+export interface ContactPhoto {
+  id: string;
+  name: string;
+  url: string;
+  thumb: string;
+  contentType: string;
+  size: number;
+  uploadedAt: number;
+  caption?: string;
+}
+
 export interface ContactLocation {
   id: string;
   label?: string;
@@ -107,6 +118,7 @@ export interface Contact {
   stakeholders?: Stakeholder[];
   profiling?: ProfilingData;
   biDocuments?: BiDocument[];
+  photos?: ContactPhoto[];
   createdAt: number;
   updatedAt: number;
 }
