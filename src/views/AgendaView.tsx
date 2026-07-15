@@ -1383,7 +1383,7 @@ Regole:
                   ? <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap break-words">{viewActivity.notes}</p>
                   : <p className="text-sm text-gray-300 dark:text-gray-600 italic">Nessuna nota</p>}
               </div>
-              {viewActivity.results && (
+              {viewActivity.outcome !== 'da-fare' && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase block">Resoconto</label>
@@ -1394,7 +1394,9 @@ Regole:
                       Modifica
                     </button>
                   </div>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap break-words">{viewActivity.results}</p>
+                  {viewActivity.results
+                    ? <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap break-words">{viewActivity.results}</p>
+                    : <p className="text-sm text-gray-300 dark:text-gray-600 italic">Nessun resoconto</p>}
                 </div>
               )}
             </div>
