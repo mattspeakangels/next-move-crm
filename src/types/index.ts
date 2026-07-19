@@ -208,6 +208,8 @@ export interface Activity {
   results?: string;
   createdAt?: number;
   transcript?: string;
+  source?: 'manual' | 'gmail';
+  externalId?: string;
 }
 
 export interface Obiezione {

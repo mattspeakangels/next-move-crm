@@ -53,6 +53,7 @@ interface StoreState {
 
   // Attività e Target
   addActivity: (activity: Activity) => void;
+  addActivitiesBatch: (activities: Activity[]) => void;
   updateActivity: (id: string, updates: Partial<Activity>) => void;
   deleteActivity: (id: string) => void;
   updateTarget: (target: any) => void;
@@ -173,6 +174,11 @@ export const useStore = create<StoreState>()(
       addActivity: (activity) => set((state) => ({
         activities: { ...state.activities, [activity.id]: activity }
       })),
+      addActivitiesBatch: (batch) => set((state) => {
+        const updated = { ...state.activities };
+        batch.forEach(a => updated[a.id] = a);
+        return { activities: updated };
+      }),
       updateActivity: (id, updates) => set((state) => ({
         activities: { ...state.activities, [id]: { ...state.activities[id], ...updates } }
       })),

@@ -6,6 +6,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
+import { GmailIntegration } from '../components/settings/GmailIntegration';
 import Anthropic from '@anthropic-ai/sdk';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
@@ -595,6 +596,7 @@ export const SettingsView: React.FC = () => {
 
       {/* ── Pulizia Territorio ─────────────────────────────────────────── */}
       <PuliziaTerritorio />
+      <GmailIntegration />
 
       {/* ── Claude API Key ─────────────────────────────────────────────── */}
       <ClaudeApiKeySection />
