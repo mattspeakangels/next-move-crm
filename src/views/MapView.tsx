@@ -1311,8 +1311,39 @@ export const MapView: React.FC<MapViewProps> = ({
           })}
         </MapContainer>
 
+        {/* Barra di ricerca fullscreen */}
+        <div className="absolute top-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-96 z-[1000]">
+          <SearchDropdown
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Cerca cliente o prospect…"
+            inputWrapperClassName={() => 'flex items-center gap-2 bg-white/90 backdrop-blur-sm border-0 rounded-2xl px-3 py-2.5 shadow-lg focus-within:ring-2 focus-within:ring-indigo-400 transition-all'}
+            dropdownClassName="z-[1100]"
+            onSelect={c => {
+              setSearchQuery(c.company);
+              if (c.lat && c.lng) setFlyToTarget([c.lat, c.lng]);
+            }}
+            results={searchResults.map(c => {
+              const isCliente = c.status === 'cliente';
+              const hasPinned = !!(c.lat && c.lng);
+              return {
+                key: c.id,
+                item: c,
+                label: c.company,
+                sublabel: c.city || '—',
+                badge: {
+                  text: hasPinned ? (isCliente ? 'Cliente' : 'Prospect') : 'no pin',
+                  className: hasPinned
+                    ? (isCliente ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600')
+                    : 'bg-gray-100 text-gray-400',
+                },
+              };
+            })}
+          />
+        </div>
+
         {/* Overlay filtri fullscreen */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center">
+        <div className="absolute top-[4.5rem] left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center">
           {/* Toggle clienti/tutti/prospect */}
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-1 flex gap-1 shadow-lg">
             {(['tutti', 'clienti', 'prospect'] as const).map(f => (
