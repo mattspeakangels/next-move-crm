@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
-import { Contact, ContactSegment } from '../types';
+import { ContactSegment } from '../types';
 import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -74,8 +74,8 @@ const ChangeView = ({ center }: { center: [number, number] }) => {
   return null;
 };
 
-const DoubleClickHandler = ({ onDoubleClick }: { onDoubleClick: (latlng: { lat: number; lng: number }) => void }) => {
-  useMapEvents({ dblclick: (e) => { onDoubleClick(e.latlng); } });
+const DoubleClickHandler = ({ onDoubleClick }: { onDoubleClick: () => void }) => {
+  useMapEvents({ dblclick: () => { onDoubleClick(); } });
   return null;
 };
 
@@ -1047,80 +1047,6 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
   );
 };
 
-// Modal rapido: doppio click sulla mappa → nome cliente/prospect → pin creato al volo
-interface QuickAddContactModalProps {
-  point: { lat: number; lng: number };
-  onClose: () => void;
-  onCreate: (name: string, status: 'cliente' | 'potenziale') => void;
-}
-
-const QuickAddContactModal: React.FC<QuickAddContactModalProps> = ({ point, onClose, onCreate }) => {
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState<'cliente' | 'potenziale'>('potenziale');
-
-  const submit = () => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    onCreate(trimmed, status);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center p-2 md:p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-[2rem] w-full max-w-sm shadow-2xl p-5"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div>
-            <h2 className="text-base font-black uppercase tracking-tight dark:text-white flex items-center gap-2">
-              <MapPin size={18} className="text-indigo-500" /> Nuovo pin
-            </h2>
-            <p className="text-xs text-gray-400 font-bold mt-0.5">
-              {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
-            </p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-all flex-shrink-0">
-            <X size={18} />
-          </button>
-        </div>
-
-        <input
-          autoFocus
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
-          placeholder="Nome cliente o azienda…"
-          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-800 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all"
-        />
-
-        <div className="flex gap-1.5 mt-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-          <button
-            onClick={() => setStatus('potenziale')}
-            className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all ${status === 'potenziale' ? 'bg-white dark:bg-gray-700 shadow text-amber-600' : 'text-gray-500'}`}
-          >
-            Prospect
-          </button>
-          <button
-            onClick={() => setStatus('cliente')}
-            className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all ${status === 'cliente' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
-          >
-            Cliente
-          </button>
-        </div>
-
-        <button
-          onClick={submit}
-          disabled={!name.trim()}
-          className={`w-full mt-4 py-3 rounded-2xl font-black uppercase text-sm tracking-wide transition-all ${name.trim() ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg' : 'bg-gray-200 dark:bg-gray-700 text-gray-400'}`}
-        >
-          Crea pin
-        </button>
-      </div>
-    </div>
-  );
-};
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 type MapFilter = 'tutti' | 'clienti' | 'prospect';
@@ -1139,29 +1065,7 @@ export const MapView: React.FC<MapViewProps> = ({
   onGoFullscreen,
   onExitFullscreen,
 }) => {
-  const { contacts, updateContact, addContact } = useStore();
-  const [newContactPoint, setNewContactPoint] = useState<{ lat: number; lng: number } | null>(null);
-
-  const createContactAtPoint = (name: string, status: 'cliente' | 'potenziale') => {
-    if (!newContactPoint) return;
-    const now = Date.now();
-    addContact({
-      id: `c_${now}`,
-      company: name,
-      contactName: '',
-      role: '',
-      email: '',
-      phone: '',
-      status,
-      sector: '',
-      region: '',
-      lat: newContactPoint.lat,
-      lng: newContactPoint.lng,
-      createdAt: now,
-      updatedAt: now,
-    } as Contact);
-    setNewContactPoint(null);
-  };
+  const { contacts, updateContact } = useStore();
   const [userPos, setUserPos]     = useState<[number, number] | null>(() => {
     try {
       const cached = JSON.parse(localStorage.getItem('nextmove_last_userpos') || 'null');
@@ -1366,7 +1270,7 @@ export const MapView: React.FC<MapViewProps> = ({
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
-          <DoubleClickHandler onDoubleClick={setNewContactPoint} />
+          <DoubleClickHandler onDoubleClick={() => onExitFullscreen?.()} />
           <FlyToContact position={flyToTarget} />
           {visibleMarkers.map(c => {
             const isCliente = c.status === 'cliente';
@@ -1461,16 +1365,8 @@ export const MapView: React.FC<MapViewProps> = ({
               Mostrati tutti i marker
             </p>
           )}
-          <p className="text-[10px] text-gray-400 font-bold mt-0.5">Doppio click per aggiungere un pin</p>
+          <p className="text-[10px] text-gray-400 font-bold mt-0.5">Doppio click per uscire</p>
         </div>
-
-        {newContactPoint && (
-          <QuickAddContactModal
-            point={newContactPoint}
-            onClose={() => setNewContactPoint(null)}
-            onCreate={createContactAtPoint}
-          />
-        )}
       </div>
     );
   }
@@ -1708,7 +1604,7 @@ export const MapView: React.FC<MapViewProps> = ({
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#4f46e5', fillOpacity: 0.06, dashArray: '6 4' }} />}
-          <DoubleClickHandler onDoubleClick={setNewContactPoint} />
+          {onGoFullscreen && <DoubleClickHandler onDoubleClick={onGoFullscreen} />}
           <FlyToContact position={flyToTarget} />
 
           {visibleMarkers.map(c => {
@@ -1754,11 +1650,13 @@ export const MapView: React.FC<MapViewProps> = ({
         </MapContainer>
 
         {/* Overlay hint doppio click */}
-        <div className="absolute bottom-3 right-3 z-[400] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl px-3 py-1.5 pointer-events-none">
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-            <MapPin size={10} /> Doppio click per aggiungere un pin
-          </p>
-        </div>
+        {onGoFullscreen && (
+          <div className="absolute bottom-3 right-3 z-[400] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl px-3 py-1.5 pointer-events-none">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Maximize2 size={10} /> Doppio click per fullscreen
+            </p>
+          </div>
+        )}
 
         {/* Geolocalizzazione */}
         <div className="absolute bottom-14 right-3 z-[400] flex flex-col items-end gap-2">
@@ -1875,14 +1773,6 @@ export const MapView: React.FC<MapViewProps> = ({
         <AICatalogPanel
           onClose={() => setShowAIPanel(false)}
           onApply={applyAISuggestions}
-        />
-      )}
-
-      {newContactPoint && (
-        <QuickAddContactModal
-          point={newContactPoint}
-          onClose={() => setNewContactPoint(null)}
-          onCreate={createContactAtPoint}
         />
       )}
     </div>
