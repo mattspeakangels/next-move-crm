@@ -21,6 +21,7 @@ type FormData = {
   type: ActivityType;
   date: string;
   time: string;
+  endTime: string;
   notes: string;
 };
 
@@ -31,8 +32,16 @@ const defaultForm = (): FormData => ({
   type: 'visita',
   date: '',
   time: '09:00',
+  endTime: '10:00',
   notes: '',
 });
+
+// Somma minuti a un orario "HH:MM" restando nello stesso giorno (clamp a 23:59)
+const addMinutesToTime = (time: string, minutes: number): string => {
+  const [h, m] = time.split(':').map(Number);
+  const total = Math.max(0, Math.min(h * 60 + m + minutes, 23 * 60 + 59));
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
 
 const TYPE_LABELS: Record<ActivityType, string> = {
   chiamata: 'Chiamata',
@@ -221,6 +230,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
           )}
           <p className="text-xs text-gray-400 font-bold">
             {new Date(activity.date).toLocaleString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            {activity.endDate && ` – ${new Date(activity.endDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`}
           </p>
           {activity.notes && <p className="text-[11px] text-gray-400 truncate mt-0.5">{activity.notes}</p>}
           {activity.results && (
@@ -357,6 +367,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
         type,
         date,
         time,
+        endTime: addMinutesToTime(time, 60),
         notes: data.notes ?? '',
       });
       setContactSearch(matchedContact?.company ?? data.companyName ?? '');
@@ -566,22 +577,26 @@ Regole:
   const openNew = (prefillDate?: Date) => {
     setEditingId(null);
     const d = prefillDate ?? new Date();
+    const time = d.toTimeString().slice(0, 5);
     setFormData({
       ...defaultForm(),
       date: toLocalDateStr(d),
-      time: d.toTimeString().slice(0, 5),
+      time,
+      endTime: addMinutesToTime(time, 60),
     });
     setShowModal(true);
   };
 
   const openEdit = (activity: Activity) => {
     const d = new Date(activity.date);
+    const time = d.toTimeString().slice(0, 5);
     setEditingId(activity.id);
     setFormData({
       contactId: activity.contactId,
       type: activity.type,
       date: toLocalDateStr(d),
-      time: d.toTimeString().slice(0, 5),
+      time,
+      endTime: activity.endDate ? new Date(activity.endDate).toTimeString().slice(0, 5) : addMinutesToTime(time, 60),
       notes: activity.notes || '',
     });
     setContactSearch(contacts[activity.contactId]?.company || '');
@@ -596,11 +611,16 @@ Regole:
     if (!noContact && !formData.contactId) { showToast("Seleziona un'azienda", 'error'); return; }
     const contactId = noContact ? '' : formData.contactId;
     const dateTime = new Date(`${formData.date}T${formData.time}`).getTime();
+    const endDateTime = formData.endTime ? new Date(`${formData.date}T${formData.endTime}`).getTime() : undefined;
+    if (endDateTime !== undefined && endDateTime <= dateTime) {
+      showToast("L'ora di fine deve essere dopo l'ora di inizio", 'error');
+      return;
+    }
     if (editingId) {
-      updateActivity(editingId, { contactId, type: formData.type, date: dateTime, notes: formData.notes });
+      updateActivity(editingId, { contactId, type: formData.type, date: dateTime, endDate: endDateTime, notes: formData.notes });
       showToast('Attività aggiornata!', 'success');
     } else {
-      addActivity({ id: `act_${Date.now()}`, contactId, type: formData.type, date: dateTime, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
+      addActivity({ id: `act_${Date.now()}`, contactId, type: formData.type, date: dateTime, endDate: endDateTime, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
       showToast('Attività salvata!', 'success');
     }
     closeModal();
@@ -617,7 +637,7 @@ Regole:
     const contact = contacts[activity.contactId];
     const title = encodeURIComponent(`${TYPE_LABELS[activity.type]} - ${contact?.company || 'Cliente'}`);
     const start = new Date(activity.date);
-    const end   = new Date(activity.date + 60 * 60 * 1000); // +1h
+    const end   = new Date(activity.endDate ?? activity.date + 60 * 60 * 1000); // usa la durata reale se impostata, altrimenti +1h
     // Outlook Web deep-link format: YYYY-MM-DDTHH:MM:SS (no trailing Z = local time)
     const fmtOutlook = (d: Date) =>
       d.getFullYear() + '-' +
@@ -979,7 +999,9 @@ Regole:
     const { h, m } = slotToTime(slotIdx);
     const newDate = new Date(day);
     newDate.setHours(h, m, 0, 0);
-    updateActivity(String(active.id), { date: newDate.getTime() });
+    const dragged = activities[String(active.id)];
+    const newEndDate = dragged?.endDate ? newDate.getTime() + (dragged.endDate - dragged.date) : undefined;
+    updateActivity(String(active.id), { date: newDate.getTime(), endDate: newEndDate });
   };
 
   // ── Week timegrid con drag & drop ─────────────────────────────────────────
@@ -1330,6 +1352,7 @@ Regole:
                 )}
                 <p className="text-xs text-gray-400 font-bold mt-1">
                   {new Date(viewActivity.date).toLocaleString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {viewActivity.endDate && ` – ${new Date(viewActivity.endDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`}
                 </p>
               </div>
               <button onClick={() => setViewActivity(null)}><X size={24} className="text-gray-400" /></button>
@@ -1468,14 +1491,36 @@ Regole:
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Data</label>
+                <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400" />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Data</label>
-                  <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400" />
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora inizio</label>
+                  <input
+                    type="time"
+                    required
+                    value={formData.time}
+                    onChange={e => {
+                      const newTime = e.target.value;
+                      // Sposta l'ora di fine mantenendo la stessa durata, così non finisce mai prima dell'inizio
+                      const prevMins = formData.time.split(':').map(Number);
+                      const nextMins = newTime.split(':').map(Number);
+                      const deltaMin = (nextMins[0] * 60 + nextMins[1]) - (prevMins[0] * 60 + prevMins[1]);
+                      setFormData({ ...formData, time: newTime, endTime: addMinutesToTime(formData.endTime, deltaMin) });
+                    }}
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400"
+                  />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora</label>
-                  <input type="time" required value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400" />
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora fine</label>
+                  <input
+                    type="time"
+                    value={formData.endTime}
+                    onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400"
+                  />
                 </div>
               </div>
               <div>

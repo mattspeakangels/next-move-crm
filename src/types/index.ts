@@ -202,6 +202,8 @@ export interface Activity {
   dealId?: string;
   type: ActivityType;
   date: number;
+  /** Orario di fine appuntamento (timestamp ms). Assente = durata non specificata. */
+  endDate?: number;
   outcome: string;
   notes: string;
   outcomeType?: ActivityOutcome;
