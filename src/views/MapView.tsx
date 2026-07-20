@@ -309,18 +309,30 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     setManualOrder(updated.length > 0 ? updated : null);
   }, [selectedIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Ripristina l'itinerario già salvato in Agenda per la data corrente (es. dopo un ricaricamento
-  // dell'app o quando i dati arrivano da Firestore in un secondo momento), così l'utente lo ritrova
-  // pronto da modificare invece di dover ricostruirlo da zero. Non sovrascrive modifiche già in corso:
-  // una volta caricato per una data, resta "fermo" finché la data non cambia.
+  // Ripristina l'itinerario per la data corrente a partire dalle attività in Agenda — sia quelle
+  // create dall'itinerario stesso (prefisso act_itin_) sia quelle compilate a mano in Agenda
+  // (visita/sopralluogo su un cliente mappato): la calendarizzazione è reciproca, un appuntamento
+  // fissato in Agenda deve comparire come tappa qui senza dover passare dalla mappa.
+  // Non sovrascrive modifiche già in corso: una volta caricato per una data, resta "fermo" finché
+  // la data non cambia.
   useEffect(() => {
     if (loadedItinDateRef.current === date) return;
     // Match sulla data reale dell'attività (non sulla data nell'id): se l'appuntamento è stato
     // spostato di giorno dall'Agenda, l'id resta quello originale ma va comunque a comparire
     // nell'itinerario del nuovo giorno, non di quello in cui era stato creato.
+    const seenContacts = new Set<string>();
     const saved = Object.values(activities)
-      .filter((a: any) => a.id.startsWith('act_itin_') && dateKey(a.date) === date)
-      .sort((a: any, b: any) => a.date - b.date);
+      .filter((a: any) =>
+        (a.type === 'visita' || a.type === 'sopralluogo') &&
+        dateKey(a.date) === date &&
+        contacts[a.contactId]?.lat && contacts[a.contactId]?.lng
+      )
+      .sort((a: any, b: any) => a.date - b.date)
+      .filter((a: any) => {
+        if (seenContacts.has(a.contactId)) return false; // una sola tappa per cliente/giorno
+        seenContacts.add(a.contactId);
+        return true;
+      });
     if (saved.length === 0) return; // magari Firestore non ha ancora sincronizzato: riprova al prossimo update
 
     const ids = saved.map((a: any) => a.contactId as string);
@@ -428,8 +440,15 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     // per evitare doppioni quando si preme più volte "Aggiungi all'Agenda". Si basa sulla data
     // reale dell'attività (non sul prefisso dell'id): se una tappa è stata spostata ad un altro
     // giorno dall'Agenda, il suo id resta quello originale ma non va cancellata da qui.
+    // Rimuove anche eventuali visite/sopralluoghi compilati a mano in Agenda per i clienti che
+    // fanno parte di questo itinerario (calendarizzazione reciproca: la voce viene sostituita,
+    // non duplicata, dalla tappa dell'itinerario).
+    const stopIds = new Set(effectiveTimes.map(({ stopId }) => stopId));
     Object.values(activities)
-      .filter((a: any) => a.id.startsWith('act_itin_') && dateKey(a.date) === date)
+      .filter((a: any) =>
+        dateKey(a.date) === date &&
+        (a.id.startsWith('act_itin_') || ((a.type === 'visita' || a.type === 'sopralluogo') && stopIds.has(a.contactId)))
+      )
       .forEach((a: any) => deleteActivity(a.id));
 
     const prefix = `act_itin_${date}_`;
