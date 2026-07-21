@@ -332,7 +332,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     date: number;
     todos: AiExtractedTodo[];
   }
-  const MAX_BATCH_SIZE = 25;
+  const MAX_BATCH_SIZE = 35;
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchAnalyzing, setBatchAnalyzing] = useState(false);
   const [batchError, setBatchError] = useState<string | null>(null);
