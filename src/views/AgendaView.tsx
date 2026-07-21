@@ -324,6 +324,20 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const voiceClose = useVoiceInput();
+
+  // ── AI batch analysis (tutte le visite fatte, 1 sola chiamata) ──
+  interface BatchGroup {
+    activityId: string;
+    contactName: string;
+    date: number;
+    todos: AiExtractedTodo[];
+  }
+  const MAX_BATCH_SIZE = 25;
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchAnalyzing, setBatchAnalyzing] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
+  const [batchGroups, setBatchGroups] = useState<BatchGroup[]>([]);
+  const [batchAnalyzedIds, setBatchAnalyzedIds] = useState<string[]>([]);
   const voiceNotes = useVoiceInput();
 
   // ── Voice schedule: parse transcript → pre-fill form ──
@@ -496,6 +510,136 @@ Regole:
     }
     if (selected.length > 0) showToast(`${selected.length} attività aggiunte al To Do`, 'success');
     setAiTodos([]);
+  };
+
+  // Visite chiuse con un resoconto, non ancora passate per l'analisi AI batch
+  const pendingBatchActivities = useMemo(() => (
+    Object.values(activities)
+      .filter(a => a.outcome === 'fatto' && a.results?.trim() && !a.aiAnalyzedAt)
+      .sort((a, b) => a.date - b.date)
+  ), [activities]);
+
+  const openBatchModal = () => {
+    setShowBatchModal(true);
+    setBatchError(null);
+    setBatchGroups([]);
+    setBatchAnalyzedIds([]);
+  };
+
+  const analyzeAllResoconti = async () => {
+    const apiKey = useStore.getState().claudeApiKey.trim();
+    if (!apiKey) { setBatchError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.'); return; }
+    const batch = pendingBatchActivities.slice(0, MAX_BATCH_SIZE);
+    if (batch.length === 0) return;
+
+    setBatchAnalyzing(true);
+    setBatchError(null);
+    setBatchGroups([]);
+
+    const today = new Date().toISOString().split('T')[0];
+    const items = batch.map(a => ({
+      id: a.id,
+      contactName: a.contactId ? contacts[a.contactId]?.company ?? '' : '',
+      date: new Date(a.date).toISOString().split('T')[0],
+      notes: a.results || '',
+    }));
+
+    try {
+      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+      const msg = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: Math.min(8192, 500 + items.length * 300),
+        messages: [{
+          role: 'user',
+          content: `Sei un assistente per un agente commerciale Blaklader (workwear premium).
+Data oggi: ${today}.
+
+Di seguito trovi i resoconti di ${items.length} visite/appuntamenti commerciali GIA CONCLUSI, ognuno identificato da un "id" esatto. Per OGNUNO, estrai TUTTE le azioni concrete da fare (offerte, campionature, schede tecniche, follow-up, appuntamenti, ecc.), con data di esecuzione e scadenza basate sulle urgenze menzionate nel testo.
+
+VISITE:
+---
+${items.map(it => `[id: ${it.id}] Cliente: "${it.contactName}" | Data visita: ${it.date}\nResoconto: ${it.notes}`).join('\n---\n')}
+---
+
+Rispondi SOLO con un array JSON valido, UN elemento per OGNI id fornito (anche con "todos": [] se non ci sono azioni concrete), in questo formato:
+[
+  {
+    "id": "<id esatto fornito>",
+    "todos": [
+      {
+        "titolo": "descrizione concisa dell'azione",
+        "tipo": "offerta"|"scheda-tecnica"|"email-info"|"chiamata-follow"|"campionatura"|"demo"|"visita"|"altro",
+        "priorita": "alta"|"media"|"bassa",
+        "dataEsecuzione": "YYYY-MM-DD",
+        "scadenza": "YYYY-MM-DD",
+        "note": "dettaglio utile (opzionale, stringa vuota se non necessario)"
+      }
+    ]
+  }
+]
+
+Regole:
+- "alta" se c'è urgenza esplicita (entro oggi/domani/48h/fine settimana)
+- "media" se entro 1-2 settimane
+- "bassa" se non c'è urgenza definita
+- dataEsecuzione = quando iniziare; scadenza = deadline massima
+- Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
+- Includi SOLO azioni concrete, non osservazioni generiche
+- Non omettere nessun id: se una visita non genera azioni, restituisci "todos": []`,
+        }],
+      });
+
+      const raw = (msg.content[0] as { text: string }).text.trim();
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('Risposta non valida');
+      const parsed: { id: string; todos: Omit<AiExtractedTodo, 'selected'>[] }[] = JSON.parse(match[0]);
+
+      const groups: BatchGroup[] = parsed.map(p => {
+        const activity = batch.find(a => a.id === p.id);
+        return {
+          activityId: p.id,
+          contactName: activity?.contactId ? contacts[activity.contactId]?.company ?? '' : '',
+          date: activity?.date ?? 0,
+          todos: (p.todos || []).map(t => ({ ...t, selected: true })),
+        };
+      });
+      setBatchGroups(groups);
+      setBatchAnalyzedIds(batch.map(a => a.id));
+    } catch (err: any) {
+      setBatchError(err.message ?? 'Errore analisi. Riprova.');
+    } finally {
+      setBatchAnalyzing(false);
+    }
+  };
+
+  const confirmBatchTodos = () => {
+    let count = 0;
+    for (const group of batchGroups) {
+      for (const t of group.todos) {
+        if (!t.selected) continue;
+        addTodo({
+          titolo: t.titolo,
+          tipo: t.tipo,
+          priorita: t.priorita,
+          scadenza: t.scadenza || undefined,
+          note: t.note || undefined,
+          contactId: activities[group.activityId]?.contactId || undefined,
+          status: 'da-fare',
+          source: 'visita',
+          sourceActivityId: group.activityId,
+        });
+        count++;
+      }
+    }
+    // Segna come analizzate tutte le visite passate nel batch, anche quelle senza azioni,
+    // così la prossima analisi batch non le riconsidera.
+    for (const activityId of batchAnalyzedIds) {
+      updateActivity(activityId, { aiAnalyzedAt: Date.now() });
+    }
+    if (count > 0) showToast(`${count} attività aggiunte al To Do da ${batchAnalyzedIds.length} visite`, 'success');
+    setBatchGroups([]);
+    setBatchAnalyzedIds([]);
+    setShowBatchModal(false);
   };
 
   const handleCloseActivity = () => {
@@ -1153,6 +1297,17 @@ Regole:
               <Mic size={16} />
             </button>
           )}
+          {pendingBatchActivities.length > 0 && (
+            <button
+              onClick={openBatchModal}
+              className="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-purple-100 transition-colors text-sm"
+              title="Analizza con AI tutte le visite chiuse non ancora processate, in un'unica chiamata"
+            >
+              <Sparkles size={15} />
+              <span className="hidden sm:inline">Analizza AI visite</span>
+              <span className="bg-purple-600 text-white rounded-full px-1.5 text-xs">{pendingBatchActivities.length}</span>
+            </button>
+          )}
           <button
             onClick={() => openNew(selectedDay ?? undefined)}
             className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors text-sm"
@@ -1796,6 +1951,111 @@ Regole:
             </div>
 
             </div>{/* end scrollable body */}
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Analisi AI Batch (tutte le visite in una chiamata) ── */}
+      {showBatchModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4 flex-shrink-0">
+              <h2 className="text-xl font-black dark:text-white flex items-center gap-2">
+                <Sparkles size={18} className="text-purple-500" /> Analisi AI batch
+              </h2>
+              <button
+                onClick={() => { setShowBatchModal(false); setBatchGroups([]); setBatchAnalyzedIds([]); setBatchError(null); }}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 pb-6 overflow-y-auto space-y-4">
+              {batchGroups.length === 0 && (
+                <>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Ci sono <strong className="text-gray-800 dark:text-gray-200">{pendingBatchActivities.length}</strong> visite chiuse non ancora analizzate.
+                    {pendingBatchActivities.length > MAX_BATCH_SIZE && (
+                      <> Questa analisi processerà le prime {MAX_BATCH_SIZE} (le più vecchie) in un'unica chiamata AI; ripeti l'operazione per le successive.</>
+                    )}
+                    {pendingBatchActivities.length <= MAX_BATCH_SIZE && (
+                      <> Verranno analizzate tutte in un'unica chiamata AI.</>
+                    )}
+                  </p>
+
+                  <button
+                    onClick={analyzeAllResoconti}
+                    disabled={batchAnalyzing || pendingBatchActivities.length === 0}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-purple-600 text-white text-sm font-black hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {batchAnalyzing
+                      ? <><Loader2 size={15} className="animate-spin" /> Analisi in corso...</>
+                      : <><Sparkles size={15} /> Analizza {Math.min(pendingBatchActivities.length, MAX_BATCH_SIZE)} visite</>}
+                  </button>
+
+                  {batchError && (
+                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
+                      <AlertCircle size={13} className="text-red-500 flex-shrink-0" />
+                      <p className="text-xs text-red-600 dark:text-red-400">{batchError}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {batchGroups.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest">
+                      {batchGroups.reduce((n, g) => n + g.todos.filter(t => t.selected).length, 0)} attività estratte da {batchGroups.length} visite
+                    </p>
+                  </div>
+
+                  {batchGroups.map((group, gi) => (
+                    <div key={group.activityId} className="bg-purple-50 dark:bg-purple-900/10 rounded-2xl p-3 border border-purple-100 dark:border-purple-800 space-y-2">
+                      <p className="text-xs font-black text-gray-700 dark:text-gray-300">
+                        {group.contactName || 'Cliente'} · {new Date(group.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                      </p>
+                      {group.todos.length === 0 && (
+                        <p className="text-[11px] text-gray-400 italic">Nessuna azione rilevata</p>
+                      )}
+                      {group.todos.map((todo, ti) => (
+                        <div key={ti} className={`bg-white dark:bg-gray-800 rounded-xl p-3 border-2 transition-all ${todo.selected ? 'border-purple-300 dark:border-purple-600' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
+                          <div className="flex items-start gap-2">
+                            <input type="checkbox" checked={todo.selected}
+                              onChange={() => setBatchGroups(gs => gs.map((g, j) => j === gi ? { ...g, todos: g.todos.map((t, k) => k === ti ? { ...t, selected: !t.selected } : t) } : g))}
+                              className="mt-0.5 flex-shrink-0 accent-purple-600" />
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-red-100 text-red-600' : todo.priorita === 'media' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
+                                  {todo.priorita}
+                                </span>
+                                {todo.scadenza && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                    entro {new Date(todo.scadenza).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={confirmBatchTodos}
+                    className="w-full py-3 rounded-2xl bg-purple-600 text-white font-black text-sm hover:bg-purple-700 transition-colors"
+                  >
+                    {(() => {
+                      const n = batchGroups.reduce((sum, g) => sum + g.todos.filter(t => t.selected).length, 0);
+                      return n > 0 ? `Aggiungi ${n} attività al To Do` : 'Segna visite come analizzate';
+                    })()}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

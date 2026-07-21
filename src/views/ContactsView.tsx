@@ -325,7 +325,7 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
                     {STATUS_LABELS[offer.status] ?? offer.status}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 font-bold mt-0.5">{new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articoli</p>
+                <p className="text-[10px] text-gray-400 font-bold mt-0.5">{new Date(offer.date).toLocaleDateString('it-IT')} · {offer.manualTotal ? 'valore ordine' : `${offer.items.length} articoli`}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-black text-sm text-indigo-600">€{offer.totalAmount.toLocaleString('it-IT')}</span>

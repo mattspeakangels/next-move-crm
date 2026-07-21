@@ -111,6 +111,8 @@ export const OffersView: React.FC = () => {
   const [items, setItems] = useState<OfferItem[]>([]);
   const [deliveryTime, setDeliveryTime] = useState('');
   const [shippingCost, setShippingCost] = useState(0);
+  const [entryMode, setEntryMode] = useState<'articoli' | 'totale'>('articoli');
+  const [manualTotalValue, setManualTotalValue] = useState(0);
 
   const openModal = (offer?: Offer) => {
     if (offer) {
@@ -123,6 +125,8 @@ export const OffersView: React.FC = () => {
       setItems(offer.items);
       setDeliveryTime(offer.deliveryTime || '');
       setShippingCost(offer.shippingCost || 0);
+      setEntryMode(offer.manualTotal ? 'totale' : 'articoli');
+      setManualTotalValue(offer.manualTotal ? offer.totalAmount : 0);
     } else {
       setEditingId(null);
       setSelectedContact('');
@@ -133,6 +137,8 @@ export const OffersView: React.FC = () => {
       setItems([]);
       setDeliveryTime('');
       setShippingCost(0);
+      setEntryMode('articoli');
+      setManualTotalValue(0);
     }
     setShowModal(true);
   };
@@ -167,6 +173,7 @@ export const OffersView: React.FC = () => {
   };
 
   const calculateTotal = () => {
+    if (entryMode === 'totale') return Number(manualTotalValue);
     const itemsTotal = items.reduce((acc, item) => {
       const lineTotal = (item.price * item.quantity) * (1 - item.discount / 100);
       return acc + lineTotal;
@@ -175,8 +182,16 @@ export const OffersView: React.FC = () => {
   };
 
   const saveOffer = () => {
-    if (!selectedContact || items.length === 0) {
+    if (!selectedContact) {
+      showToast('Seleziona un cliente', 'error');
+      return;
+    }
+    if (entryMode === 'articoli' && items.length === 0) {
       showToast('Seleziona un cliente e almeno un prodotto', 'error');
+      return;
+    }
+    if (entryMode === 'totale' && Number(manualTotalValue) <= 0) {
+      showToast('Inserisci il valore totale dell\'ordine', 'error');
       return;
     }
 
@@ -185,29 +200,31 @@ export const OffersView: React.FC = () => {
       return;
     }
 
-    // Validate offer items (business logic)
-    for (const item of items) {
-      if (item.discount < 0) {
-        showToast(`Errore: Lo sconto non può essere negativo (${item.description})`, 'error');
-        return;
+    if (entryMode === 'articoli') {
+      // Validate offer items (business logic)
+      for (const item of items) {
+        if (item.discount < 0) {
+          showToast(`Errore: Lo sconto non può essere negativo (${item.description})`, 'error');
+          return;
+        }
+        if (item.discount > 100) {
+          showToast(`Errore: Lo sconto non può superare il 100% (${item.description})`, 'error');
+          return;
+        }
+        if (item.quantity <= 0) {
+          showToast(`Errore: La quantità deve essere almeno 1 (${item.description})`, 'error');
+          return;
+        }
+        if (item.price < 0) {
+          showToast(`Errore: Il prezzo non può essere negativo (${item.description})`, 'error');
+          return;
+        }
       }
-      if (item.discount > 100) {
-        showToast(`Errore: Lo sconto non può superare il 100% (${item.description})`, 'error');
-        return;
-      }
-      if (item.quantity <= 0) {
-        showToast(`Errore: La quantità deve essere almeno 1 (${item.description})`, 'error');
-        return;
-      }
-      if (item.price < 0) {
-        showToast(`Errore: Il prezzo non può essere negativo (${item.description})`, 'error');
-        return;
-      }
-    }
 
-    if (Number(shippingCost) < 0) {
-      showToast('Errore: Il costo di trasporto non può essere negativo', 'error');
-      return;
+      if (Number(shippingCost) < 0) {
+        showToast('Errore: Il costo di trasporto non può essere negativo', 'error');
+        return;
+      }
     }
 
     const offerData: Offer = {
@@ -217,12 +234,13 @@ export const OffersView: React.FC = () => {
       endUserContactId: contactMode === 'dealer+end-user' ? selectedEndUserContact : undefined,
       offerNumber: editingId ? offers[editingId].offerNumber : `OFF-${Object.keys(offers).length + 101}`,
       date: editingId ? offers[editingId].date : Date.now(),
-      items: items,
+      items: entryMode === 'totale' ? [] : items,
       status: editingId ? offers[editingId].status : ('bozza' as OfferStatus),
+      manualTotal: entryMode === 'totale',
       totalAmount: calculateTotal(),
       followUpDate: editingId ? offers[editingId].followUpDate : Date.now() + (7 * 24 * 60 * 60 * 1000),
       deliveryTime,
-      shippingCost: Number(shippingCost)
+      shippingCost: entryMode === 'totale' ? 0 : Number(shippingCost)
     };
 
     if (editingId) {
@@ -281,7 +299,16 @@ export const OffersView: React.FC = () => {
     }
     const contact = contacts[offer.contactId];
     
-    const itemsHtml = offer.items.map(item => {
+    const itemsHtml = offer.manualTotal
+      ? `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #eee;" colspan="4">
+            <div style="font-weight: bold; text-transform: uppercase;">Valore ordine</div>
+          </td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">€ ${offer.totalAmount.toFixed(2)}</td>
+        </tr>
+      `
+      : offer.items.map(item => {
       const subtotal = (item.price * item.quantity) * (1 - item.discount / 100);
       return `
         <tr>
@@ -733,6 +760,38 @@ export const OffersView: React.FC = () => {
                 </div>
               )}
 
+              <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-900 rounded-2xl">
+                <button
+                  onClick={() => setEntryMode('articoli')}
+                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'articoli' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+                >
+                  Articoli e prezzi
+                </button>
+                <button
+                  onClick={() => setEntryMode('totale')}
+                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'totale' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+                >
+                  Solo totale ordine
+                </button>
+              </div>
+
+              {entryMode === 'totale' && (
+                <div className="bg-indigo-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-indigo-50 dark:border-gray-700">
+                  <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block">Valore totale ordine €</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-black text-lg outline-none"
+                    value={manualTotalValue || ''}
+                    onChange={e => setManualTotalValue(parseFloat(e.target.value) || 0)}
+                  />
+                  <p className="text-[11px] text-gray-400 font-bold mt-2">Niente elenco articoli: inserisci direttamente il valore complessivo dell'ordine, senza dettagliare prodotti e prezzi.</p>
+                </div>
+              )}
+
+              {entryMode === 'articoli' && (
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Articoli</label>
@@ -844,16 +903,19 @@ export const OffersView: React.FC = () => {
                   );
                 })}
               </div>
+              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-indigo-50 dark:border-gray-700">
+              <div className={`grid grid-cols-1 ${entryMode === 'articoli' ? 'md:grid-cols-2' : ''} gap-4 bg-indigo-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-indigo-50 dark:border-gray-700`}>
                 <div>
                   <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block">Tempi Consegna</label>
                   <input type="text" className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} />
                 </div>
+                {entryMode === 'articoli' && (
                 <div>
                   <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block">Spese Trasporto (€)</label>
                   <input type="number" className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={shippingCost} onChange={e => setShippingCost(Number(e.target.value))} />
                 </div>
+                )}
               </div>
 
               <div className="pt-6 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center">

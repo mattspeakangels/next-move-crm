@@ -146,6 +146,8 @@ export interface Offer {
   date: number;
   items: OfferItem[];
   status: OfferStatus;
+  /** true se il valore totale è stato inserito manualmente invece che calcolato dalle righe articolo. */
+  manualTotal?: boolean;
   totalAmount: number;
   followUpDate: number;
   deliveryTime?: string;
@@ -212,6 +214,8 @@ export interface Activity {
   transcript?: string;
   source?: 'manual' | 'gmail';
   externalId?: string;
+  /** Timestamp ms dell'ultima analisi AI batch dei to-do (assente = mai analizzato). */
+  aiAnalyzedAt?: number;
 }
 
 export interface Obiezione {
