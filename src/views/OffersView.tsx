@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles, ChevronDown, ChevronUp, CheckCircle, XCircle, Upload, Download } from 'lucide-react';
+import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles, ChevronDown, ChevronUp, CheckCircle, XCircle, Upload, Download, ShoppingBag } from 'lucide-react';
 import { uploadOfferPdf, openOfferPdf } from '../lib/uploadPdf';
 import { PdfButton } from '../components/ui/PdfButton';
 import { Offer, OfferContactMode, OfferItem, OfferStatus } from '../types';
@@ -11,9 +11,35 @@ import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch } from '../utils/search';
 
 export const OffersView: React.FC = () => {
-  const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile } = useStore();
+  const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile, deals, updateDeal } = useStore();
   const { showToast } = useToast();
-  
+  const [activeTab, setActiveTab] = useState<'offerte' | 'ordini'>('offerte');
+  const [uploadingOrderId, setUploadingOrderId] = useState<string | null>(null);
+  const orderPdfInputRef = useRef<HTMLInputElement>(null);
+  const pendingOrderPdfDealId = useRef<string | null>(null);
+
+  const triggerOrderPdfUpload = (dealId: string) => {
+    pendingOrderPdfDealId.current = dealId;
+    orderPdfInputRef.current?.click();
+  };
+
+  const handleOrderPdfFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const dealId = pendingOrderPdfDealId.current;
+    if (!file || !dealId) return;
+    e.target.value = '';
+    setUploadingOrderId(dealId);
+    try {
+      const { url, name } = await uploadOfferPdf(dealId, file);
+      updateDeal(dealId, { orderPdfUrl: url, orderPdfName: name });
+      showToast('PDF ordine caricato!', 'success');
+    } catch (err: any) {
+      showToast(err?.message ?? 'Errore caricamento PDF', 'error');
+    } finally {
+      setUploadingOrderId(null);
+    }
+  };
+
   const [showModal, setShowModal] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [aiTargetOffer, setAiTargetOffer] = useState<Offer | null>(null);
@@ -455,22 +481,121 @@ export const OffersView: React.FC = () => {
         </div>
       )}
 
+      {/* Hidden PDF file input per upload PDF ordine */}
+      <input
+        ref={orderPdfInputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={handleOrderPdfFileChange}
+      />
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte</h1>
-          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Gestione Preventivi</p>
+          <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte & Ordini</h1>
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Preventivi e trattative vinte</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setShowPdfModal(true)} className="bg-orange-500 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-orange-600 transition-all">
-            <Upload size={18} /> Carica PDF
-          </button>
-          <button onClick={() => openModal()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
-            <Plus size={20} /> Nuova
-          </button>
-        </div>
+        {activeTab === 'offerte' && (
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setShowPdfModal(true)} className="bg-orange-500 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-orange-600 transition-all">
+              <Upload size={18} /> Carica PDF
+            </button>
+            <button onClick={() => openModal()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
+              <Plus size={20} /> Nuova
+            </button>
+          </div>
+        )}
       </div>
 
-      {(() => {
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
+        {([
+          { id: 'offerte' as const, label: 'Offerte', icon: FileText },
+          { id: 'ordini' as const, label: 'Ordini', icon: ShoppingBag },
+        ]).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all
+              ${activeTab === id
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'}`}
+          >
+            <Icon size={13} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'ordini' && (() => {
+        const wonDeals = Object.values(deals)
+          .filter(d => d.stage === 'chiuso-vinto')
+          .sort((a, b) => (b.closedAt ?? b.updatedAt) - (a.closedAt ?? a.updatedAt));
+        const totalValue = wonDeals.reduce((s, d) => s + (d.value || 0), 0);
+
+        if (wonDeals.length === 0) {
+          return (
+            <div className="text-center py-20 text-gray-400 dark:text-gray-600">
+              <ShoppingBag size={40} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+              <p className="font-bold tracking-tight text-sm text-gray-600 dark:text-gray-400">Nessun ordine ancora</p>
+              <p className="text-xs mt-1">Le trattative chiuse come "Vinta" in Pipeline compaiono qui</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 flex items-center justify-between">
+              <span className="text-xs font-black text-green-700 dark:text-green-300 uppercase tracking-widest">
+                {wonDeals.length} ordini
+              </span>
+              <span className="text-xl font-black text-green-700 dark:text-green-300">
+                € {totalValue.toLocaleString('it-IT')}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {wonDeals.map(deal => {
+                const contact = contacts[deal.contactId];
+                return (
+                  <div key={deal.id} className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border-2 border-green-100 dark:border-green-900/40">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-black text-sm dark:text-white">{contact?.company ?? deal.nomeStorico ?? '—'}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                          {deal.closedAt ? new Date(deal.closedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </p>
+                      </div>
+                      <span className="font-black text-green-600 dark:text-green-400 text-lg">
+                        € {(deal.value || 0).toLocaleString('it-IT')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {deal.orderPdfUrl ? (
+                        <PdfButton
+                          pdfUrl={deal.orderPdfUrl}
+                          pdfName={deal.orderPdfName}
+                          className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-orange-100 transition-colors"
+                        >
+                          <FileText size={12} /> {deal.orderPdfName || 'PDF ordine'}
+                        </PdfButton>
+                      ) : (
+                        <button
+                          onClick={() => triggerOrderPdfUpload(deal.id)}
+                          disabled={uploadingOrderId === deal.id}
+                          className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-gray-100 transition-colors disabled:opacity-50"
+                        >
+                          <Upload size={12} /> {uploadingOrderId === deal.id ? 'Caricamento...' : 'Carica PDF ordine'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {activeTab === 'offerte' && (() => {
         const allOffers = Object.values(offers).sort((a, b) => b.date - a.date);
         const active   = allOffers.filter(o => o.status === 'bozza' || o.status === 'inviata');
         const archived = allOffers.filter(o => o.status === 'accettata' || o.status === 'rifiutata');

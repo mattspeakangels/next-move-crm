@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import {
-  Phone, MapPin, Mail, FileText, Target, Plus, X,
+  Phone, MapPin, Mail, FileText, Target, Plus, X, Pencil,
   ChevronDown, ChevronUp, TrendingUp, Activity, ChevronLeft, ChevronRight,
   Video, MonitorPlay, Wrench, GraduationCap, Laptop, Building2,
 } from 'lucide-react';
-import { ActivityType } from '../types';
+import { ActivityType, Activity as ActivityRecord } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { PdfButton } from '../components/ui/PdfButton';
 
@@ -166,15 +166,122 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
   );
 };
 
+// ─── Edit activity modal ──────────────────────────────────────────────────────
+
+interface EditActivityModalProps {
+  activity: ActivityRecord;
+  companyName: string;
+  onClose: () => void;
+  onSave: (updates: Partial<ActivityRecord>) => void;
+}
+
+const EDIT_TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio'];
+const EDIT_TYPE_LABELS: Record<ActivityType, string> = {
+  visita: 'Visita', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
+  demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
+  'smart-working': 'Smart Working', ufficio: 'Ufficio',
+};
+
+const toLocalDateTimeInput = (ts: number): string => {
+  const d = new Date(ts);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const EditActivityModal: React.FC<EditActivityModalProps> = ({ activity, companyName, onClose, onSave }) => {
+  const [type, setType] = useState<ActivityType>(activity.type);
+  const [dateTime, setDateTime] = useState(toLocalDateTimeInput(activity.date));
+  const [notes, setNotes] = useState(activity.notes || '');
+  const [results, setResults] = useState(activity.results || '');
+  const isClosed = activity.outcome === 'fatto';
+
+  const handleSave = () => {
+    onSave({
+      type,
+      date: new Date(dateTime).getTime(),
+      notes,
+      ...(isClosed ? { results } : {}),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-[2rem] p-6 shadow-2xl space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-lg font-black uppercase dark:text-white">Modifica attività</h2>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{companyName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
+            <X size={20} className="text-gray-400" />
+          </button>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Tipo</label>
+          <div className="flex flex-wrap gap-2">
+            {EDIT_TYPES.map(t => (
+              <button key={t} onClick={() => setType(t)}
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${type === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                {EDIT_TYPE_LABELS[t]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Data e ora</label>
+          <input
+            type="datetime-local"
+            value={dateTime}
+            onChange={e => setDateTime(e.target.value)}
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Note</label>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            rows={2}
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none focus:border-indigo-400 resize-none transition-colors"
+          />
+        </div>
+
+        {isClosed && (
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Esito / Resoconto</label>
+            <textarea
+              value={results}
+              onChange={e => setResults(e.target.value)}
+              rows={3}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none focus:border-indigo-400 resize-none transition-colors"
+            />
+          </div>
+        )}
+
+        <button
+          onClick={handleSave}
+          className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-colors"
+        >
+          Salva modifiche
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const ActivityLogView: React.FC = () => {
-  const { activities, deals, offers, contacts, addActivity } = useStore();
+  const { activities, deals, offers, contacts, addActivity, updateActivity } = useStore();
   const { showToast } = useToast();
 
   const [filterType, setFilterType] = useState<EventKind | 'all'>('all');
   const [filterContact, setFilterContact] = useState('');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set([toDayKey(Date.now())]));
 
   // Calendar state
@@ -479,7 +586,11 @@ export const ActivityLogView: React.FC = () => {
                         {/* Events */}
                         <div className="space-y-2 pl-9">
                           {sortedEvents.map(event => (
-                            <div key={event.id} className="flex items-start gap-2.5">
+                            <div
+                              key={event.id}
+                              onClick={() => { if (event.kind === 'activity') setEditingActivityId(event.id.replace(/^act_/, '')); }}
+                              className={`flex items-start gap-2.5 group ${event.kind === 'activity' ? 'cursor-pointer -mx-2 px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors' : ''}`}
+                            >
 
                               {/* Icon */}
                               {event.kind === 'activity' && (
@@ -536,6 +647,9 @@ export const ActivityLogView: React.FC = () => {
                                   <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{event.notes}</p>
                                 )}
                               </div>
+                              {event.kind === 'activity' && (
+                                <Pencil size={12} className="flex-shrink-0 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
+                              )}
                             </div>
                           ))}
                         </div>
@@ -548,6 +662,19 @@ export const ActivityLogView: React.FC = () => {
           );
         })}
       </div>
+
+      {editingActivityId && activities[editingActivityId] && (
+        <EditActivityModal
+          activity={activities[editingActivityId]}
+          companyName={contacts[activities[editingActivityId].contactId]?.company ?? 'Azienda sconosciuta'}
+          onClose={() => setEditingActivityId(null)}
+          onSave={updates => {
+            updateActivity(editingActivityId, updates);
+            setEditingActivityId(null);
+            showToast('Attività aggiornata!', 'success');
+          }}
+        />
+      )}
     </div>
   );
 };
