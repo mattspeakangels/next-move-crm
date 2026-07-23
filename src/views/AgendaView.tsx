@@ -493,8 +493,28 @@ Regole:
     }
   };
 
+  // Se l'AI estrae un'azione di tipo "visita" con una data di esecuzione esplicita,
+  // crea subito l'appuntamento in Agenda oltre al To Do (nessuna conferma extra richiesta).
+  const scheduleVisitIfNeeded = (t: AiExtractedTodo, contactId?: string, dealId?: string): boolean => {
+    if (t.tipo !== 'visita' || !t.dataEsecuzione || !contactId) return false;
+    const date = new Date(`${t.dataEsecuzione}T09:00:00`);
+    if (Number.isNaN(date.getTime())) return false;
+    addActivity({
+      id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      contactId,
+      dealId,
+      type: 'visita',
+      date: date.getTime(),
+      outcome: 'da-fare',
+      notes: t.note || t.titolo,
+      createdAt: Date.now(),
+    });
+    return true;
+  };
+
   const confirmAiTodos = () => {
     const selected = aiTodos.filter(t => t.selected);
+    let scheduled = 0;
     for (const t of selected) {
       addTodo({
         titolo: t.titolo,
@@ -507,8 +527,9 @@ Regole:
         source: 'visita',
         sourceActivityId: closingActivity?.id,
       });
+      if (scheduleVisitIfNeeded(t, closingActivity?.contactId, closingActivity?.dealId)) scheduled++;
     }
-    if (selected.length > 0) showToast(`${selected.length} attività aggiunte al To Do`, 'success');
+    if (selected.length > 0) showToast(`${selected.length} attività aggiunte al To Do${scheduled > 0 ? ` · ${scheduled} appuntamento/i creato/i in Agenda` : ''}`, 'success');
     setAiTodos([]);
   };
 
@@ -614,7 +635,9 @@ Regole:
 
   const confirmBatchTodos = () => {
     let count = 0;
+    let scheduled = 0;
     for (const group of batchGroups) {
+      const sourceActivity = activities[group.activityId];
       for (const t of group.todos) {
         if (!t.selected) continue;
         addTodo({
@@ -623,12 +646,13 @@ Regole:
           priorita: t.priorita,
           scadenza: t.scadenza || undefined,
           note: t.note || undefined,
-          contactId: activities[group.activityId]?.contactId || undefined,
+          contactId: sourceActivity?.contactId || undefined,
           status: 'da-fare',
           source: 'visita',
           sourceActivityId: group.activityId,
         });
         count++;
+        if (scheduleVisitIfNeeded(t, sourceActivity?.contactId, sourceActivity?.dealId)) scheduled++;
       }
     }
     // Segna come analizzate tutte le visite passate nel batch, anche quelle senza azioni,
@@ -636,7 +660,7 @@ Regole:
     for (const activityId of batchAnalyzedIds) {
       updateActivity(activityId, { aiAnalyzedAt: Date.now() });
     }
-    if (count > 0) showToast(`${count} attività aggiunte al To Do da ${batchAnalyzedIds.length} visite`, 'success');
+    if (count > 0) showToast(`${count} attività aggiunte al To Do da ${batchAnalyzedIds.length} visite${scheduled > 0 ? ` · ${scheduled} appuntamento/i creato/i in Agenda` : ''}`, 'success');
     setBatchGroups([]);
     setBatchAnalyzedIds([]);
     setShowBatchModal(false);

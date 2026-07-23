@@ -4,10 +4,12 @@ import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
 import { ArrowRight, ArrowLeft, Plus, X, Sparkles, Trash2, Edit2, Columns, CalendarDays, Lightbulb } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { AddDealModal } from '../components/deals/AddDealModal';
+import { CloseDealModal } from '../components/deals/CloseDealModal';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
 import { MonthlyOrdersView } from '../components/pipeline/MonthlyOrdersView';
 import { SuggestedDealsView } from '../components/pipeline/SuggestedDealsView';
+import { uploadOfferPdf } from '../lib/uploadPdf';
 
 const STAGES: { id: DealStage; name: string; color: string; bar: string }[] = [
   { id: 'lead', name: 'Lead', color: 'bg-sky-500', bar: 'bg-sky-400' },
@@ -41,7 +43,7 @@ interface PipelineViewProps {
 }
 
 export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact }) => {
-  const { deals, contacts, offers, updateDeal, removeDeal, addActivity } = useStore();
+  const { deals, contacts, offers, updateDeal, removeDeal, addActivity, addTodo } = useStore();
 
   const [activeTab, setActiveTab] = useState<'kanban' | 'mensile' | 'suggeriti'>('kanban');
   const [addDealOpen, setAddDealOpen] = useState(false);
@@ -49,6 +51,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<{ dealId: string; newStage: DealStage } | null>(null);
   const [activeDealForModal, setActiveDealForModal] = useState<Deal | null>(null);
+  const [closeDealTarget, setCloseDealTarget] = useState<Deal | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
   const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
@@ -157,6 +160,84 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
     setPendingMove(null);
     setActiveDealForModal(null);
     setModalOpen(false);
+  };
+
+  const handleWinDeal = async (data: { orderValue?: number; pdfFile?: File }) => {
+    const deal = closeDealTarget;
+    if (!deal) return;
+    let orderPdfUrl: string | undefined;
+    let orderPdfName: string | undefined;
+    if (data.pdfFile) {
+      try {
+        const { url, name } = await uploadOfferPdf(deal.id, data.pdfFile);
+        orderPdfUrl = url;
+        orderPdfName = name;
+      } catch {
+        // upload fallito: si procede comunque con la chiusura, senza PDF allegato
+      }
+    }
+    updateDeal(deal.id, {
+      stage: 'chiuso-vinto',
+      closedAt: Date.now(),
+      ...(data.orderValue !== undefined ? { value: data.orderValue } : {}),
+      ...(orderPdfUrl ? { orderPdfUrl, orderPdfName } : {}),
+    });
+    addActivity({
+      id: `act_close_${Date.now()}`,
+      contactId: deal.contactId,
+      dealId: deal.id,
+      type: 'nota',
+      date: Date.now(),
+      outcome: 'avanzamento-pipeline',
+      notes: `Trattativa VINTA${data.orderValue ? ` — ordine €${data.orderValue.toLocaleString('it-IT')}` : ''}`,
+      createdAt: Date.now(),
+    });
+    setCloseDealTarget(null);
+  };
+
+  const handleLoseDeal = (data: { feedback: string; monthsDelay: 1 | 2 | 3 | 6 }) => {
+    const deal = closeDealTarget;
+    if (!deal) return;
+    const nextVisitDate = new Date();
+    nextVisitDate.setMonth(nextVisitDate.getMonth() + data.monthsDelay);
+    nextVisitDate.setHours(9, 0, 0, 0);
+
+    updateDeal(deal.id, {
+      stage: 'chiuso-perso',
+      closedAt: Date.now(),
+      lostFeedback: data.feedback,
+    });
+    addActivity({
+      id: `act_close_${Date.now()}`,
+      contactId: deal.contactId,
+      dealId: deal.id,
+      type: 'nota',
+      date: Date.now(),
+      outcome: 'avanzamento-pipeline',
+      notes: `Trattativa PERSA — ${data.feedback}`,
+      createdAt: Date.now(),
+    });
+    addTodo({
+      titolo: `Ricontattare ${contacts[deal.contactId]?.company ?? ''} (trattativa persa)`,
+      tipo: 'visita',
+      priorita: 'media',
+      scadenza: nextVisitDate.toISOString().split('T')[0],
+      note: data.feedback,
+      contactId: deal.contactId,
+      status: 'da-fare',
+      source: 'manuale',
+    });
+    addActivity({
+      id: `act_${Date.now()}_nextvisit`,
+      contactId: deal.contactId,
+      dealId: deal.id,
+      type: 'visita',
+      date: nextVisitDate.getTime(),
+      outcome: 'da-fare',
+      notes: `Nuova visita dopo trattativa persa. Feedback: ${data.feedback}`,
+      createdAt: Date.now(),
+    });
+    setCloseDealTarget(null);
   };
 
   return (
@@ -399,7 +480,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
                               const idx = STAGES.findIndex(s => s.id === stage.id);
                               const nextStage = idx < STAGES.length - 1 ? STAGES[idx + 1].id : 'chiuso-vinto';
                               if (nextStage === 'chiuso-vinto') {
-                                handleMove(deal.id, 'chiuso-vinto');
+                                setCloseDealTarget(deal);
                               } else {
                                 const oldStage = deal.stage;
                                 updateDeal(deal.id, { stage: nextStage });
@@ -440,6 +521,15 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
 
       {addDealOpen && <AddDealModal onClose={() => setAddDealOpen(false)} />}
       {editDealId && <AddDealModal dealToEdit={editDealId} onClose={() => setEditDealId(null)} />}
+
+      <CloseDealModal
+        isOpen={!!closeDealTarget}
+        onClose={() => setCloseDealTarget(null)}
+        onWin={handleWinDeal}
+        onLose={handleLoseDeal}
+        companyName={closeDealTarget ? contacts[closeDealTarget.contactId]?.company : undefined}
+        currentValue={closeDealTarget?.value}
+      />
 
       {showAiPanel && (
         <AiPanel

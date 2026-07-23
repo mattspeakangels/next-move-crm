@@ -194,8 +194,11 @@ export interface Deal {
   closedAt?: number;
   offerRef?: string;
   lostReason?: LostReason;
+  lostFeedback?: string;
   competitor?: string;
   nomeStorico?: string;
+  orderPdfUrl?: string;
+  orderPdfName?: string;
 }
 
 export interface Activity {
