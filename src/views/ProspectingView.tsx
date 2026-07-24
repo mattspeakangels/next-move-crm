@@ -328,8 +328,6 @@ interface QueueRowProps {
 const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard, onEdit, onHistory }) => {
   const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addProspectHistoryEntry, addDeal } = useStore();
   const { showToast } = useToast();
-  const [showEsitoTelefonata, setShowEsitoTelefonata] = useState(false);
-  const [showEsitoEmail, setShowEsitoEmail] = useState(false);
 
   const touch = getTouch(sequence, track.toccoCorrente);
   const draft = touch?.tipo === 'email' ? Object.values(prospectEmailDrafts).find(d => d.trackId === track.id && d.tocco === track.toccoCorrente) : undefined;
@@ -384,7 +382,6 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   };
 
   const registraRisposta = (esito: 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
-    setShowEsitoEmail(false);
     if (esito !== 'risposta') {
       convertiInLead(touch?.tipo === 'email' ? 'email' : 'chiamata', esito);
       return;
@@ -401,7 +398,6 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   };
 
   const esitoTelefonata = (esito: 'risposta' | 'nessuna-risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
-    setShowEsitoTelefonata(false);
     if (esito === 'richiesta-offerta' || esito === 'appuntamento-fissato') {
       convertiInLead('chiamata', esito);
       return;
@@ -494,30 +490,26 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
               <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
             )}
             <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"><CheckCircle2 size={13} />Segna inviata</button>
-            <button onClick={() => setShowEsitoEmail(true)} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
+            <button onClick={() => registraRisposta('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
-          <button onClick={() => setShowEsitoTelefonata(true)} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Phone size={13} />Registra esito chiamata</button>
+          <button onClick={() => esitoTelefonata('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Phone size={13} />Registra esito chiamata</button>
         )}
+        {touch.tipo === 'telefonata' && (
+          <button onClick={() => esitoTelefonata('nessuna-risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Nessuna risposta</button>
+        )}
+        {/* Sempre visibili: non si presuppone di dover completare tutti i 6 tocchi
+            prima di ottenere l'obiettivo (offerta/appuntamento) su qualunque tocco. */}
+        <button
+          onClick={() => (touch.tipo === 'email' ? registraRisposta('richiesta-offerta') : esitoTelefonata('richiesta-offerta'))}
+          className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300"
+        >Richiede offerta</button>
+        <button
+          onClick={() => (touch.tipo === 'email' ? registraRisposta('appuntamento-fissato') : esitoTelefonata('appuntamento-fissato'))}
+          className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700"
+        >Appuntamento fissato</button>
         <button onClick={posticipa} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Clock size={13} />Posticipa 3gg</button>
       </div>
-
-      {showEsitoEmail && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          <button onClick={() => registraRisposta('risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Risposta generica</button>
-          <button onClick={() => registraRisposta('richiesta-offerta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300">Richiede offerta</button>
-          <button onClick={() => registraRisposta('appuntamento-fissato')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700">Appuntamento fissato</button>
-        </div>
-      )}
-
-      {showEsitoTelefonata && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          <button onClick={() => esitoTelefonata('risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Risposta generica</button>
-          <button onClick={() => esitoTelefonata('nessuna-risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Nessuna risposta</button>
-          <button onClick={() => esitoTelefonata('richiesta-offerta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300">Richiede offerta</button>
-          <button onClick={() => esitoTelefonata('appuntamento-fissato')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700">Appuntamento fissato</button>
-        </div>
-      )}
     </div>
   );
 };
