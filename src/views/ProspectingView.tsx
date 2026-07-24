@@ -168,6 +168,15 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
     navigator.clipboard.writeText(text).then(() => showToast(`${label} copiato`, 'success'));
   };
 
+  // Apre il client mail con oggetto/corpo già pronti e, contestualmente, segna il
+  // tocco come inviato e fa avanzare la sequenza: un solo tasto invece di "Apri
+  // mail" + "Segna inviata" separati.
+  const inviaEmail = () => {
+    if (!draft || !contact.email) return;
+    window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(draft.oggetto)}&body=${encodeURIComponent(draft.corpo)}`;
+    segnaInviata();
+  };
+
   if (!touch) return null;
 
   return (
@@ -197,8 +206,8 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
           <div className="flex flex-wrap gap-2 pt-1">
             <button onClick={() => copia(draft.oggetto, 'Oggetto')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Oggetto</button>
             <button onClick={() => copia(draft.corpo, 'Corpo')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Corpo</button>
-            {contact.email && (
-              <a href={`mailto:${contact.email}?subject=${encodeURIComponent(draft.oggetto)}&body=${encodeURIComponent(draft.corpo)}`} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Mail size={10} />Apri mail</a>
+            {!contact.email && (
+              <span className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600">Nessuna email sul contatto: aggiungila per inviare direttamente</span>
             )}
           </div>
           {touch.messaggioLinkedin && (
@@ -221,7 +230,11 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
       <div className="flex flex-wrap gap-2 mt-3">
         {touch.tipo === 'email' ? (
           <>
-            <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><CheckCircle2 size={13} />Segna inviata</button>
+            {draft && contact.email ? (
+              <button onClick={inviaEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
+            ) : (
+              <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><CheckCircle2 size={13} />Segna inviata</button>
+            )}
             <button onClick={registraRisposta} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
