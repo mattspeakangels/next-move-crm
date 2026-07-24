@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { useAuth } from './lib/authContext';
 import { useFirestoreSync } from './lib/useFirestoreSync';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
+import { useProspectingReminders } from './hooks/useProspectingReminders';
 import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, X, BarChart3, TrendingUp, Shield, ChevronLeft, CheckSquare, Menu, Radar } from 'lucide-react';
 import { SEED_SEQUENCES } from './data/prospectingSequences';
@@ -44,6 +45,7 @@ function AppContent() {
   const { theme, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
 
   useInitializeProducts();
+  useProspectingReminders();
 
   useEffect(() => {
     seedSequencesIfEmpty(SEED_SEQUENCES);

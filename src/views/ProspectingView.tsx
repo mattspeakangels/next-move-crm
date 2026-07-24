@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import {
   Radar, X, Mail, Phone, Linkedin, Clock, AlertCircle, CheckCircle2,
-  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2,
+  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2, History, BellRing,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { EmptyState } from '../components/ui/EmptyState';
 import type {
-  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView,
+  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView, ProspectHistoryEntry,
 } from '../types';
+import { isNotificationSupported, requestProspectingNotificationPermission } from '../hooks/useProspectingReminders';
 import {
   advanceTouch, getTouch, wakeUpIfDue,
 } from '../lib/prospecting';
@@ -206,6 +207,66 @@ const EditProspectModal: React.FC<EditProspectModalProps> = ({ contact, onClose 
   );
 };
 
+// ─── Cronostoria prospecting per azienda ────────────────────────────────────
+
+const ESITO_LABEL: Record<ProspectHistoryEntry['esito'], { label: string; color: string }> = {
+  inviata: { label: 'Inviata', color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' },
+  risposta: { label: 'Risposta ricevuta', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
+  'nessuna-risposta': { label: 'Nessuna risposta', color: 'text-gray-500 bg-gray-100 dark:bg-gray-800' },
+};
+
+interface HistoryModalProps {
+  contact: Contact;
+  onClose: () => void;
+}
+
+const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
+  const { prospectHistory } = useStore();
+
+  const entries = useMemo(
+    () => Object.values(prospectHistory)
+      .filter(h => h.contactId === contact.id)
+      .sort((a, b) => b.date - a.date),
+    [prospectHistory, contact.id]
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <History size={18} className="text-gray-400" />
+            <h2 className="text-base font-black text-gray-900 dark:text-white">Cronostoria — {contact.company}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+        </div>
+
+        {entries.length === 0 ? (
+          <p className="text-sm text-gray-400 font-bold text-center py-8">Nessuna azione registrata finora per questo prospect.</p>
+        ) : (
+          <div className="space-y-3 overflow-y-auto pr-1">
+            {entries.map(e => (
+              <div key={e.id} className="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-3.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    {e.tipo === 'email' ? <Mail size={14} className="text-gray-400" /> : <Phone size={14} className="text-gray-400" />}
+                    <span className="text-xs font-black text-gray-700 dark:text-gray-200">Tocco {e.tocco}</span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${ESITO_LABEL[e.esito].color}`}>{ESITO_LABEL[e.esito].label}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400">{new Date(e.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                {e.oggetto && <p className="text-xs font-black text-gray-600 dark:text-gray-300 mt-1">{e.oggetto}</p>}
+                {e.corpo && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap line-clamp-4">{e.corpo}</p>}
+                {e.note && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{e.note}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── Riga coda "Oggi" ────────────────────────────────────────────────────────
 
 interface QueueRowProps {
@@ -214,10 +275,11 @@ interface QueueRowProps {
   sequence: Sequence;
   onDiscard: () => void;
   onEdit: () => void;
+  onHistory: () => void;
 }
 
-const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard, onEdit }) => {
-  const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addActivity } = useStore();
+const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard, onEdit, onHistory }) => {
+  const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addProspectHistoryEntry } = useStore();
   const { showToast } = useToast();
   const [showEsitoTelefonata, setShowEsitoTelefonata] = useState(false);
 
@@ -228,15 +290,20 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   const overdue = track.dataProssimoTocco < now;
   const ritardoGiorni = Math.floor((now - track.dataProssimoTocco) / DAY_MS);
 
-  const logAttivita = (tipo: 'email' | 'chiamata', esito: 'risposta' | 'nessuna-risposta', note?: string) => {
-    addActivity({
-      id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+  // Registra il tocco nella cronostoria dedicata al prospecting: NON in `activities`,
+  // che è l'agenda degli appuntamenti fissati e non deve mostrare i tocchi di sequenza.
+  const logStorico = (tipo: 'email' | 'chiamata', esito: 'inviata' | 'risposta' | 'nessuna-risposta', note?: string) => {
+    addProspectHistoryEntry({
+      id: `psh_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       contactId: contact.id,
-      type: tipo,
+      trackId: track.id,
+      tocco: track.toccoCorrente,
+      tipo,
+      esito,
+      oggetto: tipo === 'email' ? draft?.oggetto : undefined,
+      corpo: tipo === 'email' ? draft?.corpo : undefined,
+      note,
       date: Date.now(),
-      outcome: 'fatto',
-      outcomeType: esito === 'risposta' ? 'riuscita' : 'nessun-contatto',
-      notes: note || `Sequenza prospecting — tocco ${track.toccoCorrente}/${sequence.touches.length}`,
       createdAt: Date.now(),
     });
   };
@@ -249,13 +316,13 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
 
   const segnaInviata = () => {
     if (draft) updateProspectEmailDraft(draft.id, { inviataIl: Date.now() });
-    logAttivita('email', 'nessuna-risposta');
+    logStorico('email', 'inviata');
     avanza();
     showToast('Email segnata come inviata, sequenza avanzata', 'success');
   };
 
   const registraRisposta = () => {
-    logAttivita(touch?.tipo === 'email' ? 'email' : 'chiamata', 'risposta');
+    logStorico(touch?.tipo === 'email' ? 'email' : 'chiamata', 'risposta');
     updateContact(contact.id, { prospectingStato: 'risposto' });
     updateProspectingTrack(track.id, { stato: 'stoppata' });
     showToast('Risposta registrata, sequenza fermata', 'success');
@@ -267,7 +334,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   };
 
   const esitoTelefonata = (esito: 'risposta' | 'nessuna-risposta') => {
-    logAttivita('chiamata', esito);
+    logStorico('chiamata', esito);
     setShowEsitoTelefonata(false);
     if (esito === 'risposta') {
       updateContact(contact.id, { prospectingStato: 'risposto' });
@@ -309,6 +376,9 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={onHistory} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            <History size={16} />
+          </button>
           <button onClick={onEdit} title="Modifica" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
             <Pencil size={16} />
           </button>
@@ -381,6 +451,7 @@ const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
   const { contacts, prospectingTracks, sequences, activities, updateContact } = useStore();
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
   const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [historyContact, setHistoryContact] = useState<Contact | null>(null);
 
   const now = Date.now();
 
@@ -451,13 +522,14 @@ const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
       ) : (
         <div className="space-y-3">
           {queue.map(({ track, contact, sequence }) => (
-            <QueueRow key={track.id} contact={contact} track={track} sequence={sequence} onDiscard={() => setDiscardContact(contact)} onEdit={() => setEditContact(contact)} />
+            <QueueRow key={track.id} contact={contact} track={track} sequence={sequence} onDiscard={() => setDiscardContact(contact)} onEdit={() => setEditContact(contact)} onHistory={() => setHistoryContact(contact)} />
           ))}
         </div>
       )}
 
       {discardContact && <DiscardModal contact={discardContact} onClose={() => setDiscardContact(null)} />}
       {editContact && <EditProspectModal contact={editContact} onClose={() => setEditContact(null)} />}
+      {historyContact && <HistoryModal contact={historyContact} onClose={() => setHistoryContact(null)} />}
     </div>
   );
 };
@@ -469,6 +541,7 @@ const ProspectTab: React.FC = () => {
   const [filter, setFilter] = useState<ProspectingStato | 'tutti'>('tutti');
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
   const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [historyContact, setHistoryContact] = useState<Contact | null>(null);
 
   const filtered = useMemo(() => {
     return Object.values(contacts)
@@ -502,6 +575,7 @@ const ProspectTab: React.FC = () => {
                 {contact.prospectingMotivoScarto && <p className="text-[10px] text-red-400 mt-0.5">{MOTIVO_SCARTO_LABEL[contact.prospectingMotivoScarto]}{contact.prospectingMotivoScartoNote ? ` — ${contact.prospectingMotivoScartoNote}` : ''}</p>}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => setHistoryContact(contact)} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><History size={16} /></button>
                 <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"><Pencil size={16} /></button>
                 {contact.prospectingStato !== 'scartato' && contact.prospectingStato !== 'convertito' && (
                   <button onClick={() => setDiscardContact(contact)} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"><XCircle size={16} /></button>
@@ -514,6 +588,7 @@ const ProspectTab: React.FC = () => {
 
       {discardContact && <DiscardModal contact={discardContact} onClose={() => setDiscardContact(null)} />}
       {editContact && <EditProspectModal contact={editContact} onClose={() => setEditContact(null)} />}
+      {historyContact && <HistoryModal contact={historyContact} onClose={() => setHistoryContact(null)} />}
     </div>
   );
 };
@@ -634,6 +709,9 @@ interface ProspectingViewProps {
 
 export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) => {
   const [tab, setTab] = useState<'oggi' | 'prospect' | 'report'>('oggi');
+  const [notifStatus, setNotifStatus] = useState<NotificationPermission | 'unsupported'>(
+    isNotificationSupported() ? Notification.permission : 'unsupported'
+  );
 
   const tabs: { id: typeof tab; label: string; icon: typeof Radar }[] = [
     { id: 'oggi', label: 'Oggi', icon: Clock },
@@ -661,6 +739,21 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
           ))}
         </div>
       </div>
+
+      {notifStatus === 'default' && (
+        <div className="flex items-center justify-between gap-3 bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl px-4 py-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <BellRing size={16} className="text-indigo-600 flex-shrink-0" />
+            <p className="text-xs font-bold text-indigo-800 dark:text-indigo-200">Attiva le notifiche per essere avvisato quando è il momento di fare un tocco.</p>
+          </div>
+          <button
+            onClick={async () => setNotifStatus(await requestProspectingNotificationPermission())}
+            className="flex-shrink-0 text-xs font-black px-3 py-1.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Attiva
+          </button>
+        </div>
+      )}
 
       {tab === 'oggi' && <OggiTab onNavigate={onNavigate} />}
       {tab === 'prospect' && <ProspectTab />}

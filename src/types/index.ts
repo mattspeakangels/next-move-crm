@@ -506,3 +506,23 @@ export interface ProspectEmailDraft {
   modificataAMano: boolean;
   inviataIl?: number;
 }
+
+// Cronostoria delle azioni di prospecting: traccia ogni tocco email/telefonata
+// realmente eseguito su un contatto, separata da `activities` (l'agenda) perché
+// non rappresenta un appuntamento fissato ma il log della sequenza.
+export type ProspectHistoryTipo = 'email' | 'chiamata';
+export type ProspectHistoryEsito = 'inviata' | 'risposta' | 'nessuna-risposta';
+
+export interface ProspectHistoryEntry {
+  id: string;
+  contactId: string;
+  trackId: string;
+  tocco: number;
+  tipo: ProspectHistoryTipo;
+  esito: ProspectHistoryEsito;
+  oggetto?: string;
+  corpo?: string;
+  note?: string;
+  date: number;
+  createdAt: number;
+}

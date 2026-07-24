@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
@@ -23,6 +23,7 @@ interface StoreState {
   sequences: Record<string, Sequence>;
   prospectingTracks: Record<string, ProspectingTrack>;
   prospectEmailDrafts: Record<string, ProspectEmailDraft>;
+  prospectHistory: Record<string, ProspectHistoryEntry>;
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -90,6 +91,7 @@ interface StoreState {
   addProspectingTrack: (track: ProspectingTrack) => void;
   updateProspectingTrack: (id: string, updates: Partial<ProspectingTrack>) => void;
   deleteProspectingTrack: (id: string) => void;
+  addProspectHistoryEntry: (entry: ProspectHistoryEntry) => void;
   addProspectEmailDraft: (draft: ProspectEmailDraft) => void;
   addProspectEmailDraftsBatch: (drafts: ProspectEmailDraft[]) => void;
   updateProspectEmailDraft: (id: string, updates: Partial<ProspectEmailDraft>) => void;
@@ -117,6 +119,7 @@ export const useStore = create<StoreState>()(
       sequences: {},
       prospectingTracks: {},
       prospectEmailDrafts: {},
+      prospectHistory: {},
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -124,7 +127,7 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {} }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
       setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
@@ -304,6 +307,10 @@ export const useStore = create<StoreState>()(
       updateProspectEmailDraft: (id, updates) => set((state) => ({
         prospectEmailDrafts: { ...state.prospectEmailDrafts, [id]: { ...state.prospectEmailDrafts[id], ...updates } }
       })),
+
+      addProspectHistoryEntry: (entry) => set((state) => ({
+        prospectHistory: { ...state.prospectHistory, [entry.id]: entry }
+      })),
     }),
     {
       name: 'next-move-storage',
@@ -328,6 +335,7 @@ export const useStore = create<StoreState>()(
         sequences: state.sequences,
         prospectingTracks: state.prospectingTracks,
         prospectEmailDrafts: state.prospectEmailDrafts,
+        prospectHistory: state.prospectHistory,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
