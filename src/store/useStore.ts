@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Lead, ProspectActivity, Sequence, LeadSequence, LeadEmailDraft } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
@@ -19,11 +19,9 @@ interface StoreState {
   todos: Record<string, TodoItem>;
   footerTabs: NavView[];
   claudeApiKey: string;
-  leads: Record<string, Lead>;
-  prospectActivities: Record<string, ProspectActivity>;
   sequences: Record<string, Sequence>;
-  leadSequences: Record<string, LeadSequence>;
-  leadEmailDrafts: Record<string, LeadEmailDraft>;
+  prospectingTracks: Record<string, ProspectingTrack>;
+  prospectEmailDrafts: Record<string, ProspectEmailDraft>;
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -85,19 +83,13 @@ interface StoreState {
   deleteCheckIn: (id: string) => void;
 
   // Prospecting
-  addLead: (lead: Lead) => void;
-  updateLead: (id: string, updates: Partial<Lead>) => void;
-  deleteLead: (id: string) => void;
-  addProspectActivity: (activity: ProspectActivity) => void;
-  updateProspectActivity: (id: string, updates: Partial<ProspectActivity>) => void;
-  deleteProspectActivity: (id: string) => void;
   addSequence: (sequence: Sequence) => void;
   seedSequencesIfEmpty: (sequences: Sequence[]) => void;
-  addLeadSequence: (leadSequence: LeadSequence) => void;
-  updateLeadSequence: (id: string, updates: Partial<LeadSequence>) => void;
-  addLeadEmailDraft: (draft: LeadEmailDraft) => void;
-  addLeadEmailDraftsBatch: (drafts: LeadEmailDraft[]) => void;
-  updateLeadEmailDraft: (id: string, updates: Partial<LeadEmailDraft>) => void;
+  addProspectingTrack: (track: ProspectingTrack) => void;
+  updateProspectingTrack: (id: string, updates: Partial<ProspectingTrack>) => void;
+  addProspectEmailDraft: (draft: ProspectEmailDraft) => void;
+  addProspectEmailDraftsBatch: (drafts: ProspectEmailDraft[]) => void;
+  updateProspectEmailDraft: (id: string, updates: Partial<ProspectEmailDraft>) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -118,11 +110,9 @@ export const useStore = create<StoreState>()(
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
       claudeApiKey: '',
-      leads: {},
-      prospectActivities: {},
       sequences: {},
-      leadSequences: {},
-      leadEmailDrafts: {},
+      prospectingTracks: {},
+      prospectEmailDrafts: {},
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -130,7 +120,7 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, leads: {}, prospectActivities: {}, leadSequences: {}, leadEmailDrafts: {} }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
       setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
@@ -274,30 +264,6 @@ export const useStore = create<StoreState>()(
         return { checkIns: newCheckIns };
       }),
 
-      addLead: (lead) => set((state) => ({
-        leads: { ...state.leads, [lead.id]: lead }
-      })),
-      updateLead: (id, updates) => set((state) => ({
-        leads: { ...state.leads, [id]: { ...state.leads[id], ...updates, updatedAt: Date.now() } }
-      })),
-      deleteLead: (id) => set((state) => {
-        const newLeads = { ...state.leads };
-        delete newLeads[id];
-        return { leads: newLeads };
-      }),
-
-      addProspectActivity: (activity) => set((state) => ({
-        prospectActivities: { ...state.prospectActivities, [activity.id]: activity }
-      })),
-      updateProspectActivity: (id, updates) => set((state) => ({
-        prospectActivities: { ...state.prospectActivities, [id]: { ...state.prospectActivities[id], ...updates } }
-      })),
-      deleteProspectActivity: (id) => set((state) => {
-        const newActivities = { ...state.prospectActivities };
-        delete newActivities[id];
-        return { prospectActivities: newActivities };
-      }),
-
       addSequence: (sequence) => set((state) => ({
         sequences: { ...state.sequences, [sequence.id]: sequence }
       })),
@@ -308,23 +274,23 @@ export const useStore = create<StoreState>()(
         return { sequences: seeded };
       }),
 
-      addLeadSequence: (leadSequence) => set((state) => ({
-        leadSequences: { ...state.leadSequences, [leadSequence.id]: leadSequence }
+      addProspectingTrack: (track) => set((state) => ({
+        prospectingTracks: { ...state.prospectingTracks, [track.id]: track }
       })),
-      updateLeadSequence: (id, updates) => set((state) => ({
-        leadSequences: { ...state.leadSequences, [id]: { ...state.leadSequences[id], ...updates } }
+      updateProspectingTrack: (id, updates) => set((state) => ({
+        prospectingTracks: { ...state.prospectingTracks, [id]: { ...state.prospectingTracks[id], ...updates } }
       })),
 
-      addLeadEmailDraft: (draft) => set((state) => ({
-        leadEmailDrafts: { ...state.leadEmailDrafts, [draft.id]: draft }
+      addProspectEmailDraft: (draft) => set((state) => ({
+        prospectEmailDrafts: { ...state.prospectEmailDrafts, [draft.id]: draft }
       })),
-      addLeadEmailDraftsBatch: (drafts) => set((state) => {
-        const updated = { ...state.leadEmailDrafts };
+      addProspectEmailDraftsBatch: (drafts) => set((state) => {
+        const updated = { ...state.prospectEmailDrafts };
         for (const d of drafts) updated[d.id] = d;
-        return { leadEmailDrafts: updated };
+        return { prospectEmailDrafts: updated };
       }),
-      updateLeadEmailDraft: (id, updates) => set((state) => ({
-        leadEmailDrafts: { ...state.leadEmailDrafts, [id]: { ...state.leadEmailDrafts[id], ...updates } }
+      updateProspectEmailDraft: (id, updates) => set((state) => ({
+        prospectEmailDrafts: { ...state.prospectEmailDrafts, [id]: { ...state.prospectEmailDrafts[id], ...updates } }
       })),
     }),
     {
@@ -346,11 +312,9 @@ export const useStore = create<StoreState>()(
         todos: state.todos,
         footerTabs: state.footerTabs,
         claudeApiKey: state.claudeApiKey,
-        leads: state.leads,
-        prospectActivities: state.prospectActivities,
         sequences: state.sequences,
-        leadSequences: state.leadSequences,
-        leadEmailDrafts: state.leadEmailDrafts,
+        prospectingTracks: state.prospectingTracks,
+        prospectEmailDrafts: state.prospectEmailDrafts,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {

@@ -64,6 +64,7 @@ function startOfWeekTs(): number {
 
 const ACTIVITY_ICON: Record<ActivityType, React.ReactNode> = {
   visita:       <MapPin size={14} />,
+  'visita-freddo': <MapPin size={14} />,
   chiamata:     <Phone size={14} />,
   email:        <Mail size={14} />,
   nota:         <FileText size={14} />,
@@ -77,6 +78,7 @@ const ACTIVITY_ICON: Record<ActivityType, React.ReactNode> = {
 
 const ACTIVITY_COLOR: Record<ActivityType, string> = {
   visita:       'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600',
+  'visita-freddo': 'bg-sky-100 dark:bg-sky-900/40 text-sky-600',
   chiamata:     'bg-green-100 dark:bg-green-900/40 text-green-600',
   email:        'bg-blue-100 dark:bg-blue-900/40 text-blue-600',
   nota:         'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600',
@@ -117,7 +119,7 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
 
   const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio'];
   const TYPE_LABELS: Record<ActivityType, string> = {
-    visita: 'Visita', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
+    visita: 'Visita', 'visita-freddo': 'Visita a freddo', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
     demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
     'smart-working': 'Smart Working', ufficio: 'Ufficio',
   };
@@ -177,7 +179,7 @@ interface EditActivityModalProps {
 
 const EDIT_TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio'];
 const EDIT_TYPE_LABELS: Record<ActivityType, string> = {
-  visita: 'Visita', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
+  visita: 'Visita', 'visita-freddo': 'Visita a freddo', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
   demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
   'smart-working': 'Smart Working', ufficio: 'Ufficio',
 };

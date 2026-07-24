@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle } from 'lucide-react';
-import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita } from '../types';
+import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../types';
 import Anthropic from '@anthropic-ai/sdk';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { ConversationRecorder, mergeProfilingPatch } from '../components/ai/ConversationRecorder';
+import { convertToLead, startSequenceForContact } from '../lib/prospecting';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   chiamata: 'Chiamata',
   email: 'Email',
   visita: 'Visita',
+  'visita-freddo': 'Visita a freddo',
   nota: 'Nota',
   demo: 'Demo',
   'call-remota': 'Call Remota',
@@ -61,6 +63,7 @@ const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio'];
 
 const TYPE_COLORS: Record<ActivityType, string> = {
   visita: 'bg-indigo-500',
+  'visita-freddo': 'bg-sky-500',
   chiamata: 'bg-green-500',
   email: 'bg-blue-500',
   nota: 'bg-yellow-400',
@@ -74,6 +77,7 @@ const TYPE_COLORS: Record<ActivityType, string> = {
 
 const TYPE_BG: Record<ActivityType, string> = {
   visita: 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300',
+  'visita-freddo': 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300',
   chiamata: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   email: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
   nota: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
@@ -93,7 +97,27 @@ const OUTCOME_OPTIONS: { value: ActivityOutcome; label: string; emoji: string; c
   { value: 'parziale',          label: 'Parziale',    emoji: '🟡', color: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
   { value: 'promessa-callback', label: 'Richiamata',  emoji: '📞', color: 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
   { value: 'rifiuto',           label: 'Non riuscita',emoji: '❌', color: 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
+  { value: 'richiesta-offerta', label: 'Richiesta offerta', emoji: '📄', color: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
 ];
+
+// Esiti specifici per "Visita a freddo" (Manuale Prospezione Blaklader §4)
+const VISITA_FREDDO_OUTCOME_OPTIONS: { value: ActivityOutcome; label: string; emoji: string; color: string }[] = [
+  { value: 'nessuno-trovato',      label: 'Nessuno trovato',       emoji: '🚪', color: 'border-gray-400 bg-gray-50 dark:bg-gray-700/30 text-gray-700 dark:text-gray-300' },
+  { value: 'parlato-influente',    label: 'Parlato con influente', emoji: '🗣️', color: 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+  { value: 'parlato-decisore',     label: 'Parlato col decisore',  emoji: '🎯', color: 'border-purple-400 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
+  { value: 'appuntamento-fissato', label: 'Appuntamento fissato',  emoji: '📅', color: 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' },
+  { value: 'richiesta-offerta',    label: 'Richiesta offerta',     emoji: '📄', color: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
+];
+
+const SETTORE_OPTIONS: { value: ProspectingSettore; label: string }[] = [
+  { value: 'industria',  label: 'Industria' },
+  { value: 'edilizia',   label: 'Edilizia' },
+  { value: 'rivendita',  label: 'Rivendita' },
+  { value: 'ferramenta', label: 'Ferramenta' },
+];
+
+// Esiti visita a freddo che avviano una sequenza di prospecting (tocco iniziale > 0)
+const VISITA_FREDDO_AVVIA_SEQUENZA: ActivityOutcome[] = ['nessuno-trovato', 'parlato-influente', 'parlato-decisore'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -276,7 +300,10 @@ interface AgendaViewProps {
 type CloseVisitType = 'prima-visita' | 'follow-up' | 'offerta' | 'chiamata';
 
 export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
-  const { activities, addActivity, updateActivity, deleteActivity, contacts, updateContact, addTodo } = useStore();
+  const {
+    activities, addActivity, updateActivity, deleteActivity, contacts, updateContact, addTodo,
+    sequences, prospectingTracks, addProspectingTrack, updateProspectingTrack, addProspectEmailDraftsBatch, addDeal,
+  } = useStore();
   const { showToast } = useToast();
 
   const today = new Date();
@@ -309,6 +336,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const [closeOutcome, setCloseOutcome] = useState<ActivityOutcome>('riuscita');
   const [closeNotes, setCloseNotes] = useState('');
   const [closeVisitType, setCloseVisitType] = useState<CloseVisitType>('prima-visita');
+  const [closeSettore, setCloseSettore] = useState<ProspectingSettore>('industria');
 
   // AI Todo extraction
   interface AiExtractedTodo {
@@ -414,8 +442,10 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const openCloseModal = (activity: Activity) => {
     setClosingActivity(activity);
     setCloseNotes(activity.results || '');
-    setCloseOutcome((activity.outcome === 'fatto' && activity.outcomeType ? activity.outcomeType : 'riuscita') as ActivityOutcome);
+    const defaultOutcome = activity.type === 'visita-freddo' ? 'nessuno-trovato' : 'riuscita';
+    setCloseOutcome((activity.outcome === 'fatto' && activity.outcomeType ? activity.outcomeType : defaultOutcome) as ActivityOutcome);
     setCloseVisitType('prima-visita');
+    setCloseSettore(contacts[activity.contactId]?.prospectingSettore || 'industria');
     setAiTodos([]);
     setAiError(null);
     voiceClose.reset();
@@ -674,8 +704,38 @@ Regole:
       results: closeNotes || undefined,
     });
 
-    // Auto-generazione Todo dai next step della profilazione
     const contact = closingActivity.contactId ? contacts[closingActivity.contactId] : null;
+
+    // ── Prospecting: "Richiesta offerta" è l'esito trasversale che converte il prospect in
+    // Lead e lo sposta in Pipeline, qualunque sia il tipo di attività chiusa (visita, chiamata, email...).
+    if (contact && closeOutcome === 'richiesta-offerta') {
+      const { deal, contactUpdates } = convertToLead(contact);
+      addDeal(deal);
+      updateContact(contact.id, contactUpdates);
+      const activeTrack = Object.values(prospectingTracks).find(t => t.contactId === contact.id && t.stato === 'attiva');
+      if (activeTrack) updateProspectingTrack(activeTrack.id, { stato: 'stoppata' });
+      showToast('Richiesta offerta registrata: prospect spostato in Pipeline come Lead!', 'success');
+    }
+    // ── Visita a freddo con esito che avvia una sequenza di prospecting per settore ──
+    else if (contact && closingActivity.type === 'visita-freddo' && VISITA_FREDDO_AVVIA_SEQUENZA.includes(closeOutcome)) {
+      const sequence = Object.values(sequences).find(s => s.settore === closeSettore);
+      if (sequence) {
+        const { track, emailDrafts } = startSequenceForContact(contact, sequence, closeNotes);
+        addProspectingTrack(track);
+        addProspectEmailDraftsBatch(emailDrafts);
+        updateContact(contact.id, { prospectingStato: 'in_sequenza', prospectingSettore: closeSettore });
+        showToast(`Sequenza prospecting "${sequence.nome}" avviata!`, 'success');
+      }
+    }
+    // ── Una risposta positiva su un'attività di follow-up ferma l'avanzamento automatico
+    // della sequenza (regola "solo il silenzio fa avanzare il tocco") ──
+    else if (contact && contact.prospectingStato === 'in_sequenza' && (closeOutcome === 'riuscita' || closeOutcome === 'parziale')) {
+      const activeTrack = Object.values(prospectingTracks).find(t => t.contactId === contact.id && t.stato === 'attiva');
+      if (activeTrack) updateProspectingTrack(activeTrack.id, { stato: 'stoppata' });
+      updateContact(contact.id, { prospectingStato: 'risposto' });
+    }
+
+    // Auto-generazione Todo dai next step della profilazione
     const profiling = contact?.profiling;
     if (profiling?.nextStepAzioni?.length) {
       const MAP: Record<string, { tipo: import('../types').TodoTipo; priorita: import('../types').TodoPriorita }> = {
@@ -1814,7 +1874,7 @@ Regole:
             <div className="mb-4">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Come è andata?</p>
               <div className="grid grid-cols-2 gap-2">
-                {OUTCOME_OPTIONS.map(opt => (
+                {(closingActivity?.type === 'visita-freddo' ? VISITA_FREDDO_OUTCOME_OPTIONS : OUTCOME_OPTIONS).map(opt => (
                   <button
                     key={opt.value}
                     type="button"
@@ -1828,6 +1888,29 @@ Regole:
                 ))}
               </div>
             </div>
+
+            {/* Settore prospecting: richiesto solo se la visita a freddo avvia una sequenza */}
+            {closingActivity?.type === 'visita-freddo' && VISITA_FREDDO_AVVIA_SEQUENZA.includes(closeOutcome) && (
+              <div className="mb-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Settore (per la sequenza di follow-up)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {SETTORE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setCloseSettore(opt.value)}
+                      className={`py-2.5 px-3 rounded-2xl border-2 font-black text-xs transition-all ${
+                        closeSettore === opt.value
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                          : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Notes / Resoconto */}
             <div className="mb-4">

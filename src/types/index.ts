@@ -1,8 +1,13 @@
 export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
 export type NextActionType = 'chiama' | 'email' | 'invia-offerta' | 'fissa-visita' | 'altro';
 export type NextActionPriority = 'alta' | 'media' | 'bassa';
-export type ActivityType = 'chiamata' | 'email' | 'visita' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio';
-export type ActivityOutcome = 'riuscita' | 'parziale' | 'nessun-contatto' | 'promessa-callback' | 'rifiuto' | 'nota';
+export type ActivityType = 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio';
+export type ActivityOutcome =
+  | 'riuscita' | 'parziale' | 'nessun-contatto' | 'promessa-callback' | 'rifiuto' | 'nota'
+  // esiti specifici visita a freddo (Manuale Prospezione Blaklader §4)
+  | 'nessuno-trovato' | 'parlato-influente' | 'parlato-decisore' | 'appuntamento-fissato'
+  // esito trasversale: registrabile su qualsiasi tipo di attività, fa scattare la conversione prospect -> lead
+  | 'richiesta-offerta';
 export type LostReason = 'prezzo' | 'competitor' | 'progetto-annullato' | 'cliente-finale-negativo' | 'altro';
 export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
@@ -119,6 +124,15 @@ export interface Contact {
   profiling?: ProfilingData;
   biDocuments?: BiDocument[];
   photos?: ContactPhoto[];
+
+  // ─── Stato prospecting (attivato alla prima visita/visita a freddo in Agenda) ───
+  prospectingStato?: ProspectingStato;
+  prospectingSettore?: ProspectingSettore;
+  prospectingDataRisveglio?: number;
+  prospectingMotivoScarto?: ProspectingMotivoScarto;
+  prospectingMotivoScartoNote?: string;
+  convertedToDealId?: string;
+
   createdAt: number;
   updatedAt: number;
 }
@@ -435,62 +449,16 @@ export type ProfilingData = DealerProfiling | EndUserProfiling;
 
 export type ProspectingSettore = 'industria' | 'edilizia' | 'rivendita' | 'ferramenta';
 
-export type LeadStatoProspecting =
-  | 'nuovo'
+// Stato del prospect attivo (Contact con status 'potenziale' che ha una ProspectingTrack in corso).
+// Nessuno stato "nuovo": il prospecting parte solo quando si registra una visita/visita a freddo in Agenda.
+export type ProspectingStato =
   | 'in_sequenza'
   | 'risposto'
   | 'convertito'
   | 'in_pausa'
   | 'scartato';
 
-export type LeadMotivoScarto = 'prodotto' | 'momento' | 'prezzo' | 'fornitore-vincolato' | 'altro';
-
-export interface LeadReferente {
-  nome?: string;
-  ruolo?: string;
-  email?: string;
-  telefono?: string;
-}
-
-export interface Lead {
-  id: string;
-  company: string;
-  settore: ProspectingSettore;
-  statoProspecting: LeadStatoProspecting;
-  referente?: LeadReferente;
-  address?: string;
-  city?: string;
-  province?: string;
-  region?: string;
-  dataRisveglio?: number;
-  motivoScarto?: LeadMotivoScarto;
-  motivoScartoNote?: string;
-  convertedToContactId?: string;
-  convertedToDealId?: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export type ProspectActivityTipo = 'visita_freddo' | 'email' | 'telefonata' | 'linkedin' | 'nota';
-
-export type VisitaFreddoEsito =
-  | 'nessuno_trovato'
-  | 'parlato_influente_richiesta_email'
-  | 'parlato_decisore'
-  | 'appuntamento_fissato';
-
-export type ProspectActivityEsito = VisitaFreddoEsito | 'risposta' | 'nessuna-risposta';
-
-export interface ProspectActivity {
-  id: string;
-  leadId: string;
-  tipo: ProspectActivityTipo;
-  data: number;
-  esito?: ProspectActivityEsito;
-  note?: string;
-  dettaglioVisita?: string;
-  createdAt: number;
-}
+export type ProspectingMotivoScarto = 'prodotto' | 'momento' | 'prezzo' | 'fornitore-vincolato' | 'altro';
 
 export type SequenceTouchTipo = 'email' | 'telefonata';
 
@@ -515,21 +483,23 @@ export interface Sequence {
   touches: SequenceTouch[];
 }
 
-export type LeadSequenceStato = 'attiva' | 'stoppata' | 'completata';
+export type ProspectingTrackStato = 'attiva' | 'stoppata' | 'completata';
 
-export interface LeadSequence {
+// Traccia l'avanzamento della sequenza di tocchi per un Contact già in prospecting attivo
+// (agganciata via contactId, non a un'entità Lead separata: il prospect E' il Contact).
+export interface ProspectingTrack {
   id: string;
-  leadId: string;
+  contactId: string;
   sequenceId: string;
   dataG0: number;
   toccoCorrente: number;
   dataProssimoTocco: number;
-  stato: LeadSequenceStato;
+  stato: ProspectingTrackStato;
 }
 
-export interface LeadEmailDraft {
+export interface ProspectEmailDraft {
   id: string;
-  leadSequenceId: string;
+  trackId: string;
   tocco: number;
   oggetto: string;
   corpo: string;
