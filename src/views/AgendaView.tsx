@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../types';
 import Anthropic from '@anthropic-ai/sdk';
 import { useToast } from '../components/ui/ToastContext';
@@ -273,15 +273,13 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        {!isDone && (
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-            title="Chiudi appuntamento"
-          >
-            <CheckCircle size={16} />
-          </button>
-        )}
+        <button
+          onClick={onClose}
+          className={`p-2 rounded-xl transition-colors ${isDone ? 'text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : 'text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+          title={isDone ? 'Modifica esito' : 'Chiudi appuntamento'}
+        >
+          {isDone ? <RotateCcw size={16} /> : <CheckCircle size={16} />}
+        </button>
         <button onClick={onView} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Apri / vedi dettagli"><Eye size={14} /></button>
         <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
         <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
@@ -698,11 +696,26 @@ Regole:
 
   const handleCloseActivity = () => {
     if (!closingActivity) return;
+    // Se l'attività era già chiusa, questa è una correzione a posteriori dell'esito:
+    // aggiorniamo solo i campi dell'attività e saltiamo tutti gli effetti collaterali
+    // (avvio sequenza, conversione a lead, todo automatici), che sono scattati già una
+    // volta alla prima chiusura e non vanno ripetuti/duplicati.
+    const wasAlreadyClosed = closingActivity.outcome !== 'da-fare';
+
     updateActivity(closingActivity.id, {
       outcome: 'fatto',
       outcomeType: closeOutcome,
       results: closeNotes || undefined,
     });
+
+    if (wasAlreadyClosed) {
+      showToast('Esito aggiornato!', 'success');
+      setClosingActivity(null);
+      setCloseNotes('');
+      setAiTodos([]);
+      setAiError(null);
+      return;
+    }
 
     const contact = closingActivity.contactId ? contacts[closingActivity.contactId] : null;
 
@@ -1828,7 +1841,7 @@ Regole:
             <div className="flex justify-between items-start px-6 pt-6 pb-4 sm:px-8 sm:pt-8 flex-shrink-0 border-b border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-start w-full mb-0">
               <div>
-                <h2 className="text-xl font-black dark:text-white">Chiudi Appuntamento</h2>
+                <h2 className="text-xl font-black dark:text-white">{closingActivity.outcome !== 'da-fare' ? 'Modifica Esito' : 'Chiudi Appuntamento'}</h2>
                 <p className="text-sm text-gray-400 font-bold mt-0.5">
                   {contacts[closingActivity.contactId]?.company ?? 'Azienda'} ·{' '}
                   {new Date(closingActivity.date).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -1891,8 +1904,10 @@ Regole:
               </div>
             </div>
 
-            {/* Settore prospecting: richiesto solo se la visita a freddo avvia una sequenza */}
-            {closingActivity?.type === 'visita-freddo' && VISITA_FREDDO_AVVIA_SEQUENZA.includes(closeOutcome) && (
+            {/* Settore prospecting: richiesto solo se la visita a freddo avvia una sequenza.
+                Nascosto in modifica esito (attività già chiusa): la sequenza è già stata avviata
+                una volta e non viene ri-attivata cambiando qui il settore. */}
+            {closingActivity?.type === 'visita-freddo' && closingActivity.outcome === 'da-fare' && VISITA_FREDDO_AVVIA_SEQUENZA.includes(closeOutcome) && (
               <div className="mb-4">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Settore (per la sequenza di follow-up)</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -2055,7 +2070,7 @@ Regole:
                 onClick={handleCloseActivity}
                 className="flex-1 py-3.5 rounded-2xl font-black bg-green-500 text-white hover:bg-green-600 transition-colors"
               >
-                Chiudi Appuntamento
+                {closingActivity.outcome !== 'da-fare' ? 'Salva Esito' : 'Chiudi Appuntamento'}
               </button>
             </div>
 
