@@ -8,7 +8,7 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo' | 'prospecting';
 
 export type TodoTipo = 'offerta' | 'scheda-tecnica' | 'email-info' | 'chiamata-follow' | 'campionatura' | 'demo' | 'visita' | 'altro';
 export type TodoPriorita = 'alta' | 'media' | 'bassa';
@@ -430,3 +430,109 @@ export interface EndUserProfiling {
 }
 
 export type ProfilingData = DealerProfiling | EndUserProfiling;
+
+// ===================== PROSPECTING =====================
+
+export type ProspectingSettore = 'industria' | 'edilizia' | 'rivendita' | 'ferramenta';
+
+export type LeadStatoProspecting =
+  | 'nuovo'
+  | 'in_sequenza'
+  | 'risposto'
+  | 'convertito'
+  | 'in_pausa'
+  | 'scartato';
+
+export type LeadMotivoScarto = 'prodotto' | 'momento' | 'prezzo' | 'fornitore-vincolato' | 'altro';
+
+export interface LeadReferente {
+  nome?: string;
+  ruolo?: string;
+  email?: string;
+  telefono?: string;
+}
+
+export interface Lead {
+  id: string;
+  company: string;
+  settore: ProspectingSettore;
+  statoProspecting: LeadStatoProspecting;
+  referente?: LeadReferente;
+  address?: string;
+  city?: string;
+  province?: string;
+  region?: string;
+  dataRisveglio?: number;
+  motivoScarto?: LeadMotivoScarto;
+  motivoScartoNote?: string;
+  convertedToContactId?: string;
+  convertedToDealId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type ProspectActivityTipo = 'visita_freddo' | 'email' | 'telefonata' | 'linkedin' | 'nota';
+
+export type VisitaFreddoEsito =
+  | 'nessuno_trovato'
+  | 'parlato_influente_richiesta_email'
+  | 'parlato_decisore'
+  | 'appuntamento_fissato';
+
+export type ProspectActivityEsito = VisitaFreddoEsito | 'risposta' | 'nessuna-risposta';
+
+export interface ProspectActivity {
+  id: string;
+  leadId: string;
+  tipo: ProspectActivityTipo;
+  data: number;
+  esito?: ProspectActivityEsito;
+  note?: string;
+  dettaglioVisita?: string;
+  createdAt: number;
+}
+
+export type SequenceTouchTipo = 'email' | 'telefonata';
+
+export interface SequenceTouch {
+  ordine: number;
+  tipo: SequenceTouchTipo;
+  offsetGiorni: number;
+  oggettoTemplate?: string;
+  corpoTemplate?: string;
+  scriptTelefonata?: string;
+  messaggioLinkedin?: string;
+  linkedinSaltabile?: boolean;
+  obiettivo: string;
+  noteUso?: string;
+}
+
+export interface Sequence {
+  id: string;
+  nome: string;
+  settore: ProspectingSettore;
+  attiva: boolean;
+  touches: SequenceTouch[];
+}
+
+export type LeadSequenceStato = 'attiva' | 'stoppata' | 'completata';
+
+export interface LeadSequence {
+  id: string;
+  leadId: string;
+  sequenceId: string;
+  dataG0: number;
+  toccoCorrente: number;
+  dataProssimoTocco: number;
+  stato: LeadSequenceStato;
+}
+
+export interface LeadEmailDraft {
+  id: string;
+  leadSequenceId: string;
+  tocco: number;
+  oggetto: string;
+  corpo: string;
+  modificataAMano: boolean;
+  inviataIl?: number;
+}

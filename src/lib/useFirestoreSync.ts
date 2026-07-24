@@ -4,7 +4,7 @@ import { db } from './firebase';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
 
-const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets'] as const;
+const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets', 'leads', 'prospectActivities', 'sequences', 'leadSequences', 'leadEmailDrafts'] as const;
 
 // Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
 // cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
