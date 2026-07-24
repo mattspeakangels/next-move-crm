@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Radar, X, Mail, Phone, Linkedin, Clock, AlertCircle, CheckCircle2,
-  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar,
+  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
@@ -92,6 +92,120 @@ const DiscardModal: React.FC<DiscardModalProps> = ({ contact, onClose }) => {
   );
 };
 
+// ─── Modale: modifica / elimina attività di prospecting ───────────────────────
+
+interface EditProspectModalProps {
+  contact: Contact;
+  onClose: () => void;
+}
+
+const EditProspectModal: React.FC<EditProspectModalProps> = ({ contact, onClose }) => {
+  const { prospectingTracks, sequences, updateContact, updateProspectingTrack, deleteProspectingTrack } = useStore();
+  const { showToast } = useToast();
+
+  const track = useMemo(() => {
+    const tracks = Object.values(prospectingTracks).filter(t => t.contactId === contact.id);
+    return tracks.find(t => t.stato === 'attiva') || tracks.sort((a, b) => b.dataG0 - a.dataG0)[0];
+  }, [prospectingTracks, contact.id]);
+  const sequence = track ? sequences[track.sequenceId] : undefined;
+
+  const [settore, setSettore] = useState<ProspectingSettore>(contact.prospectingSettore || 'industria');
+  const [stato, setStato] = useState<ProspectingStato>(contact.prospectingStato || 'in_sequenza');
+  const [tocco, setTocco] = useState(track?.toccoCorrente || 1);
+  const [dataProssimoTocco, setDataProssimoTocco] = useState(
+    track ? new Date(track.dataProssimoTocco).toISOString().slice(0, 10) : ''
+  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateContact(contact.id, { prospectingSettore: settore, prospectingStato: stato, updatedAt: Date.now() });
+    if (track) {
+      updateProspectingTrack(track.id, {
+        toccoCorrente: tocco,
+        dataProssimoTocco: dataProssimoTocco ? new Date(dataProssimoTocco).getTime() : track.dataProssimoTocco,
+        stato: stato === 'in_sequenza' ? 'attiva' : track.stato,
+      });
+    }
+    showToast('Prospect aggiornato', 'success');
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (track) deleteProspectingTrack(track.id);
+    updateContact(contact.id, {
+      prospectingStato: undefined,
+      prospectingSettore: undefined,
+      prospectingDataRisveglio: undefined,
+      prospectingMotivoScarto: undefined,
+      prospectingMotivoScartoNote: undefined,
+      convertedToDealId: undefined,
+      updatedAt: Date.now(),
+    });
+    showToast('Attività di prospecting eliminata', 'success');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black text-gray-900 dark:text-white">Modifica {contact.company}</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+        </div>
+
+        <div>
+          <label className={labelCls}>Settore</label>
+          <select value={settore} onChange={e => setSettore(e.target.value as ProspectingSettore)} className={inputCls}>
+            {Object.entries(SETTORE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className={labelCls}>Stato</label>
+          <select value={stato} onChange={e => setStato(e.target.value as ProspectingStato)} className={inputCls}>
+            {Object.entries(STATO_BADGE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </div>
+
+        {track && sequence && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Tocco corrente</label>
+              <select value={tocco} onChange={e => setTocco(Number(e.target.value))} className={inputCls}>
+                {sequence.touches.map(t => <option key={t.ordine} value={t.ordine}>{t.ordine}/{sequence.touches.length}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Prossima azione</label>
+              <input type="date" value={dataProssimoTocco} onChange={e => setDataProssimoTocco(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-1">
+          <button type="submit" className="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors">Salva</button>
+          <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+        </div>
+
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 pt-2">
+              <p className="flex-1 text-xs font-bold text-red-500">Eliminare definitivamente questa attività di prospecting?</p>
+              <button type="button" onClick={handleDelete} className="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-700">Conferma</button>
+              <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-black">Annulla</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-black text-red-500 hover:text-red-600">
+              <Trash2 size={13} />Elimina attività di prospecting
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+};
+
 // ─── Riga coda "Oggi" ────────────────────────────────────────────────────────
 
 interface QueueRowProps {
@@ -99,9 +213,10 @@ interface QueueRowProps {
   track: ProspectingTrack;
   sequence: Sequence;
   onDiscard: () => void;
+  onEdit: () => void;
 }
 
-const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard }) => {
+const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard, onEdit }) => {
   const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addActivity } = useStore();
   const { showToast } = useToast();
   const [showEsitoTelefonata, setShowEsitoTelefonata] = useState(false);
@@ -194,9 +309,14 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
             {overdue ? `In ritardo di ${ritardoGiorni}g` : `Previsto ${formatDate(track.dataProssimoTocco)}`}
           </p>
         </div>
-        <button onClick={onDiscard} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0">
-          <XCircle size={16} />
-        </button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={onEdit} title="Modifica" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+            <Pencil size={16} />
+          </button>
+          <button onClick={onDiscard} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+            <XCircle size={16} />
+          </button>
+        </div>
       </div>
 
       {touch.tipo === 'email' && draft && (
@@ -262,6 +382,7 @@ interface OggiTabProps {
 const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
   const { contacts, prospectingTracks, sequences, activities, updateContact } = useStore();
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
 
   const now = Date.now();
 
@@ -332,12 +453,13 @@ const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
       ) : (
         <div className="space-y-3">
           {queue.map(({ track, contact, sequence }) => (
-            <QueueRow key={track.id} contact={contact} track={track} sequence={sequence} onDiscard={() => setDiscardContact(contact)} />
+            <QueueRow key={track.id} contact={contact} track={track} sequence={sequence} onDiscard={() => setDiscardContact(contact)} onEdit={() => setEditContact(contact)} />
           ))}
         </div>
       )}
 
       {discardContact && <DiscardModal contact={discardContact} onClose={() => setDiscardContact(null)} />}
+      {editContact && <EditProspectModal contact={editContact} onClose={() => setEditContact(null)} />}
     </div>
   );
 };
@@ -348,6 +470,7 @@ const ProspectTab: React.FC = () => {
   const { contacts } = useStore();
   const [filter, setFilter] = useState<ProspectingStato | 'tutti'>('tutti');
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
 
   const filtered = useMemo(() => {
     return Object.values(contacts)
@@ -380,15 +503,19 @@ const ProspectTab: React.FC = () => {
                 {contact.contactName && <p className="text-xs text-gray-400 mt-0.5">{contact.contactName}{contact.role ? ` · ${contact.role}` : ''}</p>}
                 {contact.prospectingMotivoScarto && <p className="text-[10px] text-red-400 mt-0.5">{MOTIVO_SCARTO_LABEL[contact.prospectingMotivoScarto]}{contact.prospectingMotivoScartoNote ? ` — ${contact.prospectingMotivoScartoNote}` : ''}</p>}
               </div>
-              {contact.prospectingStato !== 'scartato' && contact.prospectingStato !== 'convertito' && (
-                <button onClick={() => setDiscardContact(contact)} className="flex-shrink-0 p-1.5 text-gray-300 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"><XCircle size={16} /></button>
-              )}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"><Pencil size={16} /></button>
+                {contact.prospectingStato !== 'scartato' && contact.prospectingStato !== 'convertito' && (
+                  <button onClick={() => setDiscardContact(contact)} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"><XCircle size={16} /></button>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {discardContact && <DiscardModal contact={discardContact} onClose={() => setDiscardContact(null)} />}
+      {editContact && <EditProspectModal contact={editContact} onClose={() => setEditContact(null)} />}
     </div>
   );
 };

@@ -89,6 +89,7 @@ interface StoreState {
   seedSequencesIfEmpty: (sequences: Sequence[]) => void;
   addProspectingTrack: (track: ProspectingTrack) => void;
   updateProspectingTrack: (id: string, updates: Partial<ProspectingTrack>) => void;
+  deleteProspectingTrack: (id: string) => void;
   addProspectEmailDraft: (draft: ProspectEmailDraft) => void;
   addProspectEmailDraftsBatch: (drafts: ProspectEmailDraft[]) => void;
   updateProspectEmailDraft: (id: string, updates: Partial<ProspectEmailDraft>) => void;
@@ -284,6 +285,13 @@ export const useStore = create<StoreState>()(
       updateProspectingTrack: (id, updates) => set((state) => ({
         prospectingTracks: { ...state.prospectingTracks, [id]: { ...state.prospectingTracks[id], ...updates } }
       })),
+      deleteProspectingTrack: (id) => set((state) => {
+        const { [id]: _removed, ...restTracks } = state.prospectingTracks;
+        const restDrafts = Object.fromEntries(
+          Object.entries(state.prospectEmailDrafts).filter(([, d]) => d.trackId !== id)
+        );
+        return { prospectingTracks: restTracks, prospectEmailDrafts: restDrafts };
+      }),
 
       addProspectEmailDraft: (draft) => set((state) => ({
         prospectEmailDrafts: { ...state.prospectEmailDrafts, [draft.id]: draft }
