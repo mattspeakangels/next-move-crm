@@ -511,7 +511,7 @@ export interface ProspectEmailDraft {
 // realmente eseguito su un contatto, separata da `activities` (l'agenda) perché
 // non rappresenta un appuntamento fissato ma il log della sequenza.
 export type ProspectHistoryTipo = 'email' | 'chiamata';
-export type ProspectHistoryEsito = 'inviata' | 'risposta' | 'nessuna-risposta';
+export type ProspectHistoryEsito = 'inviata' | 'risposta' | 'nessuna-risposta' | 'richiesta-offerta' | 'appuntamento-fissato';
 
 export interface ProspectHistoryEntry {
   id: string;

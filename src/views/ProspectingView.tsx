@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { isNotificationSupported, requestProspectingNotificationPermission } from '../hooks/useProspectingReminders';
 import {
-  advanceTouch, getTouch, wakeUpIfDue,
+  advanceTouch, getTouch, wakeUpIfDue, convertToLead,
 } from '../lib/prospecting';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -89,6 +89,51 @@ const DiscardModal: React.FC<DiscardModalProps> = ({ contact, onClose }) => {
           <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
         </div>
       </form>
+    </div>
+  );
+};
+
+// ─── Modale: conversione manuale prospect → Lead ─────────────────────────────
+// Copre il caso in cui il prospect ottiene appuntamento/offerta senza un tocco
+// "in coda" da registrare (es. dopo il sesto tocco, in pausa/risvegliato, o
+// contatto arrivato da fuori sequenza).
+
+interface ConvertModalProps {
+  contact: Contact;
+  onClose: () => void;
+}
+
+const ConvertModal: React.FC<ConvertModalProps> = ({ contact, onClose }) => {
+  const { updateContact, addDeal, prospectingTracks, updateProspectingTrack } = useStore();
+  const { showToast } = useToast();
+
+  const handleConvert = (esito: 'richiesta-offerta' | 'appuntamento-fissato') => {
+    const { deal, contactUpdates } = convertToLead(contact);
+    addDeal(deal);
+    updateContact(contact.id, contactUpdates);
+    const active = Object.values(prospectingTracks).find(t => t.contactId === contact.id && t.stato === 'attiva');
+    if (active) updateProspectingTrack(active.id, { stato: 'stoppata' });
+    showToast(
+      esito === 'richiesta-offerta' ? 'Prospect convertito in Lead: richiede offerta' : 'Prospect convertito in Lead: appuntamento fissato',
+      'success',
+    );
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black text-gray-900 dark:text-white">Converti {contact.company} in Lead</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+        </div>
+        <p className="text-xs text-gray-400">Qual è stato l'esito che sposta il prospect in pipeline?</p>
+        <div className="flex flex-col gap-2">
+          <button onClick={() => handleConvert('richiesta-offerta')} className="w-full py-3 rounded-2xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-black text-sm hover:bg-brand-200 transition-colors">Richiede offerta</button>
+          <button onClick={() => handleConvert('appuntamento-fissato')} className="w-full py-3 rounded-2xl bg-brand-600 text-white font-black text-sm hover:bg-brand-700 transition-colors">Appuntamento fissato</button>
+          <button type="button" onClick={onClose} className="w-full py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -213,6 +258,8 @@ const ESITO_LABEL: Record<ProspectHistoryEntry['esito'], { label: string; color:
   inviata: { label: 'Inviata', color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' },
   risposta: { label: 'Risposta ricevuta', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
   'nessuna-risposta': { label: 'Nessuna risposta', color: 'text-gray-500 bg-gray-100 dark:bg-gray-800' },
+  'richiesta-offerta': { label: 'Richiede offerta → Lead', color: 'text-brand-600 bg-brand-50 dark:bg-brand-900/30' },
+  'appuntamento-fissato': { label: 'Appuntamento fissato → Lead', color: 'text-brand-600 bg-brand-50 dark:bg-brand-900/30' },
 };
 
 interface HistoryModalProps {
@@ -279,9 +326,10 @@ interface QueueRowProps {
 }
 
 const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard, onEdit, onHistory }) => {
-  const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addProspectHistoryEntry } = useStore();
+  const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addProspectHistoryEntry, addDeal } = useStore();
   const { showToast } = useToast();
   const [showEsitoTelefonata, setShowEsitoTelefonata] = useState(false);
+  const [showEsitoEmail, setShowEsitoEmail] = useState(false);
 
   const touch = getTouch(sequence, track.toccoCorrente);
   const draft = touch?.tipo === 'email' ? Object.values(prospectEmailDrafts).find(d => d.trackId === track.id && d.tocco === track.toccoCorrente) : undefined;
@@ -292,7 +340,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
 
   // Registra il tocco nella cronostoria dedicata al prospecting: NON in `activities`,
   // che è l'agenda degli appuntamenti fissati e non deve mostrare i tocchi di sequenza.
-  const logStorico = (tipo: 'email' | 'chiamata', esito: 'inviata' | 'risposta' | 'nessuna-risposta', note?: string) => {
+  const logStorico = (tipo: 'email' | 'chiamata', esito: ProspectHistoryEntry['esito'], note?: string) => {
     addProspectHistoryEntry({
       id: `psh_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       contactId: contact.id,
@@ -321,7 +369,26 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
     showToast('Email segnata come inviata, sequenza avanzata', 'success');
   };
 
-  const registraRisposta = () => {
+  // Richiesta offerta o appuntamento fissato: sposta il prospect direttamente in Lead,
+  // qualunque sia il tocco in corso (anche dopo il sesto e ultimo tocco della sequenza).
+  const convertiInLead = (tipo: 'email' | 'chiamata', esito: 'richiesta-offerta' | 'appuntamento-fissato') => {
+    logStorico(tipo, esito);
+    const { deal, contactUpdates } = convertToLead(contact);
+    addDeal(deal);
+    updateContact(contact.id, contactUpdates);
+    updateProspectingTrack(track.id, { stato: 'stoppata' });
+    showToast(
+      esito === 'richiesta-offerta' ? 'Prospect convertito in Lead: richiede offerta' : 'Prospect convertito in Lead: appuntamento fissato',
+      'success',
+    );
+  };
+
+  const registraRisposta = (esito: 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
+    setShowEsitoEmail(false);
+    if (esito !== 'risposta') {
+      convertiInLead(touch?.tipo === 'email' ? 'email' : 'chiamata', esito);
+      return;
+    }
     logStorico(touch?.tipo === 'email' ? 'email' : 'chiamata', 'risposta');
     updateContact(contact.id, { prospectingStato: 'risposto' });
     updateProspectingTrack(track.id, { stato: 'stoppata' });
@@ -333,9 +400,13 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
     showToast('Tocco posticipato di 3 giorni', 'info');
   };
 
-  const esitoTelefonata = (esito: 'risposta' | 'nessuna-risposta') => {
-    logStorico('chiamata', esito);
+  const esitoTelefonata = (esito: 'risposta' | 'nessuna-risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
     setShowEsitoTelefonata(false);
+    if (esito === 'richiesta-offerta' || esito === 'appuntamento-fissato') {
+      convertiInLead('chiamata', esito);
+      return;
+    }
+    logStorico('chiamata', esito);
     if (esito === 'risposta') {
       updateContact(contact.id, { prospectingStato: 'risposto' });
       updateProspectingTrack(track.id, { stato: 'stoppata' });
@@ -423,7 +494,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
               <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
             )}
             <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"><CheckCircle2 size={13} />Segna inviata</button>
-            <button onClick={registraRisposta} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
+            <button onClick={() => setShowEsitoEmail(true)} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
           <button onClick={() => setShowEsitoTelefonata(true)} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Phone size={13} />Registra esito chiamata</button>
@@ -431,10 +502,20 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
         <button onClick={posticipa} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Clock size={13} />Posticipa 3gg</button>
       </div>
 
+      {showEsitoEmail && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          <button onClick={() => registraRisposta('risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Risposta generica</button>
+          <button onClick={() => registraRisposta('richiesta-offerta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300">Richiede offerta</button>
+          <button onClick={() => registraRisposta('appuntamento-fissato')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700">Appuntamento fissato</button>
+        </div>
+      )}
+
       {showEsitoTelefonata && (
-        <div className="flex gap-2 mt-2">
-          <button onClick={() => esitoTelefonata('risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Ha risposto</button>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <button onClick={() => esitoTelefonata('risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Risposta generica</button>
           <button onClick={() => esitoTelefonata('nessuna-risposta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Nessuna risposta</button>
+          <button onClick={() => esitoTelefonata('richiesta-offerta')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300">Richiede offerta</button>
+          <button onClick={() => esitoTelefonata('appuntamento-fissato')} className="flex-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700">Appuntamento fissato</button>
         </div>
       )}
     </div>
@@ -542,6 +623,7 @@ const ProspectTab: React.FC = () => {
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
+  const [convertContact, setConvertContact] = useState<Contact | null>(null);
 
   const filtered = useMemo(() => {
     return Object.values(contacts)
@@ -578,7 +660,10 @@ const ProspectTab: React.FC = () => {
                 <button onClick={() => setHistoryContact(contact)} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><History size={16} /></button>
                 <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"><Pencil size={16} /></button>
                 {contact.prospectingStato !== 'scartato' && contact.prospectingStato !== 'convertito' && (
-                  <button onClick={() => setDiscardContact(contact)} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"><XCircle size={16} /></button>
+                  <>
+                    <button onClick={() => setConvertContact(contact)} title="Converti in Lead" className="p-1.5 text-gray-300 hover:text-brand-600 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20"><CheckCircle2 size={16} /></button>
+                    <button onClick={() => setDiscardContact(contact)} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"><XCircle size={16} /></button>
+                  </>
                 )}
               </div>
             </div>
@@ -589,6 +674,7 @@ const ProspectTab: React.FC = () => {
       {discardContact && <DiscardModal contact={discardContact} onClose={() => setDiscardContact(null)} />}
       {editContact && <EditProspectModal contact={editContact} onClose={() => setEditContact(null)} />}
       {historyContact && <HistoryModal contact={historyContact} onClose={() => setHistoryContact(null)} />}
+      {convertContact && <ConvertModal contact={convertContact} onClose={() => setConvertContact(null)} />}
     </div>
   );
 };
