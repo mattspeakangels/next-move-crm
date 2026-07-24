@@ -105,10 +105,18 @@ export function useFirestoreSync(userId: string) {
               changed = true;
             }
           }
-          for (const id of Object.keys(lastRemote)) {
-            if (!(id in remoteData) && id in merged && localState[id] === lastRemote[id]) {
-              delete merged[id];
-              changed = true;
+          // 'sequences' non ha mai una delete lato utente (nessuna deleteSequence in store):
+          // e' seed statico scritto localmente al mount, prima che il primo snapshot
+          // Firestore (ancora vuoto la primissima volta) arrivi. Applicare qui la stessa
+          // logica di cancellazione delle altre collection cancellava il seed appena
+          // scritto in locale, lasciando 'sequences' vuoto per tutta la sessione e
+          // rompendo silenziosamente l'avvio delle sequenze di prospecting.
+          if (col !== 'sequences') {
+            for (const id of Object.keys(lastRemote)) {
+              if (!(id in remoteData) && id in merged && localState[id] === lastRemote[id]) {
+                delete merged[id];
+                changed = true;
+              }
             }
           }
 

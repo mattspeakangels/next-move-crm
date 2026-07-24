@@ -725,6 +725,8 @@ Regole:
         addProspectEmailDraftsBatch(emailDrafts);
         updateContact(contact.id, { prospectingStato: 'in_sequenza', prospectingSettore: closeSettore });
         showToast(`Sequenza prospecting "${sequence.nome}" avviata!`, 'success');
+      } else {
+        showToast('Nessuna sequenza trovata per questo settore: riprova, ricaricando la pagina se persiste.', 'error');
       }
     }
     // ── Una risposta positiva su un'attività di follow-up ferma l'avanzamento automatico
