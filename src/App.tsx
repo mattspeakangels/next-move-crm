@@ -4,7 +4,7 @@ import { useFirestoreSync } from './lib/useFirestoreSync';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { useProspectingReminders } from './hooks/useProspectingReminders';
 import { LoginView } from './views/LoginView';
-import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, X, BarChart3, TrendingUp, Shield, ChevronLeft, CheckSquare, Menu, Radar } from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, X, BarChart3, TrendingUp, Shield, ChevronLeft, CheckSquare, Menu } from 'lucide-react';
 import { SEED_SEQUENCES } from './data/prospectingSequences';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -26,7 +26,6 @@ const AnalyticsView  = lazy(() => import('./views/AnalyticsView').then(m => ({ d
 const StoricoView    = lazy(() => import('./views/StoricoView').then(m => ({ default: m.StoricoView })));
 const TodoView       = lazy(() => import('./views/TodoView').then(m => ({ default: m.TodoView })));
 const LegalView      = lazy(() => import('./views/LegalView').then(m => ({ default: m.LegalView })));
-const ProspectingView = lazy(() => import('./views/ProspectingView').then(m => ({ default: m.ProspectingView })));
 
 const ViewLoader = () => (
   <div className="flex items-center justify-center h-64">
@@ -100,7 +99,7 @@ function AppContent() {
     switch (currentView) {
       case 'dashboard': return <Dashboard onNavigate={goTo} />;
       case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
-      case 'deals': return <PipelineView onNavigateToContact={navigateToContact} />;
+      case 'deals': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       case 'offers': return <OffersView />;
       case 'agenda': return <AgendaView onNavigateToContact={navigateToContact} />;
       case 'products': return <ProductsView />;
@@ -112,14 +111,13 @@ function AppContent() {
       case 'legal': return <LegalView />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
-      case 'prospecting': return <ProspectingView onNavigate={goTo} />;
+      case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       default: return <Dashboard onNavigate={goTo} />;
     }
   };
 
   const baseNavItems = [
     { id: 'dashboard' as NavView, icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'prospecting' as NavView, icon: Radar, label: 'Prospecting' },
     { id: 'deals' as NavView, icon: Target, label: 'Pipeline' },
     { id: 'contacts' as NavView, icon: Users, label: 'Clienti' },
     { id: 'offers' as NavView, icon: FileText, label: 'Offerte' },

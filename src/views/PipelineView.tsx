@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Deal, DealStage, NextActionPriority, NextActionType } from '../types';
-import { ArrowRight, ArrowLeft, Plus, X, Sparkles, Trash2, Edit2, Columns, CalendarDays, Lightbulb } from 'lucide-react';
+import { Deal, DealStage, NavView, NextActionPriority, NextActionType } from '../types';
+import { ArrowRight, ArrowLeft, Plus, X, Sparkles, Trash2, Edit2, Columns, CalendarDays, Lightbulb, Radar } from 'lucide-react';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { CloseDealModal } from '../components/deals/CloseDealModal';
@@ -9,6 +9,7 @@ import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
 import { MonthlyOrdersView } from '../components/pipeline/MonthlyOrdersView';
 import { SuggestedDealsView } from '../components/pipeline/SuggestedDealsView';
+import { ProspectingView } from './ProspectingView';
 import { uploadOfferPdf } from '../lib/uploadPdf';
 
 const STAGES: { id: DealStage; name: string; color: string; bar: string }[] = [
@@ -40,12 +41,13 @@ function formatDeadline(ts: number): string {
 
 interface PipelineViewProps {
   onNavigateToContact: (contactId: string) => void;
+  onNavigate?: (view: NavView) => void;
 }
 
-export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact }) => {
+export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact, onNavigate }) => {
   const { deals, contacts, offers, updateDeal, removeDeal, addActivity, addTodo } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'kanban' | 'mensile' | 'suggeriti'>('kanban');
+  const [activeTab, setActiveTab] = useState<'prospecting' | 'kanban' | 'mensile' | 'suggeriti'>('prospecting');
   const [addDealOpen, setAddDealOpen] = useState(false);
   const [editDealId, setEditDealId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -266,6 +268,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
       {/* Tab switcher */}
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl mb-5 w-fit">
         {([
+          { id: 'prospecting', label: 'Prospecting', icon: Radar },
           { id: 'kanban', label: 'Deals', icon: Columns },
           { id: 'mensile', label: 'Per Mese', icon: CalendarDays },
           { id: 'suggeriti', label: 'Suggeriti', icon: Lightbulb },
@@ -282,6 +285,9 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact 
           </button>
         ))}
       </div>
+
+      {/* Prospecting — prima fase della pipeline, prima di "Lead" */}
+      {activeTab === 'prospecting' && <ProspectingView onNavigate={onNavigate ?? (() => {})} />}
 
       {/* Monthly view */}
       {activeTab === 'mensile' && <MonthlyOrdersView />}
