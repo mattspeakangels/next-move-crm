@@ -110,7 +110,7 @@ function AppContent() {
       case 'legal': return <LegalView />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
-      case 'prospecting': return <ProspectingView />;
+      case 'prospecting': return <ProspectingView onNavigate={goTo} />;
       default: return <Dashboard onNavigate={goTo} />;
     }
   };

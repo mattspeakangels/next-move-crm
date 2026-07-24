@@ -7,7 +7,7 @@ import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { EmptyState } from '../components/ui/EmptyState';
 import type {
-  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity,
+  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView,
 } from '../types';
 import {
   advanceTouch, getTouch, wakeUpIfDue,
@@ -242,7 +242,11 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
 
 // ─── Tab: Oggi ───────────────────────────────────────────────────────────────
 
-const OggiTab: React.FC = () => {
+interface OggiTabProps {
+  onNavigate?: (view: NavView) => void;
+}
+
+const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
   const { contacts, prospectingTracks, sequences, activities, updateContact } = useStore();
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
 
@@ -281,14 +285,19 @@ const OggiTab: React.FC = () => {
       {inProgramma.length > 0 && (
         <div className="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 space-y-2">
           <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><Calendar size={14} />Visite a freddo in programma ({inProgramma.length})</p>
+          <p className="text-[10px] text-indigo-400">Per avviare la sequenza email/chiamate registra l'esito della visita dall'Agenda: gli step 1-2-3-4 compaiono qui sotto solo dopo la chiusura.</p>
           {inProgramma.map(({ activity, contact }) => (
-            <div key={activity.id} className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2">
+            <button
+              key={activity.id}
+              onClick={() => onNavigate?.('agenda')}
+              className="w-full flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2 text-left hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 transition-colors"
+            >
               <div className="min-w-0">
                 <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{contact.company}</p>
                 <p className="text-[10px] text-gray-400">{new Date(activity.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}</p>
               </div>
-              <span className="text-[10px] font-black text-indigo-500 uppercase flex-shrink-0">Da chiudere in Agenda</span>
-            </div>
+              <span className="text-[10px] font-black text-indigo-500 uppercase flex-shrink-0">Chiudi in Agenda →</span>
+            </button>
           ))}
         </div>
       )}
@@ -481,7 +490,11 @@ const ReportTab: React.FC = () => {
 
 // ─── Main View ───────────────────────────────────────────────────────────────
 
-export const ProspectingView: React.FC = () => {
+interface ProspectingViewProps {
+  onNavigate?: (view: NavView) => void;
+}
+
+export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) => {
   const [tab, setTab] = useState<'oggi' | 'prospect' | 'report'>('oggi');
 
   const tabs: { id: typeof tab; label: string; icon: typeof Radar }[] = [
@@ -511,7 +524,7 @@ export const ProspectingView: React.FC = () => {
         </div>
       </div>
 
-      {tab === 'oggi' && <OggiTab />}
+      {tab === 'oggi' && <OggiTab onNavigate={onNavigate} />}
       {tab === 'prospect' && <ProspectTab />}
       {tab === 'report' && <ReportTab />}
     </div>
