@@ -333,8 +333,21 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const [closingActivity, setClosingActivity] = useState<Activity | null>(null);
   const [closeOutcome, setCloseOutcome] = useState<ActivityOutcome>('riuscita');
   const [closeNotes, setCloseNotes] = useState('');
-  const [closeVisitType, setCloseVisitType] = useState<CloseVisitType>('prima-visita');
   const [closeSettore, setCloseSettore] = useState<ProspectingSettore>('industria');
+
+  // Il "tipo di contatto" (prima visita / follow-up / offerta / chiamata) serve solo a dare
+  // contesto al prompt AI del resoconto: prima richiedeva una scelta manuale sempre uguale
+  // a "prima visita", ridondante con l'esito appena selezionato. Ora si deduce da solo da
+  // tipo attività + esito + storico del contatto, senza uno step in più nel modale di chiusura.
+  const derivedVisitType: CloseVisitType = useMemo(() => {
+    if (!closingActivity) return 'prima-visita';
+    if (closeOutcome === 'richiesta-offerta') return 'offerta';
+    if (closingActivity.type === 'chiamata' || closingActivity.type === 'email') return 'chiamata';
+    const hasPrior = Object.values(activities).some(
+      a => a.contactId === closingActivity.contactId && a.id !== closingActivity.id && a.outcome !== 'da-fare'
+    );
+    return hasPrior ? 'follow-up' : 'prima-visita';
+  }, [closingActivity, closeOutcome, activities]);
 
   // AI Todo extraction
   interface AiExtractedTodo {
@@ -442,7 +455,6 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     setCloseNotes(activity.results || '');
     const defaultOutcome = activity.type === 'visita-freddo' ? 'nessuno-trovato' : 'riuscita';
     setCloseOutcome((activity.outcome === 'fatto' && activity.outcomeType ? activity.outcomeType : defaultOutcome) as ActivityOutcome);
-    setCloseVisitType('prima-visita');
     setCloseSettore(contacts[activity.contactId]?.prospectingSettore || 'industria');
     setAiTodos([]);
     setAiError(null);
@@ -477,7 +489,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
           role: 'user',
           content: `Sei un assistente per un agente commerciale Blaklader (workwear premium).
 Data oggi: ${today}. Cliente: "${contactName}".
-Tipo di contatto: ${visitContext[closeVisitType]}
+Tipo di contatto: ${visitContext[derivedVisitType]}
 
 Dal seguente resoconto, estrai TUTTE le azioni concrete da fare.
 Per ogni azione specifica una data di esecuzione (quando farlo) e una scadenza massima, basandoti sulle urgenze menzionate nel testo.
@@ -1859,32 +1871,6 @@ Regole:
             {/* Scrollable body */}
             <div className="overflow-y-auto flex-1 px-6 pb-6 sm:px-8 sm:pb-8 pt-5 space-y-4">
 
-            {/* Visit type */}
-            <div className="mb-4">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo di contatto</p>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { value: 'prima-visita', emoji: '🤝', label: 'Prima visita / Demo' },
-                  { value: 'follow-up',    emoji: '🔄', label: 'Follow-up' },
-                  { value: 'offerta',      emoji: '💼', label: 'Offerta / Quotazione' },
-                  { value: 'chiamata',     emoji: '📞', label: 'Chiamata / Email' },
-                ] as { value: CloseVisitType; emoji: string; label: string }[]).map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setCloseVisitType(opt.value)}
-                    className={`py-2.5 px-3 rounded-2xl border-2 font-black text-xs transition-all flex items-center gap-1.5 ${
-                      closeVisitType === opt.value
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                        : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
-                    }`}
-                  >
-                    <span>{opt.emoji}</span> {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Outcome */}
             <div className="mb-4">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Come è andata?</p>
@@ -1970,7 +1956,9 @@ Regole:
               {voiceClose.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceClose.error}</p>}
             </div>
 
-            {/* AI Analysis */}
+            {/* AI Analysis: esclusa dalla visita a freddo — il prospecting resta un processo
+                manuale, guidato solo dalle scelte dell'utente (esito, settore, resoconto). */}
+            {closingActivity?.type !== 'visita-freddo' && (
             <div className="space-y-3">
                 <button
                   onClick={analyzeResoconto}
@@ -1979,7 +1967,7 @@ Regole:
                 >
                   {aiAnalyzing
                     ? <><Loader2 size={13} className="animate-spin" /> Analisi in corso...</>
-                    : closeVisitType === 'prima-visita'
+                    : derivedVisitType === 'prima-visita'
                       ? <><Sparkles size={13} /> Analizza con AI — profilazione + To Do</>
                       : <><Sparkles size={13} /> Analizza con AI — genera To Do</>}
                 </button>
@@ -2057,6 +2045,7 @@ Regole:
                   </div>
                 )}
               </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-3">
