@@ -283,13 +283,12 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
     navigator.clipboard.writeText(text).then(() => showToast(`${label} copiato`, 'success'));
   };
 
-  // Apre il client mail con oggetto/corpo già pronti e, contestualmente, segna il
-  // tocco come inviato e fa avanzare la sequenza: un solo tasto invece di "Apri
-  // mail" + "Segna inviata" separati.
-  const inviaEmail = () => {
+  // Apre il client mail predefinito (es. Outlook) con oggetto/corpo già pronti.
+  // Non segna nulla come inviato: quello resta un'azione separata ("Segna inviata"),
+  // perché aprire la bozza non significa che l'email sia stata effettivamente spedita.
+  const apriEmail = () => {
     if (!draft || !contact.email) return;
     window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(draft.oggetto)}&body=${encodeURIComponent(draft.corpo)}`;
-    segnaInviata();
   };
 
   if (!touch) return null;
@@ -350,11 +349,10 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
       <div className="flex flex-wrap gap-2 mt-3">
         {touch.tipo === 'email' ? (
           <>
-            {draft && contact.email ? (
-              <button onClick={inviaEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
-            ) : (
-              <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><CheckCircle2 size={13} />Segna inviata</button>
+            {draft && contact.email && (
+              <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
             )}
+            <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"><CheckCircle2 size={13} />Segna inviata</button>
             <button onClick={registraRisposta} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
