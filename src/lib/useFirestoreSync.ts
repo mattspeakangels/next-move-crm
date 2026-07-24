@@ -8,7 +8,7 @@ const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'a
 
 // Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
 // cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
-const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'claudeApiKey'] as const;
+const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder', 'claudeApiKey'] as const;
 
 // Firestore WriteBatch ha un limite di 500 operazioni per batch
 const BATCH_SIZE = 400;

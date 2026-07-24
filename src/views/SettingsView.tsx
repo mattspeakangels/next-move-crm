@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, type LucideIcon } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -318,6 +318,76 @@ const MicrophonePermissionSection: React.FC = () => {
           {checking ? 'Verifica in corso…' : status === 'granted' ? 'Testa di nuovo' : 'Abilita microfono'}
         </button>
       )}
+    </div>
+  );
+};
+
+const SIDEBAR_ITEMS: { id: import('../types').NavView; label: string; icon: LucideIcon }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'prospecting', label: 'Prospecting', icon: Radar },
+  { id: 'deals', label: 'Pipeline', icon: Target },
+  { id: 'contacts', label: 'Clienti', icon: Users },
+  { id: 'offers', label: 'Offerte', icon: FileText },
+  { id: 'products', label: 'Prodotti', icon: Package },
+  { id: 'agenda', label: 'Agenda', icon: Calendar },
+  { id: 'attivita', label: 'Attività', icon: Activity },
+  { id: 'map', label: 'Mappa', icon: Map },
+  { id: 'todo', label: 'To Do', icon: CheckSquare },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'storico', label: 'Storico', icon: TrendingUp },
+  { id: 'legal', label: 'Legal', icon: Shield },
+  { id: 'settings', label: 'Impostazioni', icon: Settings },
+];
+
+const SidebarOrderSection: React.FC = () => {
+  const { sidebarOrder, setSidebarOrder } = useStore();
+
+  const ordered = (sidebarOrder && sidebarOrder.length > 0)
+    ? [
+        ...sidebarOrder.map(id => SIDEBAR_ITEMS.find(n => n.id === id)).filter((n): n is typeof SIDEBAR_ITEMS[number] => !!n),
+        ...SIDEBAR_ITEMS.filter(n => !sidebarOrder.includes(n.id)),
+      ]
+    : SIDEBAR_ITEMS;
+
+  const move = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= ordered.length) return;
+    const next = ordered.map(n => n.id);
+    [next[index], next[target]] = [next[target], next[index]];
+    setSidebarOrder(next);
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-black text-gray-900 dark:text-white flex items-center gap-2"><GripVertical size={16} />Ordine menu laterale</h3>
+        {sidebarOrder && sidebarOrder.length > 0 && (
+          <button onClick={() => setSidebarOrder([])} className="text-[10px] font-black text-gray-400 hover:text-indigo-500 uppercase">Ripristina</button>
+        )}
+      </div>
+      <p className="text-xs text-gray-400">Riordina le voci come preferisci con le frecce.</p>
+      <div className="space-y-1.5">
+        {ordered.map(({ id, label, icon: Icon }, index) => (
+          <div key={id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+            <Icon size={15} className="text-gray-400 flex-shrink-0" />
+            <span className="flex-1 text-sm font-bold text-gray-700 dark:text-gray-200">{label}</span>
+            <button
+              onClick={() => move(index, -1)}
+              disabled={index === 0}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-800 disabled:opacity-25 disabled:pointer-events-none"
+            >
+              <ChevronUp size={15} />
+            </button>
+            <button
+              onClick={() => move(index, 1)}
+              disabled={index === ordered.length - 1}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-800 disabled:opacity-25 disabled:pointer-events-none"
+            >
+              <ChevronDown size={15} />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -668,6 +738,9 @@ export const SettingsView: React.FC = () => {
           {(footerTabs ?? []).length}/5 sezioni selezionate
         </p>
       </div>
+
+      {/* ── Ordine menu laterale ── */}
+      <SidebarOrderSection />
 
       {pendingAction && (
         <DeviceAuthModal

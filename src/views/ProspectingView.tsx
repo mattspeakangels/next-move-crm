@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import {
   Radar, X, Mail, Phone, Linkedin, Clock, AlertCircle, CheckCircle2,
-  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3,
+  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { EmptyState } from '../components/ui/EmptyState';
 import type {
-  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence,
+  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity,
 } from '../types';
 import {
   advanceTouch, getTouch, wakeUpIfDue,
@@ -243,7 +243,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
 // ─── Tab: Oggi ───────────────────────────────────────────────────────────────
 
 const OggiTab: React.FC = () => {
-  const { contacts, prospectingTracks, sequences, updateContact } = useStore();
+  const { contacts, prospectingTracks, sequences, activities, updateContact } = useStore();
   const [discardContact, setDiscardContact] = useState<Contact | null>(null);
 
   const now = Date.now();
@@ -256,6 +256,17 @@ const OggiTab: React.FC = () => {
       .sort((a, b) => a.track.dataProssimoTocco - b.track.dataProssimoTocco);
   }, [prospectingTracks, contacts, sequences]);
 
+  // Visite a freddo già in agenda ma non ancora chiuse: senza questa sezione il
+  // prospect non compariva in Prospecting finché l'appuntamento non veniva
+  // completato, anche se già collegato a un contatto potenziale.
+  const inProgramma = useMemo(() => {
+    return Object.values(activities)
+      .filter(a => a.type === 'visita-freddo' && a.outcome !== 'fatto')
+      .map(a => ({ activity: a, contact: contacts[a.contactId || ''] }))
+      .filter((x): x is { activity: Activity; contact: Contact } => !!x.contact)
+      .sort((a, b) => a.activity.date - b.activity.date);
+  }, [activities, contacts]);
+
   const risvegliati = useMemo(() => wakeUpIfDue(Object.values(contacts), now), [contacts, now]);
 
   const inRitardo = queue.filter(q => q.track.dataProssimoTocco < now).length;
@@ -266,6 +277,21 @@ const OggiTab: React.FC = () => {
         <span>{queue.length} in coda</span>
         {inRitardo > 0 && <span className="text-red-500 flex items-center gap-1"><AlertCircle size={12} />{inRitardo} in ritardo</span>}
       </div>
+
+      {inProgramma.length > 0 && (
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 space-y-2">
+          <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><Calendar size={14} />Visite a freddo in programma ({inProgramma.length})</p>
+          {inProgramma.map(({ activity, contact }) => (
+            <div key={activity.id} className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{contact.company}</p>
+                <p className="text-[10px] text-gray-400">{new Date(activity.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}</p>
+              </div>
+              <span className="text-[10px] font-black text-indigo-500 uppercase flex-shrink-0">Da chiudere in Agenda</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {risvegliati.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-100 dark:border-amber-800 rounded-2xl p-4 space-y-2">

@@ -18,6 +18,7 @@ interface StoreState {
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
   footerTabs: NavView[];
+  sidebarOrder: NavView[];
   claudeApiKey: string;
   sequences: Record<string, Sequence>;
   prospectingTracks: Record<string, ProspectingTrack>;
@@ -76,6 +77,7 @@ interface StoreState {
   updateTodo: (id: string, updates: Partial<TodoItem>) => void;
   deleteTodo: (id: string) => void;
   setFooterTabs: (tabs: NavView[]) => void;
+  setSidebarOrder: (order: NavView[]) => void;
 
   // Check-in Geolocalizzazione
   addCheckIn: (checkIn: CheckIn) => void;
@@ -109,6 +111,7 @@ export const useStore = create<StoreState>()(
       discountApprovalThreshold: 20,
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
+      sidebarOrder: [],
       claudeApiKey: '',
       sequences: {},
       prospectingTracks: {},
@@ -233,6 +236,7 @@ export const useStore = create<StoreState>()(
         return { todos: newTodos };
       }),
       setFooterTabs: (tabs) => set({ footerTabs: tabs }),
+      setSidebarOrder: (order) => set({ sidebarOrder: order }),
 
       addAsset: (asset) => set((state) => ({ assets: { ...state.assets, [asset.id]: asset } })),
       updateAsset: (id, updates) => set((state) => ({
@@ -311,6 +315,7 @@ export const useStore = create<StoreState>()(
         discountApprovalThreshold: state.discountApprovalThreshold,
         todos: state.todos,
         footerTabs: state.footerTabs,
+        sidebarOrder: state.sidebarOrder,
         claudeApiKey: state.claudeApiKey,
         sequences: state.sequences,
         prospectingTracks: state.prospectingTracks,

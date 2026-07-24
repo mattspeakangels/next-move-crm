@@ -41,7 +41,7 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const historyRef = useRef<NavView[]>([]);
-  const { theme, profile, footerTabs, seedSequencesIfEmpty } = useStore();
+  const { theme, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
 
   useInitializeProducts();
 
@@ -115,7 +115,7 @@ function AppContent() {
     }
   };
 
-  const navItems = [
+  const baseNavItems = [
     { id: 'dashboard' as NavView, icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'prospecting' as NavView, icon: Radar, label: 'Prospecting' },
     { id: 'deals' as NavView, icon: Target, label: 'Pipeline' },
@@ -131,6 +131,15 @@ function AppContent() {
     { id: 'legal' as NavView, icon: Shield, label: 'Legal' },
     { id: 'settings' as NavView, icon: Settings, label: 'Impostazioni' },
   ];
+
+  // Ordine personalizzato dalle Impostazioni: le voci non ancora ordinate (es. aggiunte
+  // dopo l'ultima volta che l'utente ha riordinato) restano in coda nell'ordine di default.
+  const navItems = sidebarOrder && sidebarOrder.length > 0
+    ? [
+        ...sidebarOrder.map(id => baseNavItems.find(n => n.id === id)).filter((n): n is typeof baseNavItems[number] => !!n),
+        ...baseNavItems.filter(n => !sidebarOrder.includes(n.id)),
+      ]
+    : baseNavItems;
 
   // Mobile bottom bar: usa footerTabs dallo store, fallback ai primi 4
   const activeTabs = (footerTabs && footerTabs.length > 0 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts']) as NavView[];
