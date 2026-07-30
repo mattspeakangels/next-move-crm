@@ -547,6 +547,29 @@ export interface Group {
   stato: GroupStato;
   obiettivo?: string;
   note?: string;
+  // Periodo su cui si concentra l'energia commerciale su questo gruppo
+  dataInizio?: string; // ISO date
+  dataFinePrevista?: string; // ISO date
+  prossimaAzione?: string;
+  prossimaAzioneScadenza?: string; // ISO date
+  createdAt: number;
+  updatedAt: number;
+}
+
+// Focus strategico su un singolo Contact (cliente/prospect su cui destinare
+// energie per un periodo, senza doverlo inquadrare in un Group). Stessa logica
+// di aggregazione del Group ma 1:1 col Contact, via contactId.
+export interface StrategicFocus {
+  id: string;
+  contactId: string;
+  priorita: GroupPriorita;
+  stato: GroupStato;
+  obiettivo?: string;
+  note?: string;
+  dataInizio?: string; // ISO date
+  dataFinePrevista?: string; // ISO date
+  prossimaAzione?: string;
+  prossimaAzioneScadenza?: string; // ISO date
   createdAt: number;
   updatedAt: number;
 }

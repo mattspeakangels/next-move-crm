@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry, Group } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry, Group, StrategicFocus } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
@@ -25,6 +25,7 @@ interface StoreState {
   prospectEmailDrafts: Record<string, ProspectEmailDraft>;
   prospectHistory: Record<string, ProspectHistoryEntry>;
   groups: Record<string, Group>;
+  strategicFocuses: Record<string, StrategicFocus>;
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -101,6 +102,9 @@ interface StoreState {
   addGroup: (group: Group) => void;
   updateGroup: (id: string, updates: Partial<Group>) => void;
   deleteGroup: (id: string) => void;
+  addStrategicFocus: (focus: StrategicFocus) => void;
+  updateStrategicFocus: (id: string, updates: Partial<StrategicFocus>) => void;
+  deleteStrategicFocus: (id: string) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -127,6 +131,7 @@ export const useStore = create<StoreState>()(
       prospectEmailDrafts: {},
       prospectHistory: {},
       groups: {},
+      strategicFocuses: {},
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -134,7 +139,7 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {} }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {}, strategicFocuses: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
       setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
@@ -320,6 +325,15 @@ export const useStore = create<StoreState>()(
       })),
 
       addGroup: (group) => set((state) => ({ groups: { ...state.groups, [group.id]: group } })),
+      addStrategicFocus: (focus) => set((state) => ({ strategicFocuses: { ...state.strategicFocuses, [focus.id]: focus } })),
+      updateStrategicFocus: (id, updates) => set((state) => ({
+        strategicFocuses: { ...state.strategicFocuses, [id]: { ...state.strategicFocuses[id], ...updates, updatedAt: Date.now() } }
+      })),
+      deleteStrategicFocus: (id) => set((state) => {
+        const newFocuses = { ...state.strategicFocuses };
+        delete newFocuses[id];
+        return { strategicFocuses: newFocuses };
+      }),
       updateGroup: (id, updates) => set((state) => ({
         groups: { ...state.groups, [id]: { ...state.groups[id], ...updates, updatedAt: Date.now() } }
       })),
@@ -358,6 +372,7 @@ export const useStore = create<StoreState>()(
         prospectEmailDrafts: state.prospectEmailDrafts,
         prospectHistory: state.prospectHistory,
         groups: state.groups,
+        strategicFocuses: state.strategicFocuses,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
