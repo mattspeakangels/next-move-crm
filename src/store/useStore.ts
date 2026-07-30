@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry, Group } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
@@ -24,6 +24,7 @@ interface StoreState {
   prospectingTracks: Record<string, ProspectingTrack>;
   prospectEmailDrafts: Record<string, ProspectEmailDraft>;
   prospectHistory: Record<string, ProspectHistoryEntry>;
+  groups: Record<string, Group>;
 
   // Sistema
   setProfile: (profile: AppProfile) => void;
@@ -95,6 +96,11 @@ interface StoreState {
   addProspectEmailDraft: (draft: ProspectEmailDraft) => void;
   addProspectEmailDraftsBatch: (drafts: ProspectEmailDraft[]) => void;
   updateProspectEmailDraft: (id: string, updates: Partial<ProspectEmailDraft>) => void;
+
+  // Gruppi strategici
+  addGroup: (group: Group) => void;
+  updateGroup: (id: string, updates: Partial<Group>) => void;
+  deleteGroup: (id: string) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -120,6 +126,7 @@ export const useStore = create<StoreState>()(
       prospectingTracks: {},
       prospectEmailDrafts: {},
       prospectHistory: {},
+      groups: {},
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
@@ -127,7 +134,7 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
-      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {} }),
+      resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
       setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
@@ -311,6 +318,20 @@ export const useStore = create<StoreState>()(
       addProspectHistoryEntry: (entry) => set((state) => ({
         prospectHistory: { ...state.prospectHistory, [entry.id]: entry }
       })),
+
+      addGroup: (group) => set((state) => ({ groups: { ...state.groups, [group.id]: group } })),
+      updateGroup: (id, updates) => set((state) => ({
+        groups: { ...state.groups, [id]: { ...state.groups[id], ...updates, updatedAt: Date.now() } }
+      })),
+      deleteGroup: (id) => set((state) => {
+        const newGroups = { ...state.groups };
+        delete newGroups[id];
+        const newContacts = { ...state.contacts };
+        for (const c of Object.values(newContacts)) {
+          if (c.groupId === id) newContacts[c.id] = { ...c, groupId: undefined };
+        }
+        return { groups: newGroups, contacts: newContacts };
+      }),
     }),
     {
       name: 'next-move-storage',
@@ -336,6 +357,7 @@ export const useStore = create<StoreState>()(
         prospectingTracks: state.prospectingTracks,
         prospectEmailDrafts: state.prospectEmailDrafts,
         prospectHistory: state.prospectHistory,
+        groups: state.groups,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {

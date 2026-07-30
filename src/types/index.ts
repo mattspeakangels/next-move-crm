@@ -13,7 +13,7 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo' | 'prospecting';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo' | 'prospecting' | 'strategia';
 
 export type TodoTipo = 'offerta' | 'scheda-tecnica' | 'email-info' | 'chiamata-follow' | 'campionatura' | 'demo' | 'visita' | 'altro';
 export type TodoPriorita = 'alta' | 'media' | 'bassa';
@@ -132,6 +132,9 @@ export interface Contact {
   prospectingMotivoScarto?: ProspectingMotivoScarto;
   prospectingMotivoScartoNote?: string;
   convertedToDealId?: string;
+
+  // Gruppo strategico a cui appartiene (catena/gruppo d'acquisto o grande end user)
+  groupId?: string;
 
   createdAt: number;
   updatedAt: number;
@@ -525,4 +528,25 @@ export interface ProspectHistoryEntry {
   note?: string;
   date: number;
   createdAt: number;
+}
+
+// ─── Gruppi strategici ───────────────────────────────────────────────────────
+// Contenitore trasversale che aggrega Contact già censiti (dealer e/o end user)
+// dietro un obiettivo strategico comune (es. un gruppo d'acquisto e gli end
+// user che serve). Non duplica dati: profiling e prospecting restano sul
+// Contact, il Group li aggrega tramite Contact.groupId.
+export type GroupTipo = 'dealer-chain' | 'end-user-account' | 'misto';
+export type GroupPriorita = 'alta' | 'media' | 'bassa';
+export type GroupStato = 'da-avvicinare' | 'in-corso' | 'attivo' | 'abbandonato';
+
+export interface Group {
+  id: string;
+  nome: string;
+  tipo: GroupTipo;
+  priorita: GroupPriorita;
+  stato: GroupStato;
+  obiettivo?: string;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
 }

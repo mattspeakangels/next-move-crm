@@ -714,7 +714,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, activities } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, activities, groups } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1236,6 +1236,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.status || 'potenziale'} onChange={e => setEditingContact({...editingContact, status: e.target.value})}>
                     <option value="potenziale">Potenziale</option>
                     <option value="cliente">Cliente Attivo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Gruppo strategico</label>
+                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.groupId || ''} onChange={e => setEditingContact({...editingContact, groupId: e.target.value || undefined})}>
+                    <option value="">— Nessun gruppo —</option>
+                    {Object.values(groups).sort((a, b) => a.nome.localeCompare(b.nome, 'it')).map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}
                   </select>
                 </div>
 

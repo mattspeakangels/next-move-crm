@@ -4,7 +4,7 @@ import { useFirestoreSync } from './lib/useFirestoreSync';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { useProspectingReminders } from './hooks/useProspectingReminders';
 import { LoginView } from './views/LoginView';
-import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, X, BarChart3, TrendingUp, Shield, ChevronLeft, CheckSquare, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, X, BarChart3, TrendingUp, Shield, ChevronLeft, CheckSquare, Menu, Crosshair } from 'lucide-react';
 import { SEED_SEQUENCES } from './data/prospectingSequences';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -26,6 +26,7 @@ const AnalyticsView  = lazy(() => import('./views/AnalyticsView').then(m => ({ d
 const StoricoView    = lazy(() => import('./views/StoricoView').then(m => ({ default: m.StoricoView })));
 const TodoView       = lazy(() => import('./views/TodoView').then(m => ({ default: m.TodoView })));
 const LegalView      = lazy(() => import('./views/LegalView').then(m => ({ default: m.LegalView })));
+const StrategyView   = lazy(() => import('./views/StrategyView').then(m => ({ default: m.StrategyView })));
 
 const ViewLoader = () => (
   <div className="flex items-center justify-center h-64">
@@ -109,6 +110,7 @@ function AppContent() {
       case 'analytics': return <AnalyticsView />;
       case 'storico': return <StoricoView />;
       case 'legal': return <LegalView />;
+      case 'strategia': return <StrategyView />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
       case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
@@ -119,6 +121,7 @@ function AppContent() {
   const baseNavItems = [
     { id: 'dashboard' as NavView, icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'deals' as NavView, icon: Target, label: 'Pipeline' },
+    { id: 'strategia' as NavView, icon: Crosshair, label: 'Strategia' },
     { id: 'contacts' as NavView, icon: Users, label: 'Clienti' },
     { id: 'offers' as NavView, icon: FileText, label: 'Offerte' },
     { id: 'products' as NavView, icon: Package, label: 'Prodotti' },
