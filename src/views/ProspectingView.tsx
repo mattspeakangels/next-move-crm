@@ -7,7 +7,7 @@ import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { EmptyState } from '../components/ui/EmptyState';
 import type {
-  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView, ProspectHistoryEntry,
+  Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView, ProspectHistoryEntry, ProspectEmailDraft,
 } from '../types';
 import { isNotificationSupported, requestProspectingNotificationPermission } from '../hooks/useProspectingReminders';
 import {
@@ -252,6 +252,53 @@ const EditProspectModal: React.FC<EditProspectModalProps> = ({ contact, onClose 
   );
 };
 
+// ─── Modale: personalizza l'email prima dell'invio ─────────────────────────
+// La sequenza propone una bozza semi-personalizzata; qui l'utente scrive la
+// versione definitiva che invierà davvero al prospect (`modificataAMano: true`
+// serve solo a distinguerla in UI/storico dalla bozza generata automaticamente).
+
+interface EditEmailDraftModalProps {
+  draft: ProspectEmailDraft;
+  onClose: () => void;
+}
+
+const EditEmailDraftModal: React.FC<EditEmailDraftModalProps> = ({ draft, onClose }) => {
+  const { updateProspectEmailDraft } = useStore();
+  const { showToast } = useToast();
+  const [oggetto, setOggetto] = useState(draft.oggetto);
+  const [corpo, setCorpo] = useState(draft.corpo);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProspectEmailDraft(draft.id, { oggetto: oggetto.trim(), corpo, modificataAMano: true });
+    showToast('Email personalizzata salvata', 'success');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black text-gray-900 dark:text-white">Personalizza email</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+        </div>
+        <div>
+          <label className={labelCls}>Oggetto</label>
+          <input value={oggetto} onChange={e => setOggetto(e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Corpo</label>
+          <textarea value={corpo} onChange={e => setCorpo(e.target.value)} rows={10} className={inputCls + ' resize-none'} />
+        </div>
+        <div className="flex gap-3 pt-1">
+          <button type="submit" className="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors">Salva email personalizzata</button>
+          <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 // ─── Cronostoria prospecting per azienda ────────────────────────────────────
 
 const ESITO_LABEL: Record<ProspectHistoryEntry['esito'], { label: string; color: string }> = {
@@ -328,6 +375,7 @@ interface QueueRowProps {
 const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard, onEdit, onHistory }) => {
   const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addProspectHistoryEntry, addDeal } = useStore();
   const { showToast } = useToast();
+  const [editingDraft, setEditingDraft] = useState(false);
 
   const touch = getTouch(sequence, track.toccoCorrente);
   const draft = touch?.tipo === 'email' ? Object.values(prospectEmailDrafts).find(d => d.trackId === track.id && d.tocco === track.toccoCorrente) : undefined;
@@ -457,9 +505,15 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
 
       {touch.tipo === 'email' && draft && (
         <div className="mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 space-y-2">
-          <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{draft.oggetto}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-bold text-gray-700 dark:text-gray-300 flex-1">{draft.oggetto}</p>
+            {draft.modificataAMano && (
+              <span className="flex-shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600">Personalizzata</span>
+            )}
+          </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line line-clamp-3">{draft.corpo}</p>
           <div className="flex flex-wrap gap-2 pt-1">
+            <button onClick={() => setEditingDraft(true)} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-300"><Pencil size={10} />Personalizza</button>
             <button onClick={() => copia(draft.oggetto, 'Oggetto')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Oggetto</button>
             <button onClick={() => copia(draft.corpo, 'Corpo')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Corpo</button>
             {!contact.email && (
@@ -510,6 +564,8 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
         >Appuntamento fissato</button>
         <button onClick={posticipa} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Clock size={13} />Posticipa 3gg</button>
       </div>
+
+      {editingDraft && draft && <EditEmailDraftModal draft={draft} onClose={() => setEditingDraft(false)} />}
     </div>
   );
 };
