@@ -40,6 +40,13 @@ const PROSPECTING_STATO_LABEL: Record<ProspectingStato, string> = {
 
 const PRIORITA_ORDER: Record<GroupPriorita, number> = { alta: 0, media: 1, bassa: 2 };
 
+// Difende da priorita/stato non riconosciuti (dati residui di versioni precedenti
+// dello schema, o corrotti) che altrimenti mandano in crash il render (index su
+// undefined) e bloccano l'app, dato che il fallback dell'ErrorBoundary e' una
+// pagina bianca persistente (nm_last_view riporta qui ad ogni reload).
+const priorityConfig = (p: GroupPriorita) => PRIORITA_CONFIG[p] ?? PRIORITA_CONFIG.media;
+const statoConfig = (s: GroupStato) => STATO_CONFIG[s] ?? STATO_CONFIG['da-avvicinare'];
+
 const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400';
 const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1';
 
@@ -501,8 +508,8 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack }) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-black text-gray-900 dark:text-white">{group.nome}</h1>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${PRIORITA_CONFIG[group.priorita].cls}`}>{PRIORITA_CONFIG[group.priorita].label}</span>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${STATO_CONFIG[group.stato].cls}`}>{STATO_CONFIG[group.stato].label}</span>
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${priorityConfig(group.priorita).cls}`}>{priorityConfig(group.priorita).label}</span>
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(group.stato).cls}`}>{statoConfig(group.stato).label}</span>
             </div>
             <p className="text-xs font-bold text-gray-400 mt-1">{TIPO_LABEL[group.tipo]}</p>
           </div>
@@ -626,8 +633,8 @@ const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack }) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-black text-gray-900 dark:text-white">{contact.company}</h1>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${PRIORITA_CONFIG[focus.priorita].cls}`}>{PRIORITA_CONFIG[focus.priorita].label}</span>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${STATO_CONFIG[focus.stato].cls}`}>{STATO_CONFIG[focus.stato].label}</span>
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${priorityConfig(focus.priorita).cls}`}>{priorityConfig(focus.priorita).label}</span>
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(focus.stato).cls}`}>{statoConfig(focus.stato).label}</span>
             </div>
             <p className="text-xs font-bold text-gray-400 mt-1">{contact.contactName}{contact.city ? ` · ${contact.city}` : ''}</p>
           </div>
@@ -701,10 +708,10 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ icon, titolo, sottotitolo, 
           <p className="text-[11px] font-bold text-gray-400 truncate">{sottotitolo}</p>
         </div>
       </div>
-      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0 ${PRIORITA_CONFIG[priorita].cls}`}>{PRIORITA_CONFIG[priorita].label}</span>
+      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0 ${priorityConfig(priorita).cls}`}>{priorityConfig(priorita).label}</span>
     </div>
     <div className="flex items-center justify-between gap-2">
-      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${STATO_CONFIG[stato].cls}`}>{STATO_CONFIG[stato].label}</span>
+      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(stato).cls}`}>{statoConfig(stato).label}</span>
       <FocusSummaryBadges entry={entry} />
     </div>
   </button>
