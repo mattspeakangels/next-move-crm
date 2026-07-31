@@ -34,6 +34,9 @@ export interface TodoItem {
   statusHistory?: { status: TodoStatus; at: number }[];
   source: 'manuale' | 'visita' | 'ai';
   sourceActivityId?: string;
+  /** Testo dell'email effettivamente inviata, incollato per tenerne traccia. */
+  emailContent?: string;
+  emailSavedAt?: number;
 }
 
 export type CustomerType = 'dealer' | 'end-user';

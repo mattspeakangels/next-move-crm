@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   CheckSquare, Square, Plus, Trash2, Filter, ChevronDown, ChevronRight,
-  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users, Pencil,
+  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users, Pencil, Mail,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView, Contact } from '../types';
@@ -443,6 +443,16 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(todo.titolo);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailDraft, setEmailDraft] = useState(todo.emailContent || '');
+  const [emailExpanded, setEmailExpanded] = useState(false);
+
+  const commitEmail = () => {
+    const trimmed = emailDraft.trim();
+    if (trimmed) onUpdate({ emailContent: trimmed, emailSavedAt: Date.now() });
+    else setEmailDraft(todo.emailContent || '');
+    setEditingEmail(false);
+  };
 
   const commitTitle = () => {
     const trimmed = titleDraft.trim();
@@ -565,6 +575,70 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
           {todo.note && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">{todo.note}</p>
           )}
+
+          {/* Traccia email inviata */}
+          <div className="mt-1.5">
+            {editingEmail ? (
+              <div className="flex flex-col gap-1.5">
+                <textarea
+                  autoFocus
+                  value={emailDraft}
+                  onChange={(e) => setEmailDraft(e.target.value)}
+                  placeholder="Incolla qui il testo dell'email inviata..."
+                  rows={5}
+                  className="w-full text-xs leading-relaxed bg-gray-50 dark:bg-gray-900/50 border-2 border-indigo-300 dark:border-indigo-700 rounded-xl p-2 outline-none text-gray-700 dark:text-gray-200"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={commitEmail}
+                    className="text-[10px] font-black text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded-lg"
+                  >
+                    Salva
+                  </button>
+                  <button
+                    onClick={() => { setEmailDraft(todo.emailContent || ''); setEditingEmail(false); }}
+                    className="text-[10px] font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1"
+                  >
+                    Annulla
+                  </button>
+                </div>
+              </div>
+            ) : todo.emailContent ? (
+              <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2">
+                <div className="flex items-center gap-1.5 w-full">
+                  <button
+                    onClick={() => setEmailExpanded(v => !v)}
+                    className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
+                  >
+                    <Mail size={11} className="text-indigo-400 flex-shrink-0" />
+                    <span className="text-[9px] font-black text-gray-400 flex-1 truncate">
+                      Email inviata {todo.emailSavedAt ? formatDateTime(todo.emailSavedAt) : ''}
+                    </span>
+                    {emailExpanded ? <ChevronDown size={12} className="text-gray-400 flex-shrink-0" /> : <ChevronRight size={12} className="text-gray-400 flex-shrink-0" />}
+                  </button>
+                  <button
+                    onClick={() => { setEmailDraft(todo.emailContent || ''); setEditingEmail(true); }}
+                    className="p-0.5 text-gray-400 hover:text-indigo-500 flex-shrink-0"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </div>
+                {emailExpanded && (
+                  <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-1.5 whitespace-pre-wrap">
+                    {todo.emailContent}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setEditingEmail(true)}
+                className="flex items-center gap-1 text-[10px] font-bold text-gray-400 hover:text-indigo-500 transition-colors"
+              >
+                <Mail size={11} />
+                Traccia email inviata
+              </button>
+            )}
+          </div>
 
           {/* Storico avanzamento: data di ogni cambio di step */}
           {todo.statusHistory && todo.statusHistory.length > 1 && (
