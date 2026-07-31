@@ -110,7 +110,7 @@ function AppContent() {
       case 'analytics': return <AnalyticsView />;
       case 'storico': return <StoricoView />;
       case 'legal': return <LegalView />;
-      case 'strategia': return <StrategyView />;
+      case 'strategia': return <StrategyView onNavigateToContact={navigateToContact} />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
       case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;

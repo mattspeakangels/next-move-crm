@@ -418,17 +418,18 @@ interface LinkedContactRowProps {
   contact: Contact;
   hasOpenDeal: boolean;
   onUnlink: () => void;
+  onOpenContact: () => void;
 }
 
-const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDeal, onUnlink }) => {
+const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDeal, onUnlink, onOpenContact }) => {
   const profilato = !!contact.profiling;
   return (
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
-      <div className="w-9 h-9 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+      <button onClick={onOpenContact} className="w-9 h-9 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
         <Building2 size={15} className="text-gray-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{contact.company}</p>
+      </button>
+      <button onClick={onOpenContact} className="flex-1 min-w-0 text-left">
+        <p className="text-sm font-bold text-gray-800 dark:text-white truncate hover:text-indigo-600 dark:hover:text-indigo-400">{contact.company}</p>
         <div className="flex flex-wrap items-center gap-1 mt-0.5">
           <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
             {contact.customerType === 'end-user' ? 'End user' : 'Dealer'}
@@ -449,7 +450,7 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
             </span>
           )}
         </div>
-      </div>
+      </button>
       <button onClick={onUnlink} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0" title="Scollega dal gruppo">
         <X size={14} />
       </button>
@@ -462,9 +463,10 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
 interface GroupDetailProps {
   group: Group;
   onBack: () => void;
+  onNavigateToContact: (contactId: string) => void;
 }
 
-const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack }) => {
+const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToContact }) => {
   const { contacts, deals, updateContact, updateGroup, deleteGroup } = useStore();
   const { showToast } = useToast();
   const [showEdit, setShowEdit] = useState(false);
@@ -574,6 +576,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack }) => {
                 contact={c}
                 hasOpenDeal={openDealContactIds.has(c.id)}
                 onUnlink={() => updateContact(c.id, { groupId: undefined })}
+                onOpenContact={() => onNavigateToContact(c.id)}
               />
             ))}
           </div>
@@ -597,9 +600,10 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack }) => {
 interface FocusDetailProps {
   focus: StrategicFocus;
   onBack: () => void;
+  onNavigateToContact: (contactId: string) => void;
 }
 
-const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack }) => {
+const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack, onNavigateToContact }) => {
   const { contacts, deals, updateStrategicFocus, deleteStrategicFocus } = useStore();
   const { showToast } = useToast();
   const [showEdit, setShowEdit] = useState(false);
@@ -632,7 +636,7 @@ const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack }) => {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-black text-gray-900 dark:text-white">{contact.company}</h1>
+              <button onClick={() => onNavigateToContact(contact.id)} className="text-lg font-black text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline text-left">{contact.company}</button>
               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${priorityConfig(focus.priorita).cls}`}>{priorityConfig(focus.priorita).label}</span>
               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(focus.stato).cls}`}>{statoConfig(focus.stato).label}</span>
             </div>
@@ -723,7 +727,11 @@ type ListEntry =
   | { kind: 'group'; id: string; data: Group }
   | { kind: 'focus'; id: string; data: StrategicFocus };
 
-export const StrategyView: React.FC = () => {
+interface StrategyViewProps {
+  onNavigateToContact: (contactId: string) => void;
+}
+
+export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact }) => {
   const { groups, strategicFocuses, contacts, addGroup, addStrategicFocus } = useStore();
   const { showToast } = useToast();
   const [showChooser, setShowChooser] = useState(false);
@@ -758,10 +766,10 @@ export const StrategyView: React.FC = () => {
   if (selected) {
     if (selected.kind === 'group') {
       const g = groups[selected.id];
-      if (g) return <GroupDetail group={g} onBack={() => setSelected(null)} />;
+      if (g) return <GroupDetail group={g} onBack={() => setSelected(null)} onNavigateToContact={onNavigateToContact} />;
     } else {
       const f = strategicFocuses[selected.id];
-      if (f) return <FocusDetail focus={f} onBack={() => setSelected(null)} />;
+      if (f) return <FocusDetail focus={f} onBack={() => setSelected(null)} onNavigateToContact={onNavigateToContact} />;
     }
     setSelected(null);
   }
