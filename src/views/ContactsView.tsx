@@ -726,7 +726,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
-  const [segmentFilter, setSegmentFilter] = useState<ContactSegment | null>(null);
+  const [topFilter, setTopFilter] = useState<'dealer' | 'end-user' | null>(null);
+  const [subFilter, setSubFilter] = useState<'industria' | 'edilizia' | null>(null);
   const [visibleCount, setVisibleCount] = useState(50);
 
   // Debounce ricerca — evita filter su ogni keystroke con 9k+ contatti
@@ -745,11 +746,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     const statusFilter = activeTab === 'prospect' ? 'potenziale' : 'cliente';
     return Object.values(contacts)
       .filter(c => c.status === statusFilter)
-      .filter(c => !segmentFilter || c.segment === segmentFilter)
+      .filter(c => {
+        if (!topFilter) return true;
+        if (topFilter === 'dealer') return c.segment === 'dealer';
+        if (!subFilter) return c.segment === 'end-user' || c.segment === 'industria' || c.segment === 'edilizia';
+        return c.segment === subFilter;
+      })
       .filter(c => matchSearch(debouncedSearch, [
         c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
       ]));
-  }, [contacts, activeTab, segmentFilter, debouncedSearch]);
+  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch]);
 
   // Reset paginazione quando cambia lista
   useEffect(() => { setVisibleCount(50); }, [filteredList]);
@@ -1710,38 +1716,71 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 </div>
 
                 {/* Filtri Segment */}
-                {!isProspect && (
+                <div className="space-y-2">
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => setSegmentFilter(null)}
+                      onClick={() => { setTopFilter(null); setSubFilter(null); }}
                       className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-                        segmentFilter === null
+                        topFilter === null
                           ? 'bg-indigo-600 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                       }`}
                     >
                       Tutti ({Object.values(contacts).filter(c => c.status === statusFilter).length})
                     </button>
-                    {([
-                      { key: 'dealer',    label: '🏪 Dealer' },
-                      { key: 'industria', label: '🏭 Industria' },
-                      { key: 'edilizia',  label: '🏗️ Edilizia' },
-                      { key: 'end-user',  label: '👤 End User' },
-                    ] as const).map(({ key, label }) => (
+                    <button
+                      onClick={() => { setTopFilter('dealer'); setSubFilter(null); }}
+                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                        topFilter === 'dealer'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                      }`}
+                    >
+                      🏪 Dealer ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === 'dealer').length})
+                    </button>
+                    <button
+                      onClick={() => { setTopFilter('end-user'); setSubFilter(null); }}
+                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                        topFilter === 'end-user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                      }`}
+                    >
+                      👤 End User ({Object.values(contacts).filter(c => c.status === statusFilter && (c.segment === 'end-user' || c.segment === 'industria' || c.segment === 'edilizia')).length})
+                    </button>
+                  </div>
+
+                  {topFilter === 'end-user' && (
+                    <div className="flex flex-wrap gap-2 pl-3 border-l-2 border-gray-100 dark:border-gray-700">
                       <button
-                        key={key}
-                        onClick={() => setSegmentFilter(key)}
-                        className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
-                          segmentFilter === key
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                        onClick={() => setSubFilter(null)}
+                        className={`px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase transition-all ${
+                          subFilter === null
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100'
                         }`}
                       >
-                        {label} ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === key).length})
+                        Tutti End User
                       </button>
-                    ))}
-                  </div>
-                )}
+                      {([
+                        { key: 'industria', label: '🏭 Industria' },
+                        { key: 'edilizia',  label: '🏗️ Edilizia' },
+                      ] as const).map(({ key, label }) => (
+                        <button
+                          key={key}
+                          onClick={() => setSubFilter(key)}
+                          className={`px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase transition-all ${
+                            subFilter === key
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100'
+                          }`}
+                        >
+                          {label} ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === key).length})
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
