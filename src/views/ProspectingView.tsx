@@ -351,7 +351,12 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
                 </div>
                 {e.oggetto && <p className="text-xs font-black text-gray-600 dark:text-gray-300 mt-1">{e.oggetto}</p>}
                 {e.corpo && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap line-clamp-4">{e.corpo}</p>}
-                {e.note && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{e.note}</p>}
+                {e.note && (
+                  <div className="mt-1.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg p-2">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Risposta del prospect</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{e.note}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -376,6 +381,12 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   const { updateContact, updateProspectingTrack, prospectEmailDrafts, updateProspectEmailDraft, addProspectHistoryEntry, addDeal } = useStore();
   const { showToast } = useToast();
   const [editingDraft, setEditingDraft] = useState(false);
+  const [pendingEsito, setPendingEsito] = useState<null | 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato'>(null);
+  const [rispostaTesto, setRispostaTesto] = useState('');
+  const apriModalRisposta = (esito: 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
+    setRispostaTesto('');
+    setPendingEsito(esito);
+  };
 
   const touch = getTouch(sequence, track.toccoCorrente);
   const draft = touch?.tipo === 'email' ? Object.values(prospectEmailDrafts).find(d => d.trackId === track.id && d.tocco === track.toccoCorrente) : undefined;
@@ -417,8 +428,8 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
 
   // Richiesta offerta o appuntamento fissato: sposta il prospect direttamente in Lead,
   // qualunque sia il tocco in corso (anche dopo il sesto e ultimo tocco della sequenza).
-  const convertiInLead = (tipo: 'email' | 'chiamata', esito: 'richiesta-offerta' | 'appuntamento-fissato') => {
-    logStorico(tipo, esito);
+  const convertiInLead = (tipo: 'email' | 'chiamata', esito: 'richiesta-offerta' | 'appuntamento-fissato', note?: string) => {
+    logStorico(tipo, esito, note);
     const { deal, contactUpdates } = convertToLead(contact);
     addDeal(deal);
     updateContact(contact.id, contactUpdates);
@@ -429,12 +440,12 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
     );
   };
 
-  const registraRisposta = (esito: 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
+  const registraRisposta = (esito: 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato', note?: string) => {
     if (esito !== 'risposta') {
-      convertiInLead(touch?.tipo === 'email' ? 'email' : 'chiamata', esito);
+      convertiInLead(touch?.tipo === 'email' ? 'email' : 'chiamata', esito, note);
       return;
     }
-    logStorico(touch?.tipo === 'email' ? 'email' : 'chiamata', 'risposta');
+    logStorico(touch?.tipo === 'email' ? 'email' : 'chiamata', 'risposta', note);
     updateContact(contact.id, { prospectingStato: 'risposto' });
     updateProspectingTrack(track.id, { stato: 'stoppata' });
     showToast('Risposta registrata, sequenza fermata', 'success');
@@ -544,7 +555,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
               <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
             )}
             <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"><CheckCircle2 size={13} />Segna inviata</button>
-            <button onClick={() => registraRisposta('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
+            <button onClick={() => apriModalRisposta('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
           <button onClick={() => esitoTelefonata('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Phone size={13} />Registra esito chiamata</button>
@@ -555,17 +566,53 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
         {/* Sempre visibili: non si presuppone di dover completare tutti i 6 tocchi
             prima di ottenere l'obiettivo (offerta/appuntamento) su qualunque tocco. */}
         <button
-          onClick={() => (touch.tipo === 'email' ? registraRisposta('richiesta-offerta') : esitoTelefonata('richiesta-offerta'))}
+          onClick={() => (touch.tipo === 'email' ? apriModalRisposta('richiesta-offerta') : esitoTelefonata('richiesta-offerta'))}
           className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300"
         >Richiede offerta</button>
         <button
-          onClick={() => (touch.tipo === 'email' ? registraRisposta('appuntamento-fissato') : esitoTelefonata('appuntamento-fissato'))}
+          onClick={() => (touch.tipo === 'email' ? apriModalRisposta('appuntamento-fissato') : esitoTelefonata('appuntamento-fissato'))}
           className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700"
         >Appuntamento fissato</button>
         <button onClick={posticipa} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Clock size={13} />Posticipa 3gg</button>
       </div>
 
       {editingDraft && draft && <EditEmailDraftModal draft={draft} onClose={() => setEditingDraft(false)} />}
+
+      {pendingEsito && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setPendingEsito(null); }}>
+          <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-3 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-gray-900 dark:text-white">Testo della risposta ricevuta</h2>
+              <button type="button" onClick={() => setPendingEsito(null)} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+            </div>
+            <p className="text-xs text-gray-400 font-bold">Incolla qui cosa ha risposto {contact.company}, per tenerne traccia nella cronostoria (facoltativo).</p>
+            <textarea
+              autoFocus
+              value={rispostaTesto}
+              onChange={e => setRispostaTesto(e.target.value)}
+              rows={5}
+              placeholder="Es. Al momento non siamo interessati..."
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 resize-none text-sm"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { registraRisposta(pendingEsito, rispostaTesto.trim() || undefined); setPendingEsito(null); }}
+                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700"
+              >
+                Salva
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingEsito(null)}
+                className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 font-black"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
