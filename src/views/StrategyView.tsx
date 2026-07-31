@@ -731,6 +731,10 @@ interface StrategyViewProps {
   onNavigateToContact: (contactId: string) => void;
 }
 
+type StatoFiltro = GroupStato | 'tutti';
+
+const STATO_FILTRI: StatoFiltro[] = ['tutti', 'da-avvicinare', 'in-corso', 'attivo', 'abbandonato'];
+
 export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact }) => {
   const { groups, strategicFocuses, contacts, addGroup, addStrategicFocus } = useStore();
   const { showToast } = useToast();
@@ -738,8 +742,9 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [pickedContact, setPickedContact] = useState<Contact | null>(null);
   const [selected, setSelected] = useState<{ kind: 'group' | 'focus'; id: string } | null>(null);
+  const [statoFiltro, setStatoFiltro] = useState<StatoFiltro>('tutti');
 
-  const entries = useMemo<ListEntry[]>(() => {
+  const allEntries = useMemo<ListEntry[]>(() => {
     const groupEntries: ListEntry[] = Object.values(groups).map(g => ({ kind: 'group', id: g.id, data: g }));
     const focusEntries: ListEntry[] = Object.values(strategicFocuses)
       .filter(f => !!contacts[f.contactId])
@@ -754,6 +759,17 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
       return nomeA.localeCompare(nomeB, 'it');
     });
   }, [groups, strategicFocuses, contacts]);
+
+  const countByStato = useMemo(() => {
+    const counts: Record<StatoFiltro, number> = { tutti: allEntries.length, 'da-avvicinare': 0, 'in-corso': 0, attivo: 0, abbandonato: 0 };
+    for (const e of allEntries) counts[e.data.stato] += 1;
+    return counts;
+  }, [allEntries]);
+
+  const entries = useMemo(
+    () => statoFiltro === 'tutti' ? allEntries : allEntries.filter(e => e.data.stato === statoFiltro),
+    [allEntries, statoFiltro]
+  );
 
   const contactCountByGroup = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -788,12 +804,36 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
         </button>
       </div>
 
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+        {STATO_FILTRI.map(s => {
+          const active = statoFiltro === s;
+          const label = s === 'tutti' ? 'Tutti' : STATO_CONFIG[s].label;
+          return (
+            <button
+              key={s}
+              onClick={() => setStatoFiltro(s)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
+                active
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              {label} <span className={active ? 'text-indigo-200' : 'text-gray-400 dark:text-gray-500'}>{countByStato[s]}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3 bg-white dark:bg-gray-800 rounded-3xl">
           <Target size={32} className="text-gray-300 dark:text-gray-600" />
           <div>
-            <p className="text-sm font-black text-gray-500 dark:text-gray-300">Nessun focus strategico ancora</p>
-            <p className="text-xs text-gray-400 mt-1">Crea un gruppo o metti un cliente sotto focus con "+"</p>
+            <p className="text-sm font-black text-gray-500 dark:text-gray-300">
+              {statoFiltro === 'tutti' ? 'Nessun focus strategico ancora' : `Nessun elemento in "${STATO_CONFIG[statoFiltro].label}"`}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              {statoFiltro === 'tutti' ? 'Crea un gruppo o metti un cliente sotto focus con "+"' : 'Cambia filtro per vedere gli altri elementi'}
+            </p>
           </div>
         </div>
       ) : (
