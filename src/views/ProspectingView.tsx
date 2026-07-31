@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   Radar, X, Mail, Phone, Linkedin, Clock, AlertCircle, CheckCircle2,
-  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2, History, BellRing, Plus,
+  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2, History, BellRing, Plus, Sparkles,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { useClaudeAI } from '../hooks/useClaudeAI';
+import { AiPanel } from '../components/ai/AiPanel';
 import { matchSearch } from '../utils/search';
 import type {
   Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView, ProspectHistoryEntry, ProspectEmailDraft,
@@ -318,23 +320,52 @@ interface HistoryModalProps {
 
 const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
   const { prospectHistory } = useStore();
+  const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
+  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const entries = useMemo(
     () => Object.values(prospectHistory)
       .filter(h => h.contactId === contact.id)
-      .sort((a, b) => b.date - a.date),
+      .sort((a, b) => a.date - b.date),
     [prospectHistory, contact.id]
   );
 
+  const runAnalysis = () => {
+    setShowAiPanel(true);
+    aiRun('analizza-prospecting', {
+      company: contact.company,
+      entries: entries.map(e => ({
+        tocco: e.tocco,
+        tipo: e.tipo,
+        esito: e.esito,
+        oggetto: e.oggetto,
+        corpo: e.corpo,
+        note: e.note,
+        data: new Date(e.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }),
+      })),
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-3xl sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <History size={18} className="text-gray-400" />
             <h2 className="text-base font-black text-gray-900 dark:text-white">Cronostoria — {contact.company}</h2>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <div className="flex items-center gap-2">
+            {entries.length >= 2 && (
+              <button
+                type="button"
+                onClick={runAnalysis}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition-all"
+              >
+                <Sparkles size={14} /> Analizza con AI
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          </div>
         </div>
 
         {entries.length === 0 ? (
@@ -352,7 +383,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
                   <span className="text-[10px] font-bold text-gray-400">{new Date(e.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 {e.oggetto && <p className="text-xs font-black text-gray-600 dark:text-gray-300 mt-1">{e.oggetto}</p>}
-                {e.corpo && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap line-clamp-4">{e.corpo}</p>}
+                {e.corpo && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap">{e.corpo}</p>}
                 {e.note && (
                   <div className="mt-1.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg p-2">
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Risposta del prospect</p>
@@ -364,6 +395,18 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
           </div>
         )}
       </div>
+
+      {showAiPanel && (
+        <AiPanel
+          title="Analisi cronostoria"
+          subtitle={contact.company}
+          loading={aiLoading}
+          result={aiResult}
+          error={aiError}
+          onClose={() => { setShowAiPanel(false); aiReset(); }}
+          onRetry={runAnalysis}
+        />
+      )}
     </div>
   );
 };

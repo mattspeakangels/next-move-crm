@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-type AIType = 'prepara-visita' | 'analizza-pipeline' | 'email-offerta';
+type AIType = 'prepara-visita' | 'analizza-pipeline' | 'email-offerta' | 'analizza-prospecting';
 
 interface UseClaudeAIReturn {
   result: string | null;

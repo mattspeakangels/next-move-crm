@@ -84,9 +84,24 @@ const TextAIDataSchema = z.object({
   text: z.string().min(1).max(8000),
 });
 
+const ProspectHistoryEntrySchema = z.object({
+  tocco: z.number(),
+  tipo: z.enum(['email', 'chiamata']),
+  esito: z.enum(['inviata', 'risposta', 'nessuna-risposta', 'richiesta-offerta', 'appuntamento-fissato']),
+  oggetto: z.string().max(300).optional(),
+  corpo: z.string().max(4000).optional(),
+  note: z.string().max(2000).optional(),
+  data: z.string().max(30),
+});
+
+const ProspectingDataSchema = z.object({
+  company: z.string().min(1).max(200),
+  entries: z.array(ProspectHistoryEntrySchema).min(1).max(20),
+});
+
 const RequestSchema = z.object({
-  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta', 'testo-ai']),
-  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema, TextAIDataSchema]),
+  type: z.enum(['prepara-visita', 'analizza-pipeline', 'email-offerta', 'testo-ai', 'analizza-prospecting']),
+  data: z.union([VisitaDataSchema, PipelineDataSchema, EmailOffertaDataSchema, TextAIDataSchema, ProspectingDataSchema]),
 });
 
 // ─── Security utilities ───────────────────────────────────────────────────────
@@ -271,6 +286,40 @@ ${text}
 --- FINE TESTO ---`;
 }
 
+function buildProspectingPrompt(data: {
+  company: string;
+  entries: Array<{
+    tocco: number; tipo: 'email' | 'chiamata'; esito: string;
+    oggetto?: string; corpo?: string; note?: string; data: string;
+  }>;
+}): string {
+  const { company, entries } = data;
+  const safeCompany = sanitizeInput(company);
+
+  const flow = entries.map(e => {
+    const parts = [`[Tocco ${e.tocco} — ${e.tipo === 'email' ? 'Email' : 'Chiamata'} — ${sanitizeInput(e.data)} — esito: ${sanitizeInput(e.esito)}]`];
+    if (e.oggetto) parts.push(`Oggetto: ${sanitizeInput(e.oggetto)}`);
+    if (e.corpo) parts.push(`Testo inviato: ${e.corpo.slice(0, 1500)}`);
+    if (e.note) parts.push(`Risposta del prospect: ${e.note.slice(0, 1500)}`);
+    return parts.join('\n');
+  }).join('\n\n');
+
+  return `Sei un coach commerciale esperto nel settore workwear professionale (Blåkläder). Analizza questo flusso di prospecting con un'azienda.
+
+**Azienda**: ${safeCompany}
+
+**Scambi avuti (in ordine cronologico)**:
+${flow}
+
+Analizza il flusso in italiano:
+1. **Stato della relazione** (2-3 frasi su come sta andando il prospecting)
+2. **Segnali rilevati** (interesse, obiezioni, silenzi, cosa suggeriscono)
+3. **Attività/iniziative proposte** (3-5 azioni concrete e specifiche da fare ora con questo prospect)
+4. **Prossimo passo consigliato** (1 azione prioritaria)
+
+Sii concreto e specifico su questa azienda, niente consigli generici.`;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
@@ -377,6 +426,9 @@ export default async function handler(req: { method: string; body: unknown; head
         break;
       case 'testo-ai':
         prompt = buildTextAIPrompt(data as Parameters<typeof buildTextAIPrompt>[0]);
+        break;
+      case 'analizza-prospecting':
+        prompt = buildProspectingPrompt(data as Parameters<typeof buildProspectingPrompt>[0]);
         break;
       default:
         res.status(400).json({ error: 'Invalid request type' });
