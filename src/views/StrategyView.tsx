@@ -47,6 +47,14 @@ const PRIORITA_ORDER: Record<GroupPriorita, number> = { alta: 0, media: 1, bassa
 const priorityConfig = (p: GroupPriorita) => PRIORITA_CONFIG[p] ?? PRIORITA_CONFIG.media;
 const statoConfig = (s: GroupStato) => STATO_CONFIG[s] ?? STATO_CONFIG['da-avvicinare'];
 
+const contactSublabel = (c: Contact) => {
+  const parts = [c.contactName, c.city].filter(Boolean);
+  if (c.locations && c.locations.length > 0) {
+    parts.push(`+${c.locations.length} sed${c.locations.length === 1 ? 'e' : 'i'}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : undefined;
+};
+
 const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400';
 const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1';
 
@@ -242,7 +250,7 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
                 key: c.id,
                 item: c,
                 label: c.company || '(senza nome)',
-                sublabel: c.contactName || undefined,
+                sublabel: contactSublabel(c),
               }))}
               showWhenEmpty
               placeholder="Cerca un contatto da aggiungere..."
@@ -444,7 +452,7 @@ const AddChooserModal: React.FC<AddChooserModalProps> = ({ onPickGroup, onPickCo
               key: c.id,
               item: c,
               label: c.company || '(senza nome)',
-              sublabel: c.contactName || undefined,
+              sublabel: contactSublabel(c),
             }))}
             totalCount={Object.keys(contacts).length}
             showWhenEmpty
@@ -476,7 +484,18 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
       </button>
       <button onClick={onOpenContact} className="flex-1 min-w-0 text-left">
         <p className="text-sm font-bold text-gray-800 dark:text-white truncate hover:text-indigo-600 dark:hover:text-indigo-400">{contact.company}</p>
-        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+        {(contact.city || (contact.locations && contact.locations.length > 0)) && (
+          <p className="text-[10px] text-gray-400 truncate mt-0.5">
+            {contact.city || 'Sede principale'}
+            {contact.locations && contact.locations.length > 0 && (
+              <span className="text-indigo-500 dark:text-indigo-400 font-bold">
+                {' '}+ {contact.locations.length} sed{contact.locations.length === 1 ? 'e' : 'i'}{': '}
+                {contact.locations.map(l => l.label || l.city).filter(Boolean).join(', ')}
+              </span>
+            )}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-1 mt-1">
           <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
             {contact.customerType === 'end-user' ? 'End user' : 'Dealer'}
           </span>
@@ -596,7 +615,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
             key: c.id,
             item: c,
             label: c.company || '(senza nome)',
-            sublabel: c.contactName || undefined,
+            sublabel: contactSublabel(c),
           }))}
           totalCount={Object.keys(contacts).length}
           showWhenEmpty
