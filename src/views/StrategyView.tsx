@@ -743,6 +743,7 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
   const [pickedContact, setPickedContact] = useState<Contact | null>(null);
   const [selected, setSelected] = useState<{ kind: 'group' | 'focus'; id: string } | null>(null);
   const [statoFiltro, setStatoFiltro] = useState<StatoFiltro>('tutti');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const allEntries = useMemo<ListEntry[]>(() => {
     const groupEntries: ListEntry[] = Object.values(groups).map(g => ({ kind: 'group', id: g.id, data: g }));
@@ -766,10 +767,19 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
     return counts;
   }, [allEntries]);
 
-  const entries = useMemo(
-    () => statoFiltro === 'tutti' ? allEntries : allEntries.filter(e => e.data.stato === statoFiltro),
-    [allEntries, statoFiltro]
-  );
+  const entries = useMemo(() => {
+    let list = statoFiltro === 'tutti' ? allEntries : allEntries.filter(e => e.data.stato === statoFiltro);
+    if (searchQuery.trim()) {
+      list = list.filter(e => {
+        if (e.kind === 'group') {
+          return matchSearch(searchQuery, [e.data.nome, e.data.obiettivo, e.data.note]);
+        }
+        const c = contacts[e.data.contactId];
+        return matchSearch(searchQuery, [c?.company, c?.contactName, e.data.obiettivo, e.data.note]);
+      });
+    }
+    return list;
+  }, [allEntries, statoFiltro, searchQuery, contacts]);
 
   const contactCountByGroup = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -802,6 +812,22 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
         <button onClick={() => setShowChooser(true)} className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 flex-shrink-0">
           <Plus size={22} />
         </button>
+      </div>
+
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus-within:border-indigo-400 transition-colors">
+        <Search size={15} className="text-gray-400 flex-shrink-0" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Cerca per gruppo, cliente, obiettivo o nota…"
+          className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold min-w-0"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors">
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">

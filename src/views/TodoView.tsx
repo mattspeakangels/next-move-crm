@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   CheckSquare, Square, Plus, Trash2, Filter, ChevronDown, ChevronRight,
-  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users, Pencil, Mail,
+  AlertCircle, Clock, CheckCircle2, Building2, X, Calendar, List, Users, Pencil, Mail, Search,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView, Contact } from '../types';
@@ -668,17 +668,24 @@ export const TodoView: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'lista' | 'cliente'>('cliente');
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set(['__none__']));
+  const [searchQuery, setSearchQuery] = useState('');
 
   const allTodos = Object.values(todos);
 
   // "Da fare" (status interno 'tutti') = attività ancora aperte: una volta completata,
   // l'attività esce da questa vista e resta visibile solo nel tab "Fatto", senza restarci duplicata
   const matchesStatus = (t: TodoItem) => filterStatus === 'tutti' ? t.status !== 'fatto' : t.status === filterStatus;
+  const matchesSearch = (t: TodoItem) => {
+    if (!searchQuery.trim()) return true;
+    const c = t.contactId ? contacts[t.contactId] : undefined;
+    return matchSearch(searchQuery, [t.titolo, t.note, c?.company, c?.contactName]);
+  };
 
   const filtered = useMemo(() => {
     return allTodos
       .filter(matchesStatus)
       .filter(t => filterTipo === 'tutti' || t.tipo === filterTipo)
+      .filter(matchesSearch)
       .sort((a, b) => {
         // Priorità: alta → media → bassa; poi per scadenza
         const p = { alta: 0, media: 1, bassa: 2 };
@@ -689,13 +696,14 @@ export const TodoView: React.FC = () => {
         if (b.scadenza) return 1;
         return b.createdAt - a.createdAt;
       });
-  }, [todos, filterStatus, filterTipo]);
+  }, [todos, contacts, filterStatus, filterTipo, searchQuery]);
 
   // Raggruppamento per cliente
   const byClient = useMemo(() => {
     const base = allTodos
       .filter(matchesStatus)
-      .filter(t => filterTipo === 'tutti' || t.tipo === filterTipo);
+      .filter(t => filterTipo === 'tutti' || t.tipo === filterTipo)
+      .filter(matchesSearch);
 
     const map = new Map<string, { name: string; todos: typeof base }>();
     const sortTodos = (arr: typeof base) =>
@@ -728,7 +736,7 @@ export const TodoView: React.FC = () => {
         if (b.key === '__none__') return -1;
         return a.name.localeCompare(b.name, 'it');
       });
-  }, [todos, contacts, filterStatus, filterTipo]);
+  }, [todos, contacts, filterStatus, filterTipo, searchQuery]);
 
   const toggleClient = (key: string) => {
     setExpandedClients(prev => {
@@ -789,6 +797,23 @@ export const TodoView: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus-within:border-indigo-400 transition-colors">
+        <Search size={15} className="text-gray-400 flex-shrink-0" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Cerca per titolo, nota o cliente…"
+          className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold min-w-0"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors">
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {/* Status tabs */}
@@ -860,7 +885,7 @@ export const TodoView: React.FC = () => {
         ) : (
           <div className="space-y-3">
             {byClient.map(({ key, name, todos: clientTodos }) => {
-              const open = expandedClients.has(key);
+              const open = searchQuery.trim() ? true : expandedClients.has(key);
               const scadutiClient = clientTodos.filter(t => t.status !== 'fatto' && isOverdue(t.scadenza)).length;
               const daFareClient = clientTodos.filter(t => t.status === 'da-fare').length;
               return (
