@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, type LucideIcon } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -327,6 +327,7 @@ const MicrophonePermissionSection: React.FC = () => {
 const SIDEBAR_ITEMS: { id: import('../types').NavView; label: string; icon: LucideIcon }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'prospecting', label: 'Prospecting', icon: Radar },
+  { id: 'strategia', label: 'Strategia', icon: Crosshair },
   { id: 'deals', label: 'Pipeline', icon: Target },
   { id: 'contacts', label: 'Clienti', icon: Users },
   { id: 'offers', label: 'Offerte', icon: FileText },
