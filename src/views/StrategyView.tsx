@@ -136,12 +136,13 @@ const FocusSummaryBadges: React.FC<{ entry: { dataFinePrevista?: string; prossim
 
 interface GroupFormModalProps {
   group?: Group;
-  onSave: (data: Omit<Group, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSave: (data: Omit<Group, 'id' | 'createdAt' | 'updatedAt'>, contactIds: string[]) => void;
   onDelete?: () => void;
   onClose: () => void;
 }
 
 const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete, onClose }) => {
+  const { contacts } = useStore();
   const [nome, setNome] = useState(group?.nome || '');
   const [tipo, setTipo] = useState<GroupTipo>(group?.tipo || 'dealer-chain');
   const [priorita, setPriorita] = useState<GroupPriorita>(group?.priorita || 'media');
@@ -153,6 +154,17 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
   const [prossimaAzione, setProssimaAzione] = useState(group?.prossimaAzione || '');
   const [prossimaAzioneScadenza, setProssimaAzioneScadenza] = useState(group?.prossimaAzioneScadenza || '');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
+
+  const selectedIds = useMemo(() => new Set(selectedContacts.map(c => c.id)), [selectedContacts]);
+  const contactResults = useMemo(
+    () => Object.values(contacts)
+      .filter(c => !c.groupId && !selectedIds.has(c.id))
+      .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city]))
+      .sort((a, b) => a.company.localeCompare(b.company, 'it')),
+    [contacts, selectedIds, contactSearch]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +180,7 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
       dataFinePrevista: dataFinePrevista || undefined,
       prossimaAzione: prossimaAzione.trim() || undefined,
       prossimaAzioneScadenza: prossimaAzioneScadenza || undefined,
-    });
+    }, selectedContacts.map(c => c.id));
     onClose();
   };
 
@@ -218,6 +230,40 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
           prossimaAzione={prossimaAzione} setProssimaAzione={setProssimaAzione}
           prossimaAzioneScadenza={prossimaAzioneScadenza} setProssimaAzioneScadenza={setProssimaAzioneScadenza}
         />
+
+        {!group && (
+          <div>
+            <label className={labelCls}>Clienti / prospect nel gruppo</label>
+            <SearchDropdown
+              value={contactSearch}
+              onChange={setContactSearch}
+              onSelect={c => { setSelectedContacts(prev => [...prev, c]); setContactSearch(''); }}
+              results={contactResults.map(c => ({
+                key: c.id,
+                item: c,
+                label: c.company || '(senza nome)',
+                sublabel: c.contactName || undefined,
+              }))}
+              showWhenEmpty
+              placeholder="Cerca un contatto da aggiungere..."
+              emptyTitle="🔍 Nessun risultato"
+              emptySubtitle="Prova con un termine diverso"
+              inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-indigo-400' : 'border-gray-100 dark:border-gray-700'}`}
+            />
+            {selectedContacts.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedContacts.map(c => (
+                  <span key={c.id} className="flex items-center gap-1 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 pl-2.5 pr-1.5 py-1 rounded-full">
+                    {c.company || c.contactName}
+                    <button type="button" onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))} className="text-indigo-400 hover:text-indigo-600">
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <label className={labelCls}>Note</label>
@@ -736,7 +782,7 @@ type StatoFiltro = GroupStato | 'tutti';
 const STATO_FILTRI: StatoFiltro[] = ['tutti', 'da-avvicinare', 'in-corso', 'attivo', 'abbandonato'];
 
 export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact }) => {
-  const { groups, strategicFocuses, contacts, addGroup, addStrategicFocus } = useStore();
+  const { groups, strategicFocuses, contacts, addGroup, addStrategicFocus, updateContact } = useStore();
   const { showToast } = useToast();
   const [showChooser, setShowChooser] = useState(false);
   const [showGroupForm, setShowGroupForm] = useState(false);
@@ -901,11 +947,12 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
       {showGroupForm && (
         <GroupFormModal
           onClose={() => setShowGroupForm(false)}
-          onSave={data => {
+          onSave={(data, contactIds) => {
             const id = crypto.randomUUID();
             const now = Date.now();
             addGroup({ id, ...data, createdAt: now, updatedAt: now });
-            showToast('Gruppo creato', 'success');
+            contactIds.forEach(cid => updateContact(cid, { groupId: id }));
+            showToast(contactIds.length > 0 ? `Gruppo creato con ${contactIds.length} contatt${contactIds.length === 1 ? 'o' : 'i'}` : 'Gruppo creato', 'success');
             setSelected({ kind: 'group', id });
           }}
         />
