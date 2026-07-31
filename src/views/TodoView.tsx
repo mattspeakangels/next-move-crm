@@ -597,8 +597,8 @@ export const TodoView: React.FC = () => {
 
   const allTodos = Object.values(todos);
 
-  // "Tutti" = attività ancora aperte: una volta completata, l'attività esce
-  // da questa vista e resta visibile solo nel tab "Fatto", senza restarci duplicata
+  // "Da fare" (status interno 'tutti') = attività ancora aperte: una volta completata,
+  // l'attività esce da questa vista e resta visibile solo nel tab "Fatto", senza restarci duplicata
   const matchesStatus = (t: TodoItem) => filterStatus === 'tutti' ? t.status !== 'fatto' : t.status === filterStatus;
 
   const filtered = useMemo(() => {
@@ -670,7 +670,7 @@ export const TodoView: React.FC = () => {
   const scaduti = allTodos.filter(t => t.status !== 'fatto' && isOverdue(t.scadenza)).length;
 
   const sections: { status: TodoStatus | 'tutti'; label: string; count: number; color: string }[] = [
-    { status: 'tutti',    label: 'Tutti',    count: daFare, color: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+    { status: 'tutti',    label: 'Da fare', count: daFare, color: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
     { status: 'fatto',    label: 'Fatto',    count: fatto,  color: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
   ];
 
