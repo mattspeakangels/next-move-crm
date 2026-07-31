@@ -1,17 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import {
   Radar, X, Mail, Phone, Linkedin, Clock, AlertCircle, CheckCircle2,
-  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2, History, BellRing,
+  Copy, Building2, PauseCircle, XCircle, TrendingUp, BarChart3, Calendar, Pencil, Trash2, History, BellRing, Plus,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { EmptyState } from '../components/ui/EmptyState';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch } from '../utils/search';
 import type {
   Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView, ProspectHistoryEntry, ProspectEmailDraft,
 } from '../types';
 import { isNotificationSupported, requestProspectingNotificationPermission } from '../hooks/useProspectingReminders';
 import {
-  advanceTouch, getTouch, wakeUpIfDue, convertToLead,
+  advanceTouch, getTouch, wakeUpIfDue, convertToLead, startSequenceForContact,
 } from '../lib/prospecting';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -882,6 +884,118 @@ const ReportTab: React.FC = () => {
   );
 };
 
+// ─── Avvio manuale sequenza post visita a freddo ─────────────────────────────
+
+const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const { contacts, sequences, prospectingTracks, addProspectingTrack, addProspectEmailDraftsBatch, updateContact } = useStore();
+  const { showToast } = useToast();
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [contactSearch, setContactSearch] = useState('');
+  const [settore, setSettore] = useState<ProspectingSettore>('industria');
+  const [dettaglioVisita, setDettaglioVisita] = useState('');
+
+  const activeContactIds = useMemo(
+    () => new Set(Object.values(prospectingTracks).filter(t => t.stato === 'attiva').map(t => t.contactId)),
+    [prospectingTracks]
+  );
+
+  const contactResults = useMemo(
+    () => Object.values(contacts)
+      .filter(c => c.status === 'potenziale' && !activeContactIds.has(c.id))
+      .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city]))
+      .sort((a, b) => a.company.localeCompare(b.company, 'it')),
+    [contacts, activeContactIds, contactSearch]
+  );
+
+  const handleStart = () => {
+    if (!selectedContact) return;
+    const sequence = Object.values(sequences).find(s => s.settore === settore);
+    if (!sequence) {
+      showToast('Nessuna sequenza trovata per questo settore', 'error');
+      return;
+    }
+    const { track, emailDrafts } = startSequenceForContact(selectedContact, sequence, dettaglioVisita.trim() || undefined);
+    addProspectingTrack(track);
+    addProspectEmailDraftsBatch(emailDrafts);
+    updateContact(selectedContact.id, { prospectingStato: 'in_sequenza', prospectingSettore: settore });
+    showToast(`Sequenza "${sequence.nome}" avviata per ${selectedContact.company}`, 'success');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black text-gray-900 dark:text-white">Nuova sequenza post visita a freddo</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+        </div>
+
+        {selectedContact ? (
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+            <Building2 size={16} className="text-gray-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{selectedContact.company}</p>
+              {selectedContact.city && <p className="text-[10px] text-gray-400">{selectedContact.city}</p>}
+            </div>
+            <button onClick={() => setSelectedContact(null)} className="text-gray-300 hover:text-gray-500"><X size={14} /></button>
+          </div>
+        ) : (
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Prospect visitato</label>
+            <SearchDropdown
+              value={contactSearch}
+              onChange={setContactSearch}
+              onSelect={c => { setSelectedContact(c); setContactSearch(''); }}
+              results={contactResults.map(c => ({
+                key: c.id,
+                item: c,
+                label: c.company || '(senza nome)',
+                sublabel: [c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+              }))}
+              showWhenEmpty
+              placeholder="Cerca un prospect già in rubrica..."
+              emptyTitle="🔍 Nessun prospect trovato"
+              emptySubtitle="Solo prospect senza una sequenza già attiva"
+              autoFocus
+            />
+          </div>
+        )}
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Settore</label>
+          <select
+            value={settore}
+            onChange={e => setSettore(e.target.value as ProspectingSettore)}
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400"
+          >
+            {Object.entries(SETTORE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Dettaglio visita (facoltativo)</label>
+          <textarea
+            value={dettaglioVisita}
+            onChange={e => setDettaglioVisita(e.target.value)}
+            rows={3}
+            placeholder="Es. Lasciato il catalogo, parlato con il titolare..."
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 resize-none text-sm"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">Viene usato per personalizzare i template email della sequenza.</p>
+        </div>
+
+        <button
+          onClick={handleStart}
+          disabled={!selectedContact}
+          className="w-full py-3 rounded-xl bg-indigo-600 text-white font-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-indigo-700"
+        >
+          Avvia sequenza
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main View ───────────────────────────────────────────────────────────────
 
 interface ProspectingViewProps {
@@ -893,6 +1007,7 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
   const [notifStatus, setNotifStatus] = useState<NotificationPermission | 'unsupported'>(
     isNotificationSupported() ? Notification.permission : 'unsupported'
   );
+  const [showNewSequence, setShowNewSequence] = useState(false);
 
   const tabs: { id: typeof tab; label: string; icon: typeof Radar }[] = [
     { id: 'oggi', label: 'Oggi', icon: Clock },
@@ -908,6 +1023,13 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
             <Radar size={24} className="text-indigo-600" />
             Prospecting
           </h1>
+          <button
+            onClick={() => setShowNewSequence(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
+          >
+            <Plus size={15} />
+            <span className="hidden sm:inline">Nuova sequenza</span>
+          </button>
         </div>
         <p className="text-xs text-gray-400 font-bold mt-1">
           Registra le visite a freddo dall'Agenda: qui gestisci i tocchi email/telefonata che portano il prospect a richiedere un'offerta.
@@ -939,6 +1061,8 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
       {tab === 'oggi' && <OggiTab onNavigate={onNavigate} />}
       {tab === 'prospect' && <ProspectTab />}
       {tab === 'report' && <ReportTab />}
+
+      {showNewSequence && <NewSequenceModal onClose={() => setShowNewSequence(false)} />}
     </div>
   );
 };
