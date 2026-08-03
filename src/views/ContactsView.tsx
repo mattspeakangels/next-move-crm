@@ -729,6 +729,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [topFilter, setTopFilter] = useState<'dealer' | 'end-user' | null>(null);
   const [subFilter, setSubFilter] = useState<'industria' | 'edilizia' | null>(null);
   const [visibleCount, setVisibleCount] = useState(50);
+  const [sortBy, setSortBy] = useState<'nome' | 'data' | 'citta'>('nome');
 
   // Debounce ricerca — evita filter su ogni keystroke con 9k+ contatti
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
@@ -754,8 +755,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       })
       .filter(c => matchSearch(debouncedSearch, [
         c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
-      ]));
-  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch]);
+      ]))
+      .sort((a, b) => {
+        if (sortBy === 'data') return (b.createdAt || 0) - (a.createdAt || 0);
+        if (sortBy === 'citta') return (a.city || '').localeCompare(b.city || '', 'it', { sensitivity: 'base' });
+        return (a.company || a.contactName || '').localeCompare(b.company || b.contactName || '', 'it', { sensitivity: 'base' });
+      });
+  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch, sortBy]);
 
   // Reset paginazione quando cambia lista
   useEffect(() => { setVisibleCount(50); }, [filteredList]);
@@ -1682,6 +1688,17 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       },
                     }))}
                   />
+
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as 'nome' | 'data' | 'citta')}
+                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3.5 font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-sm text-gray-600 dark:text-gray-300"
+                    title="Ordina per"
+                  >
+                    <option value="nome">Nome A-Z</option>
+                    <option value="data">Data creazione</option>
+                    <option value="citta">Città A-Z</option>
+                  </select>
 
                   {/* CSV input — clienti */}
                   <input type="file" accept=".csv,.xlsx,.xls" className="hidden" ref={fileInputRef}
