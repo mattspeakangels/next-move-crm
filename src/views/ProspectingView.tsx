@@ -428,6 +428,8 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   const [editingDraft, setEditingDraft] = useState(false);
   const [pendingEsito, setPendingEsito] = useState<null | 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato'>(null);
   const [rispostaTesto, setRispostaTesto] = useState('');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
   const apriModalRisposta = (esito: 'risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
     setRispostaTesto('');
     setPendingEsito(esito);
@@ -499,6 +501,21 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   const posticipa = () => {
     updateProspectingTrack(track.id, { dataProssimoTocco: Date.now() + 3 * DAY_MS });
     showToast('Tocco posticipato di 3 giorni', 'info');
+  };
+
+  const apriModalSchedula = () => {
+    const d = new Date(Math.max(track.dataProssimoTocco, Date.now()));
+    setScheduleDate(d.toISOString().slice(0, 10));
+    setShowScheduleModal(true);
+  };
+
+  const confermaSchedula = () => {
+    if (!scheduleDate) return;
+    // Mezzogiorno locale per evitare che il fuso orario faccia scivolare la data al giorno prima.
+    const data = new Date(`${scheduleDate}T12:00:00`).getTime();
+    updateProspectingTrack(track.id, { dataProssimoTocco: data });
+    setShowScheduleModal(false);
+    showToast(`Tocco schedulato per ${formatDate(data)}`, 'info');
   };
 
   const esitoTelefonata = (esito: 'risposta' | 'nessuna-risposta' | 'richiesta-offerta' | 'appuntamento-fissato') => {
@@ -619,9 +636,46 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
           className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700"
         >Appuntamento fissato</button>
         <button onClick={posticipa} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Clock size={13} />Posticipa 3gg</button>
+        <button onClick={apriModalSchedula} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Calendar size={13} />Schedula</button>
       </div>
 
       {editingDraft && draft && <EditEmailDraftModal draft={draft} onClose={() => setEditingDraft(false)} />}
+
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowScheduleModal(false); }}>
+          <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-3 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-gray-900 dark:text-white">Schedula prossimo tocco</h2>
+              <button type="button" onClick={() => setShowScheduleModal(false)} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+            </div>
+            <p className="text-xs text-gray-400 font-bold">Scegli quando far ricomparire {contact.company} in coda, ad esempio al rientro dalle ferie.</p>
+            <input
+              type="date"
+              autoFocus
+              value={scheduleDate}
+              onChange={e => setScheduleDate(e.target.value)}
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 text-sm"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={confermaSchedula}
+                disabled={!scheduleDate}
+                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700 disabled:opacity-50"
+              >
+                Schedula
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 font-black"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pendingEsito && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setPendingEsito(null); }}>
