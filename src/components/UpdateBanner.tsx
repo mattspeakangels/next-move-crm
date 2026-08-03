@@ -1,18 +1,25 @@
+import { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 // Ogni quanto chiedere al server se c'è una nuova versione (oltre al check
 // automatico al ritorno in foreground). iOS non controlla da solo: lo forziamo.
 const UPDATE_CHECK_MS = 20 * 60 * 1000; // 20 minuti
 
+// Se l'utente non interagisce, l'update si applica comunque da solo dopo
+// questo tempo: un telefono lasciato aperto su una versione vecchia non deve
+// restare bloccato lì (causa di crash quando il backend cambia formato dati).
+const AUTO_APPLY_MS = 15 * 1000;
+
 /**
  * Banner che compare quando un nuovo deploy è disponibile (service worker in
- * attesa). Cliccando "Aggiorna" si attiva il nuovo SW e si ricarica l'app.
+ * attesa). Mostra "Aggiorna" per farlo subito, ma si applica comunque da solo
+ * dopo AUTO_APPLY_MS per evitare che i telefoni restino su versioni stale.
  * Richiede registerType: 'prompt' in vite.config.ts.
  */
 export function UpdateBanner() {
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
@@ -25,6 +32,12 @@ export function UpdateBanner() {
       });
     },
   });
+
+  useEffect(() => {
+    if (!needRefresh) return;
+    const timer = setTimeout(() => updateServiceWorker(true), AUTO_APPLY_MS);
+    return () => clearTimeout(timer);
+  }, [needRefresh, updateServiceWorker]);
 
   if (!needRefresh) return null;
 
@@ -39,15 +52,8 @@ export function UpdateBanner() {
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black text-gray-900 dark:text-white">Nuova versione disponibile</p>
-        <p className="text-xs text-gray-400">Aggiorna per avere le ultime novità</p>
+        <p className="text-xs text-gray-400">Si applica automaticamente tra pochi secondi</p>
       </div>
-      <button
-        onClick={() => setNeedRefresh(false)}
-        aria-label="Ignora aggiornamento"
-        className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
-      >
-        <X size={16} />
-      </button>
       <button
         onClick={() => updateServiceWorker(true)}
         className="flex-shrink-0 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-black uppercase tracking-wide text-white transition-all hover:bg-indigo-700"
