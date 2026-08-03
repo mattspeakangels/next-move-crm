@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useStore } from '../store/useStore';
@@ -730,6 +730,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [subFilter, setSubFilter] = useState<'industria' | 'edilizia' | null>(null);
   const [visibleCount, setVisibleCount] = useState(50);
   const [sortBy, setSortBy] = useState<'nome' | 'data' | 'citta'>('nome');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Debounce ricerca — evita filter su ogni keystroke con 9k+ contatti
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
@@ -757,11 +758,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
       ]))
       .sort((a, b) => {
-        if (sortBy === 'data') return (b.createdAt || 0) - (a.createdAt || 0);
-        if (sortBy === 'citta') return (a.city || '').localeCompare(b.city || '', 'it', { sensitivity: 'base' });
-        return (a.company || a.contactName || '').localeCompare(b.company || b.contactName || '', 'it', { sensitivity: 'base' });
+        const dir = sortDir === 'asc' ? 1 : -1;
+        if (sortBy === 'data') return ((a.createdAt || 0) - (b.createdAt || 0)) * dir;
+        if (sortBy === 'citta') return (a.city || '').localeCompare(b.city || '', 'it', { sensitivity: 'base' }) * dir;
+        return (a.company || a.contactName || '').localeCompare(b.company || b.contactName || '', 'it', { sensitivity: 'base' }) * dir;
       });
-  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch, sortBy]);
+  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch, sortBy, sortDir]);
 
   // Reset paginazione quando cambia lista
   useEffect(() => { setVisibleCount(50); }, [filteredList]);
@@ -1695,10 +1697,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3.5 font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-sm text-gray-600 dark:text-gray-300"
                     title="Ordina per"
                   >
-                    <option value="nome">Nome A-Z</option>
+                    <option value="nome">Nome</option>
                     <option value="data">Data creazione</option>
-                    <option value="citta">Città A-Z</option>
+                    <option value="citta">Città</option>
                   </select>
+                  <button
+                    type="button"
+                    onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3.5 py-3.5 font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    title={sortDir === 'asc' ? 'Crescente' : 'Decrescente'}
+                  >
+                    {sortDir === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                  </button>
 
                   {/* CSV input — clienti */}
                   <input type="file" accept=".csv,.xlsx,.xls" className="hidden" ref={fileInputRef}
