@@ -2,16 +2,12 @@
 // per tenere le foto (assortimento/negozio) il più leggere possibile prima
 // di salvarle come base64 in Firestore (niente Firebase Storage in questo progetto).
 
-// Le foto iPhone (HEIC/HEIF, codec HEVC) non vengono decodificate da <img> in
-// tutti i browser/webview: le convertiamo in JPEG con heic2any prima del resto.
-function isHeic(file: File): boolean {
-  const type = file.type.toLowerCase();
-  if (type === 'image/heic' || type === 'image/heif') return true;
-  return /\.(heic|heif)$/i.test(file.name);
-}
-
-async function toJpegIfHeic(file: File): Promise<File | Blob> {
-  if (!isHeic(file)) return file;
+// Alcune foto (HEIC/HEIF iPhone, ma anche scatti Samsung/Xiaomi con "immagini ad
+// alta efficienza" codificate HEVC e a volte salvate con estensione .jpg fuorviante)
+// non vengono decodificate da <img> in tutti i browser/webview. Invece di fidarci
+// del mime/estensione dichiarati dal telefono, proviamo prima la decodifica nativa
+// e solo se fallisce ripieghiamo sulla conversione in JPEG via heic2any (libheif wasm).
+async function toJpegViaHeic2any(file: File | Blob): Promise<Blob> {
   const heic2any = (await import('heic2any')).default;
   const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
   return Array.isArray(result) ? result[0] : result;
@@ -54,8 +50,18 @@ export interface CompressedImage {
 // full: max 1280px lato lungo, qualità 0.72 → tipicamente 80-250KB
 // thumb: max 240px lato lungo, qualità 0.5 → tipicamente 5-15KB, per la griglia
 export async function compressImage(file: File): Promise<CompressedImage> {
-  const source = await toJpegIfHeic(file);
-  const img = await loadImage(source);
+  let img: HTMLImageElement;
+  try {
+    img = await loadImage(file);
+  } catch {
+    // Decodifica nativa fallita (probabile HEIC/HEVC): riprova convertendo in JPEG.
+    try {
+      const jpegBlob = await toJpegViaHeic2any(file);
+      img = await loadImage(jpegBlob);
+    } catch {
+      throw new Error('Immagine non valida: formato non supportato dal browser');
+    }
+  }
   const fullCanvas = drawToCanvas(img, 1280);
   const dataUrl = canvasToDataUrl(fullCanvas, 0.72);
   const thumbCanvas = drawToCanvas(img, 240);
