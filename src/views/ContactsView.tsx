@@ -659,6 +659,9 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
               className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm group"
             >
               <img src={photo.thumb} alt={photo.name} className="w-full h-full object-cover" />
+              <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 text-white text-[8px] font-black">
+                {fmtFileSize(photo.size)}
+              </span>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                 <ZoomIn size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
