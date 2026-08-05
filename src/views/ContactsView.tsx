@@ -627,7 +627,7 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
 
   return (
     <section>
-      <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" className="hidden" onChange={handleFilesChange} />
+      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFilesChange} />
 
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
