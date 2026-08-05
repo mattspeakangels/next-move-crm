@@ -53,13 +53,22 @@ export async function compressImage(file: File): Promise<CompressedImage> {
   let img: HTMLImageElement;
   try {
     img = await loadImage(file);
-  } catch {
+  } catch (nativeErr) {
     // Decodifica nativa fallita (probabile HEIC/HEVC): riprova convertendo in JPEG.
     try {
       const jpegBlob = await toJpegViaHeic2any(file);
       img = await loadImage(jpegBlob);
-    } catch {
-      throw new Error('Immagine non valida: formato non supportato dal browser');
+    } catch (heicErr: any) {
+      // Log dettagliato per diagnosticare il formato reale del file dal telefono.
+      console.error('[compressImage] decodifica fallita', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        nativeErr,
+        heicErr,
+      });
+      const detail = heicErr?.message ?? String(heicErr);
+      throw new Error(`Immagine non valida (${file.type || 'tipo sconosciuto'}, ${file.name}): ${detail}`);
     }
   }
   const fullCanvas = drawToCanvas(img, 1280);
