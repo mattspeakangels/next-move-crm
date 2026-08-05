@@ -47,8 +47,8 @@ export interface CompressedImage {
   size: number;
 }
 
-// full: max 1280px lato lungo, qualità 0.72 → tipicamente 80-250KB
-// thumb: max 240px lato lungo, qualità 0.5 → tipicamente 5-15KB, per la griglia
+// full: max 800px lato lungo, qualità 0.55 → tipicamente 20-60KB
+// thumb: max 160px lato lungo, qualità 0.4 → tipicamente 2-6KB, per la griglia
 export async function compressImage(file: File): Promise<CompressedImage> {
   let img: HTMLImageElement;
   try {
@@ -71,10 +71,10 @@ export async function compressImage(file: File): Promise<CompressedImage> {
       throw new Error(`Immagine non valida (${file.type || 'tipo sconosciuto'}, ${file.name}): ${detail}`);
     }
   }
-  const fullCanvas = drawToCanvas(img, 1280);
-  const dataUrl = canvasToDataUrl(fullCanvas, 0.72);
-  const thumbCanvas = drawToCanvas(img, 240);
-  const thumbDataUrl = canvasToDataUrl(thumbCanvas, 0.5);
+  const fullCanvas = drawToCanvas(img, 800);
+  const dataUrl = canvasToDataUrl(fullCanvas, 0.55);
+  const thumbCanvas = drawToCanvas(img, 160);
+  const thumbDataUrl = canvasToDataUrl(thumbCanvas, 0.4);
   const size = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75);
   return { dataUrl, thumbDataUrl, width: fullCanvas.width, height: fullCanvas.height, size };
 }
