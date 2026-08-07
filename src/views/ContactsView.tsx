@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Sparkles, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useStore } from '../store/useStore';
 import { Contact, ContactSegment } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
-import { useClaudeAI } from '../hooks/useClaudeAI';
-import { AiPanel } from '../components/ai/AiPanel';
 import { ProfilingForm } from '../components/profiling/ProfilingForm';
 import { ImportFromUrlModal } from '../components/contacts/ImportFromUrlModal';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -725,7 +723,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [editingContact, setEditingContact] = useState<any>(null);
   const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
   const [pendingDeleteAll, setPendingDeleteAll] = useState(false);
-  const [showAiPanel, setShowAiPanel] = useState(false);
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'clienti' | 'prospect'>('clienti');
@@ -774,7 +771,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'ok' | 'error'>('idle');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const { result: aiResult, loading: aiLoading, error: aiError, run: aiRun, reset: aiReset } = useClaudeAI();
 
   useEffect(() => {
     if (initialSearch) setSearchTerm(initialSearch);
@@ -1155,45 +1151,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
                 >
                   <History size={14} /> <span className="hidden sm:inline">Storico</span>
-                </button>
-              )}
-              {editingContact?.id && contacts[editingContact.id] && (
-                <button
-                  onClick={() => {
-                    const contactDeals = Object.values(deals)
-                      .filter(d => d.contactId === editingContact.id && !['chiuso-vinto','chiuso-perso'].includes(d.stage))
-                      .map(d => ({
-                        stage: d.stage,
-                        value: d.value,
-                        nextAction: d.nextAction,
-                        notes: d.notes,
-                      }));
-                    const { activities } = useStore.getState();
-                    const recentActivities = Object.values(activities)
-                      .filter(a => a.contactId === editingContact.id)
-                      .sort((a, b) => b.date - a.date)
-                      .slice(0, 5)
-                      .map(a => ({
-                        type: a.type,
-                        date: new Date(a.date).toLocaleDateString('it-IT'),
-                        outcome: a.outcome,
-                        notes: a.notes,
-                      }));
-                    setShowAiPanel(true);
-                    aiRun('prepara-visita', {
-                      company: editingContact.company,
-                      sector: editingContact.sector || '',
-                      customerType: editingContact.customerType,
-                      region: editingContact.region,
-                      intelligence: editingContact.intelligence,
-                      stakeholders: editingContact.stakeholders,
-                      openDeals: contactDeals,
-                      recentActivities,
-                    });
-                  }}
-                  className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
-                >
-                  <Sparkles size={14} /> <span className="hidden sm:inline">Prepara Visita</span>
                 </button>
               )}
               {/* Bottone sincronizzazione mappa — visibile se mancano le coordinate */}
@@ -1928,33 +1885,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           description={`Stai per eliminare ${Object.values(contacts).length} contatti dal database. Questa azione non è reversibile.`}
           onConfirm={() => { deleteAllContacts(); setPendingDeleteAll(false); }}
           onCancel={() => setPendingDeleteAll(false)}
-        />
-      )}
-
-      {/* AI Panel — Prepara Visita */}
-      {showAiPanel && (
-        <AiPanel
-          title="Prepara Visita"
-          subtitle={editingContact?.company}
-          loading={aiLoading}
-          result={aiResult}
-          error={aiError}
-          onClose={() => { setShowAiPanel(false); aiReset(); }}
-          onRetry={() => {
-            const contactDeals = Object.values(deals)
-              .filter(d => d.contactId === editingContact?.id && !['chiuso-vinto','chiuso-perso'].includes(d.stage))
-              .map(d => ({ stage: d.stage, value: d.value, nextAction: d.nextAction, notes: d.notes }));
-            aiRun('prepara-visita', {
-              company: editingContact?.company,
-              sector: editingContact?.sector || '',
-              customerType: editingContact?.customerType,
-              region: editingContact?.region,
-              intelligence: editingContact?.intelligence,
-              stakeholders: editingContact?.stakeholders,
-              openDeals: contactDeals,
-              recentActivities: [],
-            });
-          }}
         />
       )}
 
