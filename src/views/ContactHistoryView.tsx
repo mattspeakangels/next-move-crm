@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
+import { useToast } from '../components/ui/ToastContext';
+import { QuickLogModal } from '../components/activities/QuickLogModal';
 import { Contact } from '../types';
 import { blakladerUrl } from '../lib/blaklader';
 import {
   ArrowLeft, Phone, Mail, MapPin, Video, Wrench, GraduationCap,
   MonitorPlay, FileText, TrendingUp, StickyNote,
-  ShoppingCart, CheckCircle, XCircle, Send, Package,
+  ShoppingCart, CheckCircle, XCircle, Send, Package, Plus,
 } from 'lucide-react';
 
 // ── Tipi evento unificati ────────────────────────────────────────────────
@@ -77,7 +79,9 @@ function matchWords(a: string, b: string): number {
 }
 
 export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
-  const { activities, offers, salesTransactions, deals, products } = useStore();
+  const { activities, offers, salesTransactions, deals, products, addActivity } = useStore();
+  const { showToast } = useToast();
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const { clientiDettagliati } = useStoricoStore();
 
   // Mappa codice prodotto → nome leggibile dal catalogo
@@ -249,6 +253,28 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
     return { acts, offs, ords, fatturato };
   }, [allEvents]);
 
+  // ── Email scambiate con questo contatto ──
+
+  const emailActivities = useMemo(() => {
+    return Object.values(activities)
+      .filter(a => a.contactId === contact.id && a.type === 'email')
+      .sort((a, b) => b.date - a.date);
+  }, [activities, contact.id]);
+
+  const handleSaveEmail = (type: 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio', notes: string) => {
+    if (!notes.trim()) return;
+    addActivity({
+      id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      contactId: contact.id,
+      type,
+      date: Date.now(),
+      outcome: 'fatto',
+      notes,
+      createdAt: Date.now(),
+    });
+    showToast('Email registrata', 'success');
+  };
+
   // ── Raggruppa per mese ──
 
   const grouped = useMemo(() => {
@@ -308,6 +334,43 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
           </div>
         ))}
       </div>
+
+      {/* Email */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Mail size={16} className="text-blue-500" />
+            <h2 className="text-sm font-black dark:text-white">Email ({emailActivities.length})</h2>
+          </div>
+          <button
+            onClick={() => setShowEmailModal(true)}
+            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          >
+            <Plus size={12} /> Aggiungi email
+          </button>
+        </div>
+
+        {emailActivities.length === 0 ? (
+          <p className="text-xs text-gray-300 dark:text-gray-600 font-bold py-2">Nessuna email registrata per questo cliente</p>
+        ) : (
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {emailActivities.map(a => (
+              <div key={a.id} className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30">
+                <p className="text-[10px] text-gray-400 font-bold mb-1">{fmt(a.date)}</p>
+                <p className="text-sm dark:text-gray-100 whitespace-pre-wrap break-words">{a.notes}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showEmailModal && (
+        <QuickLogModal
+          companyName={contact.company}
+          onClose={() => setShowEmailModal(false)}
+          onSave={handleSaveEmail}
+        />
+      )}
 
       {/* Filtri */}
       <div className="flex gap-2 flex-wrap">
