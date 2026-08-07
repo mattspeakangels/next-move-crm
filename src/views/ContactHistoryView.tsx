@@ -7,18 +7,7 @@ import {
   ArrowLeft, Phone, Mail, MapPin, Video, Wrench, GraduationCap,
   MonitorPlay, FileText, TrendingUp, StickyNote,
   ShoppingCart, CheckCircle, XCircle, Send, Package,
-  Navigation, Users, ExternalLink
 } from 'lucide-react';
-
-// Haversine distance in km
-function calcDist(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 // ── Tipi evento unificati ────────────────────────────────────────────────
 
@@ -88,7 +77,7 @@ function matchWords(a: string, b: string): number {
 }
 
 export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
-  const { activities, offers, salesTransactions, deals, contacts, products } = useStore();
+  const { activities, offers, salesTransactions, deals, products } = useStore();
   const { clientiDettagliati } = useStoricoStore();
 
   // Mappa codice prodotto → nome leggibile dal catalogo
@@ -100,7 +89,6 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
     return map;
   }, [products]);
   const [filter, setFilter] = useState<'tutti' | EventKind>('tutti');
-  const [radius, setRadius] = useState<number>(20);
 
   // Match del cliente nel file storico tramite nome normalizzato
   const clienteStorico = useMemo(() => {
@@ -123,17 +111,6 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
       .sort((a, b) => b.score - a.score);
     return byWords[0]?.c ?? null;
   }, [clientiDettagliati, contact.company]);
-
-  // ── Contatti vicini ──
-  const vicini = useMemo(() => {
-    if (!contact.lat || !contact.lng) return [];
-    return Object.values(contacts)
-      .filter(c => c.id !== contact.id && c.lat && c.lng)
-      .map(c => ({ c, km: calcDist(contact.lat!, contact.lng!, c.lat!, c.lng!) }))
-      .filter(x => x.km <= radius)
-      .sort((a, b) => a.km - b.km)
-      .slice(0, 15);
-  }, [contacts, contact, radius]);
 
   // ── Costruisce la timeline unificata ──
 
@@ -417,115 +394,6 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
               </div>
             </div>
           ))}
-        </div>
-      )}
-      {/* ── Nella Zona ── */}
-      {contact.lat && contact.lng ? (
-        <div className="space-y-3">
-          {/* Header + raggio */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Navigation size={16} className="text-indigo-500" />
-              <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-widest">Nella Zona</h3>
-              <span className="text-xs bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">
-                {vicini.length} contatti
-              </span>
-            </div>
-            <div className="flex gap-1">
-              {[10, 20, 50].map(r => (
-                <button
-                  key={r}
-                  onClick={() => setRadius(r)}
-                  className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
-                    radius === r
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
-                  }`}
-                >
-                  {r} km
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {vicini.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-              <Users size={32} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm font-bold">Nessun contatto entro {radius} km</p>
-              <p className="text-xs mt-1">Prova ad aumentare il raggio</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {vicini.map(({ c, km }) => (
-                <div
-                  key={c.id}
-                  className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-3 flex items-center gap-3"
-                >
-                  {/* Distanza */}
-                  <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center font-black text-white text-xs ${
-                    km < 5 ? 'bg-green-500' : km < 15 ? 'bg-indigo-500' : 'bg-gray-400'
-                  }`}>
-                    <span className="text-lg leading-none">{km < 10 ? km.toFixed(1) : Math.round(km)}</span>
-                    <span className="text-[10px] opacity-80">km</span>
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-sm text-gray-900 dark:text-white truncate">{c.company}</p>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">
-                      {[c.city, c.province].filter(Boolean).join(', ') || c.address || '—'}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        c.status === 'cliente'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                      }`}>
-                        {c.status === 'cliente' ? 'Cliente' : 'Prospect'}
-                      </span>
-                      {c.sector && (
-                        <span className="text-[9px] text-gray-400 font-bold truncate">{c.sector}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Azioni */}
-                  <div className="flex flex-col gap-1 flex-shrink-0">
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&origin=${contact.lat},${contact.lng}&destination=${c.lat},${c.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:bg-indigo-100 transition-colors"
-                    >
-                      <Navigation size={11} /> Naviga
-                    </a>
-                    <a
-                      href={`tel:${c.phone}`}
-                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[10px] font-black hover:bg-green-100 transition-colors"
-                    >
-                      <Phone size={11} /> Chiama
-                    </a>
-                  </div>
-                </div>
-              ))}
-
-              {/* Link mappa completa */}
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${contact.lat},${contact.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-400 hover:text-indigo-500 hover:border-indigo-300 transition-colors"
-              >
-                <ExternalLink size={12} /> Apri zona su Google Maps
-              </a>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-6 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-          <MapPin size={28} className="mx-auto mb-2 opacity-30" />
-          <p className="text-xs font-bold">Posizione non disponibile</p>
-          <p className="text-xs mt-1 opacity-70">Geocodifica il contatto dalla Mappa per abilitare questa funzione</p>
         </div>
       )}
 
