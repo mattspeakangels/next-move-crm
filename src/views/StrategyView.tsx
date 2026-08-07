@@ -2,12 +2,92 @@ import React, { useMemo, useState } from 'react';
 import {
   Target, Plus, X, Trash2, Pencil, ChevronLeft, Building2,
   TrendingUp, CheckCircle2, Radar, Search, Calendar, Clock, User,
+  Mail, Phone, StickyNote, MapPin, MessageSquarePlus, ArrowRight,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { QuickLogModal } from '../components/activities/QuickLogModal';
 import { matchSearch } from '../utils/search';
-import type { Group, GroupTipo, GroupPriorita, GroupStato, Contact, ProspectingStato, StrategicFocus } from '../types';
+import type { Group, GroupTipo, GroupPriorita, GroupStato, Contact, ProspectingStato, StrategicFocus, ActivityType } from '../types';
+
+// ─── Mini-timeline dialogo (email/chiamate/note) su un contatto ──────────────
+
+const DIALOGO_ICON: Record<ActivityType, React.ReactNode> = {
+  email: <Mail size={13} />, chiamata: <Phone size={13} />, visita: <MapPin size={13} />,
+  'visita-freddo': <MapPin size={13} />, nota: <StickyNote size={13} />, demo: <MapPin size={13} />,
+  'call-remota': <Phone size={13} />, sopralluogo: <MapPin size={13} />, formazione: <MapPin size={13} />,
+  'smart-working': <MapPin size={13} />, ufficio: <MapPin size={13} />,
+};
+
+function fmtDateTime(ts: number): string {
+  return new Date(ts).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ' · ' + new Date(ts).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+}
+
+const DialogoCard: React.FC<{ contact: Contact; onNavigateToContact: (contactId: string) => void }> = ({ contact, onNavigateToContact }) => {
+  const { activities, addActivity } = useStore();
+  const { showToast } = useToast();
+  const [showLog, setShowLog] = useState(false);
+
+  const recent = useMemo(
+    () => Object.values(activities)
+      .filter(a => a.contactId === contact.id && ['email', 'chiamata', 'nota', 'visita'].includes(a.type))
+      .sort((a, b) => b.date - a.date)
+      .slice(0, 5),
+    [activities, contact.id]
+  );
+
+  const handleSave = (type: ActivityType, notes: string) => {
+    addActivity({
+      id: `act_${Date.now()}`,
+      contactId: contact.id,
+      type,
+      date: Date.now(),
+      outcome: 'fatto',
+      notes,
+      createdAt: Date.now(),
+    });
+    showToast('Contatto registrato', 'success');
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MessageSquarePlus size={13} />Dialogo con l'azienda</p>
+        <button onClick={() => setShowLog(true)} className="text-[10px] font-black px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100">
+          + Registra contatto
+        </button>
+      </div>
+
+      {recent.length === 0 ? (
+        <p className="text-xs text-gray-400">Nessuno scambio registrato ancora. Ogni email o chiamata importante va annotata qui a mano.</p>
+      ) : (
+        <div className="space-y-2">
+          {recent.map(a => (
+            <div key={a.id} className="flex items-start gap-2.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-2.5">
+              <div className="w-6 h-6 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-400 mt-0.5">
+                {DIALOGO_ICON[a.type]}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black text-gray-400">{fmtDateTime(a.date)}</p>
+                {a.notes && <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap line-clamp-3">{a.notes}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button onClick={() => onNavigateToContact(contact.id)} className="flex items-center gap-1 text-[10px] font-black text-indigo-500 hover:text-indigo-600">
+        Vedi storico completo<ArrowRight size={11} />
+      </button>
+
+      {showLog && (
+        <QuickLogModal companyName={contact.company} onClose={() => setShowLog(false)} onSave={handleSave} />
+      )}
+    </div>
+  );
+};
 
 // ─── Costanti ────────────────────────────────────────────────────────────────
 
@@ -473,9 +553,10 @@ interface LinkedContactRowProps {
   hasOpenDeal: boolean;
   onUnlink: () => void;
   onOpenContact: () => void;
+  onLog: () => void;
 }
 
-const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDeal, onUnlink, onOpenContact }) => {
+const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDeal, onUnlink, onOpenContact, onLog }) => {
   const profilato = !!contact.profiling;
   return (
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
@@ -516,6 +597,9 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
           )}
         </div>
       </button>
+      <button onClick={onLog} className="p-1.5 rounded-lg text-gray-300 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex-shrink-0" title="Registra contatto (email/chiamata)">
+        <MessageSquarePlus size={14} />
+      </button>
       <button onClick={onUnlink} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0" title="Scollega dal gruppo">
         <X size={14} />
       </button>
@@ -532,10 +616,11 @@ interface GroupDetailProps {
 }
 
 const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToContact }) => {
-  const { contacts, deals, updateContact, updateGroup, deleteGroup } = useStore();
+  const { contacts, deals, addActivity, updateContact, updateGroup, deleteGroup } = useStore();
   const { showToast } = useToast();
   const [showEdit, setShowEdit] = useState(false);
   const [contactSearch, setContactSearch] = useState('');
+  const [logContact, setLogContact] = useState<Contact | null>(null);
 
   const linkedContacts = useMemo(
     () => Object.values(contacts).filter(c => c.groupId === group.id).sort((a, b) => a.company.localeCompare(b.company, 'it')),
@@ -642,11 +727,31 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
                 hasOpenDeal={openDealContactIds.has(c.id)}
                 onUnlink={() => updateContact(c.id, { groupId: undefined })}
                 onOpenContact={() => onNavigateToContact(c.id)}
+                onLog={() => setLogContact(c)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {logContact && (
+        <QuickLogModal
+          companyName={logContact.company}
+          onClose={() => setLogContact(null)}
+          onSave={(type, notes) => {
+            addActivity({
+              id: `act_${Date.now()}`,
+              contactId: logContact.id,
+              type,
+              date: Date.now(),
+              outcome: 'fatto',
+              notes,
+              createdAt: Date.now(),
+            });
+            showToast('Contatto registrato', 'success');
+          }}
+        />
+      )}
 
       {showEdit && (
         <GroupFormModal
@@ -741,6 +846,8 @@ const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack, onNavigateToCo
         <FocusSummaryBadges entry={focus} />
         {focus.note && <p className="text-xs text-gray-400 whitespace-pre-wrap">{focus.note}</p>}
       </div>
+
+      <DialogoCard contact={contact} onNavigateToContact={onNavigateToContact} />
 
       {showEdit && (
         <FocusFormModal
