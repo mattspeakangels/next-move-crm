@@ -8,7 +8,7 @@ import { blakladerUrl } from '../lib/blaklader';
 import {
   ArrowLeft, Phone, Mail, MapPin, Video, Wrench, GraduationCap,
   MonitorPlay, FileText, TrendingUp, StickyNote,
-  ShoppingCart, CheckCircle, XCircle, Send, Package, Plus,
+  ShoppingCart, CheckCircle, XCircle, Send, Package, Plus, Trash2,
 } from 'lucide-react';
 
 // ── Tipi evento unificati ────────────────────────────────────────────────
@@ -79,7 +79,7 @@ function matchWords(a: string, b: string): number {
 }
 
 export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
-  const { activities, offers, salesTransactions, deals, products, addActivity } = useStore();
+  const { activities, offers, salesTransactions, deals, products, addActivity, deleteActivity } = useStore();
   const { showToast } = useToast();
   const [showEmailModal, setShowEmailModal] = useState(false);
   const { clientiDettagliati } = useStoricoStore();
@@ -275,6 +275,12 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
     showToast('Email registrata', 'success');
   };
 
+  const handleDeleteEmail = (id: string) => {
+    if (!window.confirm('Eliminare questa email dallo storico?')) return;
+    deleteActivity(id);
+    showToast('Email eliminata', 'success');
+  };
+
   // ── Raggruppa per mese ──
 
   const grouped = useMemo(() => {
@@ -356,7 +362,16 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {emailActivities.map(a => (
               <div key={a.id} className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30">
-                <p className="text-[10px] text-gray-400 font-bold mb-1">{fmt(a.date)}</p>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <p className="text-[10px] text-gray-400 font-bold">{fmt(a.date)}</p>
+                  <button
+                    onClick={() => handleDeleteEmail(a.id)}
+                    className="p-1 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0"
+                    title="Elimina email"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
                 <p className="text-sm dark:text-gray-100 whitespace-pre-wrap break-words">{a.notes}</p>
               </div>
             ))}
