@@ -8,7 +8,7 @@ import { useStore } from '../store/useStore';
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const LAST_NOTIFY_KEY = 'nm_prospect_last_notify_day';
 
-function checkAndNotify() {
+async function checkAndNotify() {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
 
@@ -26,10 +26,22 @@ function checkAndNotify() {
   const shown = companies.slice(0, 3).join(', ');
   const extra = companies.length > 3 ? ` e altri ${companies.length - 3}` : '';
 
-  new Notification('Prospecting: tocchi da fare oggi', {
+  const title = 'Prospecting: tocchi da fare oggi';
+  const options = {
     body: `${dueTracks.length} tocc${dueTracks.length === 1 ? 'o' : 'hi'} in scadenza — ${shown}${extra}`,
     tag: 'nm-prospecting-reminder',
-  });
+  };
+
+  // Su PWA installate (soprattutto Chrome Android) il costruttore `new
+  // Notification()` è vietato quando un service worker è attivo: va usato
+  // ServiceWorkerRegistration.showNotification(). Sui browser desktop senza
+  // SW attivo si ricade sul costruttore classico.
+  const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined;
+  if (reg) {
+    reg.showNotification(title, options);
+  } else {
+    new Notification(title, options);
+  }
   localStorage.setItem(LAST_NOTIFY_KEY, today);
 }
 
