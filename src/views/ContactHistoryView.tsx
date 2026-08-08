@@ -13,7 +13,7 @@ import {
 
 // ── Tipi evento unificati ────────────────────────────────────────────────
 
-type EventKind = 'attivita' | 'offerta' | 'ordine' | 'trattativa';
+type EventKind = 'attivita' | 'offerta' | 'ordine' | 'trattativa' | 'email';
 
 interface TimelineEvent {
   id: string;
@@ -162,7 +162,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
         const cfg = ACTIVITY_CONFIG[a.type] ?? ACTIVITY_CONFIG['nota'];
         events.push({
           id: a.id,
-          kind: 'attivita',
+          kind: a.type === 'email' ? 'email' : 'attivita',
           date: a.date,
           title: cfg.label,
           subtitle: a.notes || undefined,
@@ -247,21 +247,16 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
     const acts = allEvents.filter(e => e.kind === 'attivita').length;
     const offs = allEvents.filter(e => e.kind === 'offerta').length;
     const ords = allEvents.filter(e => e.kind === 'ordine').length;
+    const emails = allEvents.filter(e => e.kind === 'email').length;
     const fatturato = allEvents
       .filter(e => e.kind === 'ordine' && e.amount)
       .reduce((sum, e) => sum + (e.amount ?? 0), 0);
-    return { acts, offs, ords, fatturato };
+    return { acts, offs, ords, emails, fatturato };
   }, [allEvents]);
 
-  // ── Email scambiate con questo contatto ──
+  // ── Aggiunta/eliminazione email dallo storico ──
 
-  const emailActivities = useMemo(() => {
-    return Object.values(activities)
-      .filter(a => a.contactId === contact.id && a.type === 'email')
-      .sort((a, b) => b.date - a.date);
-  }, [activities, contact.id]);
-
-  const handleSaveEmail = (type: 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio', notes: string) => {
+  const handleSaveEmail =(type: 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio', notes: string) => {
     if (!notes.trim()) return;
     addActivity({
       id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -341,44 +336,6 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
         ))}
       </div>
 
-      {/* Email */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Mail size={16} className="text-blue-500" />
-            <h2 className="text-sm font-black dark:text-white">Email ({emailActivities.length})</h2>
-          </div>
-          <button
-            onClick={() => setShowEmailModal(true)}
-            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-          >
-            <Plus size={12} /> Aggiungi email
-          </button>
-        </div>
-
-        {emailActivities.length === 0 ? (
-          <p className="text-xs text-gray-300 dark:text-gray-600 font-bold py-2">Nessuna email registrata per questo cliente</p>
-        ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {emailActivities.map(a => (
-              <div key={a.id} className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-[10px] text-gray-400 font-bold">{fmt(a.date)}</p>
-                  <button
-                    onClick={() => handleDeleteEmail(a.id)}
-                    className="p-1 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0"
-                    title="Elimina email"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-                <p className="text-sm dark:text-gray-100 whitespace-pre-wrap break-words">{a.notes}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {showEmailModal && (
         <QuickLogModal
           companyName={contact.company}
@@ -388,21 +345,30 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
       )}
 
       {/* Filtri */}
-      <div className="flex gap-2 flex-wrap">
-        {([
-          { id: 'tutti',     label: `Tutti (${allEvents.length})` },
-          { id: 'attivita',  label: `Attività (${stats.acts})`    },
-          { id: 'offerta',   label: `Offerte (${stats.offs})`     },
-          { id: 'ordine',    label: `Ordini (${stats.ords})`      },
-        ] as const).map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-all ${filter === f.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-indigo-300'}`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {([
+            { id: 'tutti',     label: `Tutti (${allEvents.length})` },
+            { id: 'attivita',  label: `Attività (${stats.acts})`    },
+            { id: 'offerta',   label: `Offerte (${stats.offs})`     },
+            { id: 'ordine',    label: `Ordini (${stats.ords})`      },
+            { id: 'email',     label: `Email (${stats.emails})`     },
+          ] as const).map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-all ${filter === f.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-indigo-300'}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowEmailModal(true)}
+          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+        >
+          <Plus size={12} /> Aggiungi email
+        </button>
       </div>
 
       {/* Timeline */}
@@ -466,6 +432,17 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
                       <div className="flex-shrink-0 text-right">
                         <p className="font-black text-sm text-green-600">€{ev.amount.toLocaleString('it-IT')}</p>
                       </div>
+                    )}
+
+                    {/* Elimina (solo email) */}
+                    {ev.kind === 'email' && (
+                      <button
+                        onClick={() => handleDeleteEmail(ev.id)}
+                        className="p-1 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0"
+                        title="Elimina email"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     )}
                   </div>
                 ))}
