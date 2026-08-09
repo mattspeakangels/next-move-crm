@@ -3,12 +3,12 @@ import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
 import { useToast } from '../components/ui/ToastContext';
 import { QuickLogModal } from '../components/activities/QuickLogModal';
-import { Contact } from '../types';
+import { Contact, Activity, Offer, SalesTransaction } from '../types';
 import { blakladerUrl } from '../lib/blaklader';
 import {
   ArrowLeft, Phone, Mail, MapPin, Video, Wrench, GraduationCap,
   MonitorPlay, FileText, TrendingUp, StickyNote,
-  ShoppingCart, CheckCircle, XCircle, Send, Package, Plus, Trash2,
+  ShoppingCart, CheckCircle, XCircle, Send, Package, Plus, Trash2, ChevronDown,
 } from 'lucide-react';
 
 // ── Tipi evento unificati ────────────────────────────────────────────────
@@ -28,6 +28,8 @@ interface TimelineEvent {
   icon: React.ReactNode;
   badge?: string;
   badgeColor?: string;
+  /** Oggetto originale (activity / offer / salesTransaction) usato per il dettaglio espanso al click. */
+  raw?: Activity | Offer | SalesTransaction;
 }
 
 // ── Configurazioni ───────────────────────────────────────────────────────
@@ -93,6 +95,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
     return map;
   }, [products]);
   const [filter, setFilter] = useState<'tutti' | EventKind>('tutti');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Match del cliente nel file storico tramite nome normalizzato
   const clienteStorico = useMemo(() => {
@@ -170,6 +173,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
           bgColor: cfg.bg,
           icon: cfg.icon,
           badge: a.outcomeType ?? (a.outcome !== 'da-fare' ? a.outcome : undefined),
+          raw: a,
         });
       });
 
@@ -190,6 +194,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
           icon: cfg.icon,
           badge: cfg.badge,
           badgeColor: cfg.badgeColor,
+          raw: o,
         });
       });
 
@@ -209,6 +214,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
           icon: <ShoppingCart size={14} />,
           badge: 'Ordine',
           badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+          raw: t,
         });
       });
 
@@ -291,6 +297,101 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
 
   const fmt = (ts: number) =>
     new Date(ts).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  // ── Dettaglio evento espanso (contenuto completo al click) ──
+
+  const renderEventDetail = (ev: TimelineEvent) => {
+    if (ev.kind === 'attivita' || ev.kind === 'email') {
+      const a = ev.raw as Activity | undefined;
+      if (!a) return null;
+      return (
+        <div className="space-y-2">
+          {a.notes ? (
+            <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{a.notes}</p>
+          ) : (
+            <p className="text-xs text-gray-300 italic">Nessuna nota</p>
+          )}
+          {a.results && (
+            <p className="text-xs text-gray-500 dark:text-gray-400"><span className="font-black uppercase text-[9px] text-gray-400">Esito: </span>{a.results}</p>
+          )}
+          {a.endDate && (
+            <p className="text-[10px] text-gray-400">Fine: {fmt(a.endDate)}</p>
+          )}
+          {a.transcript && (
+            <details className="text-xs">
+              <summary className="cursor-pointer font-black text-[9px] uppercase text-gray-400">Trascrizione</summary>
+              <p className="mt-1 whitespace-pre-wrap text-gray-500 dark:text-gray-400">{a.transcript}</p>
+            </details>
+          )}
+        </div>
+      );
+    }
+
+    if (ev.kind === 'offerta') {
+      const o = ev.raw as Offer | undefined;
+      if (!o) return null;
+      return (
+        <div className="space-y-2">
+          {o.items.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-[9px] font-black uppercase text-gray-400 text-left">
+                    <th className="pb-1 pr-2">Articolo</th>
+                    <th className="pb-1 pr-2">Taglie</th>
+                    <th className="pb-1 pr-2 text-right">Qtà</th>
+                    <th className="pb-1 pr-2 text-right">Prezzo</th>
+                    <th className="pb-1 pr-2 text-right">Sconto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {o.items.map(it => (
+                    <tr key={it.id} className="border-t border-gray-100 dark:border-gray-700">
+                      <td className="py-1 pr-2 text-gray-700 dark:text-gray-300">{it.description}</td>
+                      <td className="py-1 pr-2 text-gray-400">{it.sizes || '—'}</td>
+                      <td className="py-1 pr-2 text-right text-gray-500">{it.quantity}</td>
+                      <td className="py-1 pr-2 text-right text-gray-500">€{it.price.toFixed(2)}</td>
+                      <td className="py-1 pr-2 text-right text-gray-500">{it.discount ? `${it.discount}%` : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-300 italic">Nessun articolo</p>
+          )}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-gray-400 pt-1">
+            {o.deliveryTime && <span>Consegna: {o.deliveryTime}</span>}
+            {o.shippingCost !== undefined && o.shippingCost > 0 && <span>Spedizione: €{o.shippingCost.toFixed(2)}</span>}
+            {o.followUpDate > 0 && <span>Follow-up: {fmt(o.followUpDate)}</span>}
+          </div>
+          {o.pdfUrl && (
+            <a
+              href={o.pdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs font-black text-indigo-500 hover:text-indigo-700 hover:underline"
+            >
+              <FileText size={12} /> {o.pdfName || 'Apri PDF'}
+            </a>
+          )}
+        </div>
+      );
+    }
+
+    if (ev.kind === 'ordine' && ev.raw && 'unitPrice' in (ev.raw as any)) {
+      const t = ev.raw as SalesTransaction;
+      return t.notes ? (
+        <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{t.notes}</p>
+      ) : (
+        <p className="text-xs text-gray-300 italic">Nessuna nota</p>
+      );
+    }
+
+    // Ordini dallo storico Excel: già tutto visibile nella riga (nessun dettaglio aggiuntivo)
+    return null;
+  };
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -390,62 +491,91 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
 
               {/* Events */}
               <div className="space-y-2">
-                {events.map(ev => (
-                  <div key={ev.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm flex items-start gap-3">
-                    {/* Icon */}
-                    <div className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${ev.bgColor} ${ev.color}`}>
-                      {ev.icon}
-                    </div>
+                {events.map(ev => {
+                  const detail = renderEventDetail(ev);
+                  const isExpanded = expandedId === ev.id;
+                  const isClickable = !!detail;
+                  return (
+                    <div
+                      key={ev.id}
+                      className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden ${isClickable ? 'cursor-pointer' : ''}`}
+                      onClick={() => isClickable && setExpandedId(isExpanded ? null : ev.id)}
+                    >
+                      <div className="p-4 flex items-start gap-3">
+                        {/* Icon */}
+                        <div className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${ev.bgColor} ${ev.color}`}>
+                          {ev.icon}
+                        </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-black text-sm dark:text-white">{ev.title}</p>
-                        {ev.badge && (
-                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${ev.badgeColor ?? 'bg-gray-100 text-gray-500'}`}>
-                            {ev.badge}
-                          </span>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-black text-sm dark:text-white">{ev.title}</p>
+                            {ev.badge && (
+                              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${ev.badgeColor ?? 'bg-gray-100 text-gray-500'}`}>
+                                {ev.badge}
+                              </span>
+                            )}
+                          </div>
+                          {(ev.subtitle || ev.itemId) && (
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                              {ev.itemId && (
+                                <a
+                                  href={blakladerUrl(ev.itemId)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="font-mono font-black text-indigo-500 hover:text-indigo-700 hover:underline"
+                                >
+                                  {ev.itemId} ↗
+                                </a>
+                              )}
+                              {ev.itemId && ev.subtitle && <span className="text-gray-300">·</span>}
+                              {ev.subtitle && <span>{ev.subtitle}</span>}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-gray-300 dark:text-gray-500 font-bold mt-1">{fmt(ev.date)}</p>
+                        </div>
+
+                        {/* Amount */}
+                        {ev.amount !== undefined && ev.amount > 0 && (
+                          <div className="flex-shrink-0 text-right">
+                            <p className="font-black text-sm text-green-600">€{ev.amount.toLocaleString('it-IT')}</p>
+                          </div>
+                        )}
+
+                        {/* Chevron dettaglio */}
+                        {isClickable && (
+                          <ChevronDown
+                            size={14}
+                            className={`flex-shrink-0 text-gray-300 mt-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          />
+                        )}
+
+                        {/* Elimina (solo email) */}
+                        {ev.kind === 'email' && (
+                          <button
+                            onClick={e => { e.stopPropagation(); handleDeleteEmail(ev.id); }}
+                            className="p-1 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0"
+                            title="Elimina email"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         )}
                       </div>
-                      {(ev.subtitle || ev.itemId) && (
-                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                          {ev.itemId && (
-                            <a
-                              href={blakladerUrl(ev.itemId)}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              className="font-mono font-black text-indigo-500 hover:text-indigo-700 hover:underline"
-                            >
-                              {ev.itemId} ↗
-                            </a>
-                          )}
-                          {ev.itemId && ev.subtitle && <span className="text-gray-300">·</span>}
-                          {ev.subtitle && <span>{ev.subtitle}</span>}
-                        </p>
+
+                      {/* Dettaglio espanso */}
+                      {isExpanded && detail && (
+                        <div
+                          className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-700"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {detail}
+                        </div>
                       )}
-                      <p className="text-[10px] text-gray-300 dark:text-gray-500 font-bold mt-1">{fmt(ev.date)}</p>
                     </div>
-
-                    {/* Amount */}
-                    {ev.amount !== undefined && ev.amount > 0 && (
-                      <div className="flex-shrink-0 text-right">
-                        <p className="font-black text-sm text-green-600">€{ev.amount.toLocaleString('it-IT')}</p>
-                      </div>
-                    )}
-
-                    {/* Elimina (solo email) */}
-                    {ev.kind === 'email' && (
-                      <button
-                        onClick={() => handleDeleteEmail(ev.id)}
-                        className="p-1 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0"
-                        title="Elimina email"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
