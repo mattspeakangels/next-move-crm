@@ -17,7 +17,7 @@ const DIALOGO_ICON: Record<ActivityType, React.ReactNode> = {
   email: <Mail size={13} />, chiamata: <Phone size={13} />, visita: <MapPin size={13} />,
   'visita-freddo': <MapPin size={13} />, nota: <StickyNote size={13} />, demo: <MapPin size={13} />,
   'call-remota': <Phone size={13} />, sopralluogo: <MapPin size={13} />, formazione: <MapPin size={13} />,
-  'smart-working': <MapPin size={13} />, ufficio: <MapPin size={13} />,
+  'smart-working': <MapPin size={13} />, ufficio: <MapPin size={13} />, fiera: <MapPin size={13} />,
 };
 
 function fmtDateTime(ts: number): string {

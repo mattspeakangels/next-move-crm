@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
 import { useToast } from '../components/ui/ToastContext';
 import { QuickLogModal } from '../components/activities/QuickLogModal';
-import { Contact, Activity, Offer, SalesTransaction } from '../types';
+import { Contact, Activity, ActivityType, Offer, SalesTransaction } from '../types';
 import { blakladerUrl } from '../lib/blaklader';
 import {
   ArrowLeft, Phone, Mail, MapPin, Video, Wrench, GraduationCap,
@@ -262,7 +262,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
 
   // ── Aggiunta/eliminazione email dallo storico ──
 
-  const handleSaveEmail =(type: 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio', notes: string) => {
+  const handleSaveEmail =(type: ActivityType, notes: string) => {
     if (!notes.trim()) return;
     addActivity({
       id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
