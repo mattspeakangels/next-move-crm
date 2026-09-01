@@ -134,6 +134,20 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+// Chiave numerica giorno (ignora l'orario) per confrontare/ordinare date senza problemi di fuso
+function dayKey(d: Date): number {
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+// Un'attività "occupa" un giorno se questo cade tra il giorno di inizio e quello di fine
+// (endDate può ricadere su un giorno diverso per eventi multi-giorno tipo Fiera)
+function activityOccursOnDay(a: Activity, day: Date): boolean {
+  const k = dayKey(day);
+  const startKey = dayKey(new Date(a.date));
+  const endKey = a.endDate ? dayKey(new Date(a.endDate)) : startKey;
+  return k >= startKey && k <= endKey;
+}
+
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay(); // 0=Dom
@@ -825,9 +839,9 @@ Regole:
       .sort((a, b) => (a.company ?? '').localeCompare(b.company ?? ''));
   }, [contacts, contactSearch]);
 
-  // Activities for a given day
+  // Activities for a given day (include eventi multi-giorno, es. Fiera, su ogni giorno coperto)
   const activitiesForDay = (day: Date) =>
-    allActivities.filter(a => isSameDay(new Date(a.date), day)).sort((a, b) => a.date - b.date);
+    allActivities.filter(a => activityOccursOnDay(a, day)).sort((a, b) => a.date - b.date);
 
   // Activities shown in list (all upcoming or selected day)
   const listActivities = selectedDay
@@ -1278,19 +1292,21 @@ Regole:
     const days = getWeekDays(anchor);
     const activeActivity = activeActivityId ? activities[activeActivityId] : null;
 
-    // Per ogni giorno × slot: quali attività ci sono?
+    // Per ogni giorno × slot: quali attività ci sono? (le attività multi-giorno, es. Fiera,
+    // compaiono in ogni giorno della settimana che coprono, allo stesso orario)
     const slotMap = new Map<string, Activity[]>();
     Object.values(activities).forEach(a => {
       const d = new Date(a.date);
-      const dayIdx = days.findIndex(day => isSameDay(day, d));
-      if (dayIdx < 0) return;
       const totalMins = d.getHours() * 60 + d.getMinutes();
       const startMins = HOUR_START * 60;
       const slotIdx   = Math.floor((totalMins - startMins) / SLOT_MINS);
       if (slotIdx < 0 || slotIdx >= SLOTS_PER_DAY) return;
-      const key = slotId(dayIdx, slotIdx);
-      if (!slotMap.has(key)) slotMap.set(key, []);
-      slotMap.get(key)!.push(a);
+      days.forEach((day, dayIdx) => {
+        if (!activityOccursOnDay(a, day)) return;
+        const key = slotId(dayIdx, slotIdx);
+        if (!slotMap.has(key)) slotMap.set(key, []);
+        slotMap.get(key)!.push(a);
+      });
     });
 
     return (
