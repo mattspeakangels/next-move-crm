@@ -23,6 +23,8 @@ type FormData = {
   date: string;
   time: string;
   endTime: string;
+  /** Giorno di fine per attività multi-giorno (es. Fiera). Vuoto = un solo giorno. */
+  endDateDay: string;
   notes: string;
 };
 
@@ -34,6 +36,7 @@ const defaultForm = (): FormData => ({
   date: '',
   time: '09:00',
   endTime: '10:00',
+  endDateDay: '',
   notes: '',
 });
 
@@ -56,10 +59,14 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   formazione: 'Formazione',
   'smart-working': 'Smart Working',
   ufficio: 'Ufficio',
+  fiera: 'Fiera',
 };
 
 // Categorie che non richiedono un'azienda/contatto per essere salvate
-const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio'];
+const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio', 'fiera'];
+
+// Categorie che possono estendersi su più giorni consecutivi (mostra il campo "Fino al")
+const MULTI_DAY_TYPES: ActivityType[] = ['fiera'];
 
 const TYPE_COLORS: Record<ActivityType, string> = {
   visita: 'bg-indigo-500',
@@ -73,6 +80,7 @@ const TYPE_COLORS: Record<ActivityType, string> = {
   formazione: 'bg-pink-500',
   'smart-working': 'bg-cyan-500',
   ufficio: 'bg-slate-500',
+  fiera: 'bg-fuchsia-500',
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
@@ -87,6 +95,7 @@ const TYPE_BG: Record<ActivityType, string> = {
   formazione: 'bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
   'smart-working': 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300',
   ufficio: 'bg-slate-100 dark:bg-slate-700/40 text-slate-700 dark:text-slate-300',
+  fiera: 'bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300',
 };
 
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -417,6 +426,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
 
       setFormData({
         contactId: matchedContact?.id ?? '',
+        endDateDay: '',
         type,
         date,
         time,
@@ -845,13 +855,15 @@ Regole:
   const openEdit = (activity: Activity) => {
     const d = new Date(activity.date);
     const time = d.toTimeString().slice(0, 5);
+    const endD = activity.endDate ? new Date(activity.endDate) : null;
     setEditingId(activity.id);
     setFormData({
       contactId: activity.contactId,
       type: activity.type,
       date: toLocalDateStr(d),
       time,
-      endTime: activity.endDate ? new Date(activity.endDate).toTimeString().slice(0, 5) : addMinutesToTime(time, 60),
+      endTime: endD ? endD.toTimeString().slice(0, 5) : addMinutesToTime(time, 60),
+      endDateDay: endD && !isSameDay(d, endD) ? toLocalDateStr(endD) : '',
       notes: activity.notes || '',
     });
     setContactSearch(contacts[activity.contactId]?.company || '');
@@ -866,9 +878,10 @@ Regole:
     if (!noContact && !formData.contactId) { showToast("Seleziona un'azienda", 'error'); return; }
     const contactId = noContact ? '' : formData.contactId;
     const dateTime = new Date(`${formData.date}T${formData.time}`).getTime();
-    const endDateTime = formData.endTime ? new Date(`${formData.date}T${formData.endTime}`).getTime() : undefined;
+    const endDay = (MULTI_DAY_TYPES.includes(formData.type) && formData.endDateDay) ? formData.endDateDay : formData.date;
+    const endDateTime = formData.endTime ? new Date(`${endDay}T${formData.endTime}`).getTime() : undefined;
     if (endDateTime !== undefined && endDateTime <= dateTime) {
-      showToast("L'ora di fine deve essere dopo l'ora di inizio", 'error');
+      showToast(endDay !== formData.date ? "La data/ora di fine deve essere dopo l'inizio" : "L'ora di fine deve essere dopo l'ora di inizio", 'error');
       return;
     }
     if (editingId) {
@@ -1758,9 +1771,21 @@ Regole:
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Data</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">{MULTI_DAY_TYPES.includes(formData.type) ? 'Dal giorno' : 'Data'}</label>
                 <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400" />
               </div>
+              {MULTI_DAY_TYPES.includes(formData.type) && (
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Al giorno (opzionale, per eventi su più giorni)</label>
+                  <input
+                    type="date"
+                    min={formData.date}
+                    value={formData.endDateDay}
+                    onChange={e => setFormData({ ...formData, endDateDay: e.target.value })}
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400"
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora inizio</label>
