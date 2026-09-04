@@ -1250,6 +1250,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Email Gen.</label>
                   <input type="email" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.email || ''} onChange={e => setEditingContact({...editingContact, email: e.target.value})} />
                 </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Sito Web</label>
+                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" placeholder="es. www.azienda.it" value={editingContact?.website || ''} onChange={e => setEditingContact({...editingContact, website: e.target.value})} />
+                </div>
 
                 <div className="md:col-span-2 grid grid-cols-12 gap-2 mt-2">
                   <div className="col-span-12 md:col-span-6">
