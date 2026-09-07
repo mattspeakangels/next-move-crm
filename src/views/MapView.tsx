@@ -46,10 +46,11 @@ const contactMarkerStyle = (status: string, segment?: string) => ({
   fillOpacity: 1,
 });
 
-// Tile CARTO Voyager con supporto retina ({r}): le tile OSM standard risultano
-// sfocate/illeggibili sugli schermi ad alta densità dei telefoni.
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const TILE_ATTRIBUTION = '© OpenStreetMap © CARTO';
+// CARTO ora richiede una API key sulle tile basemaps.cartocdn.com (tile
+// placeholder "API KEY REQUIRED" senza autenticazione) → torniamo alle tile
+// OSM standard, gratuite e senza registrazione.
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTRIBUTION = '© OpenStreetMap contributors';
 // Posizione utente: stella verde con contorno giallo, lampeggiante — ben
 // distinguibile dai marker circolari di clienti e prospect
 const userIcon = L.divIcon({
