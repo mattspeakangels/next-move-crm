@@ -1079,6 +1079,8 @@ export const MapView: React.FC<MapViewProps> = ({
   const [radius, setRadius]       = useState(50);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [debugMsg, setDebugMsg]   = useState('');
+  const [locatingContactId, setLocatingContactId] = useState<string | null>(null);
+  const [searchGeocodeError, setSearchGeocodeError] = useState('');
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
   const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
   const [mapProvinceFilter, setMapProvinceFilter] = useState<string>('');
@@ -1197,6 +1199,48 @@ export const MapView: React.FC<MapViewProps> = ({
 
     setIsGeocoding(false);
     setDebugMsg(`Mappati: ${ok}, Non trovati: ${fail}`);
+  };
+
+  // Selezione di un contatto dalla barra di ricerca mappa: se non ha ancora
+  // coordinate lo geocodifica al volo (invece di aprire subito il profilo),
+  // così l'obiettivo "vederlo posizionato in mappa" funziona sempre.
+  const selectSearchContact = async (
+    c: { id: string; lat?: number; lng?: number; city?: string; province?: string; address?: string },
+    onFly: (pos: [number, number]) => void
+  ) => {
+    setSearchGeocodeError('');
+
+    if (c.lat && c.lng) {
+      onFly([c.lat, c.lng]);
+      return;
+    }
+
+    if (!c.city && !c.address) {
+      setSearchGeocodeError('Contatto senza città/indirizzo: impossibile posizionarlo in mappa.');
+      return;
+    }
+
+    setLocatingContactId(c.id);
+    try {
+      const params = new URLSearchParams();
+      if (c.address) params.set('address', c.address);
+      if (c.city) params.set('city', c.city);
+      if (c.province) params.set('province', c.province);
+      const res = await fetch(`/api/geocode?${params}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        updateContact(c.id, { lat, lng });
+        onFly([lat, lng]);
+      } else {
+        setSearchGeocodeError('Indirizzo non trovato: impossibile posizionarlo in mappa.');
+      }
+    } catch {
+      setSearchGeocodeError('Geocodifica fallita: impossibile posizionarlo in mappa.');
+    } finally {
+      setLocatingContactId(null);
+    }
   };
 
   const allContacts  = Object.values(contacts);
@@ -1322,7 +1366,7 @@ export const MapView: React.FC<MapViewProps> = ({
             dropdownClassName="z-[1100]"
             onSelect={c => {
               setSearchQuery(c.company);
-              if (c.lat && c.lng) setFlyToTarget([c.lat, c.lng]);
+              selectSearchContact(c, setFlyToTarget);
             }}
             results={searchResults.map(c => {
               const isCliente = c.status === 'cliente';
@@ -1341,6 +1385,12 @@ export const MapView: React.FC<MapViewProps> = ({
               };
             })}
           />
+          {locatingContactId && (
+            <p className="mt-1.5 ml-1 text-[10px] text-white font-bold drop-shadow">Localizzo in mappa…</p>
+          )}
+          {searchGeocodeError && (
+            <p className="mt-1.5 ml-1 text-[10px] bg-red-600 text-white font-bold rounded-xl px-3 py-1.5 shadow-lg inline-block">{searchGeocodeError}</p>
+          )}
         </div>
 
         {/* Overlay filtri fullscreen */}
@@ -1466,13 +1516,8 @@ export const MapView: React.FC<MapViewProps> = ({
           dropdownClassName="z-[500]"
           onSelect={c => {
             setSearchQuery(c.company);
-            const hasPinned = !!(c.lat && c.lng);
-            if (hasPinned) {
-              setFlyToTarget([c.lat!, c.lng!]);
-              setMobileTab('mappa');
-            } else {
-              onNavigateToContact(c.id);
-            }
+            setMobileTab('mappa');
+            selectSearchContact(c, setFlyToTarget);
           }}
           results={searchResults.map(c => {
             const isCliente = c.status === 'cliente';
@@ -1491,6 +1536,12 @@ export const MapView: React.FC<MapViewProps> = ({
             };
           })}
         />
+        {locatingContactId && (
+          <p className="mt-1.5 text-[10px] text-gray-400 font-bold">Localizzo in mappa…</p>
+        )}
+        {searchGeocodeError && (
+          <p className="mt-1.5 text-[10px] text-red-600 font-bold">{searchGeocodeError}</p>
+        )}
 
         {/* Filtri collassabili */}
         {showFilters && (
