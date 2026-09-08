@@ -17,8 +17,15 @@ export default async function handler(
     return res.status(400).json({ error: 'Missing city or address' });
   }
 
-  // Rileva contatti svizzeri (Canton Ticino e altri cantoni)
-  const swissProvinces = ['TI', 'GR', 'VS', 'VD', 'GE', 'NE', 'FR', 'BE', 'ZH', 'AG', 'SO', 'BS', 'BL', 'CH'];
+  // Rileva contatti svizzeri (Canton Ticino e altri cantoni).
+  // Attenzione: molte sigle cantonali svizzere COINCIDONO con sigle di provincia
+  // italiane reali (GE=Genova/Genève, FR=Frosinone/Fribourg, AG=Agrigento/Aargau,
+  // SO=Sondrio/Solothurn, BS=Brescia/Basel-Stadt, BL=Belluno/Basel-Landschaft,
+  // CH=Chieti/Svizzera, GR=Grosseto/Graubünden). Usarle qui geocodificava i
+  // contatti italiani come se fossero in Svizzera, con risultato vuoto o una
+  // posizione sbagliata (es. Brescia → una via a Stabio, Canton Ticino).
+  // Manteniamo solo le sigle cantonali che NON collidono con nessuna provincia italiana.
+  const swissProvinces = ['TI', 'VS', 'VD', 'NE', 'BE', 'ZH'];
   const isSwiss = swissProvinces.includes((provStr ?? '').toUpperCase());
   const country = isSwiss ? 'Switzerland' : 'Italy';
 
