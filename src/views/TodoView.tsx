@@ -6,7 +6,7 @@ import {
 import { useStore } from '../store/useStore';
 import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView, Contact } from '../types';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -72,10 +72,10 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
 
   const filteredContacts = useMemo(() => {
     const selectedIds = new Set(selectedContacts.map(c => c.id));
-    return Object.values(contacts)
+    return sortByRelevance(contactSearch, Object.values(contacts)
       .filter(c => !selectedIds.has(c.id))
       .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.phone, c.email]))
-      .sort((a, b) => a.company.localeCompare(b.company));
+      .sort((a, b) => a.company.localeCompare(b.company)), c => [c.company, c.contactName]);
   }, [contacts, contactSearch, selectedContacts]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -269,10 +269,10 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
   const [note, setNote] = useState(todo.note || '');
 
   const filteredContacts = useMemo(() => {
-    return Object.values(contacts)
+    return sortByRelevance(contactSearch, Object.values(contacts)
       .filter(c => c.id !== selectedContact?.id)
       .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.phone, c.email]))
-      .sort((a, b) => a.company.localeCompare(b.company));
+      .sort((a, b) => a.company.localeCompare(b.company)), c => [c.company, c.contactName]);
   }, [contacts, contactSearch, selectedContact]);
 
   const handleSubmit = (e: React.FormEvent) => {

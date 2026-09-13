@@ -7,7 +7,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 import {
   DndContext,
   closestCenter,
@@ -267,11 +267,11 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const searchItinNorm = useMemo(() => searchItinQuery.trim(), [searchItinQuery]);
   const itinSearchResults = useMemo(() =>
     searchItinNorm.length >= 1
-      ? allContactsList
+      ? sortByRelevance(searchItinNorm, allContactsList
           .filter((c: any) =>
             c.lat && c.lng &&
             matchSearch(searchItinNorm, [c.company, c.contactName, c.city, c.province])
-          )
+          ), (c: any) => [c.company, c.contactName])
           .slice(0, 6)
       : [],
     [searchItinNorm, allContactsList]
@@ -1250,8 +1250,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const searchNorm = searchQuery.trim();
   const searchResults = searchNorm.length >= 1
-    ? allContacts
-        .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]))
+    ? sortByRelevance(searchNorm, allContacts
+        .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email])), c => [c.company, c.contactName])
         .slice(0, 7)
     : [];
 

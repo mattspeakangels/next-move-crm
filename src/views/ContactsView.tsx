@@ -10,7 +10,7 @@ import { ProfilingForm } from '../components/profiling/ProfilingForm';
 import { ImportFromUrlModal } from '../components/contacts/ImportFromUrlModal';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { ContactHistoryView } from './ContactHistoryView';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 
 const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) => {
   const { activities, addActivity, deleteActivity } = useStore();
@@ -764,6 +764,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         return (a.company || a.contactName || '').localeCompare(b.company || b.contactName || '', 'it', { sensitivity: 'base' }) * dir;
       });
   }, [contacts, activeTab, topFilter, subFilter, debouncedSearch, sortBy, sortDir]);
+
+  // Mentre si sta cercando, anteponi i risultati più rilevanti (nome/azienda che iniziano
+  // per il termine cercato) a parità di criterio di ordinamento scelto dall'utente.
+  const rankedFilteredList = useMemo(
+    () => sortByRelevance(debouncedSearch, filteredList, c => [c.company, c.contactName]),
+    [filteredList, debouncedSearch]
+  );
 
   // Reset paginazione quando cambia lista
   useEffect(() => { setVisibleCount(50); }, [filteredList]);
@@ -1620,15 +1627,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const accentCls = isProspect ? 'text-amber-500 border-amber-100 hover:bg-amber-50' : 'text-indigo-600 border-indigo-100 hover:bg-indigo-50';
             const btnCls    = isProspect ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700';
 
-            const list = filteredList;
+            const list = rankedFilteredList;
 
             const searchPreview = searchTerm.trim()
-              ? Object.values(contacts)
+              ? sortByRelevance(searchTerm, Object.values(contacts)
                   .filter(c => c.status === statusFilter)
                   .filter(c => matchSearch(searchTerm, [
                     c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
-                  ]))
-                  .slice(0, 8)
+                  ])), c => [c.company, c.contactName]).slice(0, 8)
               : [];
 
             return (

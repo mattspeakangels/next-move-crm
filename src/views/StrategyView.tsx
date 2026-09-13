@@ -8,7 +8,7 @@ import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { QuickLogModal } from '../components/activities/QuickLogModal';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 import type { Group, GroupTipo, GroupPriorita, GroupStato, Contact, ProspectingStato, StrategicFocus, ActivityType } from '../types';
 
 // ─── Mini-timeline dialogo (email/chiamate/note) su un contatto ──────────────
@@ -247,10 +247,10 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
 
   const selectedIds = useMemo(() => new Set(selectedContacts.map(c => c.id)), [selectedContacts]);
   const contactResults = useMemo(
-    () => Object.values(contacts)
+    () => sortByRelevance(contactSearch, Object.values(contacts)
       .filter(c => !c.groupId && !selectedIds.has(c.id))
       .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city]))
-      .sort((a, b) => a.company.localeCompare(b.company, 'it')),
+      .sort((a, b) => a.company.localeCompare(b.company, 'it')), c => [c.company, c.contactName]),
     [contacts, selectedIds, contactSearch]
   );
 
@@ -499,10 +499,10 @@ const AddChooserModal: React.FC<AddChooserModalProps> = ({ onPickGroup, onPickCo
   const focusedContactIds = useMemo(() => new Set(Object.values(strategicFocuses).map(f => f.contactId)), [strategicFocuses]);
 
   const results = useMemo(
-    () => Object.values(contacts)
+    () => sortByRelevance(search, Object.values(contacts)
       .filter(c => !c.groupId && !focusedContactIds.has(c.id))
       .filter(c => matchSearch(search, [c.company, c.contactName, c.city]))
-      .sort((a, b) => a.company.localeCompare(b.company, 'it')),
+      .sort((a, b) => a.company.localeCompare(b.company, 'it')), c => [c.company, c.contactName]),
     [contacts, focusedContactIds, search]
   );
 
@@ -634,10 +634,10 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
 
   const linkedIds = useMemo(() => new Set(linkedContacts.map(c => c.id)), [linkedContacts]);
   const searchResults = useMemo(
-    () => Object.values(contacts)
+    () => sortByRelevance(contactSearch, Object.values(contacts)
       .filter(c => !linkedIds.has(c.id))
       .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city]))
-      .sort((a, b) => a.company.localeCompare(b.company, 'it')),
+      .sort((a, b) => a.company.localeCompare(b.company, 'it')), c => [c.company, c.contactName]),
     [contacts, linkedIds, contactSearch]
   );
 

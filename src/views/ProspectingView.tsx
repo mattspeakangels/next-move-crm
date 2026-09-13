@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 import type {
   Contact, ProspectingSettore, ProspectingStato, ProspectingMotivoScarto, ProspectingTrack, Sequence, Activity, NavView, ProspectHistoryEntry, ProspectEmailDraft,
 } from '../types';
@@ -997,10 +997,10 @@ const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 
   const contactResults = useMemo(
-    () => Object.values(contacts)
+    () => sortByRelevance(contactSearch, Object.values(contacts)
       .filter(c => c.status === 'potenziale' && !activeContactIds.has(c.id))
       .filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city]))
-      .sort((a, b) => a.company.localeCompare(b.company, 'it')),
+      .sort((a, b) => a.company.localeCompare(b.company, 'it')), c => [c.company, c.contactName]),
     [contacts, activeContactIds, contactSearch]
   );
 

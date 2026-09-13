@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore';
 import { DealStage } from '../../types';
 import { useToast } from '../ui/ToastContext';
 import { SearchDropdown } from '../ui/SearchDropdown';
-import { matchSearch } from '../../utils/search';
+import { matchSearch, sortByRelevance } from '../../utils/search';
 
 interface AddDealModalProps {
   onClose: () => void;
@@ -37,7 +37,7 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
 
   const filteredContacts = useMemo(() =>
     contactSearch.trim()
-      ? sortedContacts.filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
+      ? sortByRelevance(contactSearch, sortedContacts.filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName])
       : sortedContacts,
     [sortedContacts, contactSearch]
   );

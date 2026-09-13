@@ -8,7 +8,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useClaudeAI } from '../hooks/useClaudeAI';
 import { AiPanel } from '../components/ai/AiPanel';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 
 export const OffersView: React.FC = () => {
   const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile, deals, addDeal, updateDeal } = useStore();
@@ -586,7 +586,7 @@ export const OffersView: React.FC = () => {
                   totalCount={Object.keys(contacts).length}
                   inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-green-400 transition-all text-sm dark:text-white'}
                   results={(orderContactSearch.trim()
-                    ? Object.values(contacts).filter(c => matchSearch(orderContactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
+                    ? sortByRelevance(orderContactSearch, Object.values(contacts).filter(c => matchSearch(orderContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName])
                     : Object.values(contacts)
                   ).slice(0, 8).map(c => ({
                     key: c.id,
@@ -1000,7 +1000,7 @@ export const OffersView: React.FC = () => {
                       placeholder="Cerca dealer per nome, azienda, città..."
                       inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
                       results={(contactSearch.trim()
-                        ? Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])).slice(0, 8)
+                        ? sortByRelevance(contactSearch, Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                         : Object.values(contacts).slice(0, 8)
                       ).map(c => ({
                         key: c.id,
@@ -1019,7 +1019,7 @@ export const OffersView: React.FC = () => {
                       placeholder="Cerca cliente finale per nome, azienda, città..."
                       inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
                       results={(endUserContactSearch.trim()
-                        ? Object.values(contacts).filter(c => matchSearch(endUserContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])).slice(0, 8)
+                        ? sortByRelevance(endUserContactSearch, Object.values(contacts).filter(c => matchSearch(endUserContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                         : Object.values(contacts).slice(0, 8)
                       ).map(c => ({
                         key: c.id,
@@ -1042,7 +1042,7 @@ export const OffersView: React.FC = () => {
                     placeholder="Cerca per nome, azienda, città, email, telefono..."
                     inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
                     results={(contactSearch.trim()
-                      ? Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])).slice(0, 8)
+                      ? sortByRelevance(contactSearch, Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                       : Object.values(contacts).slice(0, 8)
                     ).map(c => ({
                       key: c.id,

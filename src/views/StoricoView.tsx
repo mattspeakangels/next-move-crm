@@ -6,7 +6,7 @@ import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { saveStoricoToFirestore, loadStoricoFromFirestore, deleteStoricoFromFirestore } from '../lib/storicoFirestore';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 import {
   Upload, TrendingUp, TrendingDown, Target, Zap, AlertTriangle,
   ChevronDown, ChevronUp, Euro, BarChart3,
@@ -1091,7 +1091,7 @@ export function StoricoView() {
         placeholder="Cerca cliente…"
         inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors'}
         results={(searchQuery.trim()
-          ? clienti.filter(c => matchSearch(searchQuery, [c.nome])).slice(0, 8)
+          ? sortByRelevance(searchQuery, clienti.filter(c => matchSearch(searchQuery, [c.nome])), c => [c.nome]).slice(0, 8)
           : []
         ).map(c => ({
           key: String(c.clientId),
