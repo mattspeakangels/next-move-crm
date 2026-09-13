@@ -51,6 +51,10 @@ export function SearchDropdown<T>({
 }: SearchDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Nome campo casuale e stabile: impedisce al browser di associare questo
+  // input a un campo "nome/ricerca" salvato e di proporre la sua tendina
+  // nativa di autocomplete, che coprirebbe il nostro dropdown di anteprima.
+  const inputNameRef = useRef(`search-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +81,15 @@ export function SearchDropdown<T>({
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          // Attributo non standard ma rispettato da Chrome/Safari per disabilitare
+          // davvero l'autocomplete nativo del browser, che altrimenti copre con la
+          // sua tendina il nostro dropdown di anteprima risultati.
+          data-lpignore="true"
+          name={inputNameRef.current}
           className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold min-w-0"
         />
         {value && (

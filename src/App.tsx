@@ -37,7 +37,7 @@ const ViewLoader = () => (
 // Analytics feature enabled
 function AppContent() {
   const [currentView, setCurrentView] = useState<NavView>(
-    () => (localStorage.getItem('nm_last_view') as NavView) ?? 'dashboard'
+    () => (localStorage.getItem('nm_last_view') as NavView) ?? 'offers'
   );
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

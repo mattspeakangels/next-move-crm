@@ -11,7 +11,7 @@ import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch } from '../utils/search';
 
 export const OffersView: React.FC = () => {
-  const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile, deals, updateDeal } = useStore();
+  const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile, deals, addDeal, updateDeal } = useStore();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'offerte' | 'ordini'>('offerte');
   const [uploadingOrderId, setUploadingOrderId] = useState<string | null>(null);
@@ -74,7 +74,73 @@ export const OffersView: React.FC = () => {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [pdfModalContactId, setPdfModalContactId] = useState('');
   const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
+  const [pdfModalAmount, setPdfModalAmount] = useState(0);
   const [pdfModalUploading, setPdfModalUploading] = useState(false);
+
+  // ── Nuovo Ordine diretto (senza passare da un'offerta vinta) ──
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderContactId, setOrderContactId] = useState('');
+  const [orderContactSearch, setOrderContactSearch] = useState('');
+  const [orderAmount, setOrderAmount] = useState(0);
+  const [orderFile, setOrderFile] = useState<File | null>(null);
+  const [orderCreating, setOrderCreating] = useState(false);
+
+  const resetOrderModal = () => {
+    setOrderContactId('');
+    setOrderContactSearch('');
+    setOrderAmount(0);
+    setOrderFile(null);
+  };
+
+  const handleCreateOrder = async () => {
+    if (!orderContactId) {
+      showToast('Seleziona un cliente', 'error');
+      return;
+    }
+    if (!orderAmount || orderAmount <= 0) {
+      showToast('Inserisci l\'importo dell\'ordine', 'error');
+      return;
+    }
+    setOrderCreating(true);
+    try {
+      const dealId = `d_${Date.now()}`;
+      let orderPdfUrl: string | undefined;
+      let orderPdfName: string | undefined;
+      if (orderFile) {
+        const { url, name } = await uploadOfferPdf(dealId, orderFile);
+        orderPdfUrl = url;
+        orderPdfName = name;
+      }
+      const now = Date.now();
+      addDeal({
+        id: dealId,
+        contactId: orderContactId,
+        value: Number(orderAmount),
+        probability: 100,
+        products: [],
+        stage: 'chiuso-vinto',
+        nextAction: '',
+        nextActionDeadline: now,
+        notes: '',
+        createdAt: now,
+        updatedAt: now,
+        closedAt: now,
+        ...(orderPdfUrl ? { orderPdfUrl, orderPdfName } : {}),
+      });
+      showToast('Ordine creato!', 'success');
+      setShowOrderModal(false);
+      resetOrderModal();
+    } catch (err: any) {
+      showToast(err?.message ?? 'Errore creazione ordine', 'error');
+    } finally {
+      setOrderCreating(false);
+    }
+  };
+
+  const handleRevertOrder = (dealId: string) => {
+    updateDeal(dealId, { stage: 'negoziazione' });
+    showToast('Ordine annullato: trattativa riportata in Pipeline', 'success');
+  };
 
   const triggerPdfUpload = (offerId: string) => {
     pendingUploadOfferId.current = offerId;
@@ -83,6 +149,10 @@ export const OffersView: React.FC = () => {
 
   const handlePdfModalConfirm = async () => {
     if (!pdfModalContactId || !pdfModalFile) return;
+    if (!pdfModalAmount || pdfModalAmount <= 0) {
+      showToast('Inserisci l\'importo dell\'offerta', 'error');
+      return;
+    }
     setPdfModalUploading(true);
     try {
       const offerId = `offer_${Date.now()}`;
@@ -96,7 +166,8 @@ export const OffersView: React.FC = () => {
         date: Date.now(),
         items: [],
         status: 'inviata',
-        totalAmount: 0,
+        manualTotal: true,
+        totalAmount: Number(pdfModalAmount),
         followUpDate: Date.now() + 14 * 24 * 60 * 60 * 1000,
         pdfUrl: url,
         pdfName: name,
@@ -105,6 +176,7 @@ export const OffersView: React.FC = () => {
       setShowPdfModal(false);
       setPdfModalContactId('');
       setPdfModalFile(null);
+      setPdfModalAmount(0);
     } catch (err: any) {
       showToast(err?.message ?? 'Errore caricamento PDF', 'error');
     } finally {
@@ -435,7 +507,7 @@ export const OffersView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black uppercase dark:text-white">Carica PDF Offerta</h2>
-              <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); }}>
+              <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); setPdfModalAmount(0); }}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
@@ -454,6 +526,18 @@ export const OffersView: React.FC = () => {
                 </select>
               </div>
               <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Importo offerta €</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-black text-lg outline-none"
+                  value={pdfModalAmount || ''}
+                  onChange={e => setPdfModalAmount(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">File PDF</label>
                 <label className={`flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed rounded-2xl py-8 cursor-pointer transition-colors ${pdfModalFile ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'}`}>
                   <FileText size={32} className={pdfModalFile ? 'text-orange-500' : 'text-gray-300'} />
@@ -467,13 +551,85 @@ export const OffersView: React.FC = () => {
               </div>
               <button
                 onClick={handlePdfModalConfirm}
-                disabled={!pdfModalContactId || !pdfModalFile || pdfModalUploading}
+                disabled={!pdfModalContactId || !pdfModalFile || !pdfModalAmount || pdfModalUploading}
                 className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-wide hover:bg-orange-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {pdfModalUploading ? (
                   <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Caricamento...</>
                 ) : (
                   <><Upload size={16} /> Crea Offerta con PDF</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Nuovo Ordine diretto (senza passare da un'offerta vinta) */}
+      {showOrderModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black uppercase dark:text-white">Nuovo Ordine</h2>
+              <button onClick={() => { setShowOrderModal(false); resetOrderModal(); }}>
+                <X size={22} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="space-y-5">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
+                <SearchDropdown
+                  value={orderContactSearch}
+                  onChange={v => { setOrderContactSearch(v); if (orderContactId) setOrderContactId(''); }}
+                  placeholder="Cerca per nome, azienda, città..."
+                  showWhenEmpty
+                  totalCount={Object.keys(contacts).length}
+                  inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-green-400 transition-all text-sm dark:text-white'}
+                  results={(orderContactSearch.trim()
+                    ? Object.values(contacts).filter(c => matchSearch(orderContactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
+                    : Object.values(contacts)
+                  ).slice(0, 8).map(c => ({
+                    key: c.id,
+                    item: c,
+                    label: c.company || c.contactName,
+                    sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+                  }))}
+                  onSelect={c => { setOrderContactId(c.id); setOrderContactSearch(c.company || c.contactName); }}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Importo ordine €</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-black text-lg outline-none"
+                  value={orderAmount || ''}
+                  onChange={e => setOrderAmount(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">File PDF ordine (opzionale)</label>
+                <label className={`flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed rounded-2xl py-8 cursor-pointer transition-colors ${orderFile ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-green-300'}`}>
+                  <FileText size={32} className={orderFile ? 'text-green-500' : 'text-gray-300'} />
+                  {orderFile ? (
+                    <span className="text-sm font-black text-green-600 dark:text-green-400 px-4 text-center break-all">{orderFile.name}</span>
+                  ) : (
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Clicca per selezionare il PDF</span>
+                  )}
+                  <input type="file" accept="application/pdf" className="hidden" onChange={e => setOrderFile(e.target.files?.[0] || null)} />
+                </label>
+              </div>
+              <button
+                onClick={handleCreateOrder}
+                disabled={!orderContactId || !orderAmount || orderCreating}
+                className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase tracking-wide hover:bg-green-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {orderCreating ? (
+                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Creazione...</>
+                ) : (
+                  <><Plus size={16} /> Crea Ordine</>
                 )}
               </button>
             </div>
@@ -502,6 +658,13 @@ export const OffersView: React.FC = () => {
             </button>
             <button onClick={() => openModal()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
               <Plus size={20} /> Nuova
+            </button>
+          </div>
+        )}
+        {activeTab === 'ordini' && (
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { resetOrderModal(); setShowOrderModal(true); }} className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition-all">
+              <Plus size={20} /> Nuovo Ordine
             </button>
           </div>
         )}
@@ -568,7 +731,7 @@ export const OffersView: React.FC = () => {
                         € {(deal.value || 0).toLocaleString('it-IT')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {deal.orderPdfUrl ? (
                         <PdfButton
                           pdfUrl={deal.orderPdfUrl}
@@ -586,6 +749,13 @@ export const OffersView: React.FC = () => {
                           <Upload size={12} /> {uploadingOrderId === deal.id ? 'Caricamento...' : 'Carica PDF ordine'}
                         </button>
                       )}
+                      <button
+                        onClick={() => handleRevertOrder(deal.id)}
+                        title="Annulla ordine e riporta la trattativa in Pipeline"
+                        className="flex items-center gap-1.5 bg-red-50 dark:bg-red-900/20 text-red-500 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-red-100 transition-colors"
+                      >
+                        ↩ Annulla ordine
+                      </button>
                     </div>
                   </div>
                 );
