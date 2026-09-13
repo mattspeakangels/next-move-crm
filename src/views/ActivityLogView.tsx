@@ -8,6 +8,8 @@ import {
 import { ActivityType, Activity as ActivityRecord } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { PdfButton } from '../components/ui/PdfButton';
+import { SearchDropdown } from '../components/ui/SearchDropdown';
+import { matchSearch, sortByRelevance } from '../utils/search';
 
 // ─── Tipi evento ──────────────────────────────────────────────────────────────
 
@@ -109,13 +111,14 @@ const OFFER_COLOR: Record<string, string> = {
 // ─── Quick-add form ───────────────────────────────────────────────────────────
 
 interface QuickAddProps {
-  contacts: Record<string, { company: string }>;
+  contacts: Record<string, { company: string; contactName?: string; city?: string; email?: string; phone?: string }>;
   onSave: (contactId: string, type: ActivityType, notes: string) => void;
   onClose: () => void;
 }
 
 const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
   const [contactId, setContactId] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
   const [type, setType] = useState<ActivityType>('visita');
   const [notes, setNotes] = useState('');
 
@@ -133,16 +136,24 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
         <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
       </div>
       <div className="space-y-3">
-        <select
-          value={contactId}
-          onChange={e => setContactId(e.target.value)}
-          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400"
-        >
-          <option value="">Seleziona cliente...</option>
-          {Object.values(contacts).sort((a, b) => a.company.localeCompare(b.company)).map((c: any) => (
-            <option key={c.id} value={c.id}>{c.company}</option>
-          ))}
-        </select>
+        <SearchDropdown
+          value={contactSearch}
+          onChange={v => { setContactSearch(v); if (contactId) setContactId(''); }}
+          placeholder="Cerca cliente per nome, azienda, città..."
+          showWhenEmpty
+          totalCount={Object.keys(contacts).length}
+          inputWrapperClassName={() => 'flex items-center gap-2 px-3 py-2.5 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+          results={sortByRelevance(contactSearch, (contactSearch.trim()
+            ? Object.values(contacts).filter((c: any) => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
+            : Object.values(contacts)
+          ), (c: any) => [c.company, c.contactName]).slice(0, 8).map((c: any) => ({
+            key: c.id,
+            item: c,
+            label: c.company || c.contactName,
+            sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+          }))}
+          onSelect={(c: any) => { setContactId(c.id); setContactSearch(c.company || c.contactName); }}
+        />
         <div className="flex gap-2">
           {TYPES.map(t => (
             <button key={t} onClick={() => setType(t)}

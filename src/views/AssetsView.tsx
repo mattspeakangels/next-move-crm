@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
-import { matchSearch } from '../utils/search';
+import { matchSearch, sortByRelevance } from '../utils/search';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,6 +38,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
     purchaseAmount: initial?.purchaseAmount ? String(initial.purchaseAmount) : '',
     notes: initial?.notes ?? '',
   });
+  const [contactSearch, setContactSearch] = useState(() => (initial?.contactId && contacts[initial.contactId]?.company) || '');
 
   const valid = data.contactId && data.description && data.installDate;
 
@@ -71,16 +72,23 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
           {/* Cliente */}
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Cliente *</label>
-            <select
-              value={data.contactId}
-              onChange={e => setData(d => ({ ...d, contactId: e.target.value }))}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400"
-            >
-              <option value="">Seleziona cliente...</option>
-              {Object.values(contacts).sort((a, b) => a.company.localeCompare(b.company)).map((c: any) => (
-                <option key={c.id} value={c.id}>{c.company}</option>
-              ))}
-            </select>
+            <SearchDropdown
+              value={contactSearch}
+              onChange={v => { setContactSearch(v); if (data.contactId) setData(d => ({ ...d, contactId: '' })); }}
+              placeholder="Cerca cliente per nome, azienda..."
+              showWhenEmpty
+              totalCount={Object.keys(contacts).length}
+              inputWrapperClassName={() => 'w-full flex items-center gap-2 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus-within:border-indigo-400 transition-all'}
+              results={sortByRelevance(contactSearch, (contactSearch.trim()
+                ? Object.values(contacts).filter((c: any) => matchSearch(contactSearch, [c.company]))
+                : Object.values(contacts)
+              ), (c: any) => [c.company]).slice(0, 8).map((c: any) => ({
+                key: c.id,
+                item: c,
+                label: c.company,
+              }))}
+              onSelect={(c: any) => { setData(d => ({ ...d, contactId: c.id })); setContactSearch(c.company); }}
+            />
           </div>
 
           {/* Descrizione */}

@@ -73,6 +73,7 @@ export const OffersView: React.FC = () => {
   const pendingUploadOfferId = useRef<string | null>(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [pdfModalContactId, setPdfModalContactId] = useState('');
+  const [pdfModalContactSearch, setPdfModalContactSearch] = useState('');
   const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
   const [pdfModalAmount, setPdfModalAmount] = useState(0);
   const [pdfModalUploading, setPdfModalUploading] = useState(false);
@@ -175,6 +176,7 @@ export const OffersView: React.FC = () => {
       showToast('PDF caricato e offerta creata!', 'success');
       setShowPdfModal(false);
       setPdfModalContactId('');
+      setPdfModalContactSearch('');
       setPdfModalFile(null);
       setPdfModalAmount(0);
     } catch (err: any) {
@@ -507,23 +509,31 @@ export const OffersView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black uppercase dark:text-white">Carica PDF Offerta</h2>
-              <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); setPdfModalAmount(0); }}>
+              <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); setPdfModalContactSearch(''); setPdfModalAmount(0); }}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
             <div className="space-y-5">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
-                <select
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
-                  value={pdfModalContactId}
-                  onChange={e => setPdfModalContactId(e.target.value)}
-                >
-                  <option value="">Seleziona cliente...</option>
-                  {Object.values(contacts).sort((a, b) => a.company.localeCompare(b.company)).map(c => (
-                    <option key={c.id} value={c.id}>{c.company}</option>
-                  ))}
-                </select>
+                <SearchDropdown
+                  value={pdfModalContactSearch}
+                  onChange={v => { setPdfModalContactSearch(v); if (pdfModalContactId) setPdfModalContactId(''); }}
+                  placeholder="Cerca per nome, azienda, città..."
+                  showWhenEmpty
+                  totalCount={Object.keys(contacts).length}
+                  inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-orange-400 transition-all text-sm dark:text-white'}
+                  results={sortByRelevance(pdfModalContactSearch, (pdfModalContactSearch.trim()
+                    ? Object.values(contacts).filter(c => matchSearch(pdfModalContactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
+                    : Object.values(contacts)
+                  ), c => [c.company, c.contactName]).slice(0, 8).map(c => ({
+                    key: c.id,
+                    item: c,
+                    label: c.company || c.contactName,
+                    sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
+                  }))}
+                  onSelect={c => { setPdfModalContactId(c.id); setPdfModalContactSearch(c.company || c.contactName); }}
+                />
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Importo offerta €</label>
