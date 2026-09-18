@@ -1816,7 +1816,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                             {isProspect ? <UserPlus size={22} /> : <Building2 size={22} />}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-black dark:text-white uppercase leading-tight truncate">{contact.company}</h3>
+                            <h3 className="font-black dark:text-white uppercase leading-tight break-words">{contact.company}</h3>
                             <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
                               (contact as any).customerType === 'dealer' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
                             }`}>
