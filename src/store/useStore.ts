@@ -18,6 +18,7 @@ interface StoreState {
   fontFamily: 'sans' | 'serif' | 'rounded' | 'mono';
   sectionColors: Record<string, string>;
   mapMarkerStyles: Record<string, { shape: string; color: string }>;
+  mapMarkerSize: 'small' | 'medium' | 'large';
   targets: Record<string, any>;
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
@@ -39,6 +40,7 @@ interface StoreState {
   setFontFamily: (fontFamily: 'sans' | 'serif' | 'rounded' | 'mono') => void;
   setSectionColor: (sectionId: string, palette: string) => void;
   setMapMarkerStyle: (category: string, updates: Partial<{ shape: string; color: string }>) => void;
+  setMapMarkerSize: (size: 'small' | 'medium' | 'large') => void;
   toggleTheme: () => void;
   resetAll: () => void;
   setDiscountApprovalThreshold: (value: number) => void;
@@ -133,6 +135,7 @@ export const useStore = create<StoreState>()(
       fontFamily: 'sans',
       sectionColors: {},
       mapMarkerStyles: {},
+      mapMarkerSize: 'medium',
       discountApprovalThreshold: 20,
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
@@ -159,6 +162,7 @@ export const useStore = create<StoreState>()(
           [category]: { ...(state.mapMarkerStyles[category] || {}), ...updates } as { shape: string; color: string },
         },
       })),
+      setMapMarkerSize: (mapMarkerSize) => set({ mapMarkerSize }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {}, strategicFocuses: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
@@ -386,6 +390,7 @@ export const useStore = create<StoreState>()(
         fontFamily: state.fontFamily,
         sectionColors: state.sectionColors,
         mapMarkerStyles: state.mapMarkerStyles,
+        mapMarkerSize: state.mapMarkerSize,
         profile: state.profile,
         discountApprovalThreshold: state.discountApprovalThreshold,
         todos: state.todos,

@@ -8,7 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
-import { MarkerShape, getMarkerCategory, DEFAULT_MARKER_STYLE, shapeDivIcon } from '../lib/markerShapes';
+import { MarkerShape, getMarkerCategory, DEFAULT_MARKER_STYLE, shapeDivIcon, priorityStarDivIcon, MARKER_ICON_PX, MARKER_CIRCLE_RADIUS } from '../lib/markerShapes';
 import {
   DndContext,
   closestCenter,
@@ -194,19 +194,6 @@ const stopIcon = (n: number) => L.divIcon({
   iconSize: [28, 28], iconAnchor: [14, 14],
 });
 
-// Contatto segnalato prioritario da visitare: stellina contorno oro, interno fucsia
-const priorityStarIcon = L.divIcon({
-  className: '',
-  html: `<div style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.45));">
-    <svg viewBox="0 0 24 24" width="24" height="24">
-      <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z"
-        fill="#d946ef" stroke="#facc15" stroke-width="1.8" stroke-linejoin="round"/>
-    </svg>
-  </div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  popupAnchor: [0, -12],
-});
 
 // Componente sortable per singola tappa — drag handle visibile
 const SortableTappa = React.memo(function SortableTappa({ id, children }: { id: string; children: React.ReactNode }) {
@@ -248,7 +235,9 @@ interface ItinerarioViewProps {
 }
 
 const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVisible }) => {
-  const { addActivity, deleteActivity, activities, mapMarkerStyles } = useStore();
+  const { addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize } = useStore();
+  const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
+  const markerRadiusPx = MARKER_CIRCLE_RADIUS[mapMarkerSize];
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -752,18 +741,18 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             }
             if (c.priorityToVisit) {
               return (
-                <Marker key={c.id} position={[c.lat, c.lng]} icon={priorityStarIcon} eventHandlers={{ click: () => toggle(c.id) }}>
+                <Marker key={c.id} position={[c.lat, c.lng]} icon={priorityStarDivIcon(markerIconPx + 2)} eventHandlers={{ click: () => toggle(c.id) }}>
                   {popup}
                 </Marker>
               );
             }
             const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
             return style.shape !== 'circle' ? (
-              <Marker key={c.id} position={[c.lat, c.lng]} icon={shapeDivIcon(style.shape as MarkerShape, style.color)} eventHandlers={{ click: () => toggle(c.id) }}>
+              <Marker key={c.id} position={[c.lat, c.lng]} icon={shapeDivIcon(style.shape as MarkerShape, style.color, markerIconPx)} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </Marker>
             ) : (
-              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)} eventHandlers={{ click: () => toggle(c.id) }}>
+              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={markerRadiusPx} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </CircleMarker>
             );
@@ -1111,7 +1100,9 @@ export const MapView: React.FC<MapViewProps> = ({
   onGoFullscreen,
   onExitFullscreen,
 }) => {
-  const { contacts, updateContact, mapMarkerStyles } = useStore();
+  const { contacts, updateContact, mapMarkerStyles, mapMarkerSize } = useStore();
+  const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
+  const markerRadiusPx = MARKER_CIRCLE_RADIUS[mapMarkerSize];
   const [userPos, setUserPos]     = useState<[number, number] | null>(() => {
     try {
       const cached = JSON.parse(localStorage.getItem('nextmove_last_userpos') || 'null');
@@ -1406,18 +1397,18 @@ export const MapView: React.FC<MapViewProps> = ({
             );
             if (c.priorityToVisit) {
               return (
-                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarDivIcon(markerIconPx + 2)}>
                   {popupContent}
                 </Marker>
               );
             }
             const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
             return style.shape !== 'circle' ? (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color)}>
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color, markerIconPx)}>
                 {popupContent}
               </Marker>
             ) : (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={markerRadiusPx} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
                 {popupContent}
               </CircleMarker>
             );
@@ -1815,18 +1806,18 @@ export const MapView: React.FC<MapViewProps> = ({
             );
             if (c.priorityToVisit) {
               return (
-                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarDivIcon(markerIconPx + 2)}>
                   {popupContent}
                 </Marker>
               );
             }
             const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
             return style.shape !== 'circle' ? (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color)}>
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color, markerIconPx)}>
                 {popupContent}
               </Marker>
             ) : (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={markerRadiusPx} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
                 {popupContent}
               </CircleMarker>
             );

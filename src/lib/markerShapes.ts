@@ -90,6 +90,18 @@ function shapePath(shape: MarkerShape, size: number): string {
   }
 }
 
+export type MarkerSize = 'small' | 'medium' | 'large';
+
+export const MARKER_SIZE_LABELS: Record<MarkerSize, string> = {
+  small: 'Piccole',
+  medium: 'Medie',
+  large: 'Grandi',
+};
+
+// Lato in px del divIcon e raggio del CircleMarker canvas per ciascuna taglia.
+export const MARKER_ICON_PX: Record<MarkerSize, number> = { small: 18, medium: 22, large: 32 };
+export const MARKER_CIRCLE_RADIUS: Record<MarkerSize, number> = { small: 7, medium: 9, large: 13 };
+
 const iconCache = new Map<string, L.DivIcon>();
 
 // Icona DOM (divIcon) per una forma+colore. Cache per evitare di ricreare lo
@@ -115,5 +127,29 @@ export function shapeDivIcon(shape: MarkerShape, color: string, size = 22): L.Di
     popupAnchor: [0, -size / 2],
   });
   iconCache.set(key, icon);
+  return icon;
+}
+
+const starIconCache = new Map<number, L.DivIcon>();
+
+// Marker "prioritario" (contorno oro, interno fucsia), dimensione variabile
+// in base alla taglia scelta in Impostazioni. Sempre uguale a se stesso a
+// parita' di taglia, quindi cache per non ricrearlo per ogni contatto.
+export function priorityStarDivIcon(size = 24): L.DivIcon {
+  const cached = starIconCache.get(size);
+  if (cached) return cached;
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.45));width:${size}px;height:${size}px;">
+      <svg viewBox="0 0 24 24" width="${size}" height="${size}">
+        <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z"
+          fill="#d946ef" stroke="#facc15" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    </div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+  starIconCache.set(size, icon);
   return icon;
 }

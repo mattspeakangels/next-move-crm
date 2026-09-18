@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
 import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, type LucideIcon } from 'lucide-react';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
-import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory } from '../lib/markerShapes';
+import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -408,7 +408,7 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, mapMarkerStyles, setMapMarkerStyle, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -712,6 +712,22 @@ export const SettingsView: React.FC = () => {
           <Map size={18} /> Icone clienti sulla mappa
         </div>
         <p className="text-xs text-gray-400 mb-4">Scegli forma e colore del marker per ogni categoria di cliente/prospect nella sezione Mappa (i prioritari restano sempre una stellina oro/fucsia).</p>
+
+        <div className="flex justify-between items-center mb-5 pb-5 border-b border-gray-100 dark:border-gray-700">
+          <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Dimensione icone</span>
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-xl p-1">
+            {(Object.keys(MARKER_SIZE_LABELS) as MarkerSize[]).map(size => (
+              <button
+                key={size}
+                onClick={() => setMapMarkerSize(size)}
+                className={`px-3 h-9 rounded-lg font-black text-xs transition-colors ${mapMarkerSize === size ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                {MARKER_SIZE_LABELS[size]}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-4">
           {(Object.keys(MARKER_CATEGORY_LABELS) as MarkerCategory[]).map(category => {
             const base = DEFAULT_MARKER_STYLE[category];
