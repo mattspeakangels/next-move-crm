@@ -8,6 +8,7 @@ import { Contact, ContactSegment } from '../types';
 import { AddDealModal } from '../components/deals/AddDealModal';
 import { ProfilingForm } from '../components/profiling/ProfilingForm';
 import { ImportFromUrlModal } from '../components/contacts/ImportFromUrlModal';
+import { allSectors, sectorLabel } from '../lib/sectors';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { ContactHistoryView } from './ContactHistoryView';
 import { matchSearch, sortByRelevance } from '../utils/search';
@@ -715,7 +716,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, activities, groups } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, activities, groups, customSectors } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1226,7 +1227,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Tipologia</label>
-                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.customerType || 'end-user'} onChange={e => setEditingContact({...editingContact, customerType: e.target.value})}>
+                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.segment === 'dealer' ? 'dealer' : 'end-user'} onChange={e => setEditingContact({...editingContact, segment: e.target.value as ContactSegment, customerType: e.target.value})}>
                     <option value="end-user">End User (Utilizzatore Finale)</option>
                     <option value="dealer">Dealer (Rivenditore)</option>
                   </select>
@@ -1251,16 +1252,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Settore di Riferimento</label>
                   <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.sector || ''} onChange={e => setEditingContact({...editingContact, sector: e.target.value})}>
                     <option value="">— Seleziona settore —</option>
-                    <option value="Edilizia">Edilizia / Costruzioni</option>
-                    <option value="Industria">Industria / Manifattura</option>
-                    <option value="Idraulica">Idraulica / Termoidraulica</option>
-                    <option value="Elettricista">Elettricista / Impianti Elettrici</option>
-                    <option value="Ferramenta">Ferramenta / Antinfortunistica</option>
-                    <option value="Trasporti e logistica">Trasporti e Logistica</option>
-                    <option value="Agricoltura">Agricoltura / Forestale</option>
-                    <option value="Servizi">Servizi</option>
-                    <option value="Energia e utilities">Energia e Utilities</option>
-                    <option value="Altro">Altro</option>
+                    {allSectors(customSectors).map(s => (
+                      <option key={s} value={s}>{sectorLabel(s)}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

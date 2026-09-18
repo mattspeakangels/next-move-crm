@@ -19,6 +19,7 @@ interface StoreState {
   sectionColors: Record<string, string>;
   mapMarkerStyles: Record<string, { shape: string; color: string }>;
   mapMarkerSize: 'small' | 'medium' | 'large';
+  customSectors: string[];
   targets: Record<string, any>;
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
@@ -41,6 +42,8 @@ interface StoreState {
   setSectionColor: (sectionId: string, palette: string) => void;
   setMapMarkerStyle: (category: string, updates: Partial<{ shape: string; color: string }>) => void;
   setMapMarkerSize: (size: 'small' | 'medium' | 'large') => void;
+  addCustomSector: (sector: string) => void;
+  removeCustomSector: (sector: string) => void;
   toggleTheme: () => void;
   resetAll: () => void;
   setDiscountApprovalThreshold: (value: number) => void;
@@ -50,6 +53,7 @@ interface StoreState {
   addContact: (contact: Contact) => void;
   addContactsBatch: (contacts: Contact[]) => void;
   updateContact: (id: string, updates: Partial<Contact>) => void;
+  repairCustomerTypes: () => void;
   deleteContact: (id: string) => void;
   deleteContactsBatch: (ids: string[]) => void;
   deleteAllContacts: () => void;
@@ -117,6 +121,19 @@ interface StoreState {
   deleteStrategicFocus: (id: string) => void;
 }
 
+// Un contatto ha due campi che indicano "dealer vs end user": `segment`
+// (usato per raggruppare/filtrare in Clienti e Mappa: dealer/industria/
+// edilizia/end-user) e `customerType` (usato nella scheda cliente e in
+// alcuni form: dealer/end-user). Potevano andare fuori sincrono - es.
+// import che classifica solo `segment` - mostrando categorie diverse
+// nella lista e nella scheda dello stesso contatto. `segment` resta la
+// fonte di verita': questa funzione riallinea sempre `customerType` di
+// conseguenza, cosi' i due campi non possono piu' divergere.
+function syncCustomerType(contact: Contact): Contact {
+  const derived = contact.segment === 'dealer' ? 'dealer' : 'end-user';
+  return contact.customerType === derived ? contact : { ...contact, customerType: derived };
+}
+
 export const useStore = create<StoreState>()(
   persist(
     (set) => ({
@@ -136,6 +153,7 @@ export const useStore = create<StoreState>()(
       sectionColors: {},
       mapMarkerStyles: {},
       mapMarkerSize: 'medium',
+      customSectors: [],
       discountApprovalThreshold: 20,
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
@@ -163,22 +181,40 @@ export const useStore = create<StoreState>()(
         },
       })),
       setMapMarkerSize: (mapMarkerSize) => set({ mapMarkerSize }),
+      addCustomSector: (sector) => set((state) => {
+        const trimmed = sector.trim();
+        if (!trimmed || state.customSectors.includes(trimmed)) return state;
+        return { customSectors: [...state.customSectors, trimmed] };
+      }),
+      removeCustomSector: (sector) => set((state) => ({ customSectors: state.customSectors.filter(s => s !== sector) })),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {}, strategicFocuses: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
       setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
       addContact: (contact) => set((state) => ({
-        contacts: { ...state.contacts, [contact.id]: contact }
+        contacts: { ...state.contacts, [contact.id]: syncCustomerType(contact) }
       })),
       addContactsBatch: (batch) => set((state) => {
         const updated = { ...state.contacts };
-        batch.forEach(c => updated[c.id] = c);
+        batch.forEach(c => updated[c.id] = syncCustomerType(c));
         return { contacts: updated };
       }),
       updateContact: (id, updates) => set((state) => ({
-        contacts: { ...state.contacts, [id]: { ...state.contacts[id], ...updates, updatedAt: Date.now() } }
+        contacts: { ...state.contacts, [id]: syncCustomerType({ ...state.contacts[id], ...updates, updatedAt: Date.now() }) }
       })),
+      repairCustomerTypes: () => set((state) => {
+        const updated = { ...state.contacts };
+        let changed = false;
+        for (const id of Object.keys(updated)) {
+          const fixed = syncCustomerType(updated[id]);
+          if (fixed.customerType !== updated[id].customerType) {
+            updated[id] = fixed;
+            changed = true;
+          }
+        }
+        return changed ? { contacts: updated } : state;
+      }),
       deleteContact: (id) => set((state) => {
         const newContacts = { ...state.contacts };
         delete newContacts[id];
@@ -391,6 +427,7 @@ export const useStore = create<StoreState>()(
         sectionColors: state.sectionColors,
         mapMarkerStyles: state.mapMarkerStyles,
         mapMarkerSize: state.mapMarkerSize,
+        customSectors: state.customSectors,
         profile: state.profile,
         discountApprovalThreshold: state.discountApprovalThreshold,
         todos: state.todos,

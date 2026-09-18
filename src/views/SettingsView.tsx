@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
 import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
+import { DEFAULT_SECTORS, sectorLabel } from '../lib/sectors';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -408,7 +409,8 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, customSectors, addCustomSector, removeCustomSector, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const [newSector, setNewSector] = useState('');
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -771,6 +773,47 @@ export const SettingsView: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Settori personalizzati */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center gap-2 font-bold mb-1">
+          <Factory size={18} /> Settori di riferimento
+        </div>
+        <p className="text-xs text-gray-400 mb-4">Aggiungi qui i settori mancanti dall'elenco predefinito: saranno disponibili nella scheda cliente e come filtro nella sezione Mappa.</p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {DEFAULT_SECTORS.map(s => (
+            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+              {sectorLabel(s)}
+            </span>
+          ))}
+          {customSectors.map(s => (
+            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+              {s}
+              <button onClick={() => removeCustomSector(s)} className="hover:text-red-500">
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newSector}
+            onChange={e => setNewSector(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
+            placeholder="Nuovo settore (es. Nautica)"
+            className="flex-1 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none"
+          />
+          <button
+            onClick={() => { if (newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
+            className="px-4 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-1.5"
+          >
+            <Plus size={16} /> Aggiungi
+          </button>
         </div>
       </div>
 

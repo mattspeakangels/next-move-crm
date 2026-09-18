@@ -43,7 +43,7 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const historyRef = useRef<NavView[]>([]);
-  const { theme, textSize, fontFamily, sectionColors, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
+  const { theme, textSize, fontFamily, sectionColors, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty, repairCustomerTypes } = useStore();
 
   useInitializeProducts();
   useProspectingReminders();
@@ -51,6 +51,10 @@ function AppContent() {
   useEffect(() => {
     seedSequencesIfEmpty(SEED_SEQUENCES);
   }, [seedSequencesIfEmpty]);
+
+  useEffect(() => {
+    repairCustomerTypes();
+  }, [repairCustomerTypes]);
 
   const goTo = (view: NavView) => {
     historyRef.current = [...historyRef.current, currentView];
