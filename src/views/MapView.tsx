@@ -735,12 +735,19 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             );
             // Tappe selezionate: marker DOM numerato (poche unità). Il resto:
             // CircleMarker su canvas, veloce anche con centinaia di contatti.
-            return stopIdx >= 0 ? (
-              <Marker key={c.id} position={[c.lat, c.lng]} icon={stopIcon(stopIdx + 1)} eventHandlers={{ click: () => toggle(c.id) }}>
+            if (stopIdx >= 0) {
+              return (
+                <Marker key={c.id} position={[c.lat, c.lng]} icon={stopIcon(stopIdx + 1)} eventHandlers={{ click: () => toggle(c.id) }}>
+                  {popup}
+                </Marker>
+              );
+            }
+            return c.priorityToVisit ? (
+              <Marker key={c.id} position={[c.lat, c.lng]} icon={priorityStarIcon} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </Marker>
             ) : (
-              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, c.priorityToVisit)} eventHandlers={{ click: () => toggle(c.id) }}>
+              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </CircleMarker>
             );
