@@ -34,8 +34,8 @@ const defaultForm = (): FormData => ({
   contactId: '',
   type: 'visita',
   date: '',
-  time: '09:00',
-  endTime: '10:00',
+  time: '08:00',
+  endTime: '09:00',
   endDateDay: '',
   notes: '',
 });
@@ -67,6 +67,8 @@ const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio', 'fiera'];
 
 // Categorie che possono estendersi su più giorni consecutivi (mostra il campo "Fino al")
 const MULTI_DAY_TYPES: ActivityType[] = ['fiera'];
+// Tipologie "visita in loco": l'orario deve sempre restare nella fascia 08:00-18:00
+const VISIT_TYPES: ActivityType[] = ['visita', 'visita-freddo', 'sopralluogo', 'demo'];
 
 const TYPE_COLORS: Record<ActivityType, string> = {
   visita: 'bg-[var(--accent-500)]',
@@ -1808,6 +1810,8 @@ Regole:
                   <input
                     type="time"
                     required
+                    min={VISIT_TYPES.includes(formData.type) ? '08:00' : undefined}
+                    max={VISIT_TYPES.includes(formData.type) ? '18:00' : undefined}
                     value={formData.time}
                     onChange={e => {
                       const newTime = e.target.value;
@@ -1824,6 +1828,8 @@ Regole:
                   <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora fine</label>
                   <input
                     type="time"
+                    min={VISIT_TYPES.includes(formData.type) ? '08:00' : undefined}
+                    max={VISIT_TYPES.includes(formData.type) ? '18:00' : undefined}
                     value={formData.endTime}
                     onChange={e => setFormData({ ...formData, endTime: e.target.value })}
                     className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"

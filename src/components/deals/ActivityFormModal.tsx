@@ -13,6 +13,7 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
   const [type, setType] = useState<ActivityType>('chiamata');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('09:00');
+  const isVisit = type === 'visita';
   const [notes, setNotes] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,12 +72,14 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
             </div>
             <div>
               <label className="block text-xs font-black uppercase text-gray-400 mb-1">Ora</label>
-              <input 
-                type="time" 
-                required 
-                value={time} 
+              <input
+                type="time"
+                required
+                min={isVisit ? '08:00' : undefined}
+                max={isVisit ? '18:00' : undefined}
+                value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none" 
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none"
               />
             </div>
           </div>

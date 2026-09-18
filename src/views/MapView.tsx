@@ -249,7 +249,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [filterSegment, setFilterSegment] = useState<ContactSegment | null>(null);
   const [filterPriorityOnly, setFilterPriorityOnly] = useState(false);
   const [showFiltersBar, setShowFiltersBar] = useState(false);
-  const [startTime, setStartTime] = useState('09:00');
+  const [startTime, setStartTime] = useState('08:00');
   const [visitDuration, setVisitDuration] = useState(60);
   const [savedToAgenda, setSavedToAgenda] = useState(false);
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({});
@@ -520,6 +520,8 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                       <div className="flex-shrink-0">
                         <input
                           type="time"
+                          min="08:00"
+                          max="18:00"
                           value={et?.effective ?? ''}
                           onChange={e => setCustomTimes(prev => ({ ...prev, [stop.id]: e.target.value }))}
                           className={`w-[72px] text-xs font-black rounded-lg px-1.5 py-1 outline-none border transition-colors ${
@@ -565,7 +567,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
               <div className="flex gap-3">
                 <div className="flex-1">
                   <p className="text-[10px] text-gray-400 font-bold mb-1">Partenza</p>
-                  <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
+                  <input type="time" min="08:00" max="18:00" value={startTime} onChange={e => setStartTime(e.target.value)}
                     className="w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-sm font-black text-gray-800 dark:text-white outline-none" />
                 </div>
                 <div className="flex-1">
