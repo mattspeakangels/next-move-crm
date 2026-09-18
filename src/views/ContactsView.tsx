@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown, StickyNote, Star } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown, StickyNote, Star, RefreshCw } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useStore } from '../store/useStore';
@@ -716,7 +716,7 @@ interface ContactsViewProps {
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
-  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, deals, activities, groups, customSectors } = useStore();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, bulkUpdateSegments, deals, activities, groups, customSectors } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1063,6 +1063,25 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       reader.onload = (event) => processText(event.target?.result as string);
       reader.readAsText(file);
     }
+  };
+
+  const recheckDealerClassification = () => {
+    const updates: Record<string, ContactSegment> = {};
+    Object.values(contacts).forEach(c => {
+      if (c.segment === 'dealer') return;
+      const suggested = classifySegment(c.sector || '', c.company || '');
+      if (suggested === 'dealer') updates[c.id] = 'dealer';
+    });
+    const count = Object.keys(updates).length;
+    if (count === 0) {
+      alert('Nessun contatto da correggere: in base a settore e ragione sociale, nessuno risulta erroneamente classificato come End User.');
+      return;
+    }
+    const names = Object.keys(updates).slice(0, 8).map(id => contacts[id].company).join(', ');
+    const preview = count > 8 ? `${names}, +${count - 8} altri` : names;
+    if (!window.confirm(`Trovati ${count} contatti classificati come End User che, in base a settore/ragione sociale, sembrano in realtà Dealer:\n\n${preview}\n\nCorreggerli ora in Dealer?`)) return;
+    bulkUpdateSegments(updates);
+    alert(`${count} contatti aggiornati a Dealer.`);
   };
 
   const geocodeOne = async (city?: string, province?: string, address?: string) => {
@@ -1721,6 +1740,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
                     title="Crea contatto da sito web">
                     <Link size={18} /> <span className="hidden md:inline">Da URL</span>
+                  </button>
+                  <button onClick={recheckDealerClassification}
+                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
+                    title="Ricontrolla in blocco i contatti già importati e correggi i Dealer classificati come End User">
+                    <RefreshCw size={18} /> <span className="hidden md:inline">Ricontrolla Dealer</span>
                   </button>
                   <button onClick={() => {
                     const newContact = {

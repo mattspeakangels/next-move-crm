@@ -54,6 +54,7 @@ interface StoreState {
   addContactsBatch: (contacts: Contact[]) => void;
   updateContact: (id: string, updates: Partial<Contact>) => void;
   repairCustomerTypes: () => void;
+  bulkUpdateSegments: (segments: Record<string, Contact['segment']>) => void;
   deleteContact: (id: string) => void;
   deleteContactsBatch: (ids: string[]) => void;
   deleteAllContacts: () => void;
@@ -214,6 +215,14 @@ export const useStore = create<StoreState>()(
           }
         }
         return changed ? { contacts: updated } : state;
+      }),
+      bulkUpdateSegments: (segments) => set((state) => {
+        const updated = { ...state.contacts };
+        for (const id of Object.keys(segments)) {
+          if (!updated[id]) continue;
+          updated[id] = syncCustomerType({ ...updated[id], segment: segments[id], updatedAt: Date.now() });
+        }
+        return { contacts: updated };
       }),
       deleteContact: (id) => set((state) => {
         const newContacts = { ...state.contacts };
