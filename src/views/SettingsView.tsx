@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, type LucideIcon } from 'lucide-react';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
+import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory } from '../lib/markerShapes';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -343,6 +344,16 @@ const SIDEBAR_ITEMS: { id: import('../types').NavView; label: string; icon: Luci
   { id: 'settings', label: 'Impostazioni', icon: Settings },
 ];
 
+const SHAPE_ICONS: Record<MarkerShape, LucideIcon> = {
+  circle: Circle,
+  square: Square,
+  triangle: Triangle,
+  diamond: Diamond,
+  star: Star,
+  pentagon: Pentagon,
+  hexagon: Hexagon,
+};
+
 const SidebarOrderSection: React.FC = () => {
   const { sidebarOrder, setSidebarOrder } = useStore();
 
@@ -397,7 +408,7 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, mapMarkerStyles, setMapMarkerStyle, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -688,6 +699,58 @@ export const SettingsView: React.FC = () => {
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                   </label>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Icone e colori dei marker sulla mappa */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center gap-2 font-bold mb-1">
+          <Map size={18} /> Icone clienti sulla mappa
+        </div>
+        <p className="text-xs text-gray-400 mb-4">Scegli forma e colore del marker per ogni categoria di cliente/prospect nella sezione Mappa (i prioritari restano sempre una stellina oro/fucsia).</p>
+        <div className="space-y-4">
+          {(Object.keys(MARKER_CATEGORY_LABELS) as MarkerCategory[]).map(category => {
+            const base = DEFAULT_MARKER_STYLE[category];
+            const current = mapMarkerStyles[category] || base;
+            const currentShape = (current.shape as MarkerShape) || base.shape;
+            const currentColor = current.color || base.color;
+            return (
+              <div key={category} className="flex flex-col gap-2 pb-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0 last:pb-0">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-bold text-gray-600 dark:text-gray-300">{MARKER_CATEGORY_LABELS[category]}</span>
+                  <label
+                    className="relative w-7 h-7 rounded-full ring-1 ring-black/10 dark:ring-white/20 overflow-hidden cursor-pointer shadow-sm flex-shrink-0"
+                    style={{ background: currentColor }}
+                    title="Scegli un colore"
+                  >
+                    <input
+                      type="color"
+                      value={currentColor}
+                      onChange={e => setMapMarkerStyle(category, { color: e.target.value })}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </label>
+                </div>
+                <div className="flex gap-1.5 flex-wrap">
+                  {(Object.keys(MARKER_SHAPE_LABELS) as MarkerShape[]).map(shape => {
+                    const ShapeIcon = SHAPE_ICONS[shape];
+                    const active = currentShape === shape;
+                    return (
+                      <button
+                        key={shape}
+                        onClick={() => setMapMarkerStyle(category, { shape })}
+                        title={MARKER_SHAPE_LABELS[shape]}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${active ? 'text-white shadow-md' : 'bg-gray-100 dark:bg-gray-900 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                        style={active ? { background: currentColor } : undefined}
+                      >
+                        <ShapeIcon size={16} fill={active ? 'currentColor' : 'none'} />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );

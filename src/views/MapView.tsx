@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
+import { MarkerShape, getMarkerCategory, DEFAULT_MARKER_STYLE, shapeDivIcon } from '../lib/markerShapes';
 import {
   DndContext,
   closestCenter,
@@ -27,22 +28,29 @@ import { CSS } from '@dnd-kit/utilities';
 
 // ── Icone colorate via divIcon ─────────────────────────────────────────────────
 
-// Cliente = verde | Prospect Dealer = celeste | Edilizia = giallo | Industria = arancione
-function getContactColor(status: string, segment?: string) {
-  if (status === 'cliente') return '#22c55e';
-  if (segment === 'dealer')    return '#38bdf8';
-  if (segment === 'edilizia')  return '#eab308';
-  if (segment === 'industria') return '#f87171';
-  return '#94a3b8';
+type MapMarkerStyles = Record<string, { shape: string; color: string }>;
+
+// Risolve forma+colore di un contatto: stile personalizzato da Impostazioni
+// (per categoria stato/segmento) se presente, altrimenti il default.
+function resolveMarkerStyle(status: string, segment: string | undefined, styles: MapMarkerStyles) {
+  const category = getMarkerCategory(status, segment);
+  const custom = styles[category];
+  const base = DEFAULT_MARKER_STYLE[category];
+  return {
+    shape: (custom?.shape as MarkerShape) || base.shape,
+    color: custom?.color || base.color,
+  };
 }
 
-// I marker dei contatti sono CircleMarker disegnati su canvas (preferCanvas):
-// con centinaia di punti i divIcon DOM rendono la mappa inutilizzabile su
-// smartphone.
-const contactMarkerStyle = (status: string, segment?: string, priority?: boolean) => ({
-  color: priority ? '#facc15' : '#ffffff',
-  weight: priority ? 4 : 2.5,
-  fillColor: getContactColor(status, segment),
+// I marker "cerchio" (il default) sono CircleMarker disegnati su canvas
+// (preferCanvas): con centinaia di punti i divIcon DOM rendono la mappa
+// inutilizzabile su smartphone. Le altre forme (personalizzate dall'utente)
+// usano invece un divIcon SVG, pagato solo se l'utente sceglie una forma
+// diversa dal cerchio.
+const contactMarkerStyle = (status: string, segment: string | undefined, styles: MapMarkerStyles) => ({
+  color: '#ffffff',
+  weight: 2.5,
+  fillColor: resolveMarkerStyle(status, segment, styles).color,
   fillOpacity: 1,
 });
 
@@ -240,7 +248,7 @@ interface ItinerarioViewProps {
 }
 
 const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVisible }) => {
-  const { addActivity, deleteActivity, activities } = useStore();
+  const { addActivity, deleteActivity, activities, mapMarkerStyles } = useStore();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -742,12 +750,20 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                 </Marker>
               );
             }
-            return c.priorityToVisit ? (
-              <Marker key={c.id} position={[c.lat, c.lng]} icon={priorityStarIcon} eventHandlers={{ click: () => toggle(c.id) }}>
+            if (c.priorityToVisit) {
+              return (
+                <Marker key={c.id} position={[c.lat, c.lng]} icon={priorityStarIcon} eventHandlers={{ click: () => toggle(c.id) }}>
+                  {popup}
+                </Marker>
+              );
+            }
+            const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
+            return style.shape !== 'circle' ? (
+              <Marker key={c.id} position={[c.lat, c.lng]} icon={shapeDivIcon(style.shape as MarkerShape, style.color)} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </Marker>
             ) : (
-              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)} eventHandlers={{ click: () => toggle(c.id) }}>
+              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </CircleMarker>
             );
@@ -1095,7 +1111,7 @@ export const MapView: React.FC<MapViewProps> = ({
   onGoFullscreen,
   onExitFullscreen,
 }) => {
-  const { contacts, updateContact } = useStore();
+  const { contacts, updateContact, mapMarkerStyles } = useStore();
   const [userPos, setUserPos]     = useState<[number, number] | null>(() => {
     try {
       const cached = JSON.parse(localStorage.getItem('nextmove_last_userpos') || 'null');
@@ -1388,12 +1404,20 @@ export const MapView: React.FC<MapViewProps> = ({
                 </div>
               </Popup>
             );
-            return c.priorityToVisit ? (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+            if (c.priorityToVisit) {
+              return (
+                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+                  {popupContent}
+                </Marker>
+              );
+            }
+            const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
+            return style.shape !== 'circle' ? (
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color)}>
                 {popupContent}
               </Marker>
             ) : (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
                 {popupContent}
               </CircleMarker>
             );
@@ -1789,12 +1813,20 @@ export const MapView: React.FC<MapViewProps> = ({
                 </div>
               </Popup>
             );
-            return c.priorityToVisit ? (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+            if (c.priorityToVisit) {
+              return (
+                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+                  {popupContent}
+                </Marker>
+              );
+            }
+            const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
+            return style.shape !== 'circle' ? (
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color)}>
                 {popupContent}
               </Marker>
             ) : (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
                 {popupContent}
               </CircleMarker>
             );
