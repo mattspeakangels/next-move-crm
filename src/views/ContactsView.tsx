@@ -38,7 +38,7 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
   };
 
   const TYPE_CONFIG = {
-    visita:   { label: 'Visita',    color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/40' },
+    visita:   { label: 'Visita',    color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40' },
     chiamata: { label: 'Chiamata',  color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/40'   },
     email:    { label: 'Email',     color: 'text-blue-600',   bg: 'bg-blue-100 dark:bg-blue-900/40'     },
   };
@@ -81,28 +81,28 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
         </div>
       )}
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-indigo-200 dark:border-indigo-700 mb-3 space-y-3">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] mb-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <select value={newType} onChange={e => setNewType(e.target.value as any)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-indigo-400">
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]">
               <option value="visita">Visita</option>
               <option value="chiamata">Chiamata</option>
               <option value="email">Email</option>
             </select>
             <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400" />
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]" />
           </div>
           <input type="text" placeholder="Note (opzionale)" value={newNotes} onChange={e => setNewNotes(e.target.value)}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400" />
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]" />
           <div className="flex gap-2">
-            <button onClick={handleAdd} className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase">Aggiungi</button>
+            <button onClick={handleAdd} className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-xs uppercase">Aggiungi</button>
             <button onClick={() => setShowForm(false)} className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
           </div>
         </div>
       )}
       {!showForm && (
         <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors">
+          className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-3 py-2 rounded-xl uppercase hover:bg-[var(--accent-100)] transition-colors">
           <Plus size={12} /> Programma attività
         </button>
       )}
@@ -136,7 +136,7 @@ const ProfilingCollapsible: React.FC<{ contact: Contact }> = ({ contact }) => {
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all
             ${open
               ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-indigo-900'}`}>
+              : 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)] shadow-md shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]'}`}>
           <ClipboardList size={12} />
           {open ? 'Chiudi' : contact.profiling ? 'Modifica' : 'Compila'}
         </button>
@@ -326,7 +326,7 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
                 <p className="text-[10px] text-gray-400 font-bold mt-0.5">{new Date(offer.date).toLocaleDateString('it-IT')} · {offer.manualTotal ? 'valore ordine' : `${offer.items.length} articoli`}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-black text-sm text-indigo-600">€{offer.totalAmount.toLocaleString('it-IT')}</span>
+                <span className="font-black text-sm text-[var(--accent-600)]">€{offer.totalAmount.toLocaleString('it-IT')}</span>
                 <select
                   value={offer.status}
                   onChange={e => updateOffer(offer.id, { status: e.target.value as any })}
@@ -365,10 +365,10 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       )}
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-indigo-200 dark:border-indigo-700 mb-3 space-y-3">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] mb-3 space-y-3">
           {openDeals.length > 0 && (
             <select value={formDealId} onChange={e => setFormDealId(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-indigo-400">
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]">
               <option value="">Collega a un deal (opzionale)</option>
               {openDeals.map(d => <option key={d.id} value={d.id}>{d.stage} · €{d.value.toLocaleString('it-IT')}</option>)}
             </select>
@@ -379,22 +379,22 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
               <div key={item.id} className="grid grid-cols-12 gap-1.5 items-center">
                 <div className="col-span-12 sm:col-span-5">
                   <select value={item.productId} onChange={e => selectProduct(item.id, e.target.value)}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-white dark:bg-gray-700 dark:text-white text-xs font-bold outline-none focus:border-indigo-400">
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-white dark:bg-gray-700 dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]">
                     <option value="">Seleziona prodotto...</option>
                     {catalogProducts.map(p => <option key={p.id} value={p.id}>{p.description}</option>)}
                   </select>
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   <input type="number" min="1" value={item.quantity} onChange={e => updateFormItem(item.id, 'quantity', Number(e.target.value))}
-                    placeholder="Qtà" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+                    placeholder="Qtà" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   <input type="number" min="0" value={item.price} onChange={e => updateFormItem(item.id, 'price', Number(e.target.value))}
-                    placeholder="€ prezzo" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+                    placeholder="€ prezzo" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
                 </div>
                 <div className="col-span-3 sm:col-span-2">
                   <input type="number" min="0" max="100" value={item.discount} onChange={e => updateFormItem(item.id, 'discount', Number(e.target.value))}
-                    placeholder="Sc%" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+                    placeholder="Sc%" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
                 </div>
                 <div className="col-span-1">
                   <button onClick={() => removeFormItem(item.id)} className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors"><Trash2 size={12} /></button>
@@ -404,24 +404,24 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
           </div>
 
           <button onClick={addFormItem}
-            className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors">
+            className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-3 py-2 rounded-xl uppercase hover:bg-[var(--accent-100)] transition-colors">
             <Plus size={12} /> Aggiungi prodotto
           </button>
 
           <div className="grid grid-cols-2 gap-2">
             <input type="text" placeholder="Tempi consegna (es. 2 settimane)" value={formDelivery} onChange={e => setFormDelivery(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
             <input type="number" min="0" placeholder="Spese spedizione €" value={formShipping || ''} onChange={e => setFormShipping(Number(e.target.value))}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-indigo-400" />
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
           </div>
 
           {formItems.length > 0 && (
-            <p className="text-xs font-black text-indigo-600">Totale: €{calcTotal().toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-xs font-black text-[var(--accent-600)]">Totale: €{calcTotal().toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           )}
 
           <div className="flex gap-2">
             <button onClick={handleSave} disabled={formItems.length === 0}
-              className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase disabled:opacity-40">Salva Offerta</button>
+              className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-xs uppercase disabled:opacity-40">Salva Offerta</button>
             <button onClick={() => { setShowForm(false); setFormItems([]); }}
               className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
           </div>
@@ -430,7 +430,7 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
 
       {!showForm && (
         <button onClick={() => { setShowForm(true); setFormItems([]); }}
-          className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-xl uppercase hover:bg-indigo-100 transition-colors">
+          className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-3 py-2 rounded-xl uppercase hover:bg-[var(--accent-100)] transition-colors">
           <Plus size={12} /> Nuova Offerta
         </button>
       )}
@@ -675,7 +675,7 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
               <div className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
                 {viewer.loading
-                  ? <span className="animate-spin inline-block w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full" />
+                  ? <span className="animate-spin inline-block w-6 h-6 border-2 border-[var(--accent-400)] border-t-transparent rounded-full" />
                   : <img src={viewer.fullUrl ?? viewer.photo.thumb} alt={viewer.photo.name} className="w-full h-full object-contain" />
                 }
               </div>
@@ -1155,7 +1155,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               </div>
               <button
                 onClick={handleSave}
-                className="flex-shrink-0 bg-indigo-600 text-white px-5 sm:px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
+                className="flex-shrink-0 bg-[var(--accent-600)] text-white px-5 sm:px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-[var(--accent-700)] transition-colors"
               >
                 Salva
               </button>
@@ -1174,7 +1174,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               {editingContact?.id && contacts[editingContact.id] && (
                 <button
                   onClick={() => setHistoryContact(contacts[editingContact.id])}
-                  className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-100 transition-colors"
+                  className="flex items-center gap-1.5 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[var(--accent-100)] transition-colors"
                 >
                   <History size={14} /> <span className="hidden sm:inline">Storico</span>
                 </button>
@@ -1221,7 +1221,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm">
                 <div className="md:col-span-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Ragione Sociale *</label>
-                  <input type="text" style={{ textTransform: 'uppercase' }} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.company || ''} onChange={e => setEditingContact({...editingContact, company: e.target.value.toUpperCase()})} />
+                  <input type="text" style={{ textTransform: 'uppercase' }} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.company || ''} onChange={e => setEditingContact({...editingContact, company: e.target.value.toUpperCase()})} />
                 </div>
 
                 <div>
@@ -1265,38 +1265,38 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Partita IVA</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all font-mono" placeholder="es. 01234567890" value={editingContact?.vatNumber || ''} onChange={e => setEditingContact({...editingContact, vatNumber: e.target.value})} />
+                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all font-mono" placeholder="es. 01234567890" value={editingContact?.vatNumber || ''} onChange={e => setEditingContact({...editingContact, vatNumber: e.target.value})} />
                 </div>
 
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Telefono Gen.</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.phone || ''} onChange={e => setEditingContact({...editingContact, phone: e.target.value})} />
+                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.phone || ''} onChange={e => setEditingContact({...editingContact, phone: e.target.value})} />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Email Gen.</label>
-                  <input type="email" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.email || ''} onChange={e => setEditingContact({...editingContact, email: e.target.value})} />
+                  <input type="email" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.email || ''} onChange={e => setEditingContact({...editingContact, email: e.target.value})} />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Sito Web</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" placeholder="es. www.azienda.it" value={editingContact?.website || ''} onChange={e => setEditingContact({...editingContact, website: e.target.value})} />
+                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" placeholder="es. www.azienda.it" value={editingContact?.website || ''} onChange={e => setEditingContact({...editingContact, website: e.target.value})} />
                 </div>
 
                 <div className="md:col-span-2 grid grid-cols-12 gap-2 mt-2">
                   <div className="col-span-12 md:col-span-6">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Indirizzo</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.address || ''} onChange={e => setEditingContact({...editingContact, address: e.target.value})} />
+                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.address || ''} onChange={e => setEditingContact({...editingContact, address: e.target.value})} />
                   </div>
                   <div className="col-span-4 md:col-span-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">CAP</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.zipCode || ''} onChange={e => setEditingContact({...editingContact, zipCode: e.target.value})} />
+                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.zipCode || ''} onChange={e => setEditingContact({...editingContact, zipCode: e.target.value})} />
                   </div>
                   <div className="col-span-5 md:col-span-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Città</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.city || ''} onChange={e => setEditingContact({...editingContact, city: e.target.value})} />
+                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.city || ''} onChange={e => setEditingContact({...editingContact, city: e.target.value})} />
                   </div>
                   <div className="col-span-3 md:col-span-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Prov.</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.province || ''} onChange={e => setEditingContact({...editingContact, province: e.target.value})} />
+                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.province || ''} onChange={e => setEditingContact({...editingContact, province: e.target.value})} />
                   </div>
                 </div>
               </div>
@@ -1305,7 +1305,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             {/* SEZIONE 1A-BIS - Sedi Aggiuntive */}
             {(() => {
               const locations: any[] = editingContact?.locations || [];
-              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all text-sm";
+              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all text-sm";
               const labelCls = "text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1";
 
               const updateLocation = (id: string, field: string, val: string) => {
@@ -1354,7 +1354,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       </div>
                     ))}
 
-                    <button onClick={addLocation} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2">
+                    <button onClick={addLocation} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-[var(--accent-300)] hover:text-[var(--accent-500)] transition-colors flex items-center justify-center gap-2">
                       <Plus size={14} /> Aggiungi Sede
                     </button>
                   </div>
@@ -1389,7 +1389,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 setEditingContact({ ...editingContact, stakeholders: allSh.filter((s: any) => s.id !== id) });
               };
 
-              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all text-sm";
+              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all text-sm";
               const labelCls = "text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1";
 
               return (
@@ -1399,8 +1399,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </h3>
                   <div className="space-y-4">
                     {/* Titolare */}
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-indigo-100 dark:border-indigo-900/40">
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Titolare</p>
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-[var(--accent-100)] dark:border-[var(--accent-900)]/40">
+                      <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-3">Titolare</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className={labelCls}>Nome</label>
@@ -1453,7 +1453,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       </div>
                     ))}
 
-                    <button onClick={addAltra} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2">
+                    <button onClick={addAltra} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-[var(--accent-300)] hover:text-[var(--accent-500)] transition-colors flex items-center justify-center gap-2">
                       <Plus size={14} /> Aggiungi Figura di Riferimento
                     </button>
                   </div>
@@ -1527,7 +1527,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 lead: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300',
                 qualificato: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300',
                 proposta: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300',
-                negoziazione: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
+                negoziazione: 'bg-[var(--accent-100)] text-[var(--accent-600)] dark:bg-[var(--accent-900)]/30 dark:text-[var(--accent-300)]',
               };
               const stageLabels: Record<string, string> = { lead: 'Lead', qualificato: 'Qualificato', proposta: 'Proposta', negoziazione: 'Trattativa' };
               return (
@@ -1541,7 +1541,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Opportunità aperte</span>
                       <button
                         onClick={() => setAddDealForContact(editingContact.id)}
-                        className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                        className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-[var(--accent-100)] transition-colors"
                       >
                         <Plus size={10}/> Aggiungi
                       </button>
@@ -1558,7 +1558,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex-shrink-0 ${stageBadge[deal.stage] || 'bg-gray-100 text-gray-600'}`}>
                                 {stageLabels[deal.stage] || deal.stage}
                               </span>
-                              <span className="font-bold text-xs text-indigo-600">€{deal.value.toLocaleString('it-IT')}</span>
+                              <span className="font-bold text-xs text-[var(--accent-600)]">€{deal.value.toLocaleString('it-IT')}</span>
                               {deal.closingDate && (
                                 <span className={`text-[9px] font-black ml-auto flex-shrink-0 ${isPastClosing ? 'text-red-500' : daysToClose && daysToClose <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
                                   {isPastClosing ? `Scaduto ${Math.abs(daysToClose!)}gg fa` : `Chiusura: ${new Date(deal.closingDate).toLocaleDateString('it-IT')}`}
@@ -1604,7 +1604,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               <div className="flex gap-2 mt-2 flex-wrap">
                 {searchTerm && initialSearch && (
                   <button onClick={() => { setSearchTerm(''); onClearFilter?.(); }}
-                    className="flex items-center gap-1 text-indigo-600 font-black uppercase text-[10px] tracking-widest bg-indigo-50 px-2 py-1 rounded-md hover:bg-indigo-100 transition-colors">
+                    className="flex items-center gap-1 text-[var(--accent-600)] font-black uppercase text-[10px] tracking-widest bg-[var(--accent-50)] px-2 py-1 rounded-md hover:bg-[var(--accent-100)] transition-colors">
                     Filtro Mappa: {searchTerm} <X size={12} />
                   </button>
                 )}
@@ -1621,10 +1621,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           {/* Tabs */}
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
             <button onClick={() => setActiveTab('clienti')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'clienti' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'clienti' ? 'bg-white dark:bg-gray-700 shadow text-[var(--accent-600)]' : 'text-gray-500 hover:text-gray-700'}`}>
               <Users size={16} />
               Clienti
-              <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 px-2 py-0.5 rounded-full font-black">
+              <span className="text-xs bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)] px-2 py-0.5 rounded-full font-black">
                 {clientiCount}
               </span>
             </button>
@@ -1643,8 +1643,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const isProspect = activeTab === 'prospect';
             const statusFilter = isProspect ? 'potenziale' : 'cliente';
             const csvRef    = isProspect ? fileInputRefProspect : fileInputRef;
-            const accentCls = isProspect ? 'text-amber-500 border-amber-100 hover:bg-amber-50' : 'text-indigo-600 border-indigo-100 hover:bg-indigo-50';
-            const btnCls    = isProspect ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700';
+            const accentCls = isProspect ? 'text-amber-500 border-amber-100 hover:bg-amber-50' : 'text-[var(--accent-600)] border-[var(--accent-100)] hover:bg-[var(--accent-50)]';
+            const btnCls    = isProspect ? 'bg-amber-500 hover:bg-amber-600' : 'bg-[var(--accent-600)] hover:bg-[var(--accent-700)]';
 
             const list = rankedFilteredList;
 
@@ -1665,7 +1665,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     onChange={setSearchTerm}
                     onSelect={c => setSearchTerm(c.company || c.contactName)}
                     placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} per nome, azienda, città, email, telefono…`}
-                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all shadow-sm text-sm'}
+                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all shadow-sm text-sm'}
                     results={searchPreview.map(c => ({
                       key: c.id,
                       item: c,
@@ -1683,7 +1683,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value as 'nome' | 'data' | 'citta')}
-                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3.5 font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-sm text-gray-600 dark:text-gray-300"
+                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3.5 font-bold outline-none focus:border-[var(--accent-400)] transition-all shadow-sm text-sm text-gray-600 dark:text-gray-300"
                     title="Ordina per"
                   >
                     <option value="nome">Nome</option>
@@ -1693,7 +1693,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <button
                     type="button"
                     onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
-                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3.5 py-3.5 font-bold outline-none focus:border-indigo-400 transition-all shadow-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3.5 py-3.5 font-bold outline-none focus:border-[var(--accent-400)] transition-all shadow-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     title={sortDir === 'asc' ? 'Crescente' : 'Decrescente'}
                   >
                     {sortDir === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
@@ -1738,7 +1738,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       onClick={() => { setTopFilter(null); setSubFilter(null); }}
                       className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
                         topFilter === null
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-[var(--accent-600)] text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                       }`}
                     >
@@ -1748,7 +1748,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       onClick={() => { setTopFilter('dealer'); setSubFilter(null); }}
                       className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
                         topFilter === 'dealer'
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-[var(--accent-600)] text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                       }`}
                     >
@@ -1758,7 +1758,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       onClick={() => { setTopFilter('end-user'); setSubFilter(null); }}
                       className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
                         topFilter === 'end-user'
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-[var(--accent-600)] text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                       }`}
                     >
@@ -1772,7 +1772,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                         onClick={() => setSubFilter(null)}
                         className={`px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase transition-all ${
                           subFilter === null
-                            ? 'bg-indigo-500 text-white'
+                            ? 'bg-[var(--accent-500)] text-white'
                             : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100'
                         }`}
                       >
@@ -1787,7 +1787,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                           onClick={() => setSubFilter(key)}
                           className={`px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase transition-all ${
                             subFilter === key
-                              ? 'bg-indigo-500 text-white'
+                              ? 'bg-[var(--accent-500)] text-white'
                               : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100'
                           }`}
                         >
@@ -1802,7 +1802,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {list.length === 0 ? (
                     <div className="col-span-3 bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
-                      {isProspect ? <UserPlus size={44} className="mx-auto mb-4 text-amber-200" /> : <Users size={44} className="mx-auto mb-4 text-indigo-200" />}
+                      {isProspect ? <UserPlus size={44} className="mx-auto mb-4 text-amber-200" /> : <Users size={44} className="mx-auto mb-4 text-[var(--accent-200)]" />}
                       <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
                         Nessun {isProspect ? 'prospect' : 'cliente'} trovato
                       </p>
@@ -1813,12 +1813,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-all cursor-pointer ${
                         isProspect
                           ? 'border-amber-100 dark:border-amber-900/30 hover:border-amber-300'
-                          : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200'
+                          : 'border-gray-100 dark:border-gray-700 hover:border-[var(--accent-200)]'
                       }`}>
 
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${isProspect ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-500' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600'}`}>
+                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${isProspect ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-500' : 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)]'}`}>
                             {isProspect ? <UserPlus size={22} /> : <Building2 size={22} />}
                           </div>
                           <div className="min-w-0">
@@ -1855,7 +1855,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                           {contact.phone || 'Nessun telefono'}
                         </p>
                         {(contact as any).stakeholders?.length > 0 && (
-                          <p className={`flex items-center gap-1.5 text-xs font-bold w-max px-2 py-1 rounded-lg mt-2 ${isProspect ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'}`}>
+                          <p className={`flex items-center gap-1.5 text-xs font-bold w-max px-2 py-1 rounded-lg mt-2 ${isProspect ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20'}`}>
                             <Users size={13} /> {(contact as any).stakeholders.length} Referent{(contact as any).stakeholders.length === 1 ? 'e' : 'i'}
                           </p>
                         )}
@@ -1865,7 +1865,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       <div className="mt-4 flex gap-2">
                         <button
                           onClick={e => { e.stopPropagation(); setHistoryContact(contact); }}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs font-black uppercase tracking-wide hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 transition-all"
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs font-black uppercase tracking-wide hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 hover:text-[var(--accent-600)] transition-all"
                         >
                           <History size={13} /> Storico
                         </button>
@@ -1877,7 +1877,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                                 updateContact(contact.id, { status: 'cliente' });
                               }
                             }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 text-xs font-black uppercase tracking-wide hover:bg-indigo-600 hover:text-white transition-all"
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 text-[var(--accent-600)] text-xs font-black uppercase tracking-wide hover:bg-[var(--accent-600)] hover:text-white transition-all"
                           >
                             <Users size={13} /> Converti
                           </button>
@@ -1895,7 +1895,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     </p>
                     <button
                       onClick={() => setVisibleCount(v => v + 50)}
-                      className="px-6 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-black text-gray-500 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 transition-all"
+                      className="px-6 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-black text-gray-500 dark:text-gray-300 hover:border-[var(--accent-300)] hover:text-[var(--accent-600)] transition-all"
                     >
                       Carica altri 50
                     </button>

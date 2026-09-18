@@ -166,13 +166,13 @@ const Tip: React.FC<{ text: string }> = ({ text }) => {
   return (
     <div className="relative inline-block ml-1">
       <button type="button" onClick={() => setShow(s => !s)}
-        className="text-indigo-400 hover:text-indigo-600 transition-colors">
+        className="text-[var(--accent-400)] hover:text-[var(--accent-600)] transition-colors">
         <Info size={12} />
       </button>
       {show && (
-        <div className="absolute z-50 left-0 top-5 w-64 bg-indigo-900 text-white text-[10px] font-bold p-3 rounded-xl shadow-xl leading-relaxed">
+        <div className="absolute z-50 left-0 top-5 w-64 bg-[var(--accent-900)] text-white text-[10px] font-bold p-3 rounded-xl shadow-xl leading-relaxed">
           {text}
-          <button onClick={() => setShow(false)} className="block mt-2 text-indigo-300 hover:text-white">Chiudi</button>
+          <button onClick={() => setShow(false)} className="block mt-2 text-[var(--accent-300)] hover:text-white">Chiudi</button>
         </div>
       )}
     </div>
@@ -190,12 +190,12 @@ const CheckGroup: React.FC<{
       const active = selected.includes(opt);
       return (
         <label key={opt} className={`flex items-center gap-2 p-2 rounded-xl cursor-pointer text-[10px] font-bold border-2 transition-all
-          ${active ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-indigo-200'}`}>
+          ${active ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
+            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-[var(--accent-200)]'}`}>
           <input type="checkbox" className="sr-only" checked={active}
             onChange={() => onChange(active ? selected.filter(s => s !== opt) : [...selected, opt])} />
           <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0
-            ${active ? 'bg-indigo-500' : 'border-2 border-gray-300 dark:border-gray-600'}`}>
+            ${active ? 'bg-[var(--accent-500)]' : 'border-2 border-gray-300 dark:border-gray-600'}`}>
             {active && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
           </div>
           {opt}
@@ -216,8 +216,8 @@ const RadioGroup: React.FC<{
         onClick={() => onChange(opt.value)}
         className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide border-2 transition-all
           ${value === opt.value
-            ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-indigo-200'}`}>
+            ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
+            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-[var(--accent-200)]'}`}>
         {opt.label}
       </button>
     ))}
@@ -236,8 +236,8 @@ const ScoreRow: React.FC<{
         <button key={n} type="button" onClick={() => onChange(n)}
           className={`w-7 h-7 rounded-lg text-xs font-black border-2 transition-all
             ${value >= n
-              ? 'border-indigo-400 bg-indigo-500 text-white'
-              : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:border-indigo-300'}`}>
+              ? 'border-[var(--accent-400)] bg-[var(--accent-500)] text-white'
+              : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:border-[var(--accent-300)]'}`}>
           {n}
         </button>
       ))}
@@ -255,9 +255,9 @@ const TextField: React.FC<{
     </label>
     {multiline
       ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white outline-none resize-none min-h-[72px] focus:border-indigo-400" />
+          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white outline-none resize-none min-h-[72px] focus:border-[var(--accent-400)]" />
       : <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
     }
   </div>
 );
@@ -333,7 +333,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <ClipboardList size={16} className="text-indigo-600 flex-shrink-0" />
+          <ClipboardList size={16} className="text-[var(--accent-600)] flex-shrink-0" />
           <span className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             Profilazione {isDealer ? 'Dealer' : 'End User'}
           </span>
@@ -352,7 +352,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
           </button>
           <button type="button" onClick={handleSave}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all
-              ${saved ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+              ${saved ? 'bg-green-500 text-white' : 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]'}`}>
             {saved ? '✓ Salvato' : 'Salva'}
           </button>
         </div>
@@ -363,7 +363,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data Visita</label>
         <input type="date" value={form.dataVisita}
           onChange={e => isDealer ? upD({ dataVisita: e.target.value }) : upE({ dataVisita: e.target.value })}
-          className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-1.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+          className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-1.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
       </div>
 
       {/* ─── DEALER FORM ─── */}
@@ -422,7 +422,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 {d.brandAttuali.includes('Altro') && (
                   <input type="text" placeholder="Specifica brand..." value={d.brandAltro}
                     onChange={e => upD({ brandAltro: e.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                 )}
               </div>
               <div>
@@ -430,7 +430,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                   Brand Dominante (rotazione) <Tip text={TIPS.brandDominante} />
                 </label>
                 <select value={d.brandDominante} onChange={e => upD({ brandDominante: e.target.value })}
-                  className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400">
+                  className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]">
                   <option value="">— Seleziona —</option>
                   {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
@@ -448,7 +448,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 {d.dpiCatIII === 'siParziale' && (
                   <input type="text" placeholder="Quali prodotti..." value={d.dpiParziale}
                     onChange={e => upD({ dpiParziale: e.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                 )}
               </div>
               <div>
@@ -459,7 +459,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 {d.reclamiResi === 'si' && (
                   <input type="text" placeholder="Motivo principale..." value={d.reclamiMotivo}
                     onChange={e => upD({ reclamiMotivo: e.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                 )}
               </div>
               <div>
@@ -477,7 +477,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 <CheckGroup cols={1} options={DEALER_PAIN_POINTS} selected={d.painPoints} onChange={v => upD({ painPoints: v })} />
                 <input type="text" placeholder="Altro pain point..." value={d.painAltro}
                   onChange={e => upD({ painAltro: e.target.value })}
-                  className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                  className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
               </div>
               <TextField label="Pain Prioritario #1" value={d.painPrioritario} onChange={v => upD({ painPrioritario: v })}
                 placeholder="Il problema principale emerso..." />
@@ -490,7 +490,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 onChange={v => upD({ prodottiInteresse: v })} />
               <input type="text" placeholder="Altro prodotto..." value={d.prodottiAltro}
                 onChange={e => upD({ prodottiAltro: e.target.value })}
-                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
               <TextField label="Campionatura Lasciata" value={d.campionaturaLasciata}
                 onChange={v => upD({ campionaturaLasciata: v })} placeholder="Es. Pantalone 1990 tg. L/XL" />
             </Section>
@@ -525,19 +525,19 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                   <div key={i} className="grid grid-cols-2 gap-2 items-center">
                     <input type="text" placeholder="Brand citato" value={c.brand}
                       onChange={e => { const nc = [...d.competitor]; nc[i] = { ...nc[i], brand: e.target.value }; upD({ competitor: nc }); }}
-                      className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                      className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                     <div className="flex gap-1">
                       <input type="text" placeholder="Parole usate / tono" value={c.tone}
                         onChange={e => { const nc = [...d.competitor]; nc[i] = { ...nc[i], tone: e.target.value }; upD({ competitor: nc }); }}
-                        className="flex-1 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                        className="flex-1 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                       <button type="button" onClick={() => upD({ competitor: d.competitor.filter((_, j) => j !== i) })}
                         className="px-2 text-red-400 hover:text-red-600 bg-red-50 dark:bg-red-900/20 rounded-xl transition-colors">✕</button>
                     </div>
                   </div>
                 ))}
                 <button type="button" onClick={() => upD({ competitor: [...d.competitor, { brand: '', tone: '' }] })}
-                  className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 uppercase tracking-wide hover:text-indigo-800 transition-colors">
-                  <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-sm">+</span>
+                  className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] uppercase tracking-wide hover:text-[var(--accent-800)] transition-colors">
+                  <span className="w-5 h-5 rounded-full bg-[var(--accent-100)] flex items-center justify-center text-sm">+</span>
                   Aggiungi competitor
                 </button>
               </div>
@@ -648,7 +648,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 {e.ispezioniRecenti === 'si' && (
                   <input type="text" placeholder="Esito ispezione..." value={e.ispezioniEsito}
                     onChange={ev => upE({ ispezioniEsito: ev.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                 )}
               </div>
               <div>
@@ -702,7 +702,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                   onChange={v => upE({ painPoints: v })} />
                 <input type="text" placeholder="Altro pain point..." value={e.painAltro}
                   onChange={ev => upE({ painAltro: ev.target.value })}
-                  className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                  className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
               </div>
               <TextField label="Pain Prioritario #1" value={e.painPrioritario}
                 onChange={v => upE({ painPrioritario: v })} placeholder="Il problema principale emerso..." />
@@ -727,7 +727,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 onChange={v => upE({ prodottiInteresse: v })} />
               <input type="text" placeholder="Altro prodotto..." value={e.prodottiAltro}
                 onChange={ev => upE({ prodottiAltro: ev.target.value })}
-                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400" />
+                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
               <TextField label="Campionatura Lasciata" value={e.campionaturaLasciata}
                 onChange={v => upE({ campionaturaLasciata: v })} placeholder="Es. Pantalone 1990 Cat. III tg. L" />
             </Section>
@@ -822,7 +822,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
       <div className="flex justify-end pt-2">
         <button type="button" onClick={handleSave}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-black text-sm transition-all
-            ${saved ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-indigo-900'}`}>
+            ${saved ? 'bg-green-500 text-white' : 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)] shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]'}`}>
           {saved ? '✓ Profilazione salvata' : 'Salva Profilazione'}
         </button>
       </div>

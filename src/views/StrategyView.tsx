@@ -55,7 +55,7 @@ const DialogoCard: React.FC<{ contact: Contact; onNavigateToContact: (contactId:
     <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MessageSquarePlus size={13} />Dialogo con l'azienda</p>
-        <button onClick={() => setShowLog(true)} className="text-[10px] font-black px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100">
+        <button onClick={() => setShowLog(true)} className="text-[10px] font-black px-2.5 py-1.5 rounded-xl bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] dark:text-[var(--accent-300)] hover:bg-[var(--accent-100)]">
           + Registra contatto
         </button>
       </div>
@@ -78,7 +78,7 @@ const DialogoCard: React.FC<{ contact: Contact; onNavigateToContact: (contactId:
         </div>
       )}
 
-      <button onClick={() => onNavigateToContact(contact.id)} className="flex items-center gap-1 text-[10px] font-black text-indigo-500 hover:text-indigo-600">
+      <button onClick={() => onNavigateToContact(contact.id)} className="flex items-center gap-1 text-[10px] font-black text-[var(--accent-500)] hover:text-[var(--accent-600)]">
         Vedi storico completo<ArrowRight size={11} />
       </button>
 
@@ -105,7 +105,7 @@ const PRIORITA_CONFIG: Record<GroupPriorita, { label: string; cls: string }> = {
 
 const STATO_CONFIG: Record<GroupStato, { label: string; cls: string }> = {
   'da-avvicinare': { label: 'Da avvicinare', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
-  'in-corso': { label: 'In corso', cls: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' },
+  'in-corso': { label: 'In corso', cls: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]' },
   attivo: { label: 'Attivo', cls: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' },
   'completato-vinto': { label: 'Completato/Vinto', cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
   abbandonato: { label: 'Abbandonato', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
@@ -136,7 +136,7 @@ const contactSublabel = (c: Contact) => {
   return parts.length > 0 ? parts.join(' · ') : undefined;
 };
 
-const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400';
+const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)]';
 const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1';
 
 function fmtDate(iso?: string): string {
@@ -210,7 +210,7 @@ const FocusSummaryBadges: React.FC<{ entry: { dataFinePrevista?: string; prossim
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {entry.prossimaAzioneScadenza && (
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 ${overdue ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'}`}>
+        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 ${overdue ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' : 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]'}`}>
           <Clock size={10} />{overdue ? 'Scaduta' : 'Entro'} {fmtDate(entry.prossimaAzioneScadenza)}
         </span>
       )}
@@ -337,14 +337,14 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
               placeholder="Cerca un contatto da aggiungere..."
               emptyTitle="🔍 Nessun risultato"
               emptySubtitle="Prova con un termine diverso"
-              inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-indigo-400' : 'border-gray-100 dark:border-gray-700'}`}
+              inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'}`}
             />
             {selectedContacts.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {selectedContacts.map(c => (
-                  <span key={c.id} className="flex items-center gap-1 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 pl-2.5 pr-1.5 py-1 rounded-full">
+                  <span key={c.id} className="flex items-center gap-1 text-[11px] font-bold bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)] pl-2.5 pr-1.5 py-1 rounded-full">
                     {c.company || c.contactName}
-                    <button type="button" onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))} className="text-indigo-400 hover:text-indigo-600">
+                    <button type="button" onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))} className="text-[var(--accent-400)] hover:text-[var(--accent-600)]">
                       <X size={11} />
                     </button>
                   </span>
@@ -359,7 +359,7 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className={inputCls} />
         </div>
 
-        <button type="submit" className="w-full py-3 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700">
+        <button type="submit" className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]">
           {group ? 'Salva modifiche' : 'Crea gruppo'}
         </button>
 
@@ -462,7 +462,7 @@ const FocusFormModal: React.FC<FocusFormModalProps> = ({ contact, focus, onSave,
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className={inputCls} />
         </div>
 
-        <button type="submit" className="w-full py-3 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700">
+        <button type="submit" className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]">
           {focus ? 'Salva modifiche' : 'Metti sotto focus strategico'}
         </button>
 
@@ -515,8 +515,8 @@ const AddChooserModal: React.FC<AddChooserModalProps> = ({ onPickGroup, onPickCo
           <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
         </div>
 
-        <button onClick={onPickGroup} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0"><Radar size={18} className="text-indigo-500" /></div>
+        <button onClick={onPickGroup} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 text-left transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0"><Radar size={18} className="text-[var(--accent-500)]" /></div>
           <div>
             <p className="text-sm font-black text-gray-800 dark:text-white">Nuovo gruppo</p>
             <p className="text-[11px] text-gray-400">Catena o gruppo d'acquisto con più contatti collegati</p>
@@ -565,12 +565,12 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
         <Building2 size={15} className="text-gray-400" />
       </button>
       <button onClick={onOpenContact} className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-bold text-gray-800 dark:text-white truncate hover:text-indigo-600 dark:hover:text-indigo-400">{contact.company}</p>
+        <p className="text-sm font-bold text-gray-800 dark:text-white truncate hover:text-[var(--accent-600)] dark:hover:text-[var(--accent-400)]">{contact.company}</p>
         {(contact.city || (contact.locations && contact.locations.length > 0)) && (
           <p className="text-[10px] text-gray-400 truncate mt-0.5">
             {contact.city || 'Sede principale'}
             {contact.locations && contact.locations.length > 0 && (
-              <span className="text-indigo-500 dark:text-indigo-400 font-bold">
+              <span className="text-[var(--accent-500)] dark:text-[var(--accent-400)] font-bold">
                 {' '}+ {contact.locations.length} sed{contact.locations.length === 1 ? 'e' : 'i'}{': '}
                 {contact.locations.map(l => l.label || l.city).filter(Boolean).join(', ')}
               </span>
@@ -598,7 +598,7 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
           )}
         </div>
       </button>
-      <button onClick={onLog} className="p-1.5 rounded-lg text-gray-300 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex-shrink-0" title="Registra contatto (email/chiamata)">
+      <button onClick={onLog} className="p-1.5 rounded-lg text-gray-300 hover:text-[var(--accent-500)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 flex-shrink-0" title="Registra contatto (email/chiamata)">
         <MessageSquarePlus size={14} />
       </button>
       <button onClick={onUnlink} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0" title="Scollega dal gruppo">
@@ -666,13 +666,13 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
             </div>
             <p className="text-xs font-bold text-gray-400 mt-1">{TIPO_LABEL[group.tipo]}</p>
           </div>
-          <button onClick={() => setShowEdit(true)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-indigo-600 flex-shrink-0"><Pencil size={15} /></button>
+          <button onClick={() => setShowEdit(true)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[var(--accent-600)] flex-shrink-0"><Pencil size={15} /></button>
         </div>
 
         {group.obiettivo && <p className="text-sm text-gray-600 dark:text-gray-300"><span className="font-black text-gray-800 dark:text-white">Obiettivo:</span> {group.obiettivo}</p>}
         {group.prossimaAzione && (
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3">
-            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Prossima azione</p>
+          <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl p-3">
+            <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-0.5">Prossima azione</p>
             <p className="text-sm font-bold text-gray-800 dark:text-white">{group.prossimaAzione}</p>
           </div>
         )}
@@ -708,7 +708,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
           placeholder="Cerca un contatto già in rubrica..."
           emptyTitle="🔍 Nessun risultato"
           emptySubtitle="Prova con un termine diverso"
-          inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-indigo-400' : 'border-gray-100 dark:border-gray-700'}`}
+          inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'}`}
         />
       </div>
 
@@ -807,13 +807,13 @@ const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack, onNavigateToCo
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => onNavigateToContact(contact.id)} className="text-lg font-black text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline text-left">{contact.company}</button>
+              <button onClick={() => onNavigateToContact(contact.id)} className="text-lg font-black text-gray-900 dark:text-white hover:text-[var(--accent-600)] dark:hover:text-[var(--accent-400)] hover:underline text-left">{contact.company}</button>
               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${priorityConfig(focus.priorita).cls}`}>{priorityConfig(focus.priorita).label}</span>
               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(focus.stato).cls}`}>{statoConfig(focus.stato).label}</span>
             </div>
             <p className="text-xs font-bold text-gray-400 mt-1">{contact.contactName}{contact.city ? ` · ${contact.city}` : ''}</p>
           </div>
-          <button onClick={() => setShowEdit(true)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-indigo-600 flex-shrink-0"><Pencil size={15} /></button>
+          <button onClick={() => setShowEdit(true)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[var(--accent-600)] flex-shrink-0"><Pencil size={15} /></button>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -839,8 +839,8 @@ const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack, onNavigateToCo
 
         {focus.obiettivo && <p className="text-sm text-gray-600 dark:text-gray-300"><span className="font-black text-gray-800 dark:text-white">Obiettivo:</span> {focus.obiettivo}</p>}
         {focus.prossimaAzione && (
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3">
-            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Prossima azione</p>
+          <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl p-3">
+            <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-0.5">Prossima azione</p>
             <p className="text-sm font-bold text-gray-800 dark:text-white">{focus.prossimaAzione}</p>
           </div>
         )}
@@ -978,16 +978,16 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-            <Target className="text-indigo-500" size={26} />Strategia
+            <Target className="text-[var(--accent-500)]" size={26} />Strategia
           </h1>
           <p className="text-xs font-bold text-gray-400 mt-0.5">Gruppi e clienti su cui concentrare le energie</p>
         </div>
-        <button onClick={() => setShowChooser(true)} className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 flex-shrink-0">
+        <button onClick={() => setShowChooser(true)} className="w-11 h-11 rounded-2xl bg-[var(--accent-600)] text-white flex items-center justify-center shadow-lg hover:bg-[var(--accent-700)] flex-shrink-0">
           <Plus size={22} />
         </button>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus-within:border-indigo-400 transition-colors">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus-within:border-[var(--accent-400)] transition-colors">
         <Search size={15} className="text-gray-400 flex-shrink-0" />
         <input
           type="text"
@@ -1013,11 +1013,11 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
               onClick={() => setStatoFiltro(s)}
               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
                 active
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[var(--accent-600)] text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
-              {label} <span className={active ? 'text-indigo-200' : 'text-gray-400 dark:text-gray-500'}>{countByStato[s]}</span>
+              {label} <span className={active ? 'text-[var(--accent-200)]' : 'text-gray-400 dark:text-gray-500'}>{countByStato[s]}</span>
             </button>
           );
         })}
@@ -1040,7 +1040,7 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
           {entries.map(entry => entry.kind === 'group' ? (
             <StrategyCard
               key={`g-${entry.id}`}
-              icon={<Radar size={15} className="text-indigo-500" />}
+              icon={<Radar size={15} className="text-[var(--accent-500)]" />}
               titolo={entry.data.nome}
               sottotitolo={`${TIPO_LABEL[entry.data.tipo]} · ${contactCountByGroup[entry.id] || 0} contatti`}
               priorita={entry.data.priorita}
@@ -1051,7 +1051,7 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
           ) : (
             <StrategyCard
               key={`f-${entry.id}`}
-              icon={<User size={15} className="text-indigo-500" />}
+              icon={<User size={15} className="text-[var(--accent-500)]" />}
               titolo={contacts[entry.data.contactId]?.company || '—'}
               sottotitolo={entry.data.obiettivo || 'Focus su cliente singolo'}
               priorita={entry.data.priorita}

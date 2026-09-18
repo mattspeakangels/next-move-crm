@@ -763,8 +763,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-              <MessageSquare size={16} className="text-indigo-600 dark:text-indigo-400" />
+            <div className="w-9 h-9 rounded-2xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
+              <MessageSquare size={16} className="text-[var(--accent-600)] dark:text-[var(--accent-400)]" />
             </div>
             <div>
               <h2 className="text-base font-black text-gray-900 dark:text-white">Registra Conversazione</h2>
@@ -788,7 +788,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               {isSupported ? (
                 <button
                   onClick={startRecording}
-                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black text-base hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-[var(--accent-600)] text-white font-black text-base hover:bg-[var(--accent-700)] transition-all shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
                 >
                   <Mic size={20} />
                   Inizia Registrazione
@@ -801,7 +801,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               )}
               <button
                 onClick={() => setPhase('manual')}
-                className="block w-full text-center text-xs text-gray-400 hover:text-indigo-500 transition-colors mt-2 font-bold"
+                className="block w-full text-center text-xs text-gray-400 hover:text-[var(--accent-500)] transition-colors mt-2 font-bold"
               >
                 Preferisci scrivere manualmente →
               </button>
@@ -815,7 +815,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                     <div className="flex items-center gap-3 mt-3">
                       <button
                         onClick={() => setPhase('manual')}
-                        className="text-xs font-black text-indigo-600 hover:text-indigo-700 transition-colors"
+                        className="text-xs font-black text-[var(--accent-600)] hover:text-[var(--accent-700)] transition-colors"
                       >
                         Continua a modificare →
                       </button>
@@ -884,7 +884,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                       : 'Parla vicino al microfono... il testo apparirà qui'}
                   </span>
                 )}
-                {interim && <span className="text-indigo-400 italic"> {interim}</span>}
+                {interim && <span className="text-[var(--accent-400)] italic"> {interim}</span>}
               </div>
 
               {mediaSupported ? (
@@ -899,7 +899,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                 <button
                   onClick={analyze}
                   disabled={!transcript && !interim}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Sparkles size={16} /> Stop e Analizza con Claude AI
                 </button>
@@ -911,8 +911,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               la registrazione, qui si aspetta solo che si svuoti la coda residua ── */}
           {phase === 'stopped' && (
             <div className="text-center space-y-4 py-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                <Loader2 size={24} className="text-indigo-600 animate-spin" />
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
+                <Loader2 size={24} className="text-[var(--accent-600)] animate-spin" />
               </div>
               <div>
                 <p className="font-black text-gray-900 dark:text-white text-sm">Completamento trascrizione…</p>
@@ -929,7 +929,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={startRecording}
-                  className="text-xs font-black text-gray-400 hover:text-indigo-500 transition-colors"
+                  className="text-xs font-black text-gray-400 hover:text-[var(--accent-500)] transition-colors"
                 >
                   🎙 Registra di nuovo
                 </button>
@@ -968,13 +968,13 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                   value={transcript}
                   onChange={e => setTranscript(e.target.value)}
                   placeholder="Scrivi qui tutto ciò che è emerso dalla conversazione col cliente: problemi, obiezioni, interessi, accordi..."
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 text-sm dark:text-white outline-none resize-none min-h-[220px] focus:border-indigo-400"
+                  className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 text-sm dark:text-white outline-none resize-none min-h-[220px] focus:border-[var(--accent-400)]"
                 />
               </div>
               <button
                 onClick={analyze}
                 disabled={!transcript.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles size={16} /> Analizza con Claude AI
               </button>
@@ -984,8 +984,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
           {/* ── ANALYZING ── */}
           {phase === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                <Loader2 size={24} className="text-indigo-600 animate-spin" />
+              <div className="w-14 h-14 rounded-2xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
+                <Loader2 size={24} className="text-[var(--accent-600)] animate-spin" />
               </div>
               <div className="text-center">
                 <p className="font-black text-gray-900 dark:text-white text-sm">Analisi in corso...</p>
@@ -1000,9 +1000,9 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
               {/* Riassunto */}
               {result.riassunto && (
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-800">
-                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1.5">Riassunto Visita</p>
-                  <p className="text-sm text-indigo-900 dark:text-indigo-200 font-medium leading-relaxed">{result.riassunto}</p>
+                <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-4 border border-[var(--accent-100)] dark:border-[var(--accent-800)]">
+                  <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-1.5">Riassunto Visita</p>
+                  <p className="text-sm text-[var(--accent-900)] dark:text-[var(--accent-200)] font-medium leading-relaxed">{result.riassunto}</p>
                 </div>
               )}
 
@@ -1015,7 +1015,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                   <span className="flex items-center gap-2 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest">
                     <ClipboardList size={13} />
                     Dati Profilazione Estratti
-                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 text-[9px]">
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)] dark:text-[var(--accent-300)] text-[9px]">
                       {appliedFields.length} campi
                     </span>
                   </span>
@@ -1099,7 +1099,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleApply}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-all shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
                 >
                   <CheckCircle size={16} /> Applica al Contatto
                 </button>
@@ -1126,7 +1126,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                   {phase !== 'manual' && (
                     <button
                       onClick={switchToManual}
-                      className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:underline"
+                      className="text-xs font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] hover:underline"
                     >
                       ✏️ Scrivi manualmente
                     </button>

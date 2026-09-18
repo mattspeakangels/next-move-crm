@@ -80,7 +80,7 @@ const ACTIVITY_ICON: Record<ActivityType, React.ReactNode> = {
 };
 
 const ACTIVITY_COLOR: Record<ActivityType, string> = {
-  visita:       'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600',
+  visita:       'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)]',
   'visita-freddo': 'bg-sky-100 dark:bg-sky-900/40 text-sky-600',
   chiamata:     'bg-green-100 dark:bg-green-900/40 text-green-600',
   email:        'bg-blue-100 dark:bg-blue-900/40 text-blue-600',
@@ -100,7 +100,7 @@ const STAGE_LABEL: Record<string, string> = {
 };
 const STAGE_COLOR: Record<string, string> = {
   lead: 'bg-blue-100 text-blue-600', qualificato: 'bg-purple-100 text-purple-600',
-  proposta: 'bg-orange-100 text-orange-600', negoziazione: 'bg-indigo-100 text-indigo-600',
+  proposta: 'bg-orange-100 text-orange-600', negoziazione: 'bg-[var(--accent-100)] text-[var(--accent-600)]',
   'chiuso-vinto': 'bg-green-100 text-green-600', 'chiuso-perso': 'bg-red-100 text-red-500',
 };
 const OFFER_COLOR: Record<string, string> = {
@@ -130,7 +130,7 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-lg">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] p-5 shadow-lg">
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm font-black dark:text-white">Registra attività</p>
         <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
@@ -142,7 +142,7 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
           placeholder="Cerca cliente per nome, azienda, città..."
           showWhenEmpty
           totalCount={Object.keys(contacts).length}
-          inputWrapperClassName={() => 'flex items-center gap-2 px-3 py-2.5 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+          inputWrapperClassName={() => 'flex items-center gap-2 px-3 py-2.5 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
           results={sortByRelevance(contactSearch, (contactSearch.trim()
             ? Object.values(contacts).filter((c: any) => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
             : Object.values(contacts)
@@ -157,7 +157,7 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
         <div className="flex gap-2">
           {TYPES.map(t => (
             <button key={t} onClick={() => setType(t)}
-              className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${type === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+              className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${type === t ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
               {TYPE_LABELS[t]}
             </button>
           ))}
@@ -167,12 +167,12 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
           onChange={e => setNotes(e.target.value)}
           placeholder="Note, esito, prossimi passi..."
           rows={2}
-          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-indigo-400 resize-none"
+          className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)] resize-none"
         />
         <button
           onClick={() => { if (contactId) { onSave(contactId, type, notes); } }}
           disabled={!contactId}
-          className={`w-full py-3 rounded-xl font-black uppercase text-xs tracking-widest transition-colors ${contactId ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+          className={`w-full py-3 rounded-xl font-black uppercase text-xs tracking-widest transition-colors ${contactId ? 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
         >
           Registra ora
         </button>
@@ -237,7 +237,7 @@ const EditActivityModal: React.FC<EditActivityModalProps> = ({ activity, company
           <div className="flex flex-wrap gap-2">
             {EDIT_TYPES.map(t => (
               <button key={t} onClick={() => setType(t)}
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${type === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${type === t ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
                 {EDIT_TYPE_LABELS[t]}
               </button>
             ))}
@@ -250,7 +250,7 @@ const EditActivityModal: React.FC<EditActivityModalProps> = ({ activity, company
             type="datetime-local"
             value={dateTime}
             onChange={e => setDateTime(e.target.value)}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm"
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm"
           />
         </div>
 
@@ -260,7 +260,7 @@ const EditActivityModal: React.FC<EditActivityModalProps> = ({ activity, company
             value={notes}
             onChange={e => setNotes(e.target.value)}
             rows={2}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none focus:border-indigo-400 resize-none transition-colors"
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)] resize-none transition-colors"
           />
         </div>
 
@@ -271,14 +271,14 @@ const EditActivityModal: React.FC<EditActivityModalProps> = ({ activity, company
               value={results}
               onChange={e => setResults(e.target.value)}
               rows={3}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none focus:border-indigo-400 resize-none transition-colors"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)] resize-none transition-colors"
             />
           </div>
         )}
 
         <button
           onClick={handleSave}
-          className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-colors"
+          className="w-full py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black uppercase text-xs tracking-widest hover:bg-[var(--accent-700)] transition-colors"
         >
           Salva modifiche
         </button>
@@ -436,7 +436,7 @@ export const ActivityLogView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowQuickAdd(v => !v)}
-          className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-colors text-sm"
+          className="bg-[var(--accent-600)] text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--accent-700)] transition-colors text-sm"
         >
           <Plus size={16} /> Registra
         </button>
@@ -449,8 +449,8 @@ export const ActivityLogView: React.FC = () => {
 
       {/* Mini date picker */}
       {selectedDay !== todayKey && (
-        <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl px-4 py-2.5 border border-indigo-200 dark:border-indigo-800">
-          <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">
+        <div className="flex items-center gap-2 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl px-4 py-2.5 border border-[var(--accent-200)] dark:border-[var(--accent-800)]">
+          <span className="text-xs font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] uppercase">
             {new Date(selectedDay + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
           </span>
           <button
@@ -458,7 +458,7 @@ export const ActivityLogView: React.FC = () => {
               setSelectedDay(todayKey);
               setExpandedDays(prev => new Set(prev).add(todayKey));
             }}
-            className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+            className="text-xs font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] hover:text-[var(--accent-700)] dark:hover:text-[var(--accent-300)]"
           >
             ← Torna a oggi
           </button>
@@ -468,7 +468,7 @@ export const ActivityLogView: React.FC = () => {
       {/* KPI settimana */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Visite', value: kpiVisits, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+          { label: 'Visite', value: kpiVisits, color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' },
           { label: 'Chiamate', value: kpiCalls, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
           { label: 'Offerte', value: kpiOffers, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
           { label: 'Deal', value: kpiDeals, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
@@ -486,7 +486,7 @@ export const ActivityLogView: React.FC = () => {
         <div className="flex gap-1 bg-white dark:bg-gray-800 rounded-2xl p-1 shadow-sm border border-gray-100 dark:border-gray-700">
           {([['all', 'Tutto'], ['activity', 'Attività'], ['deal', 'Deal'], ['offer', 'Offerte']] as const).map(([v, l]) => (
             <button key={v} onClick={() => setFilterType(v)}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all ${filterType === v ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all ${filterType === v ? 'bg-[var(--accent-600)] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               {l}
             </button>
           ))}
@@ -562,7 +562,7 @@ export const ActivityLogView: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   {/* Data badge */}
-                  <div className="flex flex-col items-center bg-indigo-600 text-white rounded-xl px-3 py-1.5 min-w-[42px]">
+                  <div className="flex flex-col items-center bg-[var(--accent-600)] text-white rounded-xl px-3 py-1.5 min-w-[42px]">
                     <span className="text-[10px] font-black uppercase leading-none">
                       {new Date(dayKey + 'T12:00:00').toLocaleDateString('it-IT', { month: 'short' })}
                     </span>
@@ -591,7 +591,7 @@ export const ActivityLogView: React.FC = () => {
                       <div key={contactId} className="px-5 py-4">
                         {/* Cliente header */}
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="w-7 h-7 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center text-indigo-600 flex-shrink-0">
+                          <div className="w-7 h-7 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 rounded-lg flex items-center justify-center text-[var(--accent-600)] flex-shrink-0">
                             <TrendingUp size={12} />
                           </div>
                           <p className="font-black text-sm dark:text-white uppercase tracking-tight">{company}</p>
@@ -639,7 +639,7 @@ export const ActivityLogView: React.FC = () => {
                                       <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${STAGE_COLOR[event.dealStage!] ?? ''}`}>
                                         {STAGE_LABEL[event.dealStage!]}
                                       </span>
-                                      <span className="text-xs font-black text-indigo-600">€{((event.dealValue ?? 0) / 1000).toFixed(0)}k</span>
+                                      <span className="text-xs font-black text-[var(--accent-600)]">€{((event.dealValue ?? 0) / 1000).toFixed(0)}k</span>
                                     </>
                                   )}
                                   {event.kind === 'offer' && (
@@ -648,7 +648,7 @@ export const ActivityLogView: React.FC = () => {
                                       <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${OFFER_COLOR[event.offerStatus!] ?? ''}`}>
                                         {event.offerStatus}
                                       </span>
-                                      <span className="text-xs font-black text-indigo-600">€{(event.offerTotal ?? 0).toLocaleString('it-IT')}</span>
+                                      <span className="text-xs font-black text-[var(--accent-600)]">€{(event.offerTotal ?? 0).toLocaleString('it-IT')}</span>
                                       {event.offerPdfUrl && (
                                         <PdfButton pdfUrl={event.offerPdfUrl} pdfName={event.offerPdfName}
                                           className="p-1 rounded-md bg-orange-50 dark:bg-orange-900/20 text-orange-500 hover:bg-orange-100 transition-colors flex-shrink-0">

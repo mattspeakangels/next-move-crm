@@ -666,7 +666,7 @@ export const OffersView: React.FC = () => {
             <button onClick={() => setShowPdfModal(true)} className="bg-orange-500 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-orange-600 transition-all">
               <Upload size={18} /> Carica PDF
             </button>
-            <button onClick={() => openModal()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
+            <button onClick={() => openModal()} className="bg-[var(--accent-600)] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--accent-700)] transition-all">
               <Plus size={20} /> Nuova
             </button>
           </div>
@@ -796,7 +796,7 @@ export const OffersView: React.FC = () => {
             }`}>
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                  <span className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full">
                     {offer.offerNumber}
                   </span>
                   {endUserContact ? (
@@ -846,7 +846,7 @@ export const OffersView: React.FC = () => {
               )}
               <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2">
+                  <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] hover:bg-[var(--accent-600)] hover:text-white transition-all flex items-center gap-2">
                     <Mail size={12} /> Email
                   </button>
                   <button onClick={() => handleWriteEmail(offer)} className="px-3 py-2 rounded-xl font-black text-[10px] uppercase bg-purple-50 dark:bg-purple-900/30 text-purple-600 hover:bg-purple-600 hover:text-white transition-all flex items-center gap-1.5" title="Scrivi email con Claude AI">
@@ -929,7 +929,7 @@ export const OffersView: React.FC = () => {
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">{offer.offerNumber}</span>
+                              <span className="text-[10px] font-black text-[var(--accent-500)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-2 py-0.5 rounded-full">{offer.offerNumber}</span>
                               <span className="text-sm font-black text-gray-800 dark:text-white truncate">{contact?.company || 'Azienda'}</span>
                             </div>
                             <p className="text-xs text-gray-400 mt-0.5">
@@ -961,7 +961,7 @@ export const OffersView: React.FC = () => {
                                 : <Upload size={14} />}
                             </button>
                             <button onClick={() => updateOffer(offer.id, { status: 'inviata' })} title="Riporta in lavorazione"
-                              className="p-1.5 rounded-lg text-xs text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 transition-colors font-bold">
+                              className="p-1.5 rounded-lg text-xs text-gray-400 hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)] dark:hover:bg-[var(--accent-900)]/30 transition-colors font-bold">
                               ↩
                             </button>
                             <button onClick={() => handlePrint(offer)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><Printer size={14} /></button>
@@ -1008,7 +1008,7 @@ export const OffersView: React.FC = () => {
                       value={contactSearch}
                       onChange={v => { setContactSearch(v); if (selectedContact) setSelectedContact(''); }}
                       placeholder="Cerca dealer per nome, azienda, città..."
-                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
                       results={(contactSearch.trim()
                         ? sortByRelevance(contactSearch, Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                         : Object.values(contacts).slice(0, 8)
@@ -1027,7 +1027,7 @@ export const OffersView: React.FC = () => {
                       value={endUserContactSearch}
                       onChange={v => { setEndUserContactSearch(v); if (selectedEndUserContact) setSelectedEndUserContact(''); }}
                       placeholder="Cerca cliente finale per nome, azienda, città..."
-                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
                       results={(endUserContactSearch.trim()
                         ? sortByRelevance(endUserContactSearch, Object.values(contacts).filter(c => matchSearch(endUserContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                         : Object.values(contacts).slice(0, 8)
@@ -1050,7 +1050,7 @@ export const OffersView: React.FC = () => {
                     value={contactSearch}
                     onChange={v => { setContactSearch(v); if (selectedContact) setSelectedContact(''); }}
                     placeholder="Cerca per nome, azienda, città, email, telefono..."
-                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-indigo-400 transition-all text-sm dark:text-white'}
+                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
                     results={(contactSearch.trim()
                       ? sortByRelevance(contactSearch, Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                       : Object.values(contacts).slice(0, 8)
@@ -1068,21 +1068,21 @@ export const OffersView: React.FC = () => {
               <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-900 rounded-2xl">
                 <button
                   onClick={() => setEntryMode('articoli')}
-                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'articoli' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'articoli' ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}
                 >
                   Articoli e prezzi
                 </button>
                 <button
                   onClick={() => setEntryMode('totale')}
-                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'totale' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'totale' ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}
                 >
                   Solo totale ordine
                 </button>
               </div>
 
               {entryMode === 'totale' && (
-                <div className="bg-indigo-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-indigo-50 dark:border-gray-700">
-                  <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block">Valore totale ordine €</label>
+                <div className="bg-[var(--accent-50)]/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-[var(--accent-50)] dark:border-gray-700">
+                  <label className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2 block">Valore totale ordine €</label>
                   <input
                     type="number"
                     min="0"
@@ -1100,7 +1100,7 @@ export const OffersView: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Articoli</label>
-                  <button onClick={addLineItem} className="text-indigo-600 font-black text-xs uppercase bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors">+ Aggiungi Riga</button>
+                  <button onClick={addLineItem} className="text-[var(--accent-600)] font-black text-xs uppercase bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-4 py-2 rounded-full hover:bg-[var(--accent-100)] transition-colors">+ Aggiungi Riga</button>
                 </div>
 
                 {items.length === 0 && (
@@ -1128,7 +1128,7 @@ export const OffersView: React.FC = () => {
                       <div>
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Da catalogo</label>
                         <select
-                          className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 transition-colors"
+                          className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] transition-colors"
                           onChange={e => handleProductSelect(item.id, e.target.value)}
                           defaultValue=""
                         >
@@ -1146,7 +1146,7 @@ export const OffersView: React.FC = () => {
                           <input
                             type="text"
                             placeholder="Es. Giubbotto invernale"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 transition-colors"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] transition-colors"
                             value={item.description}
                             onChange={e => updateItem(item.id, { description: e.target.value })}
                           />
@@ -1156,7 +1156,7 @@ export const OffersView: React.FC = () => {
                           <input
                             type="text"
                             placeholder="Es. S/M/L/XL"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 transition-colors"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] transition-colors"
                             value={item.sizes || ''}
                             onChange={e => updateItem(item.id, { sizes: e.target.value })}
                           />
@@ -1170,7 +1170,7 @@ export const OffersView: React.FC = () => {
                           <input
                             type="number"
                             min="1"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-indigo-400 transition-colors"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-[var(--accent-400)] transition-colors"
                             value={item.quantity}
                             onChange={e => updateItem(item.id, { quantity: parseInt(e.target.value) || 1 })}
                           />
@@ -1182,7 +1182,7 @@ export const OffersView: React.FC = () => {
                             min="0"
                             step="0.01"
                             placeholder="0.00"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-indigo-400 transition-colors"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-[var(--accent-400)] transition-colors"
                             value={item.price || ''}
                             onChange={e => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                           />
@@ -1194,13 +1194,13 @@ export const OffersView: React.FC = () => {
                             min="0"
                             max="100"
                             placeholder="0"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-indigo-400 transition-colors"
+                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-[var(--accent-400)] transition-colors"
                             value={item.discount || ''}
                             onChange={e => updateItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
                           />
                         </div>
-                        <div className="bg-indigo-600 rounded-xl px-3 py-2.5 text-center">
-                          <p className="text-[9px] font-black text-indigo-300 uppercase tracking-wide">Totale riga</p>
+                        <div className="bg-[var(--accent-600)] rounded-xl px-3 py-2.5 text-center">
+                          <p className="text-[9px] font-black text-[var(--accent-300)] uppercase tracking-wide">Totale riga</p>
                           <p className="font-black text-white text-sm">€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
                         </div>
                       </div>
@@ -1210,22 +1210,22 @@ export const OffersView: React.FC = () => {
               </div>
               )}
 
-              <div className={`grid grid-cols-1 ${entryMode === 'articoli' ? 'md:grid-cols-2' : ''} gap-4 bg-indigo-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-indigo-50 dark:border-gray-700`}>
+              <div className={`grid grid-cols-1 ${entryMode === 'articoli' ? 'md:grid-cols-2' : ''} gap-4 bg-[var(--accent-50)]/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-[var(--accent-50)] dark:border-gray-700`}>
                 <div>
-                  <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block">Tempi Consegna</label>
+                  <label className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2 block">Tempi Consegna</label>
                   <input type="text" className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} />
                 </div>
                 {entryMode === 'articoli' && (
                 <div>
-                  <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block">Spese Trasporto (€)</label>
+                  <label className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2 block">Spese Trasporto (€)</label>
                   <input type="number" className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={shippingCost} onChange={e => setShippingCost(Number(e.target.value))} />
                 </div>
                 )}
               </div>
 
               <div className="pt-6 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                <div className="text-2xl md:text-3xl font-black dark:text-white text-indigo-600">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
-                <button onClick={saveOffer} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Salva</button>
+                <div className="text-2xl md:text-3xl font-black dark:text-white text-[var(--accent-600)]">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                <button onClick={saveOffer} className="w-full sm:w-auto bg-[var(--accent-600)] text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Salva</button>
               </div>
             </div>
           </div>

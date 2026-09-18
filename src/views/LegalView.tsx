@@ -42,7 +42,7 @@ export function LegalView() {
         {/* Terms of Service */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600">
+            <div className="p-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 rounded-xl text-[var(--accent-600)]">
               <FileText size={24} />
             </div>
             <div className="flex-1">
@@ -60,7 +60,7 @@ export function LegalView() {
                 href="/TERMS_OF_SERVICE.md"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white rounded-xl font-bold text-sm transition-colors"
               >
                 <FileText size={16} />
                 Leggi Completo

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, type LucideIcon } from 'lucide-react';
+import { ACCENT_PALETTES, ACCENT_PALETTE_LABELS, ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, type AccentPaletteKey, type FontFamilyKey } from '../lib/accentPalettes';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -396,7 +397,7 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, textSize, setTextSize, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -633,6 +634,52 @@ export const SettingsView: React.FC = () => {
               </button>
             ))}
           </div>
+        </div>
+        <div className="flex justify-between items-center mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2 font-bold">
+            <CaseSensitive size={18} /> Stile carattere
+          </div>
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-xl p-1 flex-wrap justify-end">
+            {(Object.keys(FONT_LABELS) as FontFamilyKey[]).map(key => (
+              <button
+                key={key}
+                onClick={() => setFontFamily(key)}
+                style={{ fontFamily: FONT_STACKS[key] }}
+                className={`px-3 h-9 rounded-lg font-black text-xs transition-colors flex items-center justify-center ${fontFamily === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                {FONT_LABELS[key]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Colori per sezione */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center gap-2 font-bold mb-1">
+          <Palette size={18} /> Colore delle sezioni
+        </div>
+        <p className="text-xs text-gray-400 mb-4">Assegna un colore d'accento diverso a ciascuna sezione dell'app (bottoni, evidenziazioni, badge).</p>
+        <div className="space-y-3">
+          {ACCENT_SECTIONS.map(section => {
+            const current = (sectionColors[section.id] || 'indigo') as AccentPaletteKey;
+            return (
+              <div key={section.id} className="flex items-center justify-between gap-3">
+                <span className="text-sm font-bold text-gray-600 dark:text-gray-300">{section.label}</span>
+                <div className="flex gap-1.5 flex-wrap justify-end">
+                  {(Object.keys(ACCENT_PALETTE_LABELS) as AccentPaletteKey[]).map(key => (
+                    <button
+                      key={key}
+                      onClick={() => setSectionColor(section.id, key)}
+                      title={ACCENT_PALETTE_LABELS[key]}
+                      style={{ background: ACCENT_PALETTES[key][600] }}
+                      className={`w-6 h-6 rounded-full transition-all ${current === key ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-800 scale-110' : 'hover:scale-110'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

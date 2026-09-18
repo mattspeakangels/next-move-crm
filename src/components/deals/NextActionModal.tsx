@@ -75,7 +75,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
         <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
           <div>
             <h3 className="font-black uppercase tracking-tight text-gray-900 dark:text-white">Prossima Azione</h3>
-            {companyName && <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mt-0.5">{companyName}</p>}
+            {companyName && <p className="text-xs font-bold text-[var(--accent-600)] uppercase tracking-widest mt-0.5">{companyName}</p>}
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <X size={20} className="text-gray-400" />
@@ -94,7 +94,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
                   onClick={() => setActionType(chip.type)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                     actionType === chip.type
-                      ? 'bg-indigo-600 text-white shadow-md'
+                      ? 'bg-[var(--accent-600)] text-white shadow-md'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                   }`}
                 >
@@ -112,7 +112,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
               value={actionText}
               onChange={e => setActionText(e.target.value)}
               placeholder="Es. Chiamare Mario per conferma ordine..."
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm"
               autoFocus
             />
           </div>
@@ -125,7 +125,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
                 <button
                   key={d}
                   onClick={() => addDays(d)}
-                  className="px-3 py-1.5 rounded-full text-xs font-black bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-black bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] hover:bg-[var(--accent-100)] transition-colors"
                 >
                   +{d}gg
                 </button>
@@ -135,7 +135,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
               type="date"
               value={selectedDate}
               onChange={e => setSelectedDate(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm"
             />
           </div>
 
@@ -170,7 +170,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
               onChange={e => setNotes(e.target.value)}
               placeholder="Dettagli aggiuntivi..."
               rows={2}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm resize-none"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm resize-none"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
             disabled={!actionText.trim()}
             className={`w-full py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all ${
               actionText.trim()
-                ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg'
+                ? 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)] shadow-lg'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >

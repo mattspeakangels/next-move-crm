@@ -45,7 +45,7 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
               key={t.type}
               type="button"
               onClick={() => setType(t.type)}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${type === t.type ? 'bg-indigo-600 text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${type === t.type ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}
             >
               {t.icon}{t.label}
             </button>
@@ -62,11 +62,11 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
             rows={type === 'email' ? 6 : 3}
             autoFocus
             placeholder={type === 'email' ? "Incolla qui oggetto e corpo dell'email inviata/ricevuta..." : undefined}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 resize-none"
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] resize-none"
           />
         </div>
 
-        <button type="submit" className="w-full py-3 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700">
+        <button type="submit" className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]">
           Registra ora
         </button>
       </form>

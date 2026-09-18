@@ -80,9 +80,9 @@ export const SuggestedDealsView: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header info */}
-      <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl px-4 py-3">
-        <Sparkles size={16} className="text-indigo-500 flex-shrink-0" />
-        <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
+      <div className="flex items-center gap-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl px-4 py-3">
+        <Sparkles size={16} className="text-[var(--accent-500)] flex-shrink-0" />
+        <p className="text-xs font-bold text-[var(--accent-700)] dark:text-[var(--accent-300)]">
           {visible.length} opportunità identificate dallo storico ordini — basate su trend stagionali e variazioni anno su anno.
         </p>
       </div>
@@ -127,7 +127,7 @@ export const SuggestedDealsView: React.FC = () => {
                         {deal.priorita}
                       </span>
                       {matched && (
-                        <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-lg">
+                        <span className="text-[10px] font-black text-[var(--accent-500)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-2 py-0.5 rounded-lg">
                           CRM
                         </span>
                       )}
@@ -144,7 +144,7 @@ export const SuggestedDealsView: React.FC = () => {
 
                   {/* Value */}
                   <div className="text-right flex-shrink-0">
-                    <p className="font-black text-indigo-600 dark:text-indigo-400 text-base">€{fmt(deal.valoreStimato)}</p>
+                    <p className="font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] text-base">€{fmt(deal.valoreStimato)}</p>
                     <p className="text-[10px] font-bold text-gray-400 uppercase">stimato</p>
                   </div>
                 </div>
@@ -160,7 +160,7 @@ export const SuggestedDealsView: React.FC = () => {
                     <>
                       <button
                         onClick={() => handleAdd(deal)}
-                        className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-xl text-xs font-black transition-colors">
+                        className="flex items-center gap-1.5 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white px-4 py-1.5 rounded-xl text-xs font-black transition-colors">
                         <Plus size={12} /> Aggiungi alla Pipeline
                       </button>
                       <button

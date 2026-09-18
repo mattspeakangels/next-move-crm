@@ -15,6 +15,8 @@ interface StoreState {
   profile: AppProfile | null;
   theme: 'light' | 'dark';
   textSize: 'small' | 'medium' | 'large';
+  fontFamily: 'sans' | 'serif' | 'rounded' | 'mono';
+  sectionColors: Record<string, string>;
   targets: Record<string, any>;
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
@@ -33,6 +35,8 @@ interface StoreState {
   updateProfile: (updates: Partial<AppProfile>) => void;
   setTheme: (theme: 'light' | 'dark') => void;
   setTextSize: (textSize: 'small' | 'medium' | 'large') => void;
+  setFontFamily: (fontFamily: 'sans' | 'serif' | 'rounded' | 'mono') => void;
+  setSectionColor: (sectionId: string, palette: string) => void;
   toggleTheme: () => void;
   resetAll: () => void;
   setDiscountApprovalThreshold: (value: number) => void;
@@ -124,6 +128,8 @@ export const useStore = create<StoreState>()(
       profile: null,
       theme: 'light',
       textSize: 'medium',
+      fontFamily: 'sans',
+      sectionColors: {},
       discountApprovalThreshold: 20,
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
@@ -142,6 +148,8 @@ export const useStore = create<StoreState>()(
       })),
       setTheme: (theme) => set({ theme }),
       setTextSize: (textSize) => set({ textSize }),
+      setFontFamily: (fontFamily) => set({ fontFamily }),
+      setSectionColor: (sectionId, palette) => set((state) => ({ sectionColors: { ...state.sectionColors, [sectionId]: palette } })),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {}, strategicFocuses: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
@@ -366,6 +374,8 @@ export const useStore = create<StoreState>()(
         targets: state.targets,
         theme: state.theme,
         textSize: state.textSize,
+        fontFamily: state.fontFamily,
+        sectionColors: state.sectionColors,
         profile: state.profile,
         discountApprovalThreshold: state.discountApprovalThreshold,
         todos: state.todos,

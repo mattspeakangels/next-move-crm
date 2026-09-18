@@ -127,7 +127,7 @@ export function SelectionAI() {
           style={{ top: pos.top, left: pos.left }}
           onMouseDown={(e) => e.preventDefault()}
         >
-          <Sparkles size={14} className="text-indigo-300 ml-1 mr-0.5 flex-shrink-0" />
+          <Sparkles size={14} className="text-[var(--accent-300)] ml-1 mr-0.5 flex-shrink-0" />
           {ACTIONS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -150,7 +150,7 @@ export function SelectionAI() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 font-black dark:text-white">
-                <Sparkles size={18} className="text-indigo-500" /> Assistente AI
+                <Sparkles size={18} className="text-[var(--accent-500)]" /> Assistente AI
               </div>
               <button onClick={closeSheet} aria-label="Chiudi"><X size={22} className="text-gray-400" /></button>
             </div>
@@ -170,7 +170,7 @@ export function SelectionAI() {
             {result && (
               <button
                 onClick={copy}
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl transition-colors"
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white font-black py-3 rounded-2xl transition-colors"
               >
                 {copied ? <><Check size={16} /> Copiato</> : <><Copy size={16} /> Copia</>}
               </button>

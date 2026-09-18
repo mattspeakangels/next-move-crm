@@ -87,7 +87,7 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
     lead: 'bg-blue-400',
     qualificato: 'bg-purple-400',
     proposta: 'bg-orange-400',
-    negoziazione: 'bg-indigo-400',
+    negoziazione: 'bg-[var(--accent-400)]',
   };
 
   return (
@@ -95,7 +95,7 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
       {/* Toolbar */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-50 dark:border-gray-700">
         <div className="flex items-center gap-2">
-          <Calendar size={14} className="text-indigo-500" />
+          <Calendar size={14} className="text-[var(--accent-500)]" />
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Scadenze Deal</span>
         </div>
         <div className="flex items-center gap-2">
@@ -115,13 +115,13 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
           ><ChevronRight size={16} /></button>
           <button
             onClick={() => { setWeekOffset(0); setMonthOffset(0); setSelectedDay(null); }}
-            className="text-[9px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-full uppercase"
+            className="text-[9px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-2 py-1 rounded-full uppercase"
           >Oggi</button>
           {/* View toggle */}
           <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg ml-1">
             {(['week', 'month'] as const).map(m => (
               <button key={m} onClick={() => { setViewMode(m); setSelectedDay(null); }}
-                className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all ${viewMode === m ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-400'}`}>
+                className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all ${viewMode === m ? 'bg-white dark:bg-gray-800 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}>
                 {m === 'week' ? 'Sett.' : 'Mese'}
               </button>
             ))}
@@ -138,9 +138,9 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
             const isSel = selectedDay && isSameDay(day, selectedDay);
             return (
               <button key={i} onClick={() => setSelectedDay(isSel ? null : day)}
-                className={`flex flex-col items-center py-2.5 rounded-xl transition-all ${isSel ? 'bg-indigo-600' : isToday ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                <span className={`text-[10px] font-black uppercase tracking-wide mb-1 ${isSel ? 'text-indigo-200' : 'text-gray-400'}`}>{DAYS_IT[i]}</span>
-                <span className={`text-base font-black ${isSel ? 'text-white' : isToday ? 'text-indigo-600' : 'text-gray-700 dark:text-gray-200'}`}>{day.getDate()}</span>
+                className={`flex flex-col items-center py-2.5 rounded-xl transition-all ${isSel ? 'bg-[var(--accent-600)]' : isToday ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-wide mb-1 ${isSel ? 'text-[var(--accent-200)]' : 'text-gray-400'}`}>{DAYS_IT[i]}</span>
+                <span className={`text-base font-black ${isSel ? 'text-white' : isToday ? 'text-[var(--accent-600)]' : 'text-gray-700 dark:text-gray-200'}`}>{day.getDate()}</span>
                 <div className="flex gap-0.5 mt-1.5 flex-wrap justify-center max-w-[36px]">
                   {dayDeals.slice(0, 3).map((d, j) => (
                     <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white/70' : stageDot[d.stage] ?? 'bg-gray-400'}`} />
@@ -167,8 +167,8 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
               const isSel = selectedDay && isSameDay(day, selectedDay);
               return (
                 <button key={i} onClick={() => setSelectedDay(isSel ? null : day)}
-                  className={`flex flex-col items-center py-1.5 rounded-lg transition-all min-h-[40px] ${isSel ? 'bg-indigo-600' : isToday ? 'bg-indigo-50 dark:bg-indigo-900/30' : inMonth ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}>
-                  <span className={`text-[11px] font-black ${isSel ? 'text-white' : isToday ? 'text-indigo-600' : inMonth ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>{day.getDate()}</span>
+                  className={`flex flex-col items-center py-1.5 rounded-lg transition-all min-h-[40px] ${isSel ? 'bg-[var(--accent-600)]' : isToday ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30' : inMonth ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}>
+                  <span className={`text-[11px] font-black ${isSel ? 'text-white' : isToday ? 'text-[var(--accent-600)]' : inMonth ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>{day.getDate()}</span>
                   <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[30px]">
                     {dayDeals.slice(0, 2).map((d, j) => (
                       <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white/70' : stageDot[d.stage] ?? 'bg-gray-400'}`} />
@@ -201,7 +201,7 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
                   <p className="text-[10px] text-gray-400 truncate">{deal.nextAction || 'Nessuna azione'}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-xs font-black text-indigo-600">€{(deal.value / 1000).toFixed(0)}k</p>
+                  <p className="text-xs font-black text-[var(--accent-600)]">€{(deal.value / 1000).toFixed(0)}k</p>
                   <p className={`text-[9px] font-black ${diff < 0 ? 'text-red-500' : diff <= 3 ? 'text-yellow-500' : 'text-gray-400'}`}>
                     {diff < 0 ? `${Math.abs(diff)}gg fa` : diff === 0 ? 'oggi' : `+${diff}gg`}
                   </p>
@@ -411,10 +411,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* ── Coach AI Card ── */}
-      <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-5 text-white shadow-lg">
+      <div className="bg-gradient-to-br from-[var(--accent-600)] to-violet-600 rounded-3xl p-5 text-white shadow-lg">
         <div className="flex items-center gap-2 mb-3">
           <Zap size={16} className="text-yellow-300" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Coach del Giorno</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-200)]">Coach del Giorno</span>
         </div>
         <p className="font-bold text-sm leading-relaxed">{coachMessage}</p>
       </div>
@@ -461,12 +461,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       {/* ── Metriche processo (Vitality / Progression / Win Rate) ── */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Activity size={14} className="text-indigo-500" />
+          <Activity size={14} className="text-[var(--accent-500)]" />
           <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Salute Pipeline</h2>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Vitality', value: vitality, target: 10, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20', desc: '% nuovi 30gg' },
+            { label: 'Vitality', value: vitality, target: 10, color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20', desc: '% nuovi 30gg' },
             { label: 'Progression', value: progression, target: 20, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', desc: '% avanzati 30gg' },
             { label: 'Win Rate', value: winRate, target: 30, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', desc: '% vinti totali' },
           ].map(m => (
@@ -543,7 +543,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <p className="font-black text-sm text-gray-900 dark:text-white">{company}</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {deal.nextActionType && (
-                        <span className="text-indigo-500">{ACTION_ICON[deal.nextActionType]}</span>
+                        <span className="text-[var(--accent-500)]">{ACTION_ICON[deal.nextActionType]}</span>
                       )}
                       <p className="text-xs text-gray-600 dark:text-gray-400 font-bold truncate">
                         {deal.nextAction || 'Nessuna azione definita'}
@@ -599,7 +599,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Panoramica</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
-            <Target className="text-indigo-600 mb-2" size={22} />
+            <Target className="text-[var(--accent-600)] mb-2" size={22} />
             <h3 className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Pipeline</h3>
             <p className="text-xl font-black dark:text-white tracking-tighter">€{totalPipeline.toLocaleString('it-IT')}</p>
           </div>

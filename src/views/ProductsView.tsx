@@ -199,7 +199,7 @@ const CompactList: React.FC<{
             style={{ minHeight: 54, opacity: st === 'esaurito' ? 0.6 : 1 }}
             className={`flex items-center px-4 cursor-pointer transition-colors ${
               i > 0 ? 'border-t border-gray-50 dark:border-gray-700/50' : ''
-            } ${sel ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'}`}
+            } ${sel ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'}`}
           >
             {/* Left: thumbnail o color dots */}
             <div className="mr-3 flex-shrink-0">
@@ -225,7 +225,7 @@ const CompactList: React.FC<{
                   target="_blank"
                   rel="noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-indigo-500 hover:text-indigo-700 flex-shrink-0 font-mono hover:underline flex items-center gap-0.5"
+                  className="text-[var(--accent-500)] hover:text-[var(--accent-700)] flex-shrink-0 font-mono hover:underline flex items-center gap-0.5"
                   style={{ fontSize: 10.5 }}
                 >
                   {p.code}
@@ -264,7 +264,7 @@ const CompactList: React.FC<{
                 onClick={e => { e.stopPropagation(); onToggle(p.id); }}
                 className={`w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${
                   sel
-                    ? 'bg-indigo-600 border-indigo-600'
+                    ? 'bg-[var(--accent-600)] border-[var(--accent-600)]'
                     : 'border-gray-300 dark:border-gray-600'
                 }`}
                 role="checkbox"
@@ -318,7 +318,7 @@ const VisualList: React.FC<{
             onClick={() => onOpen(p)}
             style={{ opacity: st === 'esaurito' ? 0.65 : 1, borderRadius: 12, padding: 11 }}
             className={`bg-white dark:bg-gray-800 border flex gap-3 cursor-pointer transition-all ${
-              sel ? 'border-indigo-400 dark:border-indigo-500' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
+              sel ? 'border-[var(--accent-400)] dark:border-[var(--accent-500)]' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
             }`}
           >
             {/* Thumbnail */}
@@ -357,7 +357,7 @@ const VisualList: React.FC<{
                   target="_blank"
                   rel="noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-indigo-500 hover:text-indigo-700 font-mono flex-shrink-0 hover:underline"
+                  className="text-[var(--accent-500)] hover:text-[var(--accent-700)] font-mono flex-shrink-0 hover:underline"
                   style={{ fontSize: 10 }}
                 >
                   {p.code}
@@ -388,7 +388,7 @@ const VisualList: React.FC<{
                 <div
                   onClick={e => { e.stopPropagation(); onToggle(p.id); }}
                   className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
-                    sel ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 dark:border-gray-600'
+                    sel ? 'bg-[var(--accent-600)] border-[var(--accent-600)]' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   role="checkbox"
                   aria-checked={sel}
@@ -442,7 +442,7 @@ const GridList: React.FC<{
             onClick={() => onOpen(p)}
             style={{ opacity: st === 'esaurito' ? 0.65 : 1, borderRadius: 14, overflow: 'hidden' }}
             className={`bg-white dark:bg-gray-800 border cursor-pointer transition-all ${
-              sel ? 'border-indigo-400 shadow-md shadow-indigo-100 dark:shadow-indigo-900/20' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
+              sel ? 'border-[var(--accent-400)] shadow-md shadow-[var(--accent-100)] dark:shadow-[var(--accent-900)]/20' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
             }`}
           >
             {/* Hero */}
@@ -460,7 +460,7 @@ const GridList: React.FC<{
                 onClick={e => { e.stopPropagation(); onToggle(p.id); }}
               >
                 <div className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
-                  sel ? 'bg-indigo-600 border-indigo-600' : 'bg-white/20 border-white/50'
+                  sel ? 'bg-[var(--accent-600)] border-[var(--accent-600)]' : 'bg-white/20 border-white/50'
                 }`}>
                   {sel && <Check size={13} className="text-white" strokeWidth={3} />}
                 </div>
@@ -485,7 +485,7 @@ const GridList: React.FC<{
               <div className="flex items-center gap-1.5 mb-1">
                 <span className={`text-[9px] font-black uppercase ${cs.text}`}>{catLabel(p)}</span>
                 <a href={blakladerUrl(p.code, p.productUrl)} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                  className="text-indigo-500 hover:text-indigo-700 font-mono text-[9px] ml-auto flex-shrink-0 hover:underline flex items-center gap-0.5">
+                  className="text-[var(--accent-500)] hover:text-[var(--accent-700)] font-mono text-[9px] ml-auto flex-shrink-0 hover:underline flex items-center gap-0.5">
                   {p.code}{p.productUrl && <ExternalLink size={8} />}
                 </a>
               </div>
@@ -555,7 +555,7 @@ const AddProductModal: React.FC<{
   };
 
   const LINES = ['X1900','X1500','X1600','X1800','X1700','X1100','HiVis','Softshell','Knitwear'];
-  const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3.5 bg-transparent dark:text-white font-bold outline-none focus:border-indigo-500 text-sm transition-colors';
+  const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3.5 bg-transparent dark:text-white font-bold outline-none focus:border-[var(--accent-500)] text-sm transition-colors';
   const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block';
 
   return (
@@ -612,7 +612,7 @@ const AddProductModal: React.FC<{
             <div className="flex gap-2">
               <input className={inputCls} value={colorInput} onChange={e => setColorInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addColor()} placeholder="Es. nero, blu, grigio..." />
-              <button onClick={addColor} className="px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-sm flex-shrink-0">+</button>
+              <button onClick={addColor} className="px-4 py-3 bg-[var(--accent-600)] text-white rounded-2xl font-bold text-sm flex-shrink-0">+</button>
             </div>
             {(form.colors?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
@@ -634,14 +634,14 @@ const AddProductModal: React.FC<{
               <div className="flex items-center gap-3">
                 <img src={form.imageUrl} alt="preview" className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100 dark:border-gray-700" />
                 <div className="flex flex-col gap-2">
-                  <button onClick={() => imgInputRef.current?.click()} className="text-xs font-bold text-indigo-600 hover:underline">Cambia foto</button>
+                  <button onClick={() => imgInputRef.current?.click()} className="text-xs font-bold text-[var(--accent-600)] hover:underline">Cambia foto</button>
                   <button onClick={() => set('imageUrl', undefined)} className="text-xs font-bold text-red-400 hover:underline">Rimuovi</button>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => imgInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                className="w-full border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-[var(--accent-400)] hover:text-[var(--accent-500)] transition-colors"
               >
                 <Upload size={20} />
                 <span className="text-xs font-bold">Carica foto (jpg, png, webp)</span>
@@ -649,7 +649,7 @@ const AddProductModal: React.FC<{
             )}
           </div>
 
-          <button onClick={handleSave} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-indigo-700 transition-all mt-2">
+          <button onClick={handleSave} className="w-full bg-[var(--accent-600)] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[var(--accent-700)] transition-all mt-2">
             {editProduct ? 'Salva Modifiche' : 'Salva nel Catalogo'}
           </button>
         </div>
@@ -723,7 +723,7 @@ const AddToOfferModal: React.FC<{
                 <button
                   key={o.id}
                   onClick={() => handlePick(o.id)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-700 transition-all text-left group"
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 hover:border-[var(--accent-200)] dark:hover:border-[var(--accent-700)] transition-all text-left group"
                 >
                   <div className="min-w-0">
                     <div className="font-bold text-sm text-gray-900 dark:text-white">
@@ -741,7 +741,7 @@ const AddToOfferModal: React.FC<{
                     }`}>
                       {o.status}
                     </span>
-                    <span className="text-xs text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs text-[var(--accent-600)] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                       Aggiungi →
                     </span>
                   </div>
@@ -821,7 +821,7 @@ const ProductDetailModal: React.FC<{
                 href={blakladerUrl(p.code, p.productUrl)}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono text-indigo-500 hover:text-indigo-700 text-sm hover:underline flex items-center gap-1"
+                className="font-mono text-[var(--accent-500)] hover:text-[var(--accent-700)] text-sm hover:underline flex items-center gap-1"
               >
                 {p.code} <ExternalLink size={12} />
               </a>
@@ -923,7 +923,7 @@ const ProductDetailModal: React.FC<{
           <div className="grid grid-cols-2 gap-2 pt-2">
             <button
               onClick={() => { onAddToOffer(p); onClose(); }}
-              className="flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all col-span-2"
+              className="flex items-center justify-center gap-2 bg-[var(--accent-600)] text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[var(--accent-700)] transition-all col-span-2"
             >
               <ShoppingBag size={14} /> Aggiungi a offerta
             </button>
@@ -1254,7 +1254,7 @@ export const ProductsView: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSV} className="hidden" />
           <button onClick={() => fileInputRef.current?.click()}
-            className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-800 text-indigo-600 border-2 border-indigo-100 dark:border-indigo-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all">
+            className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-800 text-[var(--accent-600)] border-2 border-[var(--accent-100)] dark:border-[var(--accent-900)]/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-[var(--accent-50)] transition-all">
             <Upload size={16} /> CSV / Excel
           </button>
           <button
@@ -1293,7 +1293,7 @@ export const ProductsView: React.FC = () => {
             <span className="hidden sm:inline">Arricchisci</span>
           </button>
           <button onClick={() => setShowModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all text-sm">
+            className="bg-[var(--accent-600)] text-white px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--accent-700)] transition-all text-sm">
             <Plus size={16} /> Aggiungi
           </button>
         </div>
@@ -1307,7 +1307,7 @@ export const ProductsView: React.FC = () => {
             onClick={() => changeLayout(t.id)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
               layout === t.id
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm'
                 : 'text-gray-400 hover:text-gray-600'
             }`}
           >
@@ -1322,7 +1322,7 @@ export const ProductsView: React.FC = () => {
         onChange={setSearch}
         onSelect={p => setSearch(pName(p))}
         placeholder="Cerca per nome, codice, linea, categoria, colore..."
-        inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-medium dark:text-white outline-none focus-within:border-indigo-400 transition-colors'}
+        inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-medium dark:text-white outline-none focus-within:border-[var(--accent-400)] transition-colors'}
         results={(search.trim()
           ? productList.filter(p => matchSearch(search, [
               pName(p), p.code, p.line, p.description, p.category, ...(p.colors ?? []),
@@ -1344,7 +1344,7 @@ export const ProductsView: React.FC = () => {
             onClick={() => setCatFilter(c.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
               catFilter === c.id
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-[var(--accent-600)] text-white shadow-sm'
                 : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 hover:border-gray-300'
             }`}
           >
@@ -1355,7 +1355,7 @@ export const ProductsView: React.FC = () => {
 
       {/* ── Selection action bar ── */}
       {selected.size > 0 && (
-        <div className="sticky top-2 z-20 bg-indigo-600 text-white rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-xl shadow-indigo-200 dark:shadow-indigo-900/40">
+        <div className="sticky top-2 z-20 bg-[var(--accent-600)] text-white rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-xl shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]/40">
           <span className="font-bold text-sm flex-shrink-0">{selected.size} selezionati</span>
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={handleAddToOffer} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all">
@@ -1385,7 +1385,7 @@ export const ProductsView: React.FC = () => {
             {search || catFilter !== 'all' ? 'Nessun risultato' : 'Catalogo vuoto'}
           </p>
           {(search || catFilter !== 'all') && (
-            <button onClick={() => { setSearch(''); setCatFilter('all'); }} className="mt-3 text-indigo-500 text-sm font-bold">
+            <button onClick={() => { setSearch(''); setCatFilter('all'); }} className="mt-3 text-[var(--accent-500)] text-sm font-bold">
               Rimuovi filtri
             </button>
           )}

@@ -37,7 +37,7 @@ function RichText({ text }: { text: string }) {
       const content = line.replace(/^[-•]\s/, '').trim();
       elements.push(
         <div key={key++} className="flex gap-2 mb-1">
-          <span className="text-indigo-400 font-bold mt-0.5 flex-shrink-0">•</span>
+          <span className="text-[var(--accent-400)] font-bold mt-0.5 flex-shrink-0">•</span>
           <span className="text-sm text-gray-700 dark:text-gray-300">{renderInline(content)}</span>
         </div>
       );
@@ -50,7 +50,7 @@ function RichText({ text }: { text: string }) {
       const content = line.replace(/^\d+\.\s/, '').trim();
       elements.push(
         <div key={key++} className="flex gap-2 mb-1">
-          <span className="text-indigo-500 font-black text-xs mt-0.5 flex-shrink-0 w-4">{num}.</span>
+          <span className="text-[var(--accent-500)] font-black text-xs mt-0.5 flex-shrink-0 w-4">{num}.</span>
           <span className="text-sm text-gray-700 dark:text-gray-300">{renderInline(content)}</span>
         </div>
       );
@@ -105,7 +105,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-[var(--accent-600)] rounded-xl flex items-center justify-center">
               <Sparkles size={18} className="text-white" />
             </div>
             <div>
@@ -139,10 +139,10 @@ export const AiPanel: React.FC<AiPanelProps> = ({
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center">
-                  <Sparkles size={28} className="text-indigo-500" />
+                <div className="w-16 h-16 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 rounded-2xl flex items-center justify-center">
+                  <Sparkles size={28} className="text-[var(--accent-500)]" />
                 </div>
-                <Loader2 size={20} className="text-indigo-500 animate-spin absolute -top-1 -right-1" />
+                <Loader2 size={20} className="text-[var(--accent-500)] animate-spin absolute -top-1 -right-1" />
               </div>
               <div className="text-center">
                 <p className="font-bold text-gray-700 dark:text-gray-300 text-sm">Claude sta elaborando…</p>
@@ -162,7 +162,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
                 <p className="text-xs text-red-400 mt-1">{error}</p>
               </div>
               {onRetry && (
-                <button onClick={onRetry} className="mt-2 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all">
+                <button onClick={onRetry} className="mt-2 flex items-center gap-2 px-4 py-2 bg-[var(--accent-600)] text-white rounded-xl text-sm font-bold hover:bg-[var(--accent-700)] transition-all">
                   <RefreshCw size={14} /> Riprova
                 </button>
               )}

@@ -93,7 +93,7 @@ const LocateButton: React.FC<{ locating: boolean; onClick: () => void; className
   <button
     onClick={onClick}
     title="Mostra la mia posizione"
-    className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-lg text-indigo-600 dark:text-indigo-400 active:scale-95 transition-all ${className ?? ''}`}
+    className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-3 shadow-lg text-[var(--accent-600)] dark:text-[var(--accent-400)] active:scale-95 transition-all ${className ?? ''}`}
   >
     <LocateFixed size={18} className={locating ? 'animate-pulse' : ''} />
   </button>
@@ -499,11 +499,11 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
         ) : (
           <>
             {/* Partenza */}
-            <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl px-3 py-2.5">
-              <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl px-3 py-2.5">
+              <div className="w-7 h-7 rounded-full bg-[var(--accent-600)] flex items-center justify-center flex-shrink-0">
                 <Home size={13} className="text-white" />
               </div>
-              <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 truncate">{HOME.label}</p>
+              <p className="text-xs font-black text-[var(--accent-700)] dark:text-[var(--accent-300)] truncate">{HOME.label}</p>
             </div>
 
             {/* Tappe — drag & drop */}
@@ -524,14 +524,14 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                           onChange={e => setCustomTimes(prev => ({ ...prev, [stop.id]: e.target.value }))}
                           className={`w-[72px] text-xs font-black rounded-lg px-1.5 py-1 outline-none border transition-colors ${
                             et?.isCustom
-                              ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                              ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
                               : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
                           }`}
                         />
                         {et?.isCustom && (
                           <button
                             onClick={() => setCustomTimes(prev => { const n = { ...prev }; delete n[stop.id]; return n; })}
-                            className="block text-[9px] text-gray-400 hover:text-indigo-500 font-bold mt-0.5 pl-1"
+                            className="block text-[9px] text-gray-400 hover:text-[var(--accent-500)] font-bold mt-0.5 pl-1"
                           >↩ reset</button>
                         )}
                       </div>
@@ -553,7 +553,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             {manualOrder && (
               <button
                 onClick={() => setManualOrder(null)}
-                className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[10px] font-black text-indigo-500 hover:text-indigo-700 uppercase tracking-wider transition-colors"
+                className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[10px] font-black text-[var(--accent-500)] hover:text-[var(--accent-700)] uppercase tracking-wider transition-colors"
               >
                 <RotateCcw size={11} /> Ottimizza ordine automatico
               </button>
@@ -600,7 +600,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
         <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-gray-800">
           <button onClick={addToAgenda}
             className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-wide transition-all shadow-lg ${
-              savedToAgenda ? 'bg-green-500 text-white' : 'bg-indigo-600 active:bg-indigo-700 text-white'
+              savedToAgenda ? 'bg-green-500 text-white' : 'bg-[var(--accent-600)] active:bg-[var(--accent-700)] text-white'
             }`}>
             <CalendarCheck size={17} />
             {savedToAgenda ? '✓ Salvato in Agenda!' : "Aggiungi all'Agenda"}
@@ -638,7 +638,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             </div>
 
             <button onClick={() => setShowFiltersBar(v => !v)}
-              className={`p-2.5 rounded-xl shadow-lg flex-shrink-0 transition-all ${showFiltersBar ? 'bg-indigo-600 text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-600 dark:text-white'}`}>
+              className={`p-2.5 rounded-xl shadow-lg flex-shrink-0 transition-all ${showFiltersBar ? 'bg-[var(--accent-600)] text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-600 dark:text-white'}`}>
               <SlidersHorizontal size={16} />
             </button>
           </div>
@@ -648,19 +648,19 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
               <div className="flex gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg">
                 {([{ key: 'tutti', label: 'Tutti' }, { key: 'clienti', label: 'Clienti' }, { key: 'prospect', label: 'Prospect' }] as const).map(({ key, label }) => (
                   <button key={key} onClick={() => setFilterStatus(key)}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterStatus === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterStatus === key ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                     {label}
                   </button>
                 ))}
               </div>
               <div className="flex gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg">
                 <button onClick={() => setFilterSegment(null)}
-                  className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === null ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                  className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === null ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                   Tutti
                 </button>
                 {([{ key: 'dealer', label: 'Dealer', icon: '🏪' }, { key: 'industria', label: 'Industria', icon: '🏭' }, { key: 'edilizia', label: 'Edilizia', icon: '🏗️' }, { key: 'end-user', label: 'End User', icon: '👤' }] as const).map(({ key, label, icon }) => (
                   <button key={key} onClick={() => setFilterSegment(key)}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === key ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                     {icon} {label}
                   </button>
                 ))}
@@ -701,7 +701,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                   text: already ? 'in itinerario' : `${isCliente ? 'Cliente' : 'Prospect'}`,
                   className: already
                     ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300'
-                    : isCliente ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
+                    : isCliente ? 'bg-[var(--accent-100)] text-[var(--accent-600)] dark:bg-[var(--accent-900)]/40 dark:text-[var(--accent-300)]' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
                 },
               };
             })}
@@ -770,7 +770,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             onClick={() => setSheetOpen(v => !v)}
             className={`absolute bottom-4 left-4 right-4 z-[700] flex items-center justify-between rounded-2xl px-4 py-3 shadow-2xl transition-all ${
               selectedIds.length > 0
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-[var(--accent-600)] text-white'
                 : 'bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-700 dark:text-white'
             }`}
           >
@@ -829,8 +829,8 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                 <p className="text-xs font-black text-orange-600">{totalKm.toFixed(0)} km</p>
                 <p className="text-[10px] text-gray-400 font-bold">totale</p>
               </div>
-              <div className="flex-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl py-2">
-                <p className="text-xs font-black text-indigo-600">{fmtTime(totalKm)}</p>
+              <div className="flex-1 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl py-2">
+                <p className="text-xs font-black text-[var(--accent-600)]">{fmtTime(totalKm)}</p>
                 <p className="text-[10px] text-gray-400 font-bold">in viaggio</p>
               </div>
               <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl py-2">
@@ -849,7 +849,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
 // ── AI Catalog Panel ──────────────────────────────────────────────────────────
 
 const SEGMENT_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  dealer:    { bg: 'bg-indigo-100 dark:bg-indigo-900/40', text: 'text-indigo-700 dark:text-indigo-300', label: '🏪 Dealer' },
+  dealer:    { bg: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40', text: 'text-[var(--accent-700)] dark:text-[var(--accent-300)]', label: '🏪 Dealer' },
   edilizia:  { bg: 'bg-amber-100 dark:bg-amber-900/40',  text: 'text-amber-700 dark:text-amber-300',   label: '🏗️ Edilizia' },
   industria: { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300', label: '🏭 Industria' },
 };
@@ -897,7 +897,7 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-black uppercase tracking-tight dark:text-white flex items-center gap-2">
-                <Sparkles size={18} className="text-indigo-500" /> AI Cataloga Contatti
+                <Sparkles size={18} className="text-[var(--accent-500)]" /> AI Cataloga Contatti
               </h2>
               <p className="text-xs text-gray-400 font-bold mt-0.5">
                 Classifica segment + priorità con Claude Haiku
@@ -912,13 +912,13 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
           <div className="flex gap-1.5 mt-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
             <button
               onClick={() => setOnlyUncategorized(true)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${onlyUncategorized ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${onlyUncategorized ? 'bg-white dark:bg-gray-700 shadow text-[var(--accent-600)]' : 'text-gray-500'}`}
             >
               Non categ. ({uncategorized.length})
             </button>
             <button
               onClick={() => setOnlyUncategorized(false)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${!onlyUncategorized ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${!onlyUncategorized ? 'bg-white dark:bg-gray-700 shadow text-[var(--accent-600)]' : 'text-gray-500'}`}
             >
               Tutti ({allContacts.length})
             </button>
@@ -930,21 +930,21 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
 
           {/* Progress bar */}
           {(loading || (progress && progress.done > 0)) && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-3">
+            <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
+                <span className="text-xs font-black text-[var(--accent-700)] dark:text-[var(--accent-300)] uppercase tracking-wide">
                   {loading ? `Elaborazione… ${progress?.done ?? 0}/${progress?.total ?? 0}` : `Completato ${progress?.done}/${progress?.total}`}
                 </span>
-                <span className="text-xs font-black text-indigo-500">{progressPct}%</span>
+                <span className="text-xs font-black text-[var(--accent-500)]">{progressPct}%</span>
               </div>
-              <div className="h-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-full overflow-hidden">
+              <div className="h-2 bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/50 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                  className="h-full bg-[var(--accent-500)] rounded-full transition-all duration-500"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
               {!loading && remaining.length > 0 && (
-                <p className="text-[10px] text-indigo-400 font-bold mt-1.5">
+                <p className="text-[10px] text-[var(--accent-400)] font-bold mt-1.5">
                   {remaining.length} contatti rimanenti — clicca "Continua" per completare
                 </p>
               )}
@@ -974,7 +974,7 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
                   {suggestions.length} catalogati
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => setAllApproved(true)} className="text-[10px] font-black text-indigo-600 uppercase hover:underline">Seleziona tutto</button>
+                  <button onClick={() => setAllApproved(true)} className="text-[10px] font-black text-[var(--accent-600)] uppercase hover:underline">Seleziona tutto</button>
                   <button onClick={() => setAllApproved(false)} className="text-[10px] font-black text-gray-400 uppercase hover:underline">Deseleziona</button>
                 </div>
               </div>
@@ -984,7 +984,7 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
                 return (
                   <div
                     key={s.id}
-                    className={`rounded-2xl border-2 p-3 transition-all cursor-pointer ${s.approved ? 'border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 opacity-60'}`}
+                    className={`rounded-2xl border-2 p-3 transition-all cursor-pointer ${s.approved ? 'border-[var(--accent-200)] dark:border-[var(--accent-700)] bg-white dark:bg-gray-800' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 opacity-60'}`}
                     onClick={() => toggleApproval(s.id)}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -997,7 +997,7 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
                           {seg.label}
                         </span>
                         {s.approved
-                          ? <CheckCircle2 size={16} className="text-indigo-500" />
+                          ? <CheckCircle2 size={16} className="text-[var(--accent-500)]" />
                           : <XCircle size={16} className="text-gray-300" />
                         }
                       </div>
@@ -1015,7 +1015,7 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
 
           {suggestions.length === 0 && !loading && !error && (
             <div className="text-center py-8">
-              <Sparkles size={28} className="mx-auto mb-3 text-indigo-200" />
+              <Sparkles size={28} className="mx-auto mb-3 text-[var(--accent-200)]" />
               <p className="text-sm font-black text-gray-400 uppercase tracking-widest">Nessun risultato</p>
               <p className="text-xs text-gray-300 mt-1">Avvia l'analisi per catalogare i contatti</p>
             </div>
@@ -1040,7 +1040,7 @@ const AICatalogPanel: React.FC<AICatalogPanelProps> = ({ onClose, onApply }) => 
               onClick={() => run(targetContacts)}
               disabled={loading}
               className={`w-full py-3 rounded-2xl font-black uppercase text-sm tracking-wide transition-all flex items-center justify-center gap-2 ${
-                loading ? 'bg-gray-200 dark:bg-gray-700 text-gray-400' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'
+                loading ? 'bg-gray-200 dark:bg-gray-700 text-gray-400' : 'bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white shadow-lg'
               }`}
             >
               <Sparkles size={16} />
@@ -1346,7 +1346,7 @@ export const MapView: React.FC<MapViewProps> = ({
               <Popup minWidth={220}>
                 <div className="p-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-[var(--accent-100)] text-[var(--accent-700)]' : 'bg-amber-100 text-amber-700'}`}>
                       {isCliente ? '● Cliente' : '◆ Prospect'}
                     </span>
                     {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
@@ -1357,7 +1357,7 @@ export const MapView: React.FC<MapViewProps> = ({
                   {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
                   <button
                     onClick={() => onNavigateToContact(c.id)}
-                    className="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
+                    className="mt-2 w-full bg-[var(--accent-600)] text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
                   >
                     <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
                   </button>
@@ -1397,7 +1397,7 @@ export const MapView: React.FC<MapViewProps> = ({
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Cerca cliente o prospect…"
-            inputWrapperClassName={() => 'flex items-center gap-2 bg-white/90 backdrop-blur-sm border-0 rounded-2xl px-3 py-2.5 shadow-lg focus-within:ring-2 focus-within:ring-indigo-400 transition-all'}
+            inputWrapperClassName={() => 'flex items-center gap-2 bg-white/90 backdrop-blur-sm border-0 rounded-2xl px-3 py-2.5 shadow-lg focus-within:ring-2 focus-within:ring-[var(--accent-400)] transition-all'}
             dropdownClassName="z-[1100]"
             onSelect={c => {
               setSearchQuery(c.company);
@@ -1414,7 +1414,7 @@ export const MapView: React.FC<MapViewProps> = ({
                 badge: {
                   text: hasPinned ? (isCliente ? 'Cliente' : 'Prospect') : 'no pin',
                   className: hasPinned
-                    ? (isCliente ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600')
+                    ? (isCliente ? 'bg-[var(--accent-100)] text-[var(--accent-600)]' : 'bg-amber-100 text-amber-600')
                     : 'bg-gray-100 text-gray-400',
                 },
               };
@@ -1434,7 +1434,7 @@ export const MapView: React.FC<MapViewProps> = ({
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-1 flex gap-1 shadow-lg">
             {(['tutti', 'clienti', 'prospect'] as const).map(f => (
               <button key={f} onClick={() => setMapFilter(f)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${mapFilter === f ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${mapFilter === f ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
                 {f === 'tutti' ? 'Tutti' : f === 'clienti' ? 'Clienti' : 'Prospect'}
               </button>
             ))}
@@ -1481,7 +1481,7 @@ export const MapView: React.FC<MapViewProps> = ({
         {/* Info overlay */}
         <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2.5 shadow-lg">
           <p className="text-xs font-black text-gray-700">
-            <span className="text-indigo-600">{nClienti}</span> clienti ·{' '}
+            <span className="text-[var(--accent-600)]">{nClienti}</span> clienti ·{' '}
             <span className="text-amber-500">{nProspect}</span> prospect
           </p>
           {markersCapped && (
@@ -1504,10 +1504,10 @@ export const MapView: React.FC<MapViewProps> = ({
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div className="min-w-0">
             <h1 className="text-lg font-black dark:text-white uppercase tracking-tighter flex items-center gap-2">
-              <Navigation className="text-indigo-600" size={20} /> Radar Clienti
+              <Navigation className="text-[var(--accent-600)]" size={20} /> Radar Clienti
             </h1>
             <p className="text-gray-400 text-xs font-bold">
-              <span className="text-indigo-600 font-black">{nClienti}</span> clienti ·{' '}
+              <span className="text-[var(--accent-600)] font-black">{nClienti}</span> clienti ·{' '}
               <span className="text-amber-500 font-black">{nProspect}</span> prospect · {allMapped.length}/{allContacts.length} mappati
             </p>
           </div>
@@ -1523,7 +1523,7 @@ export const MapView: React.FC<MapViewProps> = ({
             {/* AI Cataloga */}
             <button
               onClick={() => setShowAIPanel(true)}
-              className="p-2.5 rounded-xl border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-all"
+              className="p-2.5 rounded-xl border-2 border-[var(--accent-200)] text-[var(--accent-600)] hover:bg-[var(--accent-50)] transition-all"
               title="AI Cataloga contatti"
             >
               <Sparkles size={16} />
@@ -1531,7 +1531,7 @@ export const MapView: React.FC<MapViewProps> = ({
             {/* Toggle filtri */}
             <button
               onClick={() => setShowFilters(v => !v)}
-              className={`p-2.5 rounded-xl border-2 transition-all ${showFilters ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-200 dark:border-gray-600 text-gray-500'}`}
+              className={`p-2.5 rounded-xl border-2 transition-all ${showFilters ? 'bg-[var(--accent-600)] border-[var(--accent-600)] text-white' : 'border-gray-200 dark:border-gray-600 text-gray-500'}`}
             >
               <SlidersHorizontal size={16} />
             </button>
@@ -1539,7 +1539,7 @@ export const MapView: React.FC<MapViewProps> = ({
             {onGoFullscreen && (
               <button
                 onClick={onGoFullscreen}
-                className="p-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all"
+                className="p-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-[var(--accent-50)] hover:border-[var(--accent-200)] hover:text-[var(--accent-600)] transition-all"
                 title="Espandi a tutto schermo"
               >
                 <Maximize2 size={16} />
@@ -1554,7 +1554,7 @@ export const MapView: React.FC<MapViewProps> = ({
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="Cerca cliente o prospect…"
-          inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors'}
+          inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-3 py-2.5 focus-within:border-[var(--accent-400)] transition-colors'}
           dropdownClassName="z-[500]"
           onSelect={c => {
             setSearchQuery(c.company);
@@ -1572,7 +1572,7 @@ export const MapView: React.FC<MapViewProps> = ({
               badge: {
                 text: hasPinned ? (isCliente ? 'Cliente' : 'Prospect') : 'no pin',
                 className: hasPinned
-                  ? (isCliente ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300')
+                  ? (isCliente ? 'bg-[var(--accent-100)] text-[var(--accent-600)] dark:bg-[var(--accent-900)]/40 dark:text-[var(--accent-300)]' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300')
                   : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-400',
               },
             };
@@ -1623,7 +1623,7 @@ export const MapView: React.FC<MapViewProps> = ({
               </select>
               <button
                 onClick={geocodeContacts} disabled={isGeocoding}
-                className={`px-3 py-1.5 rounded-xl font-black uppercase text-[10px] transition-all ${isGeocoding ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white'}`}
+                className={`px-3 py-1.5 rounded-xl font-black uppercase text-[10px] transition-all ${isGeocoding ? 'bg-gray-200 text-gray-500' : 'bg-[var(--accent-600)] text-white'}`}
               >
                 {isGeocoding ? 'Ricerca…' : 'Trova Coordinate'}
               </button>
@@ -1640,7 +1640,7 @@ export const MapView: React.FC<MapViewProps> = ({
                   key={key}
                   onClick={() => setMapFilter(key)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${
-                    mapFilter === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    mapFilter === key ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
                 >
                   {label} ({count})
@@ -1651,7 +1651,7 @@ export const MapView: React.FC<MapViewProps> = ({
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setMapSegmentFilter(null)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${mapSegmentFilter === null ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${mapSegmentFilter === null ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
               >
                 Tutti
               </button>
@@ -1664,7 +1664,7 @@ export const MapView: React.FC<MapViewProps> = ({
                 <button
                   key={key}
                   onClick={() => setMapSegmentFilter(key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${mapSegmentFilter === key ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${mapSegmentFilter === key ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
                 >
                   {icon} {label}
                 </button>
@@ -1693,7 +1693,7 @@ export const MapView: React.FC<MapViewProps> = ({
                 </select>
                 {mapProvinceFilter && (
                   <button onClick={() => setMapProvinceFilter('')}
-                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 whitespace-nowrap">
+                    className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] whitespace-nowrap">
                     Rimuovi
                   </button>
                 )}
@@ -1707,16 +1707,16 @@ export const MapView: React.FC<MapViewProps> = ({
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-full mb-3 md:hidden flex-shrink-0">
         <button
           onClick={() => setMobileTab('mappa')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${mobileTab === 'mappa' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${mobileTab === 'mappa' ? 'bg-white dark:bg-gray-700 shadow text-[var(--accent-600)]' : 'text-gray-500'}`}
         >
           <MapIcon size={16} /> Mappa
         </button>
         <button
           onClick={() => setMobileTab('lista')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${mobileTab === 'lista' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600' : 'text-gray-500'}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${mobileTab === 'lista' ? 'bg-white dark:bg-gray-700 shadow text-[var(--accent-600)]' : 'text-gray-500'}`}
         >
           <List size={16} /> Lista
-          <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 px-1.5 py-0.5 rounded-full font-black">{filtered.length}</span>
+          <span className="text-xs bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)] px-1.5 py-0.5 rounded-full font-black">{filtered.length}</span>
         </button>
       </div>
 
@@ -1745,7 +1745,7 @@ export const MapView: React.FC<MapViewProps> = ({
               <Popup minWidth={220}>
                 <div className="p-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-[var(--accent-100)] text-[var(--accent-700)]' : 'bg-amber-100 text-amber-700'}`}>
                       {isCliente ? '● Cliente' : '◆ Prospect'}
                     </span>
                     {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
@@ -1757,7 +1757,7 @@ export const MapView: React.FC<MapViewProps> = ({
                   <div className="flex flex-col gap-1.5 pt-2 mt-2 border-t border-gray-100">
                     <button
                       onClick={() => onNavigateToContact(c.id)}
-                      className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700"
+                      className="w-full bg-[var(--accent-600)] text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-[var(--accent-700)]"
                     >
                       <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
                     </button>
@@ -1845,11 +1845,11 @@ export const MapView: React.FC<MapViewProps> = ({
             <div
               key={c.id}
               onClick={() => onNavigateToContact(c.id)}
-              className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-2 cursor-pointer transition-all ${isCliente ? 'border-gray-100 dark:border-gray-700 hover:border-indigo-200' : 'border-amber-100 dark:border-amber-900/30 hover:border-amber-300'}`}
+              className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-2 cursor-pointer transition-all ${isCliente ? 'border-gray-100 dark:border-gray-700 hover:border-[var(--accent-200)]' : 'border-amber-100 dark:border-amber-900/30 hover:border-amber-300'}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-500'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isCliente ? 'bg-[var(--accent-50)] text-[var(--accent-600)]' : 'bg-amber-50 text-amber-500'}`}>
                     <Building2 size={18} />
                   </div>
                   <div className="min-w-0">
@@ -1866,7 +1866,7 @@ export const MapView: React.FC<MapViewProps> = ({
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-[var(--accent-100)] text-[var(--accent-700)]' : 'bg-amber-100 text-amber-700'}`}>
                     {isCliente ? 'Cliente' : 'Prospect'}
                   </span>
                   {c.priorityToVisit && (
@@ -1886,7 +1886,7 @@ export const MapView: React.FC<MapViewProps> = ({
                   href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
                   target="_blank" rel="noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 text-xs font-black uppercase hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                  className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 text-xs font-black uppercase hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)] transition-all"
                 >
                   <Navigation size={12} /> Naviga
                 </a>
@@ -1899,10 +1899,10 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* ── Nearby summary (solo se mappa visibile) ── */}
       {userPos && nearby.length > 0 && mobileTab === 'mappa' && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-2.5 border border-gray-100 dark:border-gray-700 flex items-center gap-3 mt-2 flex-shrink-0">
-          <Navigation size={14} className="text-indigo-500 flex-shrink-0" />
+          <Navigation size={14} className="text-[var(--accent-500)] flex-shrink-0" />
           <p className="text-xs font-bold text-gray-600 dark:text-gray-300">
             <span className="font-black text-gray-900 dark:text-white">{nearby.length}</span> nel raggio di <span className="font-black">{radius} km</span>
-            {' · '}<span className="text-indigo-600 font-black">{nearby.filter(c => c.status === 'cliente').length} clienti</span>
+            {' · '}<span className="text-[var(--accent-600)] font-black">{nearby.filter(c => c.status === 'cliente').length} clienti</span>
             {' · '}<span className="text-amber-500 font-black">{nearby.filter(c => c.status === 'potenziale').length} prospect</span>
           </p>
         </div>

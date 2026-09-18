@@ -38,14 +38,14 @@ export const DealDetailView: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-8 shadow-sm border dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
           <div className="min-w-0">
-            <span className="text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mb-3 inline-block">
+            <span className="text-xs font-black uppercase tracking-widest text-[var(--accent-600)] bg-[var(--accent-50)] px-3 py-1 rounded-full mb-3 inline-block">
               {deal.stage.replace('-', ' ')}
             </span>
             <h1 className="text-2xl sm:text-3xl font-black dark:text-white break-words">{contact.company}</h1>
             <p className="text-gray-500">Referente: {contact.contactName}</p>
           </div>
           <div className="sm:text-right flex-shrink-0">
-            <div className="text-2xl sm:text-3xl font-black text-indigo-600">€ {deal.value.toLocaleString()}</div>
+            <div className="text-2xl sm:text-3xl font-black text-[var(--accent-600)]">€ {deal.value.toLocaleString()}</div>
             <div className="flex items-center gap-2 sm:justify-end text-sm text-gray-400">
               <Target size={14}/> Probabilità: {deal.probability}%
             </div>
@@ -55,7 +55,7 @@ export const DealDetailView: React.FC = () => {
         {/* Sezione Offerta */}
         <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl mb-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm"><Package size={20} className="text-indigo-600"/></div>
+                <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm"><Package size={20} className="text-[var(--accent-600)]"/></div>
                 <div>
                     <p className="text-[10px] uppercase font-bold text-gray-400">Riferimento Offerta</p>
                     <input 

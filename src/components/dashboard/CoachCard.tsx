@@ -21,12 +21,12 @@ export const CoachCard: React.FC = () => {
   const title = contact ? `Inizia da ${contact.contactName.split(' ')[0]}` : 'Priorità del giorno';
 
   return (
-    <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-5 relative border border-indigo-100 dark:border-indigo-900/50 shadow-sm mb-6 transition-colors duration-200">
+    <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-5 relative border border-[var(--accent-100)] dark:border-[var(--accent-900)]/50 shadow-sm mb-6 transition-colors duration-200">
       <div className="flex items-center gap-2 mb-3">
-        <div className="bg-indigo-600 text-white w-6 h-6 rounded-full flex justify-center items-center">
+        <div className="bg-[var(--accent-600)] text-white w-6 h-6 rounded-full flex justify-center items-center">
           <Star size={12} className="fill-white" />
         </div>
-        <span className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 tracking-widest uppercase">Coach · Suggerimento del giorno</span>
+        <span className="text-[10px] font-bold text-[var(--accent-800)] dark:text-[var(--accent-300)] tracking-widest uppercase">Coach · Suggerimento del giorno</span>
       </div>
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h2>
       <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
@@ -36,7 +36,7 @@ export const CoachCard: React.FC = () => {
       </p>
       <button 
         onClick={() => navigate(`/deal/${topSuggestion.id}`)}
-        className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+        className="text-sm font-bold text-[var(--accent-700)] dark:text-[var(--accent-400)] flex items-center gap-1 hover:text-[var(--accent-800)] dark:hover:text-[var(--accent-300)] transition-colors"
       >
         Vai al dettaglio <ArrowRight size={14} />
       </button>

@@ -35,7 +35,7 @@ interface TimelineEvent {
 // ── Configurazioni ───────────────────────────────────────────────────────
 
 const ACTIVITY_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
-  visita:       { icon: <MapPin size={14} />,       color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/40',  label: 'Visita'        },
+  visita:       { icon: <MapPin size={14} />,       color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40',  label: 'Visita'        },
   chiamata:     { icon: <Phone size={14} />,         color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/40',    label: 'Chiamata'      },
   email:        { icon: <Mail size={14} />,          color: 'text-blue-600',   bg: 'bg-blue-100 dark:bg-blue-900/40',      label: 'Email'         },
   nota:         { icon: <StickyNote size={14} />,    color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/40',  label: 'Nota'          },
@@ -189,8 +189,8 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
           title: `Offerta N° ${o.offerNumber}`,
           subtitle: o.items.length > 0 ? `${o.items.length} articol${o.items.length === 1 ? 'o' : 'i'}` : undefined,
           amount: o.totalAmount,
-          color: 'text-indigo-600',
-          bgColor: 'bg-indigo-50 dark:bg-indigo-900/30',
+          color: 'text-[var(--accent-600)]',
+          bgColor: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30',
           icon: cfg.icon,
           badge: cfg.badge,
           badgeColor: cfg.badgeColor,
@@ -371,7 +371,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
               target="_blank"
               rel="noreferrer"
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs font-black text-indigo-500 hover:text-indigo-700 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-black text-[var(--accent-500)] hover:text-[var(--accent-700)] hover:underline"
             >
               <FileText size={12} /> {o.pdfName || 'Apri PDF'}
             </a>
@@ -402,7 +402,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+          className="p-2 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
@@ -425,7 +425,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Attività', value: stats.acts, color: 'text-indigo-600' },
+          { label: 'Attività', value: stats.acts, color: 'text-[var(--accent-600)]' },
           { label: 'Offerte',  value: stats.offs, color: 'text-blue-600'   },
           { label: 'Ordini',   value: stats.ords, color: 'text-emerald-600'},
           { label: 'Fatturato', value: `€${stats.fatturato.toLocaleString('it-IT')}`, color: 'text-green-600', big: true },
@@ -458,7 +458,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-all ${filter === f.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-indigo-300'}`}
+              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-all ${filter === f.id ? 'bg-[var(--accent-600)] text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-[var(--accent-300)]'}`}
             >
               {f.label}
             </button>
@@ -525,7 +525,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
                                   target="_blank"
                                   rel="noreferrer"
                                   onClick={e => e.stopPropagation()}
-                                  className="font-mono font-black text-indigo-500 hover:text-indigo-700 hover:underline"
+                                  className="font-mono font-black text-[var(--accent-500)] hover:text-[var(--accent-700)] hover:underline"
                                 >
                                   {ev.itemId} ↗
                                 </a>

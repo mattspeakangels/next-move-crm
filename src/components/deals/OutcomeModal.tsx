@@ -100,7 +100,7 @@ export const OutcomeModal: React.FC<OutcomeModalProps> = ({
           </label>
           <textarea
             placeholder="Es. Ha confermato interesse, aspetta nostro preventivo... O: No-answer, ha lasciato voicemail... O: Ha rifiutato, dice che ha già supplier."
-            className="w-full bg-white dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 font-bold text-sm dark:text-white resize-none min-h-[120px] outline-none focus:border-indigo-400 transition-all"
+            className="w-full bg-white dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 font-bold text-sm dark:text-white resize-none min-h-[120px] outline-none focus:border-[var(--accent-400)] transition-all"
             value={results}
             onChange={e => setResults(e.target.value)}
           />
@@ -110,7 +110,7 @@ export const OutcomeModal: React.FC<OutcomeModalProps> = ({
         <div className="flex gap-3">
           <button
             onClick={handleSave}
-            className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-indigo-700 transition-colors"
+            className="flex-1 bg-[var(--accent-600)] text-white px-6 py-3 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-[var(--accent-700)] transition-colors"
           >
             Salva e continua
           </button>

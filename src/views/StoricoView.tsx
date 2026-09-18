@@ -697,7 +697,7 @@ function DealCard({ deal, rank, onAddToPipeline }: { deal: DealSuggerito; rank: 
                   ))}
                   <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-700 mt-1">
                     <span className="text-[10px] font-black uppercase text-gray-400">Media</span>
-                    <span className="text-xs font-black text-indigo-600">
+                    <span className="text-xs font-black text-[var(--accent-600)]">
                       {fmtEur(Math.round(deal.mensili.reduce((s, d) => s + d.amount, 0) / deal.mensili.length))}
                     </span>
                   </div>
@@ -721,7 +721,7 @@ function DealCard({ deal, rank, onAddToPipeline }: { deal: DealSuggerito; rank: 
         {/* ── Aggiungi a Pipeline ── */}
         <button
           onClick={() => onAddToPipeline(deal)}
-          className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wide transition-all"
+          className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white text-xs font-black uppercase tracking-wide transition-all"
         >
           <ArrowRightCircle size={14} /> Aggiungi a Pipeline
         </button>
@@ -1024,12 +1024,12 @@ export function StoricoView() {
           onDrop={onDrop}
           onDragOver={e => e.preventDefault()}
           onClick={() => !firestoreLoading && fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-8 sm:p-16 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all group"
+          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-8 sm:p-16 text-center cursor-pointer hover:border-[var(--accent-400)] hover:bg-[var(--accent-50)]/50 dark:hover:bg-[var(--accent-900)]/10 transition-all group"
         >
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.numbers" className="hidden" onChange={onFileChange} />
           {(loading || firestoreLoading)
-            ? <RefreshCw size={40} className="mx-auto text-indigo-500 animate-spin mb-4" />
-            : <Upload size={40} className="mx-auto text-gray-300 group-hover:text-indigo-400 mb-4 transition-colors" />
+            ? <RefreshCw size={40} className="mx-auto text-[var(--accent-500)] animate-spin mb-4" />
+            : <Upload size={40} className="mx-auto text-gray-300 group-hover:text-[var(--accent-400)] mb-4 transition-colors" />
           }
           <h3 className="font-black text-gray-900 dark:text-white text-lg mb-2">
             {loading ? 'Elaborazione in corso…' : firestoreLoading ? 'Caricamento dati dal cloud…' : 'Carica Storico Vendite'}
@@ -1047,7 +1047,7 @@ export function StoricoView() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           {[
-            { icon: BarChart3, label: 'Analisi storico per cliente', color: 'text-indigo-500' },
+            { icon: BarChart3, label: 'Analisi storico per cliente', color: 'text-[var(--accent-500)]' },
             { icon: Target, label: 'Budget mensile configurabile', color: 'text-green-500' },
             { icon: Zap, label: 'Deal suggeriti automaticamente', color: 'text-amber-500' },
           ].map(({ icon: Icon, label, color }) => (
@@ -1089,7 +1089,7 @@ export function StoricoView() {
         onChange={v => { setSearchQuery(v); setPage(0); }}
         onSelect={c => { setSearchQuery(c.nome || `#${c.clientId}`); setPage(0); }}
         placeholder="Cerca cliente…"
-        inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-indigo-400 transition-colors'}
+        inputWrapperClassName={() => 'flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3 py-2.5 focus-within:border-[var(--accent-400)] transition-colors'}
         results={(searchQuery.trim()
           ? sortByRelevance(searchQuery, clienti.filter(c => matchSearch(searchQuery, [c.nome])), c => [c.nome]).slice(0, 8)
           : []
@@ -1213,10 +1213,10 @@ export function StoricoView() {
                         <tr
                           key={c.clientId}
                           onClick={() => hasProdotti && setExpandedClientId(isExpanded ? null : c.clientId)}
-                          className={`border-b border-gray-50 dark:border-gray-700/50 transition-colors ${hasProdotti ? 'cursor-pointer hover:bg-indigo-50/60 dark:hover:bg-indigo-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'} ${isExpanded ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : ''}`}
+                          className={`border-b border-gray-50 dark:border-gray-700/50 transition-colors ${hasProdotti ? 'cursor-pointer hover:bg-[var(--accent-50)]/60 dark:hover:bg-[var(--accent-900)]/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'} ${isExpanded ? 'bg-[var(--accent-50)]/40 dark:bg-[var(--accent-900)]/10' : ''}`}
                         >
                           <td className="w-8 px-2 py-3 text-gray-300">
-                            {hasProdotti && (isExpanded ? <ChevronUp size={14} className="text-indigo-500" /> : <ChevronDown size={14} />)}
+                            {hasProdotti && (isExpanded ? <ChevronUp size={14} className="text-[var(--accent-500)]" /> : <ChevronDown size={14} />)}
                           </td>
                           <td className="px-4 py-3 font-bold text-gray-900 dark:text-white truncate max-w-[250px]" title={c.nome || `#${c.clientId}`}>{c.nome || `#${c.clientId}`}</td>
                           <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-300">{cPrev > 0 ? fmtEur(cPrev) : '—'}</td>
@@ -1239,9 +1239,9 @@ export function StoricoView() {
                           </td>
                         </tr>
                         {isExpanded && (
-                          <tr key={`${c.clientId}-prodotti`} className="border-b border-indigo-100 dark:border-indigo-900/30">
+                          <tr key={`${c.clientId}-prodotti`} className="border-b border-[var(--accent-100)] dark:border-[var(--accent-900)]/30">
                             <td colSpan={8} className="px-0 py-0">
-                              <div className="bg-indigo-50/50 dark:bg-indigo-900/10 px-6 py-3">
+                              <div className="bg-[var(--accent-50)]/50 dark:bg-[var(--accent-900)]/10 px-6 py-3">
                                 {allOrdini.length > 0 ? (
                                   <table className="w-full text-xs">
                                     <thead>
@@ -1255,13 +1255,13 @@ export function StoricoView() {
                                         <th className="text-right pb-2">Qtà</th>
                                       </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-indigo-100/60 dark:divide-indigo-900/20">
+                                    <tbody className="divide-y divide-[var(--accent-100)]/60 dark:divide-[var(--accent-900)]/20">
                                       {allOrdini.map((o, idx) => (
                                         <tr key={`${o.itemId}-${o.date}-${idx}`} className="text-gray-600 dark:text-gray-300">
                                           <td className="py-1.5 pr-3 whitespace-nowrap">
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                               o.year === 2023 ? 'bg-blue-100 text-blue-600' :
-                                              o.year === 2024 ? 'bg-indigo-100 text-indigo-600' :
+                                              o.year === 2024 ? 'bg-[var(--accent-100)] text-[var(--accent-600)]' :
                                               o.year === 2025 ? 'bg-violet-100 text-violet-600' :
                                               'bg-purple-100 text-purple-600'
                                             }`}>{o.date}</span>
@@ -1305,7 +1305,7 @@ export function StoricoView() {
                       <button
                         key={i}
                         onClick={() => { setPage(i); setExpandedClientId(null); }}
-                        className={`w-8 h-8 text-xs font-black rounded-lg transition-colors ${page === i ? 'bg-indigo-600 text-white' : 'border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                        className={`w-8 h-8 text-xs font-black rounded-lg transition-colors ${page === i ? 'bg-[var(--accent-600)] text-white' : 'border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                       >
                         {i + 1}
                       </button>
@@ -1341,7 +1341,7 @@ export function StoricoView() {
                 value={riepilogoSearch}
                 onChange={e => setRiepilogoSearch(e.target.value)}
                 placeholder="Cerca cliente…"
-                className="pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent-400)]"
               />
             </div>
           </div>
@@ -1419,20 +1419,20 @@ export function StoricoView() {
                     value={budget.annuale || ''}
                     onChange={e => setBudget(b => ({ ...b, annuale: parseFloat(e.target.value) || 0 }))}
                     placeholder="es. 500000"
-                    className="w-full pl-9 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl text-lg font-bold bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl text-lg font-bold bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]"
                   />
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setBudgetMode('annuale')}
-                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${budgetMode === 'annuale' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${budgetMode === 'annuale' ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
                 >
                   Annuale
                 </button>
                 <button
                   onClick={() => setBudgetMode('mensile')}
-                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${budgetMode === 'mensile' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${budgetMode === 'mensile' ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
                 >
                   Per Mese
                 </button>
@@ -1440,11 +1440,11 @@ export function StoricoView() {
             </div>
 
             {budget.annuale > 0 && (
-              <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+              <div className="mt-4 p-4 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Mensile Base</div>
-                    <div className="font-black text-indigo-600">{fmtEur(budgetMensileBase)}</div>
+                    <div className="font-black text-[var(--accent-600)]">{fmtEur(budgetMensileBase)}</div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">vs 2024</div>
@@ -1482,7 +1482,7 @@ export function StoricoView() {
                       />
                       <div className="text-xs text-gray-400 mt-1">{pct.toFixed(1)}%</div>
                       <div className="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full mt-2 overflow-hidden">
-                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(pct * 12, 100)}%` }} />
+                        <div className="h-full bg-[var(--accent-500)] rounded-full" style={{ width: `${Math.min(pct * 12, 100)}%` }} />
                       </div>
                     </div>
                   );
@@ -1575,7 +1575,7 @@ export function StoricoView() {
               <div className="text-xs text-gray-400 uppercase tracking-widest mt-1">Media Priorità</div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 text-center">
-              <div className="text-2xl font-black text-indigo-600">{fmtEur(totalePipeline)}</div>
+              <div className="text-2xl font-black text-[var(--accent-600)]">{fmtEur(totalePipeline)}</div>
               <div className="text-xs text-gray-400 uppercase tracking-widest mt-1">Totale Pipeline</div>
             </div>
           </div>
@@ -1593,7 +1593,7 @@ export function StoricoView() {
               <div>
                 <h3 className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                   🔄 Ordini dal Passato
-                  <span className="text-xs bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-1 rounded-lg">{clientiSignals.length}</span>
+                  <span className="text-xs bg-[var(--accent-100)] text-[var(--accent-600)] dark:bg-[var(--accent-900)]/30 dark:text-[var(--accent-400)] px-2 py-1 rounded-lg">{clientiSignals.length}</span>
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {clientiSignals.slice(0, 10).map((signal) => {
@@ -1663,7 +1663,7 @@ export function StoricoView() {
                             };
                             setPipelineModal(newDeal);
                           }}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wide transition-all"
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white text-xs font-black uppercase tracking-wide transition-all"
                         >
                           <Plus size={14} /> Aggiungi a Pipeline
                         </button>
@@ -1745,7 +1745,7 @@ export function StoricoView() {
                   type="number"
                   value={pmValue}
                   onChange={e => setPmValue(parseFloat(e.target.value) || 0)}
-                  className="w-full pl-9 pr-4 py-3 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-black text-lg bg-gray-50 dark:bg-gray-900 dark:text-white outline-none focus:border-indigo-400 transition-colors"
+                  className="w-full pl-9 pr-4 py-3 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-black text-lg bg-gray-50 dark:bg-gray-900 dark:text-white outline-none focus:border-[var(--accent-400)] transition-colors"
                 />
               </div>
             </div>
@@ -1759,7 +1759,7 @@ export function StoricoView() {
               <select
                 value={pmContactId}
                 onChange={e => setPmContactId(e.target.value)}
-                className={`w-full border-2 rounded-xl px-3 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-colors text-sm ${pmContactId ? 'border-emerald-300 dark:border-emerald-700' : 'border-gray-100 dark:border-gray-700'}`}
+                className={`w-full border-2 rounded-xl px-3 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm ${pmContactId ? 'border-emerald-300 dark:border-emerald-700' : 'border-gray-100 dark:border-gray-700'}`}
               >
                 <option value="">— Nessuna azienda (aggiungila dopo) —</option>
                 {(() => {
@@ -1791,12 +1791,12 @@ export function StoricoView() {
 
             {/* Prodotti suggeriti (read-only) */}
             {pipelineModal.prodottiSuggeriti.length > 0 && (
-              <div className="mb-5 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2">Prodotti da proporre</p>
+              <div className="mb-5 p-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl">
+                <p className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2">Prodotti da proporre</p>
                 <div className="space-y-1">
                   {pipelineModal.prodottiSuggeriti.map((p, i) => (
-                    <div key={i} className="text-xs text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
+                    <div key={i} className="text-xs text-[var(--accent-700)] dark:text-[var(--accent-300)] flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-400)] flex-shrink-0" />
                       {p}
                     </div>
                   ))}
@@ -1811,7 +1811,7 @@ export function StoricoView() {
                 Annulla
               </button>
               <button onClick={confirmAddToPipeline}
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg">
+                className="flex-1 py-3 rounded-xl bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg">
                 <Plus size={16} /> Crea Deal
               </button>
             </div>

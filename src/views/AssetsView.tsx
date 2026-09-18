@@ -78,7 +78,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
               placeholder="Cerca cliente per nome, azienda..."
               showWhenEmpty
               totalCount={Object.keys(contacts).length}
-              inputWrapperClassName={() => 'w-full flex items-center gap-2 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus-within:border-indigo-400 transition-all'}
+              inputWrapperClassName={() => 'w-full flex items-center gap-2 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus-within:border-[var(--accent-400)] transition-all'}
               results={sortByRelevance(contactSearch, (contactSearch.trim()
                 ? Object.values(contacts).filter((c: any) => matchSearch(contactSearch, [c.company]))
                 : Object.values(contacts)
@@ -99,7 +99,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
               placeholder="Es. Trapano MK2 Pro, Software ERP modulo vendite..."
               value={data.description}
               onChange={e => setData(d => ({ ...d, description: e.target.value }))}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)]"
             />
           </div>
 
@@ -112,7 +112,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
                 placeholder="SN-001234"
                 value={data.serialNumber}
                 onChange={e => setData(d => ({ ...d, serialNumber: e.target.value }))}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400"
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)]"
               />
             </div>
 
@@ -124,7 +124,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
                 placeholder="0"
                 value={data.purchaseAmount}
                 onChange={e => setData(d => ({ ...d, purchaseAmount: e.target.value }))}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400"
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)]"
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
                 type="date"
                 value={data.installDate}
                 onChange={e => setData(d => ({ ...d, installDate: e.target.value }))}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400"
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)]"
               />
             </div>
 
@@ -148,7 +148,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
                 type="date"
                 value={data.expiryDate}
                 onChange={e => setData(d => ({ ...d, expiryDate: e.target.value }))}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400"
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)]"
               />
             </div>
           </div>
@@ -181,7 +181,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
               placeholder="Informazioni aggiuntive..."
               value={data.notes}
               onChange={e => setData(d => ({ ...d, notes: e.target.value }))}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-indigo-400 resize-none"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-white dark:bg-gray-900 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] resize-none"
             />
           </div>
 
@@ -189,7 +189,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
             onClick={handleSave}
             disabled={!valid}
             className={`w-full py-3.5 rounded-2xl font-black uppercase text-xs tracking-widest transition-colors ${
-              valid ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              valid ? 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
             {initial?.id ? 'Salva Modifiche' : 'Aggiungi Asset'}
@@ -275,7 +275,7 @@ export const AssetsView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-colors text-sm"
+          className="bg-[var(--accent-600)] text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--accent-700)] transition-colors text-sm"
         >
           <Plus size={16} /> Aggiungi
         </button>
@@ -324,7 +324,7 @@ export const AssetsView: React.FC = () => {
           onChange={setSearch}
           onSelect={a => setSearch(a.description)}
           placeholder="Cerca asset, seriale, cliente..."
-          inputWrapperClassName={() => 'flex items-center gap-2 pl-3.5 pr-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold text-sm outline-none focus-within:border-indigo-400'}
+          inputWrapperClassName={() => 'flex items-center gap-2 pl-3.5 pr-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold text-sm outline-none focus-within:border-[var(--accent-400)]'}
           results={(search.trim()
             ? allAssets.filter(a => {
                 const q = search.toLowerCase();
@@ -343,7 +343,7 @@ export const AssetsView: React.FC = () => {
         />
         <div className="flex gap-1 bg-white dark:bg-gray-800 rounded-2xl p-1 border border-gray-100 dark:border-gray-700">
           <button onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${filterStatus === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${filterStatus === 'all' ? 'bg-[var(--accent-600)] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
             Tutti
           </button>
           {(Object.keys(STATUS_CONFIG) as AssetStatus[]).map(s => (
@@ -363,7 +363,7 @@ export const AssetsView: React.FC = () => {
           <p className="text-xs text-gray-400 mt-1">Aggiungi i prodotti/servizi installati presso i clienti</p>
           <button
             onClick={() => setShowForm(true)}
-            className="mt-4 bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-colors"
+            className="mt-4 bg-[var(--accent-600)] text-white px-5 py-2.5 rounded-2xl font-bold text-sm hover:bg-[var(--accent-700)] transition-colors"
           >
             Aggiungi il primo asset
           </button>
@@ -385,8 +385,8 @@ export const AssetsView: React.FC = () => {
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
-                    <Package size={16} className="text-indigo-600" />
+                  <div className="w-9 h-9 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 rounded-xl flex items-center justify-center">
+                    <Package size={16} className="text-[var(--accent-600)]" />
                   </div>
                   <div className="text-left">
                     <p className="font-black text-sm dark:text-white">{company}</p>
@@ -449,7 +449,7 @@ export const AssetsView: React.FC = () => {
                         <div className="flex gap-1 flex-shrink-0">
                           <button
                             onClick={() => setEditingAsset(asset)}
-                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-colors"
+                            className="p-2 text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 rounded-xl transition-colors"
                           >
                             <Pencil size={14} />
                           </button>

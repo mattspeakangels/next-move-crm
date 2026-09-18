@@ -36,7 +36,7 @@ const MOTIVO_SCARTO_LABEL: Record<ProspectingMotivoScarto, string> = {
 };
 
 const STATO_BADGE: Record<ProspectingStato, { label: string; cls: string }> = {
-  in_sequenza: { label: 'In sequenza', cls: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' },
+  in_sequenza: { label: 'In sequenza', cls: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]' },
   risposto: { label: 'Risposto', cls: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
   convertito: { label: 'Convertito', cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
   in_pausa: { label: 'In pausa', cls: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
@@ -48,7 +48,7 @@ function formatDate(ts?: number): string {
   return new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(ts));
 }
 
-const inputCls = 'w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400';
+const inputCls = 'w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]';
 const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5';
 
 // ─── Modale: scarto prospect ─────────────────────────────────────────────────
@@ -234,7 +234,7 @@ const EditProspectModal: React.FC<EditProspectModalProps> = ({ contact, onClose 
         )}
 
         <div className="flex gap-3 pt-1">
-          <button type="submit" className="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors">Salva</button>
+          <button type="submit" className="flex-1 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors">Salva</button>
           <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
         </div>
 
@@ -295,7 +295,7 @@ const EditEmailDraftModal: React.FC<EditEmailDraftModalProps> = ({ draft, onClos
           <textarea value={corpo} onChange={e => setCorpo(e.target.value)} rows={10} className={inputCls + ' resize-none'} />
         </div>
         <div className="flex gap-3 pt-1">
-          <button type="submit" className="flex-1 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors">Salva email personalizzata</button>
+          <button type="submit" className="flex-1 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors">Salva email personalizzata</button>
           <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
         </div>
       </form>
@@ -306,7 +306,7 @@ const EditEmailDraftModal: React.FC<EditEmailDraftModalProps> = ({ draft, onClos
 // ─── Cronostoria prospecting per azienda ────────────────────────────────────
 
 const ESITO_LABEL: Record<ProspectHistoryEntry['esito'], { label: string; color: string }> = {
-  inviata: { label: 'Inviata', color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' },
+  inviata: { label: 'Inviata', color: 'text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30' },
   risposta: { label: 'Risposta ricevuta', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
   'nessuna-risposta': { label: 'Nessuna risposta', color: 'text-gray-500 bg-gray-100 dark:bg-gray-800' },
   'richiesta-offerta': { label: 'Richiede offerta → Lead', color: 'text-brand-600 bg-brand-50 dark:bg-brand-900/30' },
@@ -359,7 +359,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
               <button
                 type="button"
                 onClick={runAnalysis}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white text-xs font-black rounded-xl transition-all"
               >
                 <Sparkles size={14} /> Analizza con AI
               </button>
@@ -555,7 +555,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-black text-gray-900 dark:text-white">{contact.company}</p>
             {contact.prospectingSettore && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500">{SETTORE_LABEL[contact.prospectingSettore]}</span>}
-            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600">Tocco {track.toccoCorrente}/{sequence.touches.length}</span>
+            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)]">Tocco {track.toccoCorrente}/{sequence.touches.length}</span>
           </div>
           {contact.contactName && <p className="text-xs text-gray-400 mt-0.5">{contact.contactName}{contact.role ? ` · ${contact.role}` : ''}</p>}
           <p className={`flex items-center gap-1 text-[10px] font-bold mt-1 ${overdue ? 'text-red-500' : 'text-gray-400'}`}>
@@ -567,7 +567,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
           <button onClick={onHistory} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
             <History size={16} />
           </button>
-          <button onClick={onEdit} title="Modifica" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+          <button onClick={onEdit} title="Modifica" className="p-1.5 text-gray-300 hover:text-[var(--accent-500)] rounded-lg hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20">
             <Pencil size={16} />
           </button>
           <button onClick={onDiscard} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
@@ -586,7 +586,7 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line line-clamp-3">{draft.corpo}</p>
           <div className="flex flex-wrap gap-2 pt-1">
-            <button onClick={() => setEditingDraft(true)} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-300"><Pencil size={10} />Personalizza</button>
+            <button onClick={() => setEditingDraft(true)} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 border border-[var(--accent-100)] dark:border-[var(--accent-800)] text-[var(--accent-600)] dark:text-[var(--accent-300)]"><Pencil size={10} />Personalizza</button>
             <button onClick={() => copia(draft.oggetto, 'Oggetto')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Oggetto</button>
             <button onClick={() => copia(draft.corpo, 'Corpo')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Corpo</button>
             {!contact.email && (
@@ -614,13 +614,13 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
         {touch.tipo === 'email' ? (
           <>
             {draft && contact.email && (
-              <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Mail size={13} />Invia email</button>
+              <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]"><Mail size={13} />Invia email</button>
             )}
-            <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"><CheckCircle2 size={13} />Segna inviata</button>
+            <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]"><CheckCircle2 size={13} />Segna inviata</button>
             <button onClick={() => apriModalRisposta('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
-          <button onClick={() => esitoTelefonata('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"><Phone size={13} />Registra esito chiamata</button>
+          <button onClick={() => esitoTelefonata('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]"><Phone size={13} />Registra esito chiamata</button>
         )}
         {touch.tipo === 'telefonata' && (
           <button onClick={() => esitoTelefonata('nessuna-risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Nessuna risposta</button>
@@ -654,14 +654,14 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
               autoFocus
               value={scheduleDate}
               onChange={e => setScheduleDate(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 text-sm"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] text-sm"
             />
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={confermaSchedula}
                 disabled={!scheduleDate}
-                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)] disabled:opacity-50"
               >
                 Schedula
               </button>
@@ -691,13 +691,13 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
               onChange={e => setRispostaTesto(e.target.value)}
               rows={5}
               placeholder="Es. Al momento non siamo interessati..."
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 resize-none text-sm"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] resize-none text-sm"
             />
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => { registraRisposta(pendingEsito, rispostaTesto.trim() || undefined); setPendingEsito(null); }}
-                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700"
+                className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]"
               >
                 Salva
               </button>
@@ -761,20 +761,20 @@ const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
       </div>
 
       {inProgramma.length > 0 && (
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 space-y-2">
-          <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><Calendar size={14} />Visite a freddo in programma ({inProgramma.length})</p>
-          <p className="text-[10px] text-indigo-400">Per avviare la sequenza email/chiamate registra l'esito della visita dall'Agenda: gli step 1-2-3-4 compaiono qui sotto solo dopo la chiusura.</p>
+        <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 border-2 border-[var(--accent-100)] dark:border-[var(--accent-800)] rounded-2xl p-4 space-y-2">
+          <p className="text-xs font-black text-[var(--accent-700)] dark:text-[var(--accent-300)] flex items-center gap-1.5"><Calendar size={14} />Visite a freddo in programma ({inProgramma.length})</p>
+          <p className="text-[10px] text-[var(--accent-400)]">Per avviare la sequenza email/chiamate registra l'esito della visita dall'Agenda: gli step 1-2-3-4 compaiono qui sotto solo dopo la chiusura.</p>
           {inProgramma.map(({ activity, contact }) => (
             <button
               key={activity.id}
               onClick={() => onNavigate?.('agenda')}
-              className="w-full flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2 text-left hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 transition-colors"
+              className="w-full flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2 text-left hover:bg-[var(--accent-100)]/60 dark:hover:bg-[var(--accent-900)]/40 transition-colors"
             >
               <div className="min-w-0">
                 <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{contact.company}</p>
                 <p className="text-[10px] text-gray-400">{new Date(activity.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}</p>
               </div>
-              <span className="text-[10px] font-black text-indigo-500 uppercase flex-shrink-0">Chiudi in Agenda →</span>
+              <span className="text-[10px] font-black text-[var(--accent-500)] uppercase flex-shrink-0">Chiudi in Agenda →</span>
             </button>
           ))}
         </div>
@@ -786,7 +786,7 @@ const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
           {risvegliati.map(c => (
             <div key={c.id} className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2">
               <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{c.company}</span>
-              <button onClick={() => updateContact(c.id, { prospectingStato: undefined, prospectingDataRisveglio: undefined })} className="text-[10px] font-black text-indigo-600">Rimetti in gioco</button>
+              <button onClick={() => updateContact(c.id, { prospectingStato: undefined, prospectingDataRisveglio: undefined })} className="text-[10px] font-black text-[var(--accent-600)]">Rimetti in gioco</button>
             </div>
           ))}
         </div>
@@ -829,9 +829,9 @@ const ProspectTab: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <button onClick={() => setFilter('tutti')} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border-2 ${filter === 'tutti' ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700' : 'border-transparent bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>Tutti</button>
+        <button onClick={() => setFilter('tutti')} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border-2 ${filter === 'tutti' ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)]' : 'border-transparent bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>Tutti</button>
         {(Object.keys(STATO_BADGE) as ProspectingStato[]).map(s => (
-          <button key={s} onClick={() => setFilter(s)} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border-2 ${filter === s ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700' : `border-transparent ${STATO_BADGE[s].cls}`}`}>{STATO_BADGE[s].label}</button>
+          <button key={s} onClick={() => setFilter(s)} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border-2 ${filter === s ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)]' : `border-transparent ${STATO_BADGE[s].cls}`}`}>{STATO_BADGE[s].label}</button>
         ))}
       </div>
 
@@ -852,7 +852,7 @@ const ProspectTab: React.FC = () => {
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button onClick={() => setHistoryContact(contact)} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><History size={16} /></button>
-                <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"><Pencil size={16} /></button>
+                <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-gray-300 hover:text-[var(--accent-500)] rounded-lg hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20"><Pencil size={16} /></button>
                 {contact.prospectingStato !== 'scartato' && contact.prospectingStato !== 'convertito' && (
                   <>
                     <button onClick={() => setConvertContact(contact)} title="Converti in Lead" className="p-1.5 text-gray-300 hover:text-brand-600 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20"><CheckCircle2 size={16} /></button>
@@ -1063,7 +1063,7 @@ const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <select
             value={settore}
             onChange={e => setSettore(e.target.value as ProspectingSettore)}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400"
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)]"
           >
             {Object.entries(SETTORE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
@@ -1076,7 +1076,7 @@ const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             onChange={e => setDettaglioVisita(e.target.value)}
             rows={3}
             placeholder="Es. Lasciato il catalogo, parlato con il titolare..."
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 resize-none text-sm"
+            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] resize-none text-sm"
           />
           <p className="text-[10px] text-gray-400 mt-1">Viene usato per personalizzare i template email della sequenza.</p>
         </div>
@@ -1084,7 +1084,7 @@ const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         <button
           onClick={handleStart}
           disabled={!selectedContact}
-          className="w-full py-3 rounded-xl bg-indigo-600 text-white font-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-indigo-700"
+          className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent-700)]"
         >
           Avvia sequenza
         </button>
@@ -1117,12 +1117,12 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
       <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-            <Radar size={24} className="text-indigo-600" />
+            <Radar size={24} className="text-[var(--accent-600)]" />
             Prospecting
           </h1>
           <button
             onClick={() => setShowNewSequence(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-indigo-900"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
           >
             <Plus size={15} />
             <span className="hidden sm:inline">Nuova sequenza</span>
@@ -1133,7 +1133,7 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
         </p>
         <div className="flex gap-2 mt-3">
           {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${tab === id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <button key={id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${tab === id ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
               <Icon size={13} />{label}
             </button>
           ))}
@@ -1141,14 +1141,14 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
       </div>
 
       {notifStatus === 'default' && (
-        <div className="flex items-center justify-between gap-3 bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl px-4 py-3">
+        <div className="flex items-center justify-between gap-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 border-2 border-[var(--accent-100)] dark:border-[var(--accent-800)] rounded-2xl px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <BellRing size={16} className="text-indigo-600 flex-shrink-0" />
-            <p className="text-xs font-bold text-indigo-800 dark:text-indigo-200">Attiva le notifiche per essere avvisato quando è il momento di fare un tocco.</p>
+            <BellRing size={16} className="text-[var(--accent-600)] flex-shrink-0" />
+            <p className="text-xs font-bold text-[var(--accent-800)] dark:text-[var(--accent-200)]">Attiva le notifiche per essere avvisato quando è il momento di fare un tocco.</p>
           </div>
           <button
             onClick={async () => setNotifStatus(await requestProspectingNotificationPermission())}
-            className="flex-shrink-0 text-xs font-black px-3 py-1.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"
+            className="flex-shrink-0 text-xs font-black px-3 py-1.5 rounded-xl bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]"
           >
             Attiva
           </button>

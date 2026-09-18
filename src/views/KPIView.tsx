@@ -116,7 +116,7 @@ export const KPIView: React.FC = () => {
       {/* Cerchi metriche — stile Salesforce Italy SURG */}
       <div>
         <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-2">
-          <Activity size={13} className="text-indigo-500" /> Metriche Processo
+          <Activity size={13} className="text-[var(--accent-500)]" /> Metriche Processo
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {circles.map(c => <CircleMetric key={c.label} {...c} />)}
@@ -126,7 +126,7 @@ export const KPIView: React.FC = () => {
       {/* Pipeline & fase */}
       <div>
         <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-2">
-          <BarChart3 size={13} className="text-indigo-500" /> Analisi Fasi Pipeline
+          <BarChart3 size={13} className="text-[var(--accent-500)]" /> Analisi Fasi Pipeline
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Pipeline per stage */}
@@ -137,13 +137,13 @@ export const KPIView: React.FC = () => {
                 const stageDeals = Object.values(state.deals).filter(d => d.stage === stage);
                 const count = stageDeals.length;
                 const value = stageDeals.reduce((a, b) => a + b.value, 0);
-                const stageColors = ['bg-blue-400', 'bg-purple-400', 'bg-orange-400', 'bg-indigo-400'];
+                const stageColors = ['bg-blue-400', 'bg-purple-400', 'bg-orange-400', 'bg-[var(--accent-400)]'];
                 const stageLabels = ['Lead', 'Qualificato', 'Proposta', 'Trattativa'];
                 return (
                   <div key={stage}>
                     <div className="flex justify-between mb-1">
                       <span className="text-xs font-black text-gray-600 dark:text-gray-300">{stageLabels[idx]}</span>
-                      <span className="text-xs font-black text-indigo-600">
+                      <span className="text-xs font-black text-[var(--accent-600)]">
                         {count} deal · €{(value / 1000).toFixed(0)}k
                       </span>
                     </div>
@@ -160,7 +160,7 @@ export const KPIView: React.FC = () => {
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
               <div className="flex justify-between">
                 <span className="text-xs text-gray-400 font-bold">Pipeline totale</span>
-                <span className="text-sm font-black text-indigo-600">€{(pipelinePesata / 1000).toFixed(0)}k</span>
+                <span className="text-sm font-black text-[var(--accent-600)]">€{(pipelinePesata / 1000).toFixed(0)}k</span>
               </div>
             </div>
           </div>
@@ -282,7 +282,7 @@ export const KPIView: React.FC = () => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 text-center">
-            <TrendingUp className="text-indigo-600 mx-auto mb-2" size={22} />
+            <TrendingUp className="text-[var(--accent-600)] mx-auto mb-2" size={22} />
             <p className="text-2xl font-black dark:text-white">€{(pipelinePesata / 1000).toFixed(0)}k</p>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Pipeline totale</p>
           </div>

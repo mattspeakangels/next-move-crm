@@ -20,7 +20,7 @@ const Field: React.FC<{
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
+      className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
     />
   </div>
 );
@@ -59,7 +59,7 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <Link size={18} className="text-indigo-600" />
+            <Link size={18} className="text-[var(--accent-600)]" />
             <h2 className="text-base font-black dark:text-white">Importa da URL</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
@@ -81,12 +81,12 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
                 onKeyDown={e => e.key === 'Enter' && handleFetch()}
                 placeholder="es. https://www.azienda.it"
                 autoFocus
-                className="flex-1 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-bold dark:text-white outline-none focus:border-indigo-400"
+                className="flex-1 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
               />
               <button
                 onClick={handleFetch}
                 disabled={loading || !url.trim()}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-sm disabled:opacity-50 hover:bg-indigo-700 transition-colors flex items-center gap-2 flex-shrink-0"
+                className="px-4 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-sm disabled:opacity-50 hover:bg-[var(--accent-700)] transition-colors flex items-center gap-2 flex-shrink-0"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : 'Analizza'}
               </button>
@@ -135,7 +135,7 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
                     value={data.notes}
                     onChange={e => update('notes')(e.target.value)}
                     rows={3}
-                    className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2 text-sm font-bold dark:text-white outline-none focus:border-indigo-400 resize-none"
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)] resize-none"
                   />
                 </div>
               )}
@@ -155,7 +155,7 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
             <button
               onClick={() => { onImport(data); onClose(); }}
               disabled={!data.company.trim()}
-              className="flex-2 flex-grow py-2.5 px-6 rounded-xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex-2 flex-grow py-2.5 px-6 rounded-xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] disabled:opacity-50 transition-colors"
             >
               Crea contatto
             </button>

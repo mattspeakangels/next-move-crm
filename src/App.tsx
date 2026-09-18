@@ -11,6 +11,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { SelectionAI } from './components/ai/SelectionAI';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
+import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, AccentPaletteKey, FontFamilyKey } from './lib/accentPalettes';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -42,7 +43,7 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const historyRef = useRef<NavView[]>([]);
-  const { theme, textSize, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
+  const { theme, textSize, fontFamily, sectionColors, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
 
   useInitializeProducts();
   useProspectingReminders();
@@ -93,6 +94,13 @@ function AppContent() {
   useEffect(() => {
     document.documentElement.style.fontSize = textSize === 'small' ? '14px' : textSize === 'large' ? '19px' : '16px';
   }, [textSize]);
+
+  useEffect(() => {
+    document.documentElement.style.fontFamily = FONT_STACKS[fontFamily as FontFamilyKey] || FONT_STACKS.sans;
+  }, [fontFamily]);
+
+  const accentSectionId = ACCENT_SECTION_ALIAS[currentView] || currentView;
+  const accentStyle = cssVarsForPalette(sectionColors[accentSectionId] as AccentPaletteKey) as React.CSSProperties;
 
   if (!profile) return (
     <Suspense fallback={<ViewLoader />}>
@@ -203,7 +211,7 @@ function AppContent() {
 
       {/* ── MAIN CONTENT ── */}
       <main className="md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-gray-50 dark:bg-gray-900">
-        <div className={currentView === 'map' ? 'p-2 md:p-3' : 'p-4 md:p-8 max-w-7xl mx-auto'}>
+        <div style={accentStyle} className={currentView === 'map' ? 'p-2 md:p-3' : 'p-4 md:p-8 max-w-7xl mx-auto'}>
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>

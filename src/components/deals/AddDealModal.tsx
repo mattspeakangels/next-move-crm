@@ -134,15 +134,15 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
           <div className="p-2 border rounded-xl">
             <div className="flex flex-wrap gap-1 mb-2">
               {profile?.customProducts.map(p => (
-                <button key={p} type="button" onClick={() => toggleProduct(p)} className={`px-2 py-1 rounded-md text-[10px] ${selectedProducts.includes(p) ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>{p}</button>
+                <button key={p} type="button" onClick={() => toggleProduct(p)} className={`px-2 py-1 rounded-md text-[10px] ${selectedProducts.includes(p) ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>{p}</button>
               ))}
             </div>
             <div className="flex gap-2">
               <input type="text" value={newProduct} onChange={e => setNewProduct(e.target.value)} placeholder="Altro prodotto..." className="flex-1 text-xs bg-transparent dark:text-white" />
-              <button type="button" onClick={handleAddNewProduct} className="text-xs text-indigo-600 font-bold">Aggiungi</button>
+              <button type="button" onClick={handleAddNewProduct} className="text-xs text-[var(--accent-600)] font-bold">Aggiungi</button>
             </div>
           </div>
-          <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl">Salva Deal</button>
+          <button type="submit" className="w-full bg-[var(--accent-600)] text-white font-bold py-3 rounded-xl">Salva Deal</button>
         </form>
       </div>
     </div>

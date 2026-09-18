@@ -18,7 +18,7 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, badgeLabel, badgeColor
   const colors = {
     red: { border: 'border-red-500', bg: 'bg-red-50', text: 'text-red-600', avatar: 'bg-red-100 text-red-700' },
     yellow: { border: 'border-yellow-400', bg: 'bg-yellow-50', text: 'text-yellow-700', avatar: 'bg-yellow-100 text-yellow-700' },
-    gray: { border: 'border-gray-300', bg: 'bg-gray-100', text: 'text-gray-600', avatar: 'bg-indigo-50 text-indigo-600' }
+    gray: { border: 'border-gray-300', bg: 'bg-gray-100', text: 'text-gray-600', avatar: 'bg-[var(--accent-50)] text-[var(--accent-600)]' }
   };
   const theme = colors[badgeColor];
 
@@ -31,7 +31,7 @@ export const DealCard: React.FC<DealCardProps> = ({ deal, badgeLabel, badgeColor
           <div className="min-w-0 pr-2">
             <h4 className="font-bold text-gray-900 dark:text-white text-sm truncate">{contact.company}</h4>
             <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{deal.products.join(', ')} · {contact.region}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate group-hover:text-indigo-600 font-medium">{deal.nextAction}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate group-hover:text-[var(--accent-600)] font-medium">{deal.nextAction}</p>
           </div>
         </div>
         <div className="text-right flex flex-col items-end border-l border-gray-100 dark:border-gray-700 pl-3 shrink-0">

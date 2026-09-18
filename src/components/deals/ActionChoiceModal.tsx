@@ -62,14 +62,14 @@ export const ActionChoiceModal: React.FC<ActionChoiceModalProps> = ({
           {/* Option 2: Schedule Next Action */}
           <button
             onClick={onSetNextAction}
-            className="flex items-start gap-4 p-5 rounded-2xl border-2 border-indigo-200 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-900/20 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all text-left"
+            className="flex items-start gap-4 p-5 rounded-2xl border-2 border-[var(--accent-200)] dark:border-[var(--accent-900)]/50 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 hover:border-[var(--accent-300)] dark:hover:border-[var(--accent-800)] transition-all text-left"
           >
             <div className="flex-shrink-0 mt-1">
-              <ArrowRight size={24} className="text-indigo-600" />
+              <ArrowRight size={24} className="text-[var(--accent-600)]" />
             </div>
             <div className="flex-1">
-              <h3 className="font-black text-indigo-900 dark:text-indigo-100 uppercase text-sm">Programma i prossimi passi</h3>
-              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1">
+              <h3 className="font-black text-[var(--accent-900)] dark:text-[var(--accent-100)] uppercase text-sm">Programma i prossimi passi</h3>
+              <p className="text-xs text-[var(--accent-700)] dark:text-[var(--accent-300)] mt-1">
                 Imposta subito la prossima azione e il deadline. Crea una nuova attività.
               </p>
             </div>

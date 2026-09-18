@@ -69,7 +69,7 @@ const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio', 'fiera'];
 const MULTI_DAY_TYPES: ActivityType[] = ['fiera'];
 
 const TYPE_COLORS: Record<ActivityType, string> = {
-  visita: 'bg-indigo-500',
+  visita: 'bg-[var(--accent-500)]',
   'visita-freddo': 'bg-sky-500',
   chiamata: 'bg-green-500',
   email: 'bg-blue-500',
@@ -84,7 +84,7 @@ const TYPE_COLORS: Record<ActivityType, string> = {
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
-  visita: 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300',
+  visita: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]',
   'visita-freddo': 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300',
   chiamata: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   email: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
@@ -114,7 +114,7 @@ const VISITA_FREDDO_OUTCOME_OPTIONS: { value: ActivityOutcome; label: string; em
   { value: 'nessuno-trovato',      label: 'Nessuno trovato',       emoji: '🚪', color: 'border-gray-400 bg-gray-50 dark:bg-gray-700/30 text-gray-700 dark:text-gray-300' },
   { value: 'parlato-influente',    label: 'Parlato con influente', emoji: '🗣️', color: 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
   { value: 'parlato-decisore',     label: 'Parlato col decisore',  emoji: '🎯', color: 'border-purple-400 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
-  { value: 'appuntamento-fissato', label: 'Appuntamento fissato',  emoji: '📅', color: 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' },
+  { value: 'appuntamento-fissato', label: 'Appuntamento fissato',  emoji: '📅', color: 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]' },
   { value: 'richiesta-offerta',    label: 'Richiesta offerta',     emoji: '📄', color: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
 ];
 
@@ -236,7 +236,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = ({ id, children, isHour }) =
         isHour
           ? 'border-gray-200 dark:border-gray-700'
           : 'border-gray-100 dark:border-gray-800'
-      } ${isOver ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+      } ${isOver ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : ''}`}
       style={{ height: 28 }}
     >
       {children}
@@ -270,7 +270,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
             <button
               type="button"
               onClick={e => { e.stopPropagation(); onNavigateToContact(activity.contactId); }}
-              className="font-black text-sm text-indigo-600 dark:text-indigo-400 truncate hover:underline text-left"
+              className="font-black text-sm text-[var(--accent-600)] dark:text-[var(--accent-400)] truncate hover:underline text-left"
             >{companyName}</button>
           ) : (
             <p className="font-black text-sm dark:text-white truncate">{companyName}</p>
@@ -298,14 +298,14 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={onClose}
-          className={`p-2 rounded-xl transition-colors ${isDone ? 'text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : 'text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+          className={`p-2 rounded-xl transition-colors ${isDone ? 'text-gray-300 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20' : 'text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
           title={isDone ? 'Modifica esito' : 'Chiudi appuntamento'}
         >
           {isDone ? <RotateCcw size={16} /> : <CheckCircle size={16} />}
         </button>
-        <button onClick={onView} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Apri / vedi dettagli"><Eye size={14} /></button>
-        <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
-        <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
+        <button onClick={onView} className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors" title="Apri / vedi dettagli"><Eye size={14} /></button>
+        <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
+        <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
         <button onClick={onDelete} className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Elimina"><Trash2 size={14} /></button>
       </div>
     </div>
@@ -1191,15 +1191,15 @@ Regole:
                 onClick={() => { setSelectedDay(selectedDay && isSameDay(day, selectedDay) ? null : day); }}
                 className={`relative flex flex-col items-center py-2 rounded-xl transition-all text-sm font-bold min-h-[52px] ${
                   isSelected
-                    ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 ring-offset-1'
+                    ? 'bg-[var(--accent-600)] text-white ring-2 ring-[var(--accent-400)] ring-offset-1'
                     : isToday
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 ring-2 ring-indigo-300 ring-offset-1'
+                    ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] ring-2 ring-[var(--accent-300)] ring-offset-1'
                     : isCurrentMonth
                     ? 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
                     : 'text-gray-300 dark:text-gray-600'
                 }`}
               >
-                <span className={`text-xs font-black ${isToday && !isSelected ? 'text-indigo-600' : ''}`}>{day.getDate()}</span>
+                <span className={`text-xs font-black ${isToday && !isSelected ? 'text-[var(--accent-600)]' : ''}`}>{day.getDate()}</span>
                 {/* Activity dots */}
                 {dayActivities.length > 0 && (
                   <div className="flex gap-0.5 mt-1 flex-wrap justify-center max-w-[40px]">
@@ -1235,9 +1235,9 @@ Regole:
               onClick={() => setSelectedDay(isSelected ? null : day)}
               className={`flex flex-col items-center py-3 rounded-2xl transition-all ${
                 isSelected
-                  ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 ring-offset-1'
+                  ? 'bg-[var(--accent-600)] text-white ring-2 ring-[var(--accent-400)] ring-offset-1'
                   : isToday
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 ring-2 ring-indigo-300 ring-offset-1'
+                  ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] ring-2 ring-[var(--accent-300)] ring-offset-1'
                   : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
               }`}
             >
@@ -1318,9 +1318,9 @@ Regole:
             {days.map((day, i) => {
               const isToday = isSameDay(day, today);
               return (
-                <div key={i} className={`py-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0 ${isToday ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
+                <div key={i} className={`py-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0 ${isToday ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : ''}`}>
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{DAYS_IT[i]}</p>
-                  <p className={`text-sm font-black ${isToday ? 'text-indigo-600' : 'dark:text-white'}`}>{day.getDate()}</p>
+                  <p className={`text-sm font-black ${isToday ? 'text-[var(--accent-600)]' : 'dark:text-white'}`}>{day.getDate()}</p>
                 </div>
               );
             })}
@@ -1364,7 +1364,7 @@ Regole:
                         {/* Click su slot vuoto per nuovo appuntamento */}
                         {slotActivities.length === 0 && (
                           <div
-                            className="absolute inset-0 cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors"
+                            className="absolute inset-0 cursor-pointer hover:bg-[var(--accent-50)]/50 dark:hover:bg-[var(--accent-900)]/10 transition-colors"
                             onClick={() => {
                               const day = getWeekDays(anchor)[dayIdx];
                               const d = new Date(day);
@@ -1422,7 +1422,7 @@ Regole:
           </button>
           <button
             onClick={handleExportICS}
-            className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm"
+            className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-[var(--accent-400)] hover:text-[var(--accent-600)] transition-colors text-sm"
             title="Esporta tutti gli appuntamenti futuri come file .ics"
           >
             <Download size={15} /> <span className="hidden sm:inline">Esporta .ics</span>
@@ -1431,7 +1431,7 @@ Regole:
             <button
               onClick={startVoiceSchedule}
               disabled={voiceState !== 'idle'}
-              className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 p-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-indigo-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
+              className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 p-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-[var(--accent-400)] hover:text-[var(--accent-600)] transition-colors disabled:opacity-50"
               title="Pianifica con la voce"
             >
               <Mic size={16} />
@@ -1450,7 +1450,7 @@ Regole:
           )}
           <button
             onClick={() => openNew(selectedDay ?? undefined)}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors text-sm"
+            className="bg-[var(--accent-600)] text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-[var(--accent-700)] transition-colors text-sm"
           >
             <Plus size={16} /> Nuova
           </button>
@@ -1459,7 +1459,7 @@ Regole:
 
       {/* Voice schedule panel */}
       {showVoicePanel && (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-indigo-200 dark:border-indigo-700 p-5 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <p className="font-black dark:text-white text-sm">Pianifica con la voce</p>
@@ -1482,8 +1482,8 @@ Regole:
               </>
             ) : voiceState === 'parsing' ? (
               <>
-                <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                  <Loader2 size={28} className="text-indigo-600 animate-spin" />
+                <div className="w-16 h-16 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
+                  <Loader2 size={28} className="text-[var(--accent-600)] animate-spin" />
                 </div>
                 <p className="text-xs text-gray-400 font-bold">Analisi in corso...</p>
               </>
@@ -1510,7 +1510,7 @@ Regole:
               {calMode === 'month' ? renderMonthHeader() : calMode === 'week' ? renderWeekHeader() : 'Tutte le attività'}
             </span>
             <button onClick={nextPeriod} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"><ChevronRight size={18} /></button>
-            <button onClick={goToday} className="ml-1 text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 rounded-full uppercase tracking-wide hover:bg-indigo-100 transition-colors">Oggi</button>
+            <button onClick={goToday} className="ml-1 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-2.5 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">Oggi</button>
           </div>
 
           {/* View switcher */}
@@ -1520,7 +1520,7 @@ Regole:
                 key={mode}
                 onClick={() => setCalMode(mode)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all ${
-                  calMode === mode ? 'bg-white dark:bg-gray-800 text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                  calMode === mode ? 'bg-white dark:bg-gray-800 text-[var(--accent-600)] shadow-sm' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 {mode === 'month' ? 'Mese' : mode === 'week' ? 'Sett.' : 'Lista'}
@@ -1564,7 +1564,7 @@ Regole:
             }
           </h2>
           {selectedDay && (
-            <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-indigo-100 transition-colors">
+            <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">
               + Aggiungi in questa data
             </button>
           )}
@@ -1640,7 +1640,7 @@ Regole:
                   <button
                     type="button"
                     onClick={() => { setViewActivity(null); onNavigateToContact(viewActivity.contactId); }}
-                    className="text-xl font-black text-indigo-600 dark:text-indigo-400 truncate hover:underline text-left"
+                    className="text-xl font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] truncate hover:underline text-left"
                   >{contacts[viewActivity.contactId]?.company || 'Azienda'}</button>
                 ) : (
                   <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || (NO_CONTACT_TYPES.includes(viewActivity.type) ? TYPE_LABELS[viewActivity.type] : 'Azienda')}</h2>
@@ -1669,24 +1669,24 @@ Regole:
               ['visita', 'chiamata', 'demo', 'call-remota', 'sopralluogo'].includes(viewActivity.type) && (
               <div className="mb-5">
                 {viewActivity.transcript ? (
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-3 border border-indigo-100 dark:border-indigo-800">
+                  <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-3 border border-[var(--accent-100)] dark:border-[var(--accent-800)]">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                      <span className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest flex items-center gap-1">
                         <MessageSquare size={10} /> Conversazione registrata
                       </span>
                       <button
                         onClick={() => setShowRecorder(true)}
-                        className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wide"
+                        className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] uppercase tracking-wide"
                       >
                         Analizza di nuovo
                       </button>
                     </div>
-                    <p className="text-xs text-indigo-700 dark:text-indigo-300 line-clamp-2">{viewActivity.transcript}</p>
+                    <p className="text-xs text-[var(--accent-700)] dark:text-[var(--accent-300)] line-clamp-2">{viewActivity.transcript}</p>
                   </div>
                 ) : (
                   <button
                     onClick={() => setShowRecorder(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-black hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-[var(--accent-300)] dark:border-[var(--accent-700)] text-[var(--accent-600)] dark:text-[var(--accent-400)] text-xs font-black hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 transition-colors"
                   >
                     <MessageSquare size={14} /> Registra Conversazione con Cliente
                   </button>
@@ -1707,7 +1707,7 @@ Regole:
                     <label className="text-[10px] font-black text-gray-400 uppercase block">Resoconto</label>
                     <button
                       onClick={() => { setViewActivity(null); openCloseModal(viewActivity); }}
-                      className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wide"
+                      className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] uppercase tracking-wide"
                     >
                       Modifica
                     </button>
@@ -1721,7 +1721,7 @@ Regole:
 
             <button
               onClick={() => { const a = viewActivity; setViewActivity(null); openEdit(a); }}
-              className="mt-8 w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl transition-colors"
+              className="mt-8 w-full flex items-center justify-center gap-2 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white font-black py-3 rounded-2xl transition-colors"
             >
               <Pencil size={16} /> Modifica
             </button>
@@ -1744,7 +1744,7 @@ Regole:
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">
                   Cliente / Azienda
                   {formData.contactId && (
-                    <span className="ml-2 normal-case font-bold text-indigo-600">✓ selezionato</span>
+                    <span className="ml-2 normal-case font-bold text-[var(--accent-600)]">✓ selezionato</span>
                   )}
                 </label>
                 <SearchDropdown
@@ -1782,13 +1782,13 @@ Regole:
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tipo</label>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.keys(TYPE_LABELS) as ActivityType[]).map(t => (
-                    <button key={t} type="button" onClick={() => setFormData({ ...formData, type: t })} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${formData.type === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>{TYPE_LABELS[t]}</button>
+                    <button key={t} type="button" onClick={() => setFormData({ ...formData, type: t })} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${formData.type === t ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>{TYPE_LABELS[t]}</button>
                   ))}
                 </div>
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">{MULTI_DAY_TYPES.includes(formData.type) ? 'Dal giorno' : 'Data'}</label>
-                <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400" />
+                <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]" />
               </div>
               {MULTI_DAY_TYPES.includes(formData.type) && (
                 <div>
@@ -1798,7 +1798,7 @@ Regole:
                     min={formData.date}
                     value={formData.endDateDay}
                     onChange={e => setFormData({ ...formData, endDateDay: e.target.value })}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400"
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"
                   />
                 </div>
               )}
@@ -1817,7 +1817,7 @@ Regole:
                       const deltaMin = (nextMins[0] * 60 + nextMins[1]) - (prevMins[0] * 60 + prevMins[1]);
                       setFormData({ ...formData, time: newTime, endTime: addMinutesToTime(formData.endTime, deltaMin) });
                     }}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400"
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"
                   />
                 </div>
                 <div>
@@ -1826,7 +1826,7 @@ Regole:
                     type="time"
                     value={formData.endTime}
                     onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-indigo-400"
+                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"
                   />
                 </div>
               </div>
@@ -1849,7 +1849,7 @@ Regole:
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
                         voiceNotes.isRecording
                           ? 'bg-red-500 text-white animate-pulse'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-indigo-50 hover:text-indigo-600'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)]'
                       }`}
                     >
                       {voiceNotes.isRecording ? <MicOff size={12} /> : <Mic size={12} />}
@@ -1857,13 +1857,13 @@ Regole:
                     </button>
                   )}
                 </div>
-                <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Obiettivo della visita, dettagli..." rows={2} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-400 text-sm resize-none" />
+                <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Obiettivo della visita, dettagli..." rows={2} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)] text-sm resize-none" />
                 {voiceNotes.isRecording && voiceNotes.transcript && (
-                  <p className="text-xs text-indigo-500 italic mt-1.5 px-1">"{voiceNotes.transcript}"</p>
+                  <p className="text-xs text-[var(--accent-500)] italic mt-1.5 px-1">"{voiceNotes.transcript}"</p>
                 )}
                 {voiceNotes.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceNotes.error}</p>}
               </div>
-              <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-indigo-700 transition-colors">
+              <button type="submit" className="w-full bg-[var(--accent-600)] text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-[var(--accent-700)] transition-colors">
                 {editingId ? 'Aggiorna' : 'Salva'}
               </button>
             </form>
@@ -1945,7 +1945,7 @@ Regole:
                       onClick={() => setCloseSettore(opt.value)}
                       className={`py-2.5 px-3 rounded-2xl border-2 font-black text-xs transition-all ${
                         closeSettore === opt.value
-                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                          ? 'border-[var(--accent-500)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
                           : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
                       }`}
                     >
@@ -1976,7 +1976,7 @@ Regole:
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
                       voiceClose.isRecording
                         ? 'bg-red-500 text-white animate-pulse'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-indigo-50 hover:text-indigo-600'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)]'
                     }`}
                   >
                     {voiceClose.isRecording ? <MicOff size={12} /> : <Mic size={12} />}
@@ -1989,10 +1989,10 @@ Regole:
                 value={closeNotes}
                 onChange={e => setCloseNotes(e.target.value)}
                 placeholder="Descrivi come è andata la visita, cosa è stato discusso, prossimi passi..."
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-indigo-400 text-sm resize-none"
+                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)] text-sm resize-none"
               />
               {voiceClose.isRecording && voiceClose.transcript && (
-                <p className="text-xs text-indigo-500 italic mt-1.5 px-1">"{voiceClose.transcript}"</p>
+                <p className="text-xs text-[var(--accent-500)] italic mt-1.5 px-1">"{voiceClose.transcript}"</p>
               )}
               {voiceClose.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceClose.error}</p>}
             </div>
@@ -2004,7 +2004,7 @@ Regole:
                 <button
                   onClick={analyzeResoconto}
                   disabled={aiAnalyzing || !closeNotes.trim()}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-black hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-[var(--accent-300)] dark:border-[var(--accent-700)] text-[var(--accent-600)] dark:text-[var(--accent-400)] text-xs font-black hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {aiAnalyzing
                     ? <><Loader2 size={13} className="animate-spin" /> Analisi in corso...</>
@@ -2021,26 +2021,26 @@ Regole:
                 )}
 
                 {aiTodos.length > 0 && (
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-4 space-y-3 border border-indigo-100 dark:border-indigo-800">
+                  <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-4 space-y-3 border border-[var(--accent-100)] dark:border-[var(--accent-800)]">
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                      <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest">
                         <Sparkles size={10} className="inline mr-1" />
                         {aiTodos.filter(t => t.selected).length} attività estratte
                       </p>
                       <button
                         onClick={() => { const allSel = aiTodos.every(t => t.selected); setAiTodos(ts => ts.map(t => ({ ...t, selected: !allSel }))); }}
-                        className="text-[9px] font-black text-indigo-400 hover:text-indigo-600 uppercase tracking-wide"
+                        className="text-[9px] font-black text-[var(--accent-400)] hover:text-[var(--accent-600)] uppercase tracking-wide"
                       >
                         {aiTodos.every(t => t.selected) ? 'Deseleziona tutte' : 'Seleziona tutte'}
                       </button>
                     </div>
 
                     {aiTodos.map((todo, i) => (
-                      <div key={i} className={`bg-white dark:bg-gray-800 rounded-xl p-3 border-2 transition-all ${todo.selected ? 'border-indigo-300 dark:border-indigo-600' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
+                      <div key={i} className={`bg-white dark:bg-gray-800 rounded-xl p-3 border-2 transition-all ${todo.selected ? 'border-[var(--accent-300)] dark:border-[var(--accent-600)]' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
                         <div className="flex items-start gap-2">
                           <input type="checkbox" checked={todo.selected}
                             onChange={() => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, selected: !t.selected } : t))}
-                            className="mt-0.5 flex-shrink-0 accent-indigo-600" />
+                            className="mt-0.5 flex-shrink-0 accent-[var(--accent-600)]" />
                           <div className="flex-1 min-w-0 space-y-2">
                             <div className="flex items-start justify-between gap-1">
                               <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
@@ -2062,13 +2062,13 @@ Regole:
                                 <label className="text-[9px] text-gray-400 font-bold uppercase block mb-0.5">Esecuzione</label>
                                 <input type="date" value={todo.dataEsecuzione}
                                   onChange={e => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, dataEsecuzione: e.target.value } : t))}
-                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-indigo-400" />
+                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                               </div>
                               <div>
                                 <label className="text-[9px] text-gray-400 font-bold uppercase block mb-0.5">Scadenza</label>
                                 <input type="date" value={todo.scadenza}
                                   onChange={e => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, scadenza: e.target.value } : t))}
-                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-indigo-400" />
+                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                               </div>
                             </div>
                           </div>
@@ -2079,7 +2079,7 @@ Regole:
                     <button
                       onClick={confirmAiTodos}
                       disabled={!aiTodos.some(t => t.selected)}
-                      className="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs hover:bg-indigo-700 transition-colors disabled:opacity-40"
+                      className="w-full py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-xs hover:bg-[var(--accent-700)] transition-colors disabled:opacity-40"
                     >
                       Aggiungi {aiTodos.filter(t => t.selected).length} attività al To Do
                     </button>
@@ -2286,7 +2286,7 @@ Regole:
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                           ev._type === 'call-remota' ? 'bg-purple-100 text-purple-600' :
                           ev._type === 'formazione' ? 'bg-green-100 text-green-600' :
-                          'bg-indigo-100 text-indigo-600'
+                          'bg-[var(--accent-100)] text-[var(--accent-600)]'
                         }`}>{ev._type}</span>
                         {/* Dropdown selezione cliente */}
                         <select
@@ -2298,7 +2298,7 @@ Regole:
                           }}
                           className={`text-[11px] font-bold rounded-full px-2 py-0.5 border outline-none cursor-pointer max-w-[180px] ${
                             overrideId
-                              ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                              ? 'border-[var(--accent-300)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] dark:text-[var(--accent-400)]'
                               : 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 text-gray-400'
                           }`}
                         >
@@ -2326,7 +2326,7 @@ Regole:
                   const allSelectable = pstEvents.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx);
                   setPstSelected(new Set(allSelectable));
                 }}
-                className="text-xs font-bold text-gray-500 hover:text-indigo-600 transition-colors"
+                className="text-xs font-bold text-gray-500 hover:text-[var(--accent-600)] transition-colors"
               >
                 Seleziona tutti
               </button>

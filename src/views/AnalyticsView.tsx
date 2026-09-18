@@ -153,7 +153,7 @@ export const AnalyticsView: React.FC = () => {
         </div>
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-2xl font-bold flex items-center gap-2"
+          className="bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white px-4 py-2 rounded-2xl font-bold flex items-center gap-2"
         >
           <Upload size={16} /> Importa CSV / Excel
         </button>
@@ -164,7 +164,7 @@ export const AnalyticsView: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Fatturato</p>
-            <TrendingUp size={20} className="text-indigo-600" />
+            <TrendingUp size={20} className="text-[var(--accent-600)]" />
           </div>
           <p className="text-2xl font-black text-gray-900 dark:text-white">€{(totalRevenue / 1000).toFixed(0)}k</p>
           <p className="text-xs text-gray-400 mt-1">{transactionCount} transazioni</p>
@@ -269,8 +269,8 @@ export const AnalyticsView: React.FC = () => {
       </div>
 
       {transactionCount > 0 && (
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/50">
-          <p className="text-sm text-indigo-900 dark:text-indigo-200">
+        <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-4 border border-[var(--accent-100)] dark:border-[var(--accent-900)]/50">
+          <p className="text-sm text-[var(--accent-900)] dark:text-[var(--accent-200)]">
             <strong>{transactionCount}</strong> transazioni • <strong>€{(totalRevenue / 1000).toFixed(0)}k</strong> fatturato
           </p>
         </div>
@@ -342,7 +342,7 @@ export const AnalyticsView: React.FC = () => {
       {accountPipeline.length > 0 && (
         <div className="pt-2">
           <div className="flex items-center gap-3 mb-4">
-            <Target size={20} className="text-indigo-500" />
+            <Target size={20} className="text-[var(--accent-500)]" />
             <h2 className="text-lg font-black uppercase tracking-tight dark:text-white">Account Pipeline</h2>
             <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">Top 10</span>
           </div>
@@ -419,7 +419,7 @@ export const AnalyticsView: React.FC = () => {
       {/* ── SEZIONE OFFERTE ─────────────────────────────────────────────────── */}
       <div className="pt-2">
         <div className="flex items-center gap-3 mb-4">
-          <FileText size={20} className="text-indigo-500" />
+          <FileText size={20} className="text-[var(--accent-500)]" />
           <h2 className="text-lg font-black uppercase tracking-tight dark:text-white">Analisi Offerte</h2>
           <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">{totalOfferte} totali</span>
         </div>
@@ -438,7 +438,7 @@ export const AnalyticsView: React.FC = () => {
                 {
                   label: 'Offerte Totali', value: String(totalOfferte),
                   sub: `${offersByStatus.inviata.length} in attesa`,
-                  icon: FileText, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20',
+                  icon: FileText, color: 'text-[var(--accent-500)]', bg: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20',
                 },
                 {
                   label: 'Tasso Conversione', value: `${tassoConversione}%`,

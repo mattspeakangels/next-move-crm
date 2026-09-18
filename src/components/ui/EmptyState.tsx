@@ -16,7 +16,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ icon: Icon, title, descr
     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
     <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{description}</p>
     {action && (
-      <button onClick={action.onClick} className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
+      <button onClick={action.onClick} className="bg-[var(--accent-600)] text-white px-6 py-2 rounded-xl font-bold hover:bg-[var(--accent-700)] transition-colors">
         {action.label}
       </button>
     )}

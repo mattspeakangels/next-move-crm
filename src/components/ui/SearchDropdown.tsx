@@ -31,7 +31,7 @@ interface SearchDropdownProps<T> {
 
 const defaultInputWrapperClassName = (open: boolean) =>
   `flex items-center gap-2 bg-white dark:bg-gray-800 border-2 rounded-2xl px-4 py-3 transition-colors ${
-    open ? 'border-indigo-400' : 'border-gray-100 dark:border-gray-700'
+    open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'
   }`;
 
 export function SearchDropdown<T>({
@@ -105,7 +105,7 @@ export function SearchDropdown<T>({
       </div>
 
       {isVisible && (
-        <div className={`absolute z-30 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border-2 border-indigo-100 dark:border-gray-600 rounded-2xl shadow-2xl overflow-hidden ${dropdownClassName}`}>
+        <div className={`absolute z-30 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border-2 border-[var(--accent-100)] dark:border-gray-600 rounded-2xl shadow-2xl overflow-hidden ${dropdownClassName}`}>
           <div className="px-4 py-2 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-wide">
               {q
@@ -128,14 +128,14 @@ export function SearchDropdown<T>({
                   type="button"
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => { onSelect(r.item); setOpen(false); }}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-gray-50 dark:border-gray-700/50 last:border-0 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-gray-50 dark:border-gray-700/50 last:border-0 hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20"
                 >
                   <div className="min-w-0 flex-1 mr-3">
                     <p className="text-sm font-black dark:text-white truncate">
                       {hiIdx >= 0 ? (
                         <>
                           {label.slice(0, hiIdx)}
-                          <mark className="bg-indigo-200 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-200 rounded px-0.5 not-italic">{label.slice(hiIdx, hiIdx + q.length)}</mark>
+                          <mark className="bg-[var(--accent-200)] dark:bg-[var(--accent-700)] text-[var(--accent-800)] dark:text-[var(--accent-200)] rounded px-0.5 not-italic">{label.slice(hiIdx, hiIdx + q.length)}</mark>
                           {label.slice(hiIdx + q.length)}
                         </>
                       ) : label}

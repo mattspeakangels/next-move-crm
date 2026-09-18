@@ -49,7 +49,7 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
             <select 
               value={type} 
               onChange={(e) => setType(e.target.value as ActivityType)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none focus:border-indigo-600"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none focus:border-[var(--accent-600)]"
             >
               <option value="chiamata">Chiamata</option>
               <option value="visita">Visita</option>
@@ -88,11 +88,11 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
               value={notes} 
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Di cosa parlerete?"
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none resize-none focus:border-indigo-600"
+              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none resize-none focus:border-[var(--accent-600)]"
             />
           </div>
 
-          <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-indigo-700 transition-all uppercase">
+          <button type="submit" className="w-full bg-[var(--accent-600)] text-white font-black py-4 rounded-2xl shadow-xl hover:bg-[var(--accent-700)] transition-all uppercase">
             Pianifica
           </button>
         </form>
