@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed, Star } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
@@ -39,9 +39,9 @@ function getContactColor(status: string, segment?: string) {
 // I marker dei contatti sono CircleMarker disegnati su canvas (preferCanvas):
 // con centinaia di punti i divIcon DOM rendono la mappa inutilizzabile su
 // smartphone.
-const contactMarkerStyle = (status: string, segment?: string) => ({
-  color: '#ffffff',
-  weight: 2.5,
+const contactMarkerStyle = (status: string, segment?: string, priority?: boolean) => ({
+  color: priority ? '#facc15' : '#ffffff',
+  weight: priority ? 4 : 2.5,
   fillColor: getContactColor(status, segment),
   fillOpacity: 1,
 });
@@ -718,7 +718,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                 {popup}
               </Marker>
             ) : (
-              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)} eventHandlers={{ click: () => toggle(c.id) }}>
+              <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, c.priorityToVisit)} eventHandlers={{ click: () => toggle(c.id) }}>
                 {popup}
               </CircleMarker>
             );
@@ -1084,6 +1084,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
   const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
   const [mapProvinceFilter, setMapProvinceFilter] = useState<string>('');
+  const [mapPriorityOnly, setMapPriorityOnly] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('mappa');
   const [showFilters, setShowFilters] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -1261,6 +1262,7 @@ export const MapView: React.FC<MapViewProps> = ({
     return true;
   }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter)
     .filter(c => !mapProvinceFilter || c.province === mapProvinceFilter)
+    .filter(c => !mapPriorityOnly || c.priorityToVisit === true)
     .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]));
 
   // Province disponibili nei contatti geocodificati
@@ -1321,7 +1323,7 @@ export const MapView: React.FC<MapViewProps> = ({
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, c.priorityToVisit)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -1339,6 +1341,12 @@ export const MapView: React.FC<MapViewProps> = ({
                       className="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
                     >
                       <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
+                    </button>
+                    <button
+                      onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
+                      className={`mt-1 w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-amber-400 text-white' : 'bg-amber-50 text-amber-600'}`}
+                    >
+                      <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
                     </button>
                     {c.lat && c.lng && (
                       <a
@@ -1404,6 +1412,13 @@ export const MapView: React.FC<MapViewProps> = ({
               </button>
             ))}
           </div>
+
+          <button
+            onClick={() => setMapPriorityOnly(p => !p)}
+            className={`px-3 py-1.5 rounded-2xl text-xs font-black uppercase transition-all flex items-center gap-1 shadow-lg ${mapPriorityOnly ? 'bg-amber-400 text-white' : 'bg-white/90 backdrop-blur-sm text-gray-500'}`}
+          >
+            <Star size={14} fill={mapPriorityOnly ? 'currentColor' : 'none'} /> Prioritari
+          </button>
 
           {/* Filtro provincia */}
           {availableProvinces.length > 0 && (
@@ -1627,6 +1642,12 @@ export const MapView: React.FC<MapViewProps> = ({
                   {icon} {label}
                 </button>
               ))}
+              <button
+                onClick={() => setMapPriorityOnly(p => !p)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1 ${mapPriorityOnly ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+              >
+                <Star size={12} fill={mapPriorityOnly ? 'currentColor' : 'none'} /> Prioritari
+              </button>
             </div>
 
             {/* Filtro provincia */}
@@ -1694,7 +1715,7 @@ export const MapView: React.FC<MapViewProps> = ({
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             return (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, c.priorityToVisit)}>
                 <Popup minWidth={220}>
                   <div className="p-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -1713,6 +1734,12 @@ export const MapView: React.FC<MapViewProps> = ({
                         className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700"
                       >
                         <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
+                      </button>
+                      <button
+                        onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
+                        className={`w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-amber-400 text-white hover:bg-amber-500' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                      >
+                        <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
                       </button>
                       {c.lat && c.lng && (
                         <a
@@ -1808,6 +1835,11 @@ export const MapView: React.FC<MapViewProps> = ({
                   <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
                     {isCliente ? 'Cliente' : 'Prospect'}
                   </span>
+                  {c.priorityToVisit && (
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-white flex items-center gap-0.5">
+                      <Star size={9} fill="currentColor" /> Prioritario
+                    </span>
+                  )}
                   {c.distKm !== null && (
                     <span className="text-[10px] font-black text-gray-400">
                       {c.distKm.toFixed(0)} km

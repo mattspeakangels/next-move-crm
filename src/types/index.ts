@@ -139,6 +139,9 @@ export interface Contact {
   // Gruppo strategico a cui appartiene (catena/gruppo d'acquisto o grande end user)
   groupId?: string;
 
+  // Segnalato manualmente come prioritario da visitare (mappa)
+  priorityToVisit?: boolean;
+
   createdAt: number;
   updatedAt: number;
 }
