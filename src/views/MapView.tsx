@@ -9,6 +9,7 @@ import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
 import { MarkerShape, getMarkerCategory, DEFAULT_MARKER_STYLE, shapeDivIcon, priorityStarDivIcon, MARKER_ICON_PX, MARKER_CIRCLE_RADIUS } from '../lib/markerShapes';
+import { sectorLabel } from '../lib/sectors';
 import {
   DndContext,
   closestCenter,
@@ -245,6 +246,8 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [filterStatus, setFilterStatus] = useState<'tutti' | 'clienti' | 'prospect'>('tutti');
   const [filterSegment, setFilterSegment] = useState<ContactSegment | null>(null);
   const [filterPriorityOnly, setFilterPriorityOnly] = useState(false);
+  const [filterProvince, setFilterProvince] = useState<string>('');
+  const [filterSector, setFilterSector] = useState<string>('');
   const [showFiltersBar, setShowFiltersBar] = useState(false);
   const [startTime, setStartTime] = useState('08:00');
   const [visitDuration, setVisitDuration] = useState(60);
@@ -294,13 +297,22 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     [contacts]
   );
 
+  const availableProvinces = useMemo(() =>
+    [...new Set(mapped.map((c: any) => c.province).filter(Boolean))].sort() as string[]
+  , [mapped]);
+  const availableSectors = useMemo(() =>
+    [...new Set(mapped.map((c: any) => c.sector).filter(Boolean))].sort() as string[]
+  , [mapped]);
+
   const visible = useMemo(() => mapped.filter((c: any) => {
     if (filterStatus === 'clienti' && c.status !== 'cliente') return false;
     if (filterStatus === 'prospect' && c.status !== 'potenziale') return false;
     if (filterSegment && c.segment !== filterSegment) return false;
     if (filterPriorityOnly && c.priorityToVisit !== true) return false;
+    if (filterProvince && c.province !== filterProvince) return false;
+    if (filterSector && c.sector !== filterSector) return false;
     return true;
-  }), [mapped, filterStatus, filterSegment, filterPriorityOnly]);
+  }), [mapped, filterStatus, filterSegment, filterPriorityOnly, filterProvince, filterSector]);
 
   const toggle = (id: string) =>
     setSelectedIds(prev => {
@@ -664,6 +676,24 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                   </button>
                 ))}
               </div>
+              {(availableProvinces.length > 0 || availableSectors.length > 0) && (
+                <div className="flex gap-1.5">
+                  {availableProvinces.length > 0 && (
+                    <select value={filterProvince} onChange={e => setFilterProvince(e.target.value)}
+                      className="flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl p-2 shadow-lg text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
+                      <option value="">Tutte le provincie</option>
+                      {availableProvinces.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  )}
+                  {availableSectors.length > 0 && (
+                    <select value={filterSector} onChange={e => setFilterSector(e.target.value)}
+                      className="flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl p-2 shadow-lg text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
+                      <option value="">Tutti i settori</option>
+                      {availableSectors.map(s => <option key={s} value={s}>{sectorLabel(s)}</option>)}
+                    </select>
+                  )}
+                </div>
+              )}
               <button onClick={() => setFilterPriorityOnly(v => !v)}
                 className={`w-full py-1.5 rounded-2xl text-xs font-black uppercase transition-all shadow-lg flex items-center justify-center gap-1.5 ${filterPriorityOnly ? 'bg-amber-400 text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-500 dark:text-gray-400'}`}>
                 <Star size={12} fill={filterPriorityOnly ? 'currentColor' : 'none'} /> Solo prioritari
@@ -1120,6 +1150,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const [mapFilter, setMapFilter] = useState<MapFilter>('tutti');
   const [mapSegmentFilter, setMapSegmentFilter] = useState<ContactSegment | null>(null);
   const [mapProvinceFilter, setMapProvinceFilter] = useState<string>('');
+  const [mapSectorFilter, setMapSectorFilter] = useState<string>('');
   const [mapPriorityOnly, setMapPriorityOnly] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('mappa');
   const [showFilters, setShowFilters] = useState(false);
@@ -1298,12 +1329,16 @@ export const MapView: React.FC<MapViewProps> = ({
     return true;
   }).filter(c => !mapSegmentFilter || c.segment === mapSegmentFilter)
     .filter(c => !mapProvinceFilter || c.province === mapProvinceFilter)
+    .filter(c => !mapSectorFilter || c.sector === mapSectorFilter)
     .filter(c => !mapPriorityOnly || c.priorityToVisit === true)
     .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]));
 
   // Province disponibili nei contatti geocodificati
   const availableProvinces = useMemo(() =>
     [...new Set(allMapped.map(c => c.province).filter(Boolean))].sort() as string[]
+  , [allMapped]);
+  const availableSectors = useMemo(() =>
+    [...new Set(allMapped.map(c => c.sector).filter(Boolean))].sort() as string[]
   , [allMapped]);
 
   const nearby = userPos
@@ -1481,6 +1516,20 @@ export const MapView: React.FC<MapViewProps> = ({
               <option value="">Tutte le province</option>
               {availableProvinces.map(p => (
                 <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Filtro settore */}
+          {availableSectors.length > 0 && (
+            <select
+              value={mapSectorFilter}
+              onChange={e => setMapSectorFilter(e.target.value)}
+              className="bg-white/90 backdrop-blur-sm rounded-2xl px-3 py-2 text-xs font-black text-gray-700 shadow-lg border-0 outline-none cursor-pointer"
+            >
+              <option value="">Tutti i settori</option>
+              {availableSectors.map(s => (
+                <option key={s} value={s}>{sectorLabel(s)}</option>
               ))}
             </select>
           )}
@@ -1717,6 +1766,29 @@ export const MapView: React.FC<MapViewProps> = ({
                 </select>
                 {mapProvinceFilter && (
                   <button onClick={() => setMapProvinceFilter('')}
+                    className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] whitespace-nowrap">
+                    Rimuovi
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Filtro settore */}
+            {availableSectors.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Settore</span>
+                <select
+                  value={mapSectorFilter}
+                  onChange={e => setMapSectorFilter(e.target.value)}
+                  className="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 border-0 outline-none cursor-pointer"
+                >
+                  <option value="">Tutti</option>
+                  {availableSectors.map(s => (
+                    <option key={s} value={s}>{sectorLabel(s)}</option>
+                  ))}
+                </select>
+                {mapSectorFilter && (
+                  <button onClick={() => setMapSectorFilter('')}
                     className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] whitespace-nowrap">
                     Rimuovi
                   </button>
