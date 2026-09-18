@@ -314,6 +314,13 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     return true;
   }), [mapped, filterStatus, filterSegment, filterPriorityOnly, filterProvince, filterSector]);
 
+  const itinActiveFilterCount =
+    (filterStatus !== 'tutti' ? 1 : 0) +
+    (filterSegment ? 1 : 0) +
+    (filterProvince ? 1 : 0) +
+    (filterSector ? 1 : 0) +
+    (filterPriorityOnly ? 1 : 0);
+
   const toggle = (id: string) =>
     setSelectedIds(prev => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
@@ -649,55 +656,56 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             </div>
 
             <button onClick={() => setShowFiltersBar(v => !v)}
-              className={`p-2.5 rounded-xl shadow-lg flex-shrink-0 transition-all ${showFiltersBar ? 'bg-[var(--accent-600)] text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-600 dark:text-white'}`}>
+              className={`relative p-2.5 rounded-xl shadow-lg flex-shrink-0 transition-all ${showFiltersBar ? 'bg-[var(--accent-600)] text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-600 dark:text-white'}`}>
               <SlidersHorizontal size={16} />
+              {itinActiveFilterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-white text-[9px] font-black flex items-center justify-center">
+                  {itinActiveFilterCount}
+                </span>
+              )}
             </button>
           </div>
 
           {showFiltersBar && (
-            <div className="w-full flex flex-col gap-2 mt-1">
-              <div className="flex gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg">
-                {([{ key: 'tutti', label: 'Tutti' }, { key: 'clienti', label: 'Clienti' }, { key: 'prospect', label: 'Prospect' }] as const).map(({ key, label }) => (
-                  <button key={key} onClick={() => setFilterStatus(key)}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterStatus === key ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg">
-                <button onClick={() => setFilterSegment(null)}
-                  className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === null ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                  Tutti
-                </button>
-                {([{ key: 'dealer', label: 'Dealer', icon: '🏪' }, { key: 'industria', label: 'Industria', icon: '🏭' }, { key: 'edilizia', label: 'Edilizia', icon: '🏗️' }, { key: 'end-user', label: 'End User', icon: '👤' }] as const).map(({ key, label, icon }) => (
-                  <button key={key} onClick={() => setFilterSegment(key)}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${filterSegment === key ? 'bg-[var(--accent-600)] text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {icon} {label}
-                  </button>
-                ))}
-              </div>
-              {(availableProvinces.length > 0 || availableSectors.length > 0) && (
-                <div className="flex gap-1.5">
-                  {availableProvinces.length > 0 && (
-                    <select value={filterProvince} onChange={e => setFilterProvince(e.target.value)}
-                      className="flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl p-2 shadow-lg text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
-                      <option value="">Tutte le provincie</option>
-                      {availableProvinces.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  )}
-                  {availableSectors.length > 0 && (
-                    <select value={filterSector} onChange={e => setFilterSector(e.target.value)}
-                      className="flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl p-2 shadow-lg text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
-                      <option value="">Tutti i settori</option>
-                      {availableSectors.map(s => <option key={s} value={s}>{sectorLabel(s)}</option>)}
-                    </select>
-                  )}
-                </div>
+            <div className="w-full flex flex-wrap items-center gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-2 shadow-lg mt-1">
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
+                className="flex-1 min-w-[100px] bg-gray-50 dark:bg-gray-900 rounded-xl px-2.5 py-1.5 text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
+                <option value="tutti">Tutti</option>
+                <option value="clienti">Clienti</option>
+                <option value="prospect">Prospect</option>
+              </select>
+              <select value={filterSegment ?? ''} onChange={e => setFilterSegment((e.target.value || null) as any)}
+                className="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-900 rounded-xl px-2.5 py-1.5 text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
+                <option value="">Tutti i segmenti</option>
+                <option value="dealer">🏪 Dealer</option>
+                <option value="industria">🏭 Industria</option>
+                <option value="edilizia">🏗️ Edilizia</option>
+                <option value="end-user">👤 End User</option>
+              </select>
+              {availableProvinces.length > 0 && (
+                <select value={filterProvince} onChange={e => setFilterProvince(e.target.value)}
+                  className="flex-1 min-w-[100px] bg-gray-50 dark:bg-gray-900 rounded-xl px-2.5 py-1.5 text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
+                  <option value="">Tutte le prov.</option>
+                  {availableProvinces.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              )}
+              {availableSectors.length > 0 && (
+                <select value={filterSector} onChange={e => setFilterSector(e.target.value)}
+                  className="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-900 rounded-xl px-2.5 py-1.5 text-xs font-black uppercase text-gray-600 dark:text-white outline-none">
+                  <option value="">Tutti i settori</option>
+                  {availableSectors.map(s => <option key={s} value={s}>{sectorLabel(s)}</option>)}
+                </select>
               )}
               <button onClick={() => setFilterPriorityOnly(v => !v)}
-                className={`w-full py-1.5 rounded-2xl text-xs font-black uppercase transition-all shadow-lg flex items-center justify-center gap-1.5 ${filterPriorityOnly ? 'bg-amber-400 text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-500 dark:text-gray-400'}`}>
-                <Star size={12} fill={filterPriorityOnly ? 'currentColor' : 'none'} /> Solo prioritari
+                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1 flex-shrink-0 ${filterPriorityOnly ? 'bg-amber-400 text-white' : 'bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400'}`}>
+                <Star size={12} fill={filterPriorityOnly ? 'currentColor' : 'none'} /> Prioritari
               </button>
+              {itinActiveFilterCount > 0 && (
+                <button onClick={() => { setFilterStatus('tutti'); setFilterSegment(null); setFilterProvince(''); setFilterSector(''); setFilterPriorityOnly(false); }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-black uppercase text-red-400 hover:text-red-600 flex-shrink-0">
+                  Reset
+                </button>
+              )}
             </div>
           )}
 
