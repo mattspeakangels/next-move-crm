@@ -543,7 +543,7 @@ export interface ProspectHistoryEntry {
 // Contact, il Group li aggrega tramite Contact.groupId.
 export type GroupTipo = 'dealer-chain' | 'end-user-account' | 'misto';
 export type GroupPriorita = 'alta' | 'media' | 'bassa';
-export type GroupStato = 'da-avvicinare' | 'in-corso' | 'attivo' | 'abbandonato';
+export type GroupStato = 'da-avvicinare' | 'in-corso' | 'attivo' | 'completato-vinto' | 'abbandonato';
 
 export interface Group {
   id: string;

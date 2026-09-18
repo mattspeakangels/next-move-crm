@@ -42,7 +42,7 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const historyRef = useRef<NavView[]>([]);
-  const { theme, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
+  const { theme, textSize, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty } = useStore();
 
   useInitializeProducts();
   useProspectingReminders();
@@ -89,6 +89,10 @@ function AppContent() {
     if (theme === 'dark') document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = textSize === 'small' ? '14px' : textSize === 'large' ? '19px' : '16px';
+  }, [textSize]);
 
   if (!profile) return (
     <Suspense fallback={<ViewLoader />}>

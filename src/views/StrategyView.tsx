@@ -107,6 +107,7 @@ const STATO_CONFIG: Record<GroupStato, { label: string; cls: string }> = {
   'da-avvicinare': { label: 'Da avvicinare', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
   'in-corso': { label: 'In corso', cls: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' },
   attivo: { label: 'Attivo', cls: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' },
+  'completato-vinto': { label: 'Completato/Vinto', cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
   abbandonato: { label: 'Abbandonato', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
 };
 
@@ -905,7 +906,7 @@ interface StrategyViewProps {
 
 type StatoFiltro = GroupStato | 'tutti';
 
-const STATO_FILTRI: StatoFiltro[] = ['tutti', 'da-avvicinare', 'in-corso', 'attivo', 'abbandonato'];
+const STATO_FILTRI: StatoFiltro[] = ['tutti', 'da-avvicinare', 'in-corso', 'attivo', 'completato-vinto', 'abbandonato'];
 
 export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact }) => {
   const { groups, strategicFocuses, contacts, addGroup, addStrategicFocus, updateContact } = useStore();
@@ -934,7 +935,7 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
   }, [groups, strategicFocuses, contacts]);
 
   const countByStato = useMemo(() => {
-    const counts: Record<StatoFiltro, number> = { tutti: allEntries.length, 'da-avvicinare': 0, 'in-corso': 0, attivo: 0, abbandonato: 0 };
+    const counts: Record<StatoFiltro, number> = { tutti: allEntries.length, 'da-avvicinare': 0, 'in-corso': 0, attivo: 0, 'completato-vinto': 0, abbandonato: 0 };
     for (const e of allEntries) counts[e.data.stato] += 1;
     return counts;
   }, [allEntries]);

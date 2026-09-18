@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, type LucideIcon } from 'lucide-react';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -396,7 +396,7 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
@@ -615,6 +615,24 @@ export const SettingsView: React.FC = () => {
           >
             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${theme === 'dark' ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
+        </div>
+        <div className="flex justify-between items-center mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2 font-bold">
+            <Type size={18} /> Dimensione testo
+          </div>
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-xl p-1">
+            {([{ key: 'small', label: 'A' }, { key: 'medium', label: 'A' }, { key: 'large', label: 'A' }] as const).map(({ key, label }, i) => (
+              <button
+                key={key}
+                onClick={() => setTextSize(key)}
+                title={key === 'small' ? 'Piccolo' : key === 'medium' ? 'Medio' : 'Grande'}
+                style={{ fontSize: 12 + i * 3 }}
+                className={`w-9 h-9 rounded-lg font-black transition-colors flex items-center justify-center ${textSize === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

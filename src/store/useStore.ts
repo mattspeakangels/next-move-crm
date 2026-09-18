@@ -14,6 +14,7 @@ interface StoreState {
   checkIns: Record<string, CheckIn>;
   profile: AppProfile | null;
   theme: 'light' | 'dark';
+  textSize: 'small' | 'medium' | 'large';
   targets: Record<string, any>;
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
@@ -31,6 +32,7 @@ interface StoreState {
   setProfile: (profile: AppProfile) => void;
   updateProfile: (updates: Partial<AppProfile>) => void;
   setTheme: (theme: 'light' | 'dark') => void;
+  setTextSize: (textSize: 'small' | 'medium' | 'large') => void;
   toggleTheme: () => void;
   resetAll: () => void;
   setDiscountApprovalThreshold: (value: number) => void;
@@ -121,6 +123,7 @@ export const useStore = create<StoreState>()(
       targets: {},
       profile: null,
       theme: 'light',
+      textSize: 'medium',
       discountApprovalThreshold: 20,
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
@@ -138,6 +141,7 @@ export const useStore = create<StoreState>()(
         profile: state.profile ? { ...state.profile, ...updates } : null
       })),
       setTheme: (theme) => set({ theme }),
+      setTextSize: (textSize) => set({ textSize }),
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {}, strategicFocuses: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
@@ -361,6 +365,7 @@ export const useStore = create<StoreState>()(
         checkIns: state.checkIns,
         targets: state.targets,
         theme: state.theme,
+        textSize: state.textSize,
         profile: state.profile,
         discountApprovalThreshold: state.discountApprovalThreshold,
         todos: state.todos,
