@@ -186,6 +186,20 @@ const stopIcon = (n: number) => L.divIcon({
   iconSize: [28, 28], iconAnchor: [14, 14],
 });
 
+// Contatto segnalato prioritario da visitare: stellina contorno oro, interno fucsia
+const priorityStarIcon = L.divIcon({
+  className: '',
+  html: `<div style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.45));">
+    <svg viewBox="0 0 24 24" width="24" height="24">
+      <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z"
+        fill="#d946ef" stroke="#facc15" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+  </div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
+});
+
 // Componente sortable per singola tappa — drag handle visibile
 const SortableTappa = React.memo(function SortableTappa({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -1322,43 +1336,50 @@ export const MapView: React.FC<MapViewProps> = ({
           {visibleMarkers.map(c => {
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
-            return (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, c.priorityToVisit)}>
-                <Popup minWidth={220}>
-                  <div className="p-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {isCliente ? '● Cliente' : '◆ Prospect'}
-                      </span>
-                      {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
-                      {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
-                    </div>
-                    <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
-                    {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
-                    {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
-                    <button
-                      onClick={() => onNavigateToContact(c.id)}
-                      className="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
-                    >
-                      <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
-                    </button>
-                    <button
-                      onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
-                      className={`mt-1 w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-amber-400 text-white' : 'bg-amber-50 text-amber-600'}`}
-                    >
-                      <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
-                    </button>
-                    {c.lat && c.lng && (
-                      <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
-                        target="_blank" rel="noreferrer"
-                        className="mt-1 w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
-                      >
-                        <Navigation size={10} /> Naviga
-                      </a>
-                    )}
+            const popupContent = (
+              <Popup minWidth={220}>
+                <div className="p-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {isCliente ? '● Cliente' : '◆ Prospect'}
+                    </span>
+                    {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
+                    {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
                   </div>
-                </Popup>
+                  <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
+                  {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
+                  {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
+                  <button
+                    onClick={() => onNavigateToContact(c.id)}
+                    className="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
+                  >
+                    <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
+                  </button>
+                  <button
+                    onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
+                    className={`mt-1 w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-amber-400 text-white' : 'bg-amber-50 text-amber-600'}`}
+                  >
+                    <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
+                  </button>
+                  {c.lat && c.lng && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
+                      target="_blank" rel="noreferrer"
+                      className="mt-1 w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5"
+                    >
+                      <Navigation size={10} /> Naviga
+                    </a>
+                  )}
+                </div>
+              </Popup>
+            );
+            return c.priorityToVisit ? (
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+                {popupContent}
+              </Marker>
+            ) : (
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+                {popupContent}
               </CircleMarker>
             );
           })}
@@ -1470,7 +1491,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   // ── NORMAL MODE ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-[calc(100dvh-168px)] md:h-[calc(100vh-120px)]">
+    <div className="flex flex-col h-[calc(100dvh-140px)] md:h-[calc(100vh-70px)]">
 
       {/* ── Header compatto ── */}
       <div className="bg-white dark:bg-gray-800 rounded-[1.5rem] px-4 py-3 shadow-sm border border-gray-50 dark:border-gray-700 mb-3 flex-shrink-0">
@@ -1714,45 +1735,52 @@ export const MapView: React.FC<MapViewProps> = ({
           {visibleMarkers.map(c => {
             const isCliente = c.status === 'cliente';
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
-            return (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment, c.priorityToVisit)}>
-                <Popup minWidth={220}>
-                  <div className="p-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {isCliente ? '● Cliente' : '◆ Prospect'}
-                      </span>
-                      {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
-                      {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
-                    </div>
-                    <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
-                    {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
-                    {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
-                    <div className="flex flex-col gap-1.5 pt-2 mt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => onNavigateToContact(c.id)}
-                        className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700"
-                      >
-                        <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
-                      </button>
-                      <button
-                        onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
-                        className={`w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-amber-400 text-white hover:bg-amber-500' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
-                      >
-                        <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
-                      </button>
-                      {c.lat && c.lng && (
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
-                          target="_blank" rel="noreferrer"
-                          className="w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-gray-200"
-                        >
-                          <Navigation size={10} /> Naviga
-                        </a>
-                      )}
-                    </div>
+            const popupContent = (
+              <Popup minWidth={220}>
+                <div className="p-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {isCliente ? '● Cliente' : '◆ Prospect'}
+                    </span>
+                    {c.sedeLabel && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{c.sedeLabel}</span>}
+                    {distKm !== null && <span className="text-[9px] text-gray-400 font-bold">{distKm.toFixed(0)} km</span>}
                   </div>
-                </Popup>
+                  <h4 className="font-black uppercase text-gray-800 text-sm mb-1">{c.company}</h4>
+                  {c.address && <p className="text-[10px] text-gray-500 flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
+                  {c.phone   && <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
+                  <div className="flex flex-col gap-1.5 pt-2 mt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => onNavigateToContact(c.id)}
+                      className="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-indigo-700"
+                    >
+                      <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
+                    </button>
+                    <button
+                      onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
+                      className={`w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-amber-400 text-white hover:bg-amber-500' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                    >
+                      <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
+                    </button>
+                    {c.lat && c.lng && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
+                        target="_blank" rel="noreferrer"
+                        className="w-full bg-gray-100 text-gray-700 py-1.5 rounded-lg font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-1.5 hover:bg-gray-200"
+                      >
+                        <Navigation size={10} /> Naviga
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </Popup>
+            );
+            return c.priorityToVisit ? (
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarIcon}>
+                {popupContent}
+              </Marker>
+            ) : (
+              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={9} pathOptions={contactMarkerStyle(c.status, c.segment)}>
+                {popupContent}
               </CircleMarker>
             );
           })}

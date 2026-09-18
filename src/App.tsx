@@ -199,7 +199,7 @@ function AppContent() {
 
       {/* ── MAIN CONTENT ── */}
       <main className="md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-gray-50 dark:bg-gray-900">
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className={currentView === 'map' ? 'p-2 md:p-3' : 'p-4 md:p-8 max-w-7xl mx-auto'}>
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>
