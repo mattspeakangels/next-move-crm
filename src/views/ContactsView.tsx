@@ -1221,7 +1221,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm">
                 <div className="md:col-span-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Ragione Sociale *</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.company || ''} onChange={e => setEditingContact({...editingContact, company: e.target.value})} />
+                  <input type="text" style={{ textTransform: 'uppercase' }} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-indigo-400 transition-all" value={editingContact?.company || ''} onChange={e => setEditingContact({...editingContact, company: e.target.value.toUpperCase()})} />
                 </div>
 
                 <div>

@@ -247,6 +247,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'tutti' | 'clienti' | 'prospect'>('tutti');
   const [filterSegment, setFilterSegment] = useState<ContactSegment | null>(null);
+  const [filterPriorityOnly, setFilterPriorityOnly] = useState(false);
   const [showFiltersBar, setShowFiltersBar] = useState(false);
   const [startTime, setStartTime] = useState('09:00');
   const [visitDuration, setVisitDuration] = useState(60);
@@ -300,8 +301,9 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     if (filterStatus === 'clienti' && c.status !== 'cliente') return false;
     if (filterStatus === 'prospect' && c.status !== 'potenziale') return false;
     if (filterSegment && c.segment !== filterSegment) return false;
+    if (filterPriorityOnly && c.priorityToVisit !== true) return false;
     return true;
-  }), [mapped, filterStatus, filterSegment]);
+  }), [mapped, filterStatus, filterSegment, filterPriorityOnly]);
 
   const toggle = (id: string) =>
     setSelectedIds(prev => {
@@ -663,6 +665,10 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                   </button>
                 ))}
               </div>
+              <button onClick={() => setFilterPriorityOnly(v => !v)}
+                className={`w-full py-1.5 rounded-2xl text-xs font-black uppercase transition-all shadow-lg flex items-center justify-center gap-1.5 ${filterPriorityOnly ? 'bg-amber-400 text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-500 dark:text-gray-400'}`}>
+                <Star size={12} fill={filterPriorityOnly ? 'currentColor' : 'none'} /> Solo prioritari
+              </button>
             </div>
           )}
 
