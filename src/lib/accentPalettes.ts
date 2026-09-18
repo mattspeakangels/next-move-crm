@@ -49,11 +49,74 @@ export const ACCENT_SECTION_ALIAS: Record<string, string> = {
   prospecting: 'deals',
 };
 
-export function cssVarsForPalette(key: AccentPaletteKey | undefined): Record<string, string> {
-  const palette = ACCENT_PALETTES[key || 'indigo'];
+// --- Colore libero: l'utente sceglie qualsiasi colore da un color picker
+// nativo e qui generiamo l'intera scala 50-900 partendo da quell'hex,
+// cosi' bottoni/badge/evidenziazioni restano leggibili in ogni shade.
+function hexToHsl(hex: string): [number, number, number] {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16) / 255;
+  const g = parseInt(clean.substring(2, 4), 16) / 255;
+  const b = parseInt(clean.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d !== 0) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return [h * 360, s * 100, l * 100];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100; l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = (x: number) => Math.round(x * 255).toString(16).padStart(2, '0');
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
+// Curva di luminosita' target per ciascuna shade, calibrata sulle palette
+// Tailwind (es. indigo-500 ~ L 65%, indigo-900 ~ L 27%).
+const SHADE_LIGHTNESS: Record<number, number> = {
+  50: 96, 100: 92, 200: 83, 300: 72, 400: 62, 500: 55, 600: 47, 700: 39, 800: 31, 900: 23,
+};
+
+export function shadesFromHex(hex: string): Record<number, string> {
+  const [h, s] = hexToHsl(hex);
+  const sat = Math.max(s, 45); // evita grigi piatti se l'utente sceglie un colore poco saturo
+  const shades: Record<number, string> = {} as Record<number, string>;
+  for (const shade of Object.keys(SHADE_LIGHTNESS)) {
+    shades[Number(shade)] = hslToHex(h, sat, SHADE_LIGHTNESS[Number(shade)]);
+  }
+  return shades;
+}
+
+export function cssVarsForPalette(value: string | undefined): Record<string, string> {
+  let palette: Record<number, string>;
+  if (!value) {
+    palette = ACCENT_PALETTES.indigo;
+  } else if (value.startsWith('#')) {
+    palette = shadesFromHex(value);
+  } else {
+    palette = ACCENT_PALETTES[value as AccentPaletteKey] || ACCENT_PALETTES.indigo;
+  }
   const vars: Record<string, string> = {};
   for (const shade of Object.keys(palette)) vars[`--accent-${shade}`] = palette[Number(shade)];
   return vars;
+}
+
+// Colore "rappresentativo" (shade 600) da mostrare come anteprima/valore
+// corrente nell'input color, sia per i vecchi preset sia per un hex libero.
+export function representativeColor(value: string | undefined): string {
+  if (!value) return ACCENT_PALETTES.indigo[600];
+  if (value.startsWith('#')) return value;
+  return (ACCENT_PALETTES[value as AccentPaletteKey] || ACCENT_PALETTES.indigo)[600];
 }
 
 export type FontFamilyKey = 'sans' | 'serif' | 'rounded' | 'mono';

@@ -11,7 +11,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { SelectionAI } from './components/ai/SelectionAI';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
-import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, AccentPaletteKey, FontFamilyKey } from './lib/accentPalettes';
+import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -100,7 +100,7 @@ function AppContent() {
   }, [fontFamily]);
 
   const accentSectionId = ACCENT_SECTION_ALIAS[currentView] || currentView;
-  const accentStyle = cssVarsForPalette(sectionColors[accentSectionId] as AccentPaletteKey) as React.CSSProperties;
+  const accentStyle = cssVarsForPalette(sectionColors[accentSectionId]) as React.CSSProperties;
 
   if (!profile) return (
     <Suspense fallback={<ViewLoader />}>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
 import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, type LucideIcon } from 'lucide-react';
-import { ACCENT_PALETTES, ACCENT_PALETTE_LABELS, ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, type AccentPaletteKey, type FontFamilyKey } from '../lib/accentPalettes';
+import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
@@ -659,23 +659,35 @@ export const SettingsView: React.FC = () => {
         <div className="flex items-center gap-2 font-bold mb-1">
           <Palette size={18} /> Colore delle sezioni
         </div>
-        <p className="text-xs text-gray-400 mb-4">Assegna un colore d'accento diverso a ciascuna sezione dell'app (bottoni, evidenziazioni, badge).</p>
+        <p className="text-xs text-gray-400 mb-4">Scegli qualsiasi colore d'accento per ciascuna sezione dell'app (bottoni, evidenziazioni, badge) da una tavolozza completa.</p>
         <div className="space-y-3">
           {ACCENT_SECTIONS.map(section => {
-            const current = (sectionColors[section.id] || 'indigo') as AccentPaletteKey;
+            const current = representativeColor(sectionColors[section.id]);
             return (
               <div key={section.id} className="flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-gray-600 dark:text-gray-300">{section.label}</span>
-                <div className="flex gap-1.5 flex-wrap justify-end">
-                  {(Object.keys(ACCENT_PALETTE_LABELS) as AccentPaletteKey[]).map(key => (
+                <div className="flex items-center gap-2">
+                  {sectionColors[section.id] && (
                     <button
-                      key={key}
-                      onClick={() => setSectionColor(section.id, key)}
-                      title={ACCENT_PALETTE_LABELS[key]}
-                      style={{ background: ACCENT_PALETTES[key][600] }}
-                      className={`w-6 h-6 rounded-full transition-all ${current === key ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-800 scale-110' : 'hover:scale-110'}`}
+                      onClick={() => setSectionColor(section.id, '')}
+                      title="Ripristina colore predefinito"
+                      className="text-[10px] font-bold uppercase text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      Reset
+                    </button>
+                  )}
+                  <label
+                    className="relative w-8 h-8 rounded-full ring-1 ring-black/10 dark:ring-white/20 overflow-hidden cursor-pointer shadow-sm"
+                    style={{ background: current }}
+                    title="Scegli un colore"
+                  >
+                    <input
+                      type="color"
+                      value={current}
+                      onChange={e => setSectionColor(section.id, e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
-                  ))}
+                  </label>
                 </div>
               </div>
             );
