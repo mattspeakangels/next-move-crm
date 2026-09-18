@@ -477,8 +477,14 @@ export const SettingsView: React.FC = () => {
     showToast('Prodotto rimosso');
   };
 
+  const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
+    <p className={`text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1 ${first ? '' : 'pt-2'}`}>{children}</p>
+  );
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
+
+      <GroupLabel first>Account & Profilo</GroupLabel>
 
       {/* Account */}
       {user && (
@@ -544,16 +550,16 @@ export const SettingsView: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
         <h3 className="font-bold mb-4 flex items-center gap-2"><User size={18} className="text-indigo-600"/> Profilo Personale</h3>
         <div className="space-y-4">
-          <input 
-            type="text" 
-            value={profile.name} 
+          <input
+            type="text"
+            value={profile.name}
             onChange={e => updateProfile({ name: e.target.value })}
             placeholder="Tuo Nome"
             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent"
           />
-          <input 
-            type="text" 
-            value={profile.company} 
+          <input
+            type="text"
+            value={profile.company}
             onChange={e => updateProfile({ company: e.target.value })}
             placeholder="Azienda"
             className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent"
@@ -564,58 +570,15 @@ export const SettingsView: React.FC = () => {
       {/* Target */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
         <h3 className="font-bold mb-4 flex items-center gap-2"><Target size={18} className="text-indigo-600"/> Obiettivo Mensile</h3>
-        <input 
-          type="number" 
-          value={profile.defaultMonthlyTarget} 
+        <input
+          type="number"
+          value={profile.defaultMonthlyTarget}
           onChange={e => updateProfile({ defaultMonthlyTarget: parseInt(e.target.value) })}
           className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent font-bold text-indigo-600"
         />
       </div>
 
-      {/* Prodotti Custom */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><Package size={18} className="text-indigo-600"/> Gestione Prodotti</h3>
-        <div className="flex gap-2 mb-4">
-          <input 
-            type="text" 
-            value={newProduct} 
-            onChange={e => setNewProduct(e.target.value)}
-            placeholder="Aggiungi nuovo prodotto..."
-            className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent text-sm"
-          />
-          <button onClick={handleAddProduct} className="p-2 bg-indigo-600 text-white rounded-xl"><Plus size={20}/></button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {profile.customProducts.map(p => (
-            <span key={p} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full text-xs font-bold">
-              {p} <X size={14} className="cursor-pointer text-red-500" onClick={() => removeProduct(p)}/>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Approvazione Sconti */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Soglia Approvazione Sconti</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          Le offerte con sconto medio superiore a questa soglia vengono marcate come "Richiede approvazione".
-        </p>
-        <div className="flex items-center gap-4">
-          <input
-            type="range"
-            min={0}
-            max={60}
-            step={5}
-            value={discountApprovalThreshold}
-            onChange={e => setDiscountApprovalThreshold(parseInt(e.target.value))}
-            className="flex-1 accent-indigo-600"
-          />
-          <span className="text-xl font-black text-indigo-600 min-w-[50px] text-right">{discountApprovalThreshold}%</span>
-        </div>
-        <div className="flex justify-between text-[9px] text-gray-400 font-bold mt-1">
-          <span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span><span>60%</span>
-        </div>
-      </div>
+      <GroupLabel>Aspetto & Personalizzazione</GroupLabel>
 
       {/* Preferenze */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -776,157 +739,6 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Settori personalizzati */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <div className="flex items-center gap-2 font-bold mb-1">
-          <Factory size={18} /> Settori di riferimento
-        </div>
-        <p className="text-xs text-gray-400 mb-4">Aggiungi qui i settori mancanti dall'elenco predefinito: saranno disponibili nella scheda cliente e come filtro nella sezione Mappa.</p>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          {DEFAULT_SECTORS.map(s => (
-            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
-              {sectorLabel(s)}
-            </span>
-          ))}
-          {customSectors.map(s => (
-            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
-              {s}
-              <button onClick={() => removeCustomSector(s)} className="hover:text-red-500">
-                <X size={12} />
-              </button>
-            </span>
-          ))}
-        </div>
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newSector}
-            onChange={e => setNewSector(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
-            placeholder="Nuovo settore (es. Nautica)"
-            className="flex-1 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none"
-          />
-          <button
-            onClick={() => { if (newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
-            className="px-4 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-1.5"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        </div>
-      </div>
-
-      {/* Backup dati */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-1 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Backup dati</h3>
-        <p className="text-xs text-gray-400 mb-4">Scarica un file con tutti i dati dell'app (clienti, deal, offerte, prodotti, storico...) o ripristinali da un backup precedente.</p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={downloadBackup}
-            className="flex items-center gap-2 text-indigo-600 text-sm font-bold border border-indigo-200 dark:border-indigo-800 px-4 py-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-          >
-            <Download size={15} /> Scarica backup
-          </button>
-          <button
-            onClick={() => backupFileInputRef.current?.click()}
-            disabled={restoringBackup}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-sm font-bold border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-          >
-            <Upload size={15} /> {restoringBackup ? 'Ripristino in corso...' : 'Carica backup'}
-          </button>
-          <input
-            ref={backupFileInputRef}
-            type="file"
-            accept="application/json"
-            onChange={handleBackupFileSelected}
-            className="hidden"
-          />
-        </div>
-      </div>
-
-      {/* Gestione Rubrica */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-1 flex items-center gap-2"><Users size={18} className="text-indigo-600"/> Gestione Rubrica</h3>
-        <p className="text-xs text-gray-400 mb-4">
-          Attualmente hai <span className="font-black text-indigo-600">{Object.keys(contacts).length}</span> contatti in rubrica
-          {' '}(<span className="text-green-600 font-bold">{Object.values(contacts).filter(c => c.status === 'cliente').length} clienti</span>
-          {' '}· <span className="text-blue-600 font-bold">{Object.values(contacts).filter(c => c.status === 'potenziale').length} prospect</span>)
-        </p>
-        <button
-          onClick={() => requireAuth(
-            'Svuota tutti i contatti',
-            `Stai per eliminare ${Object.keys(contacts).length} contatti. Questa azione non è reversibile e cancellerà anche deal, offerte e attività associate.`,
-            () => { deleteAllContacts(); showToast('Rubrica svuotata', 'success'); }
-          )}
-          className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        >
-          <Trash2 size={15} /> Svuota tutti i contatti
-        </button>
-      </div>
-
-      {/* Svuota Catalogo Prodotti */}
-      <div className="p-6 border-t border-gray-100 dark:border-gray-700">
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Catalogo Prodotti</p>
-        <p className="text-xs text-gray-400 mb-3">
-          Attualmente hai <span className="font-black text-indigo-600">{Object.keys(products).length}</span> articoli nel catalogo
-        </p>
-        <button
-          onClick={() => requireAuth(
-            'Svuota catalogo prodotti',
-            `Stai per eliminare ${Object.keys(products).length} articoli dal catalogo. Questa azione non è reversibile.`,
-            () => { clearProducts(); showToast('Catalogo prodotti svuotato', 'success'); }
-          )}
-          className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        >
-          <Trash2 size={15} /> Svuota catalogo prodotti
-        </button>
-      </div>
-
-      {/* Reset Storico Vendite */}
-      <div className="p-6 border-t border-gray-100 dark:border-gray-700">
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Storico Vendite</p>
-        <button
-          onClick={() => {
-            const nTransazioni = Object.keys(salesTransactions).length;
-            const nStorico = storicoClienti.length;
-            requireAuth(
-              'Svuota storico vendite',
-              `Stai per eliminare ${nStorico} clienti da Excel e ${nTransazioni} transazioni. I clienti CRM e i deal non verranno toccati.`,
-              () => { clearSalesTransactions(); resetStorico(); showToast('Storico vendite svuotato', 'success'); }
-            );
-          }}
-          className="flex items-center gap-2 text-orange-500 text-sm font-bold border border-orange-200 dark:border-orange-800 px-4 py-2 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-        >
-          <Trash2 size={15} /> Svuota storico vendite
-        </button>
-      </div>
-
-      {/* Azioni Pericolose */}
-      <div className="p-6 border-t border-gray-100 dark:border-gray-700">
-        <button
-          onClick={() => requireAuth(
-            'Resetta tutti i dati',
-            'Verranno eliminati TUTTI i dati: clienti, deal, offerte, attività, prodotti, storico. Il tuo account rimarrà attivo ma il database sarà completamente azzerato.',
-            () => { localStorage.removeItem('next-move-storage'); window.location.reload(); }
-          )}
-          className="flex items-center gap-2 text-red-500 text-sm font-bold opacity-70 hover:opacity-100 transition-opacity"
-        >
-          <Trash2 size={16} /> Resetta tutti i dati dell'App
-        </button>
-      </div>
-
-      {/* ── Pulizia Territorio ─────────────────────────────────────────── */}
-      <PuliziaTerritorio />
-      <GmailIntegration />
-
-      {/* ── Claude API Key ─────────────────────────────────────────────── */}
-      <ClaudeApiKeySection />
-      <MicrophonePermissionSection />
-
-      {/* ── Aggiornamento App ─────────────────────────────────────────── */}
-      <AppUpdateSection />
-
       {/* ── Footer personalizzabile ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
         <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -993,6 +805,213 @@ export const SettingsView: React.FC = () => {
 
       {/* ── Ordine menu laterale ── */}
       <SidebarOrderSection />
+
+      <GroupLabel>Dati di Vendita</GroupLabel>
+
+      {/* Prodotti Custom */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><Package size={18} className="text-indigo-600"/> Gestione Prodotti</h3>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={newProduct}
+            onChange={e => setNewProduct(e.target.value)}
+            placeholder="Aggiungi nuovo prodotto..."
+            className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent text-sm"
+          />
+          <button onClick={handleAddProduct} className="p-2 bg-indigo-600 text-white rounded-xl"><Plus size={20}/></button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {profile.customProducts.map(p => (
+            <span key={p} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full text-xs font-bold">
+              {p} <X size={14} className="cursor-pointer text-red-500" onClick={() => removeProduct(p)}/>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Settori personalizzati */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center gap-2 font-bold mb-1">
+          <Factory size={18} /> Settori di riferimento
+        </div>
+        <p className="text-xs text-gray-400 mb-4">Aggiungi qui i settori mancanti dall'elenco predefinito: saranno disponibili nella scheda cliente e come filtro nella sezione Mappa.</p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {DEFAULT_SECTORS.map(s => (
+            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+              {sectorLabel(s)}
+            </span>
+          ))}
+          {customSectors.map(s => (
+            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+              {s}
+              <button onClick={() => removeCustomSector(s)} className="hover:text-red-500">
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newSector}
+            onChange={e => setNewSector(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
+            placeholder="Nuovo settore (es. Nautica)"
+            className="flex-1 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none"
+          />
+          <button
+            onClick={() => { if (newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
+            className="px-4 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-1.5"
+          >
+            <Plus size={16} /> Aggiungi
+          </button>
+        </div>
+      </div>
+
+      {/* Approvazione Sconti */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Soglia Approvazione Sconti</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Le offerte con sconto medio superiore a questa soglia vengono marcate come "Richiede approvazione".
+        </p>
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min={0}
+            max={60}
+            step={5}
+            value={discountApprovalThreshold}
+            onChange={e => setDiscountApprovalThreshold(parseInt(e.target.value))}
+            className="flex-1 accent-indigo-600"
+          />
+          <span className="text-xl font-black text-indigo-600 min-w-[50px] text-right">{discountApprovalThreshold}%</span>
+        </div>
+        <div className="flex justify-between text-[9px] text-gray-400 font-bold mt-1">
+          <span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span><span>60%</span>
+        </div>
+      </div>
+
+      <GroupLabel>Integrazioni & Strumenti</GroupLabel>
+
+      <ClaudeApiKeySection />
+      <MicrophonePermissionSection />
+      <GmailIntegration />
+      <PuliziaTerritorio />
+      <AppUpdateSection />
+
+      <GroupLabel>Backup Dati</GroupLabel>
+
+      {/* Backup dati */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Backup dati</h3>
+        <p className="text-xs text-gray-400 mb-4">Scarica un file con tutti i dati dell'app (clienti, deal, offerte, prodotti, storico...) o ripristinali da un backup precedente.</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={downloadBackup}
+            className="flex items-center gap-2 text-indigo-600 text-sm font-bold border border-indigo-200 dark:border-indigo-800 px-4 py-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          >
+            <Download size={15} /> Scarica backup
+          </button>
+          <button
+            onClick={() => backupFileInputRef.current?.click()}
+            disabled={restoringBackup}
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-sm font-bold border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            <Upload size={15} /> {restoringBackup ? 'Ripristino in corso...' : 'Carica backup'}
+          </button>
+          <input
+            ref={backupFileInputRef}
+            type="file"
+            accept="application/json"
+            onChange={handleBackupFileSelected}
+            className="hidden"
+          />
+        </div>
+      </div>
+
+      <GroupLabel>Zona Pericolosa</GroupLabel>
+
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-red-200 dark:border-red-900/40 shadow-sm divide-y divide-red-100 dark:divide-red-900/30 overflow-hidden">
+
+        {/* Gestione Rubrica */}
+        <div className="p-6">
+          <h3 className="font-bold mb-1 flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle size={18}/> Svuota Rubrica</h3>
+          <p className="text-xs text-gray-400 mb-4">
+            Attualmente hai <span className="font-black text-indigo-600">{Object.keys(contacts).length}</span> contatti in rubrica
+            {' '}(<span className="text-green-600 font-bold">{Object.values(contacts).filter(c => c.status === 'cliente').length} clienti</span>
+            {' '}· <span className="text-blue-600 font-bold">{Object.values(contacts).filter(c => c.status === 'potenziale').length} prospect</span>)
+          </p>
+          <button
+            onClick={() => requireAuth(
+              'Svuota tutti i contatti',
+              `Stai per eliminare ${Object.keys(contacts).length} contatti. Questa azione non è reversibile e cancellerà anche deal, offerte e attività associate.`,
+              () => { deleteAllContacts(); showToast('Rubrica svuotata', 'success'); }
+            )}
+            className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <Trash2 size={15} /> Svuota tutti i contatti
+          </button>
+        </div>
+
+        {/* Svuota Catalogo Prodotti */}
+        <div className="p-6">
+          <h3 className="font-bold mb-1 flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle size={18}/> Svuota Catalogo Prodotti</h3>
+          <p className="text-xs text-gray-400 mb-4">
+            Attualmente hai <span className="font-black text-indigo-600">{Object.keys(products).length}</span> articoli nel catalogo
+          </p>
+          <button
+            onClick={() => requireAuth(
+              'Svuota catalogo prodotti',
+              `Stai per eliminare ${Object.keys(products).length} articoli dal catalogo. Questa azione non è reversibile.`,
+              () => { clearProducts(); showToast('Catalogo prodotti svuotato', 'success'); }
+            )}
+            className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <Trash2 size={15} /> Svuota catalogo prodotti
+          </button>
+        </div>
+
+        {/* Reset Storico Vendite */}
+        <div className="p-6">
+          <h3 className="font-bold mb-1 flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle size={18}/> Svuota Storico Vendite</h3>
+          <button
+            onClick={() => {
+              const nTransazioni = Object.keys(salesTransactions).length;
+              const nStorico = storicoClienti.length;
+              requireAuth(
+                'Svuota storico vendite',
+                `Stai per eliminare ${nStorico} clienti da Excel e ${nTransazioni} transazioni. I clienti CRM e i deal non verranno toccati.`,
+                () => { clearSalesTransactions(); resetStorico(); showToast('Storico vendite svuotato', 'success'); }
+              );
+            }}
+            className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <Trash2 size={15} /> Svuota storico vendite
+          </button>
+        </div>
+
+        {/* Reset Totale */}
+        <div className="p-6 bg-red-50/50 dark:bg-red-900/10">
+          <h3 className="font-black mb-1 flex items-center gap-2 text-red-700 dark:text-red-400"><AlertTriangle size={18}/> Resetta tutti i dati dell'App</h3>
+          <p className="text-xs text-red-400 dark:text-red-400/70 mb-4">
+            Verranno eliminati TUTTI i dati: clienti, deal, offerte, attività, prodotti, storico. Il tuo account rimarrà attivo ma il database sarà completamente azzerato.
+          </p>
+          <button
+            onClick={() => requireAuth(
+              'Resetta tutti i dati',
+              'Verranno eliminati TUTTI i dati: clienti, deal, offerte, attività, prodotti, storico. Il tuo account rimarrà attivo ma il database sarà completamente azzerato.',
+              () => { localStorage.removeItem('next-move-storage'); window.location.reload(); }
+            )}
+            className="flex items-center gap-2 text-white text-sm font-black bg-red-600 px-4 py-2 rounded-xl hover:bg-red-700 transition-colors"
+          >
+            <Trash2 size={16} /> Resetta tutti i dati dell'App
+          </button>
+        </div>
+
+      </div>
 
       {pendingAction && (
         <DeviceAuthModal
