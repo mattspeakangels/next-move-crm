@@ -1741,11 +1741,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     title="Crea contatto da sito web">
                     <Link size={18} /> <span className="hidden md:inline">Da URL</span>
                   </button>
-                  <button onClick={recheckDealerClassification}
-                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
-                    title="Ricontrolla in blocco i contatti già importati e correggi i Dealer classificati come End User">
-                    <RefreshCw size={18} /> <span className="hidden md:inline">Ricontrolla Dealer</span>
-                  </button>
                   <button onClick={() => {
                     const newContact = {
                       id: `c_${Date.now()}`,
@@ -1932,6 +1927,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     </button>
                   </div>
                 )}
+
+                <div className="flex justify-center pb-6">
+                  <button onClick={recheckDealerClassification}
+                    className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-[var(--accent-600)] hover:border-[var(--accent-300)] transition-all flex items-center gap-1"
+                    title="Ricontrolla in blocco i contatti già importati e correggi i Dealer classificati come End User">
+                    <RefreshCw size={11} /> Ricontrolla Dealer
+                  </button>
+                </div>
               </>
             );
           })()}
