@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown, StickyNote } from 'lucide-react';
+import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown, StickyNote, Star } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { useStore } from '../store/useStore';
@@ -1138,9 +1138,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <ArrowLeft size={20} />
                 </button>
                 <div className="min-w-0">
-                  <h2 className="font-black text-lg dark:text-white uppercase tracking-tight truncate">
-                    {editingContact?.company || 'Nuova Azienda'}
-                  </h2>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h2 className="font-black text-lg dark:text-white uppercase tracking-tight truncate">
+                      {editingContact?.company || 'Nuova Azienda'}
+                    </h2>
+                    <button
+                      onClick={() => setEditingContact({ ...editingContact, priorityToVisit: !editingContact?.priorityToVisit })}
+                      title={editingContact?.priorityToVisit ? 'Rimuovi priorità' : 'Segna come prioritario'}
+                      className={`p-1 rounded-lg transition-colors flex-shrink-0 ${editingContact?.priorityToVisit ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400'}`}
+                    >
+                      <Star size={18} fill={editingContact?.priorityToVisit ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Scheda Azienda</p>
                 </div>
               </div>
@@ -1151,12 +1160,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 Salva
               </button>
             </div>
-            <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-800 rounded-2xl px-3 py-2">
-              <StickyNote size={14} className="text-amber-500 flex-shrink-0 mt-1" />
+            <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-200 dark:border-blue-800 rounded-2xl px-3 py-2">
+              <StickyNote size={14} className="text-blue-500 flex-shrink-0 mt-1" />
               <textarea
                 rows={2}
                 placeholder="Note rapide di identificazione (es. portineria, referente in loco, orari, accessi particolari...)"
-                className="w-full bg-transparent resize-none outline-none text-xs font-bold text-amber-900 dark:text-amber-200 placeholder:text-amber-400 placeholder:font-semibold max-h-20 overflow-y-auto"
+                className="w-full bg-transparent resize-none outline-none text-xs font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 placeholder:font-semibold max-h-20 overflow-y-auto"
                 value={editingContact?.notes || ''}
                 onChange={e => setEditingContact({ ...editingContact, notes: e.target.value })}
               />
@@ -1822,10 +1831,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                           </div>
                         </div>
 
-                        <button onClick={e => { e.stopPropagation(); if (window.confirm(`Elimina ${contact.company}?`)) deleteContact(contact.id); }}
-                          className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors flex-shrink-0">
-                          <Trash2 size={15} />
-                        </button>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={e => { e.stopPropagation(); updateContact(contact.id, { priorityToVisit: !contact.priorityToVisit }); }}
+                            title={contact.priorityToVisit ? 'Rimuovi priorità' : 'Segna come prioritario'}
+                            className={`p-2 rounded-xl transition-colors ${contact.priorityToVisit ? 'text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}>
+                            <Star size={15} fill={contact.priorityToVisit ? 'currentColor' : 'none'} />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); if (window.confirm(`Elimina ${contact.company}?`)) deleteContact(contact.id); }}
+                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="space-y-1.5">
