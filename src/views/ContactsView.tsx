@@ -937,7 +937,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     // Mapping colonne — keywords in ordine di specificità (più specifico prima)
     const col: Record<string, number> = {
       company:     findColumn(['aziende', 'ragione sociale', 'nome azienda', 'company name', 'azienda', 'company', 'organizzazione', 'organization', 'name']),
-      status:      findColumn(['stato azienda', 'stato cliente', 'stato', 'status', 'tipo cliente', 'tipologia', 'ruolo']),
+      status:      findColumn(['stato azienda', 'stato cliente', 'stato', 'status']),
+      businessType: findColumn(['tipologia cliente', 'tipo di cliente', 'tipo cliente', 'tipologia', 'canale', 'segmento cliente', 'segmento', 'customer type', 'business type']),
       contactName: findColumn(['referente', 'contatto principale', 'nome contatto', 'contatto', 'contact name', 'contact', 'person']),
       role:        findColumn(['ruolo', 'qualifica', 'posizione', 'role', 'title', 'job']),
       phone:       findColumn(['numero di telefono', 'telefono fisso', 'telefono 1', 'telefono', 'telefoni', 'phone', 'tel ']),
@@ -968,6 +969,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       return fallbackStatus;
     };
 
+    // Tipologia cliente esplicita (Dealer / End User) da colonna dedicata, se presente:
+    // ha priorità sull'euristica basata su settore/nome azienda che spesso sbaglia.
+    const parseBusinessType = (raw: string): ContactSegment | null => {
+      const v = raw.toLowerCase().trim();
+      if (!v) return null;
+      if (v.match(/dealer|rivendit|distribu|reseller/)) return 'dealer';
+      if (v.match(/end.?user|utilizzat|finale/)) return 'end-user';
+      return null;
+    };
+
     const result: Contact[] = [];
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -988,6 +999,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       const contactStatus = statusRaw ? parseStatus(statusRaw) : fallbackStatus;
 
       const sectorVal = get(values, 'sector');
+      const explicitBusinessType = parseBusinessType(get(values, 'businessType'));
+      const segmentVal = explicitBusinessType || classifySegment(sectorVal, company);
       result.push({
         id: `c_${Date.now()}_${i}_${Math.random().toString(36).slice(2)}`,
         company,
@@ -1002,7 +1015,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         zipCode:     get(values, 'zipCode'),
         region:      get(values, 'province'),
         sector:      sectorVal,
-        segment:     classifySegment(sectorVal, company),
+        segment:     segmentVal,
         notes:       get(values, 'notes'),
         status:      contactStatus,
         country:     'Italia',
