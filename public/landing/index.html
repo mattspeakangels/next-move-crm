@@ -193,6 +193,21 @@
   .dcard .cnext{color:var(--ink-500);font-size:11.5px;margin-top:4px;line-height:1.3;}
   .kcol.dragover{outline:2px dashed var(--brand-400);outline-offset:-2px;}
   .k-lost .dcard{opacity:.7;}
+  .dcard.card-new{animation:cardPop .5s ease;}
+  @keyframes cardPop{0%{transform:scale(.9);box-shadow:0 0 0 2px var(--brand-400);}100%{transform:scale(1);}}
+
+  .new-lead-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .new-lead-form input{flex:1;min-width:180px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink-900);}
+  .new-lead-form input:focus{outline:2px solid var(--brand-400);outline-offset:1px;}
+  .new-lead-form button{padding:10px 16px;border:none;border-radius:10px;background:var(--brand-600);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .new-lead-form button:hover{background:var(--brand-700, var(--brand-600));}
+
+  .storico-suggestions{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+  .sugg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;}
+  .sugg-row .sname{font-weight:700;}
+  .sugg-row .sval{color:var(--brand-600);font-weight:700;margin-left:8px;}
+  .sugg-row button{padding:7px 12px;border:none;border-radius:8px;background:var(--brand-600);color:#fff;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .sugg-row button:disabled{background:var(--ink-500);opacity:.5;cursor:default;}
 
   /* AI coach demo */
   .chat{max-width:640px;margin:0 auto;}
@@ -416,12 +431,14 @@
     <div class="section-head reveal">
       <span class="eyebrow">Provalo subito</span>
       <h2>Non è uno screenshot: è Next Move che puoi già usare</h2>
-      <p class="lead">Trascina una trattativa, chiedi qualcosa al coach AI o componi un'offerta — è una simulazione reale dell'interfaccia dell'app.</p>
+      <p class="lead">Aggiungi un cliente, trascina una trattativa, guarda la mappa e lo storico, chiedi qualcosa al coach AI o componi un'offerta — è una simulazione completa dell'interfaccia dell'app.</p>
     </div>
 
     <div class="demo-shell reveal">
       <div class="demo-tabs" role="tablist">
         <div class="demo-tab active" data-tab="pipeline" role="tab">📊 Pipeline</div>
+        <div class="demo-tab" data-tab="mappa" role="tab">🗺️ Mappa</div>
+        <div class="demo-tab" data-tab="storico" role="tab">📈 Storico</div>
         <div class="demo-tab" data-tab="coach" role="tab">🤖 Coach AI</div>
         <div class="demo-tab" data-tab="offerta" role="tab">🧾 Offerta</div>
       </div>
@@ -430,7 +447,12 @@
 
         <!-- PIPELINE DEMO -->
         <div class="demo-pane active" data-pane="pipeline">
-          <div class="demo-hint">👆 Trascina una scheda in un'altra colonna, esattamente come nell'app.</div>
+          <div class="demo-hint">👆 Trascina una scheda in un'altra colonna, esattamente come nell'app. Oppure aggiungi tu un nuovo lead qui sotto.</div>
+          <form class="new-lead-form" id="newLeadForm">
+            <input type="text" id="newLeadName" placeholder="Nome del cliente (es. Ferramenta Colombo)" required maxlength="60" />
+            <input type="text" id="newLeadValue" placeholder="Valore stimato (es. € 3.200)" maxlength="20" />
+            <button type="submit">+ Aggiungi lead</button>
+          </form>
           <div class="kanban" id="kanban">
             <div class="kcol" data-stage="lead"><div class="kcol-head">Lead <span>1</span></div></div>
             <div class="kcol" data-stage="qualificato"><div class="kcol-head">Qualificato <span>1</span></div></div>
@@ -439,6 +461,23 @@
             <div class="kcol" data-stage="vinto"><div class="kcol-head">Chiuso vinto <span>1</span></div></div>
             <div class="kcol k-lost" data-stage="perso"><div class="kcol-head">Chiuso perso <span>1</span></div></div>
           </div>
+        </div>
+
+        <!-- MAPPA DEMO -->
+        <div class="demo-pane" data-pane="mappa">
+          <div class="demo-hint">🗺️ Questa è la mappa reale dell'app: ogni cliente inserito viene geolocalizzato in automatico e compare qui.</div>
+          <div class="shot-card">
+            <div class="shot-frame"><img src="/landing/images/app-mappa.png" alt="Mappa reale con i clienti geolocalizzati sul territorio italiano" loading="lazy"></div>
+          </div>
+        </div>
+
+        <!-- STORICO DEMO -->
+        <div class="demo-pane" data-pane="storico">
+          <div class="demo-hint">📈 L'AI analizza lo storico vendite e ti suggerisce deal pronti da lavorare: prova ad aggiungerne uno alla pipeline.</div>
+          <div class="shot-card">
+            <div class="shot-frame"><img src="/landing/images/app-storico.png" alt="Analisi storico vendite con deal suggeriti dall'AI" loading="lazy"></div>
+          </div>
+          <div class="storico-suggestions" id="storicoSuggestions"></div>
         </div>
 
         <!-- COACH DEMO -->
@@ -567,13 +606,12 @@
   // Demo tabs
   var tabs = document.querySelectorAll('.demo-tab');
   var panes = document.querySelectorAll('.demo-pane');
+  function activateTab(name){
+    tabs.forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-tab') === name); });
+    panes.forEach(function(p){ p.classList.toggle('active', p.getAttribute('data-pane') === name); });
+  }
   tabs.forEach(function(tab){
-    tab.addEventListener('click', function(){
-      tabs.forEach(function(t){ t.classList.remove('active'); });
-      panes.forEach(function(p){ p.classList.remove('active'); });
-      tab.classList.add('active');
-      document.querySelector('.demo-pane[data-pane="' + tab.getAttribute('data-tab') + '"]').classList.add('active');
-    });
+    tab.addEventListener('click', function(){ activateTab(tab.getAttribute('data-tab')); });
   });
 
   // Kanban demo data + drag & drop
@@ -622,6 +660,59 @@
     });
   });
   renderKanban();
+
+  // Nuovo lead: aggiunge una card reale in "Lead" con il nome inserito dall'utente
+  var nextDealId = 100;
+  function addDeal(name, value, stage){
+    nextDealId += 1;
+    var deal = { id: nextDealId, stage: stage || 'lead', name: name, value: value || 'da definire', next: 'Primo contatto da pianificare' };
+    deals.push(deal);
+    renderKanban();
+    var newCard = kanban.querySelector('.dcard[data-id="' + deal.id + '"]');
+    if (newCard){
+      newCard.classList.add('card-new');
+      newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      setTimeout(function(){ newCard.classList.remove('card-new'); }, 700);
+    }
+    return deal;
+  }
+  var newLeadForm = document.getElementById('newLeadForm');
+  newLeadForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var nameInput = document.getElementById('newLeadName');
+    var valueInput = document.getElementById('newLeadValue');
+    var name = nameInput.value.trim();
+    if (!name) return;
+    addDeal(name, valueInput.value.trim() || '€ —');
+    nameInput.value = '';
+    valueInput.value = '';
+    nameInput.focus();
+  });
+
+  // Storico demo: deal suggeriti dall'AI, aggiungibili alla pipeline con un click
+  var storicoDeals = [
+    { name: 'Cooperativa Agricola Verdi', reason: 'Crescita +141% negli ultimi 12 mesi', value: '€ 11.476' },
+    { name: 'Trasporti Bianchi & Figli', reason: 'Crescita +59%, pronto per un upsell', value: '€ 2.805' },
+    { name: 'Ferramenta Nord Milano', reason: 'Cliente dormiente da riattivare', value: '€ 1.950' }
+  ];
+  var storicoWrap = document.getElementById('storicoSuggestions');
+  storicoDeals.forEach(function(sd, idx){
+    var row = document.createElement('div');
+    row.className = 'sugg-row';
+    row.innerHTML =
+      '<span><span class="sname">' + sd.name + '</span> — ' + sd.reason + '<span class="sval">' + sd.value + '</span></span>' +
+      '<button type="button" data-idx="' + idx + '">+ Aggiungi a pipeline</button>';
+    storicoWrap.appendChild(row);
+  });
+  storicoWrap.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-idx]');
+    if (!btn) return;
+    var sd = storicoDeals[parseInt(btn.getAttribute('data-idx'), 10)];
+    addDeal(sd.name, sd.value, 'qualificato');
+    btn.textContent = '✓ Aggiunto alla pipeline';
+    btn.disabled = true;
+    activateTab('pipeline');
+  });
 
   // Coach AI demo
   var answers = {
