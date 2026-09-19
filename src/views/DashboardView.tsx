@@ -260,11 +260,11 @@ function getCoachSuggestion(
     const top = urgentDeals[0];
     const company = contacts[top.contactId]?.company ?? 'un cliente';
     const overdue = Math.abs(daysDiff(top.nextActionDeadline));
-    return `Hai ${urgentDeals.length} azione${urgentDeals.length > 1 ? 'i' : 'e'} scadut${urgentDeals.length > 1 ? 'e' : 'a'}. Priorità assoluta: ${top.nextAction || 'contatta'} ${company}${overdue > 0 ? ` (scaduta da ${overdue}gg)` : ''}.`;
+    return `Hai ${urgentDeals.length} azion${urgentDeals.length > 1 ? 'i' : 'e'} scadut${urgentDeals.length > 1 ? 'e' : 'a'}. Priorità assoluta: ${top.nextAction || 'contatta'} ${company}${overdue > 0 ? ` (scaduta da ${overdue}gg)` : ''}.`;
   }
   const top = soonDeals[0];
   const company = contacts[top.contactId]?.company ?? 'un cliente';
-  return `${soonDeals.length} azione${soonDeals.length > 1 ? 'i' : 'e'} in scadenza a breve. Inizia con ${company}: ${top.nextAction || 'prossima azione'}.`;
+  return `${soonDeals.length} azion${soonDeals.length > 1 ? 'i' : 'e'} in scadenza a breve. Inizia con ${company}: ${top.nextAction || 'prossima azione'}.`;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
