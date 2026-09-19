@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/landing",
+      "destination": "/landing/index.html"
+    }
+  ],
   "functions": {
     "api/blaklader-enrich.ts": {
       "includeFiles": "api/blak-catalog.json"
