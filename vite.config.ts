@@ -18,6 +18,10 @@ export default defineConfig({
       workbox: {
         // Aumenta il limite per precachare tutti i chunk
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        // Il fallback di navigazione (tutte le richieste non-precache tornano
+        // index.html, la SPA) non deve intercettare /landing: è una pagina
+        // statica separata, non una rotta interna dell'app.
+        navigateFallbackDenylist: [/^\/landing/],
       },
       manifest: {
         name: 'Next Move',
