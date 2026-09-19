@@ -1038,7 +1038,7 @@ export function StoricoView() {
             Trascina qui il file Excel (.xlsx) o clicca per selezionarlo
           </p>
           <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
-            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Formato Blaklader ✓</span>
+            <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Formato standard ✓</span>
             <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Anno 2024 ✓</span>
             <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Anno 2025 ✓</span>
             <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Pivot Excel ✓</span>
