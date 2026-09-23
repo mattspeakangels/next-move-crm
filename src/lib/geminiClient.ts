@@ -4,10 +4,12 @@
 // l'uso diretto di @anthropic-ai/sdk (dangerouslyAllowBrowser) in
 // AgendaView.tsx e ConversationRecorder.tsx.
 
-// gemini-2.0-flash deprecato da Google (404 "no longer available");
-// cascata sul modello corrente + alias "latest" come rete di sicurezza
-// contro future deprecazioni (stesso pattern di api/_gemini.ts).
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
+// gemini-2.0-flash deprecato da Google (404 "no longer available"); i flash
+// "di punta" più recenti (3.6/3.7/3.8-flash) vanno spesso in 503 "high
+// demand" appena rilasciati. Le varianti "lite" hanno quota/capacità
+// separata e meno contesa, quindi vengono provate per prime (stesso ordine
+// e stessa logica di api/_gemini.ts).
+const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-pro-latest'];
 
 // 503 "UNAVAILABLE / high demand" è un sovraccarico temporaneo lato Google:
 // un solo retry con breve attesa lo assorbe nella maggior parte dei casi.

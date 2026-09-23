@@ -4,9 +4,13 @@
 // ritorno (testo grezzo), così i chiamanti (api/claude.ts, api/log-activity.ts,
 // api/parse-activity.ts, api/catalog.ts) restano quasi identici.
 
-// gemini-2.5-flash/2.0-flash/1.5-flash deprecati da Google (404 "no longer
-// available"); modello attuale segnalato dall'errore stesso di Google.
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
+// gemini-2.5-flash/2.0-flash/1.5-flash deprecati da Google per questo account
+// (404 "no longer available to new users"). I flash "di punta" più recenti
+// (3.6/3.7/3.8-flash) esistono ma vanno spesso in 503 "high demand" appena
+// rilasciati; le varianti "lite" hanno tipicamente quota/capacità separata
+// e meno contesa, quindi vengono provate per prime. Elenco confermato via
+// ListModels reale sulla chiave (vedi diagnostica sotto), non per nome a caso.
+const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-pro-latest'];
 
 // 503 "UNAVAILABLE / high demand" è un sovraccarico temporaneo lato Google,
 // non un errore del modello: un solo retry con breve attesa lo assorbe nella
