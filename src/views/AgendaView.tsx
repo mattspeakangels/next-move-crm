@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw, Route } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../types';
 import Anthropic from '@anthropic-ai/sdk';
 import { useToast } from '../components/ui/ToastContext';
@@ -318,11 +318,12 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
 
 interface AgendaViewProps {
   onNavigateToContact?: (contactId: string) => void;
+  onViewItinerary?: (date: string) => void;
 }
 
 type CloseVisitType = 'prima-visita' | 'follow-up' | 'offerta' | 'chiamata';
 
-export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
+export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onViewItinerary }) => {
   const {
     activities, addActivity, updateActivity, deleteActivity, contacts, updateContact, addTodo,
     sequences, prospectingTracks, addProspectingTrack, updateProspectingTrack, addProspectEmailDraftsBatch, addDeal,
@@ -849,6 +850,13 @@ Regole:
   const listActivities = selectedDay
     ? activitiesForDay(selectedDay)
     : allActivities.filter(a => a.date >= today.getTime()).sort((a, b) => a.date - b.date);
+
+  // Il giorno selezionato ha almeno una visita/sopralluogo con un cliente geolocalizzato?
+  // Serve per mostrare il tasto "Vedi itinerario" solo quando ha senso aprire la mappa.
+  const dayHasMappedVisits = !!selectedDay && listActivities.some(a =>
+    (a.type === 'visita' || a.type === 'sopralluogo') &&
+    contacts[a.contactId]?.lat && contacts[a.contactId]?.lng
+  );
 
   // ── Modal helpers ──
 
@@ -1566,9 +1574,17 @@ Regole:
             }
           </h2>
           {selectedDay && (
-            <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">
-              + Aggiungi in questa data
-            </button>
+            <div className="flex items-center gap-2">
+              {dayHasMappedVisits && onViewItinerary && (
+                <button onClick={() => onViewItinerary(toLocalDateStr(selectedDay))}
+                  className="flex items-center gap-1 text-[10px] font-black text-orange-500 bg-orange-50 dark:bg-orange-900/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-orange-100 transition-colors">
+                  <Route size={11} /> Vedi itinerario
+                </button>
+              )}
+              <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">
+                + Aggiungi in questa data
+              </button>
+            </div>
           )}
         </div>
 

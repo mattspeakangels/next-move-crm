@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
-import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed, Star } from 'lucide-react';
+import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed, Star, Eye, EyeOff } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
@@ -233,14 +233,28 @@ interface ItinerarioViewProps {
   contacts: Record<string, any>;
   onClose: () => void;
   isVisible: boolean;
+  // Data richiesta dall'esterno (es. dall'Agenda, "Vedi itinerario" per un giorno specifico).
+  // `nonce` cambia ad ogni richiesta cosi' da poter ri-applicare anche la stessa data.
+  requestedDate?: { date: string; nonce: number } | null;
 }
 
-const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVisible }) => {
+const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVisible, requestedDate }) => {
   const { addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize } = useStore();
   const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
   const markerRadiusPx = MARKER_CIRCLE_RADIUS[mapMarkerSize];
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
+  // Quando aperto dall'Agenda per un giorno specifico: mostra sulla mappa solo le tappe
+  // dell'itinerario di quel giorno, non tutti i clienti/prospect.
+  const [onlyRouteOnMap, setOnlyRouteOnMap] = useState(false);
+  const lastRequestNonceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (requestedDate && requestedDate.nonce !== lastRequestNonceRef.current) {
+      lastRequestNonceRef.current = requestedDate.nonce;
+      setDate(requestedDate.date);
+      setOnlyRouteOnMap(true);
+    }
+  }, [requestedDate]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'tutti' | 'clienti' | 'prospect'>('tutti');
@@ -320,6 +334,13 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
     (filterProvince ? 1 : 0) +
     (filterSector ? 1 : 0) +
     (filterPriorityOnly ? 1 : 0);
+
+  // In modalita' "solo itinerario" (attivata quando si arriva dall'Agenda per un giorno
+  // specifico) la mappa mostra solo le tappe già selezionate, non tutti i clienti/prospect.
+  const mapMarkersToShow = useMemo(
+    () => onlyRouteOnMap ? visible.filter((c: any) => selectedIds.includes(c.id)) : visible,
+    [visible, onlyRouteOnMap, selectedIds]
+  );
 
   const toggle = (id: string) =>
     setSelectedIds(prev => {
@@ -664,6 +685,14 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                 </span>
               )}
             </button>
+
+            {selectedIds.length > 0 && (
+              <button onClick={() => setOnlyRouteOnMap(v => !v)}
+                title={onlyRouteOnMap ? 'Mostra tutti i clienti sulla mappa' : 'Mostra solo le tappe di questo itinerario'}
+                className={`p-2.5 rounded-xl shadow-lg flex-shrink-0 transition-all ${onlyRouteOnMap ? 'bg-orange-500 text-white' : 'bg-white/95 dark:bg-gray-800/95 text-gray-600 dark:text-white'}`}>
+                {onlyRouteOnMap ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            )}
           </div>
 
           {showFiltersBar && (
@@ -754,7 +783,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             <Popup><strong>Partenza — {HOME.label}</strong></Popup>
           </Marker>
           {itinUserPos && <Marker position={itinUserPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
-          {visible.map((c: any) => {
+          {mapMarkersToShow.map((c: any) => {
             const selected = selectedIds.includes(c.id);
             const stopIdx = activeRoute.findIndex((s: any) => s.id === c.id);
             const popup = (
@@ -1130,6 +1159,10 @@ interface MapViewProps {
   isFullscreen?: boolean;
   onGoFullscreen?: () => void;
   onExitFullscreen?: () => void;
+  // Richiesta di apertura diretta dell'itinerario per una data (es. dal tasto "Vedi itinerario"
+  // in Agenda). Consumata subito dopo l'apertura tramite onItineraryDateConsumed.
+  initialItineraryDate?: string | null;
+  onItineraryDateConsumed?: () => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -1137,6 +1170,8 @@ export const MapView: React.FC<MapViewProps> = ({
   isFullscreen = false,
   onGoFullscreen,
   onExitFullscreen,
+  initialItineraryDate,
+  onItineraryDateConsumed,
 }) => {
   const { contacts, updateContact, mapMarkerStyles, mapMarkerSize } = useStore();
   const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
@@ -1165,10 +1200,21 @@ export const MapView: React.FC<MapViewProps> = ({
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [showItinerario, setShowItinerario] = useState(false);
   const [itinerarioEverOpened, setItinerarioEverOpened] = useState(false);
+  const [itinRequestedDate, setItinRequestedDate] = useState<{ date: string; nonce: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [geoMsg, setGeoMsg] = useState('');
+
+  // Apertura diretta dell'itinerario per una data richiesta dall'esterno (es. Agenda).
+  useEffect(() => {
+    if (!initialItineraryDate) return;
+    setItinRequestedDate({ date: initialItineraryDate, nonce: Date.now() });
+    setItinerarioEverOpened(true);
+    setShowItinerario(true);
+    onItineraryDateConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialItineraryDate]);
 
   const saveUserPos = (p: [number, number]) => {
     setUserPos(p);
@@ -2026,6 +2072,7 @@ export const MapView: React.FC<MapViewProps> = ({
           contacts={contacts}
           onClose={() => setShowItinerario(false)}
           isVisible={showItinerario}
+          requestedDate={itinRequestedDate}
         />
       )}
 
