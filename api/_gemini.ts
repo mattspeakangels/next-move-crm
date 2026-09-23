@@ -12,7 +12,11 @@ export async function callGemini(prompt: string, opts?: { maxOutputTokens?: numb
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new GeminiError('GEMINI_API_KEY non configurata su Vercel');
 
-  let lastErr = '';
+  // Accumula l'errore di OGNI modello tentato (non solo l'ultimo): un
+  // fallimento sistemico (es. chiave con permessi/versione API sbagliata)
+  // fa fallire tutti i modelli allo stesso modo, e senza vedere l'elenco
+  // completo è impossibile distinguere quel caso da un modello deprecato.
+  const errors: string[] = [];
   for (const model of GEMINI_MODELS) {
     try {
       const response = await fetch(
@@ -29,7 +33,7 @@ export async function callGemini(prompt: string, opts?: { maxOutputTokens?: numb
 
       if (!response.ok) {
         const errBody = await response.text().catch(() => '');
-        lastErr = `${model}: ${response.status} ${errBody.slice(0, 200)}`;
+        errors.push(`${model}: ${response.status} ${errBody.slice(0, 200)}`);
         continue;
       }
 
@@ -37,13 +41,13 @@ export async function callGemini(prompt: string, opts?: { maxOutputTokens?: numb
         candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
       };
       const text = json.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
-      if (!text) { lastErr = `${model}: risposta vuota`; continue; }
+      if (!text) { errors.push(`${model}: risposta vuota`); continue; }
       return text;
     } catch (err) {
-      lastErr = `${model}: ${err instanceof Error ? err.message : 'error'}`;
+      errors.push(`${model}: ${err instanceof Error ? err.message : 'error'}`);
       continue;
     }
   }
 
-  throw new GeminiError(`Nessun modello Gemini disponibile (${lastErr})`);
+  throw new GeminiError(`Nessun modello Gemini disponibile [${errors.join(' | ')}]`);
 }
