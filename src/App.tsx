@@ -9,6 +9,7 @@ import { SEED_SEQUENCES } from './data/prospectingSequences';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
 import { SelectionAI } from './components/ai/SelectionAI';
+import { QuickLogFAB } from './components/ai/QuickLogFAB';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
@@ -274,6 +275,7 @@ function AppContent() {
         </div>
       )}
 
+      <QuickLogFAB />
     </div>
   );
 }
