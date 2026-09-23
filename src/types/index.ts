@@ -177,6 +177,8 @@ export interface Offer {
   shippingCost?: number;
   pdfUrl?: string;
   pdfName?: string;
+  /** Testo libero opzionale con cui si accompagna l'offerta via email (corpo del messaggio). */
+  emailBody?: string;
 }
 
 export type ProductCategory = 'giacche' | 'felpe' | 'pantaloni' | 'hivis' | 'tshirt' | 'accessori';
