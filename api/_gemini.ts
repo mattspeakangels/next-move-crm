@@ -73,5 +73,25 @@ export async function callGemini(prompt: string, opts?: { maxOutputTokens?: numb
     }
   }
 
-  throw new GeminiError(`Nessun modello Gemini disponibile [${errors.join(' | ')}]`);
+  // Diagnostica: se il cascade fallisce del tutto, interroga ListModels per
+  // sapere quali modelli generateContent sono REALMENTE disponibili per
+  // questa chiave/progetto, invece di continuare a indovinare nomi.
+  let available = '';
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (listRes.ok) {
+      const listJson = await listRes.json() as { models?: Array<{ name?: string; supportedGenerationMethods?: string[] }> };
+      available = (listJson.models ?? [])
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+        .map(m => m.name?.replace('models/', ''))
+        .filter(Boolean)
+        .join(', ');
+    } else {
+      available = `ListModels fallito: ${listRes.status}`;
+    }
+  } catch (err) {
+    available = `ListModels errore: ${err instanceof Error ? err.message : 'error'}`;
+  }
+
+  throw new GeminiError(`Nessun modello Gemini disponibile [${errors.join(' | ')}] — disponibili per questa chiave: ${available}`);
 }
