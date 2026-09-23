@@ -1,0 +1,49 @@
+// Client condiviso per Google Gemini (generativelanguage.googleapis.com).
+// Sostituisce le chiamate dirette all'API Anthropic: stessa forma di cascata
+// modelli (dal più economico/veloce al più capace), stesso contratto di
+// ritorno (testo grezzo), così i chiamanti (api/claude.ts, api/log-activity.ts,
+// api/parse-activity.ts, api/catalog.ts) restano quasi identici.
+
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+export class GeminiError extends Error {}
+
+export async function callGemini(prompt: string, opts?: { maxOutputTokens?: number }): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new GeminiError('GEMINI_API_KEY non configurata su Vercel');
+
+  let lastErr = '';
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: opts?.maxOutputTokens ?? 1024 },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        lastErr = `${model}: ${response.status} ${errBody.slice(0, 200)}`;
+        continue;
+      }
+
+      const json = await response.json() as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
+      };
+      const text = json.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
+      if (!text) { lastErr = `${model}: risposta vuota`; continue; }
+      return text;
+    } catch (err) {
+      lastErr = `${model}: ${err instanceof Error ? err.message : 'error'}`;
+      continue;
+    }
+  }
+
+  throw new GeminiError(`Nessun modello Gemini disponibile (${lastErr})`);
+}

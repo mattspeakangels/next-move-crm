@@ -131,7 +131,7 @@ export function LegalView() {
               <span>Vendete i miei dati?</span>
             </summary>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
-              No, mai. Non vendiamo dati. Usiamo solo servizi cloud (Google, Anthropic) necessari al funzionamento.
+              No, mai. Non vendiamo dati. Usiamo solo servizi cloud (Google) necessari al funzionamento.
             </p>
           </details>
         </div>

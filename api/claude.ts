@@ -1,9 +1,10 @@
 // Vercel Node.js serverless function
-// Uses raw fetch to Anthropic API with fallback to cheapest models
+// Uses Google Gemini (via callGemini) with model cascade fallback
 
 import { z } from 'zod';
 import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
 import { applyCors, handleCorsPreFlight } from './cors.js';
+import { callGemini, GeminiError } from './gemini.js';
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {
@@ -402,12 +403,6 @@ export default async function handler(req: { method: string; body: unknown; head
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'ANTHROPIC_API_KEY non configurata su Vercel' });
-    return;
-  }
-
   try {
     // Validate request body against schema
     const validated = RequestSchema.parse(req.body);
@@ -435,48 +430,16 @@ export default async function handler(req: { method: string; body: unknown; head
         return;
     }
 
-    // Try models in order of cost (cheapest first)
-    const models = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-8'];
-    let lastError = '';
-
-    for (const model of models) {
-      try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model,
-            max_tokens: 1024,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-        });
-
-        if (!response.ok) {
-          const errBody = await response.text().catch(() => '');
-          lastError = `${model}: ${response.status} ${errBody.slice(0, 200)}`;
-          console.error('[claude api]', lastError);
-          continue;
-        }
-
-        const json = await response.json() as {
-          content: Array<{ type: string; text?: string }>;
-        };
-        const text = json.content.find(b => b.type === 'text')?.text ?? '';
-        res.json({ result: text });
-        return;
-
-      } catch (err) {
-        lastError = `${model}: ${err instanceof Error ? err.message : 'error'}`;
-        continue;
-      }
+    try {
+      const text = await callGemini(prompt);
+      res.json({ result: text });
+      return;
+    } catch (err) {
+      const message = err instanceof GeminiError ? err.message : (err instanceof Error ? err.message : 'error');
+      console.error('[claude api]', message);
+      res.status(500).json({ error: `Nessun modello disponibile (${message})` });
+      return;
     }
-
-    // All models failed
-    res.status(500).json({ error: `Nessun modello disponibile (${lastError})` });
 
   } catch (err) {
     // Handle Zod validation errors

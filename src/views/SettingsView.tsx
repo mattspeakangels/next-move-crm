@@ -10,7 +10,6 @@ import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 import { GmailIntegration } from '../components/settings/GmailIntegration';
-import Anthropic from '@anthropic-ai/sdk';
 import { downloadBackup, restoreBackupFromFile } from '../lib/backup';
 import { Download, Upload } from 'lucide-react';
 
@@ -134,18 +133,24 @@ const ClaudeApiKeySection: React.FC = () => {
     setTestStatus('testing');
     setTestError('');
     try {
-      const client = new Anthropic({ apiKey: k, dangerouslyAllowBrowser: true });
-      await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'ping' }],
-      });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 5 } }),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`${res.status} ${body}`);
+      }
       setTestStatus('ok');
     } catch (e: any) {
       setTestStatus('fail');
       const msg: string = e.message || '';
-      if (msg.includes('401') || msg.includes('authentication') || msg.includes('invalid x-api-key')) {
-        setTestError('Chiave non valida. Genera una nuova key su console.anthropic.com');
+      if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('API_KEY_INVALID')) {
+        setTestError('Chiave non valida. Genera una nuova key su aistudio.google.com');
       } else if (msg.includes('Failed to fetch') || msg.includes('network')) {
         setTestError('Errore di rete. Verifica la connessione internet.');
       } else {
@@ -160,7 +165,7 @@ const ClaudeApiKeySection: React.FC = () => {
     <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles size={16} className="text-indigo-500" />
-        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Claude AI — API Key</h2>
+        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Gemini AI — API Key</h2>
         {hasKey && testStatus === 'idle' && (
           <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
             <CheckCircle2 size={10} /> Salvata
@@ -186,7 +191,7 @@ const ClaudeApiKeySection: React.FC = () => {
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Necessaria per registrazione conversazioni, analisi resoconto e funzionalità AI.
-        Ottienila su <span className="font-mono text-indigo-500">console.anthropic.com</span>.
+        Ottienila gratis su <span className="font-mono text-indigo-500">aistudio.google.com</span>.
       </p>
 
       <div className="flex gap-2">

@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
 import { applyCors, handleCorsPreFlight } from './cors.js';
+import { callGemini, GeminiError } from './gemini.js';
 
 function logError(message: string, context: Record<string, unknown>) {
   console.error(`[API Error] ${message}`, JSON.stringify(context, null, 2));
@@ -192,9 +193,6 @@ export default async function handler(
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) { res.status(500).json({ error: 'ANTHROPIC_API_KEY mancante' }); return; }
-
   let parsedInput: z.infer<typeof RequestSchema>;
   try {
     parsedInput = RequestSchema.parse(req.body);
@@ -207,48 +205,26 @@ export default async function handler(
   const { transcript, contacts, now, openActivitiesHint } = parsedInput;
   const prompt = buildPrompt(transcript, contacts, now, openActivitiesHint);
 
-  const models = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-8'];
-  let lastErr = '';
-
-  for (const model of models) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 1024,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-
-      if (!response.ok) { lastErr = `${model}: ${response.status}`; continue; }
-
-      const json = await response.json() as { content: Array<{ type: string; text?: string }> };
-      const text = json.content.find(b => b.type === 'text')?.text ?? '';
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) { res.status(502).json({ error: 'Risposta AI non valida' }); return; }
-
-      let raw: unknown;
-      try {
-        raw = JSON.parse(match[0]);
-      } catch {
-        res.status(502).json({ error: 'Risposta AI non valida (JSON malformato)' });
-        return;
-      }
-
-      res.json(sanitizeResult(raw));
-      return;
-    } catch (err) {
-      lastErr = String(err);
-      continue;
-    }
+  let text: string;
+  try {
+    text = await callGemini(prompt);
+  } catch (err) {
+    const message = err instanceof GeminiError ? err.message : String(err);
+    logError('All models failed', { endpoint: '/api/log-activity', lastErr: message });
+    res.status(502).json({ error: `Modello non disponibile (${message})` });
+    return;
   }
 
-  logError('All models failed', { endpoint: '/api/log-activity', lastErr });
-  res.status(502).json({ error: `Modello non disponibile (${lastErr})` });
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) { res.status(502).json({ error: 'Risposta AI non valida' }); return; }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(match[0]);
+  } catch {
+    res.status(502).json({ error: 'Risposta AI non valida (JSON malformato)' });
+    return;
+  }
+
+  res.json(sanitizeResult(raw));
 }

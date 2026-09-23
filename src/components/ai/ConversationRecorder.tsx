@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import Anthropic from '@anthropic-ai/sdk';
+import { callGeminiClient } from '../../lib/geminiClient';
 import {
   Mic, Square, Sparkles, X, CheckCircle, AlertCircle,
   ChevronDown, ChevronUp, MessageSquare, Loader2, ClipboardList,
@@ -677,7 +677,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const analyze = async () => {
     const apiKey = useStore.getState().claudeApiKey.trim();
     if (!apiKey) {
-      setError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.');
+      setError('API Key assente. Vai in Impostazioni → Gemini AI e inserisci la tua chiave Gemini.');
       return;
     }
 
@@ -700,18 +700,11 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     setInterim('');
 
     try {
-      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
       const prompt = buildPrompt(text, isDealer, contact.company);
 
-      const msg = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const raw = (msg.content[0] as { text: string }).text.trim();
+      const raw = (await callGeminiClient(apiKey, prompt, 2048)).trim();
       const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('Risposta non valida da Claude');
+      if (!match) throw new Error('Risposta non valida da Gemini');
 
       const parsed = JSON.parse(match[0]);
 

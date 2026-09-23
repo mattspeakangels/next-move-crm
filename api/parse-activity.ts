@@ -1,4 +1,5 @@
 // Endpoint autocontenuto — nessun import locale
+import { callGemini, GeminiError } from './gemini.js';
 
 interface ContactHint {
   id: string;
@@ -58,51 +59,23 @@ export default async function handler(
   const serverToken = process.env.ADMIN_API_TOKEN;
   if (!token || token !== serverToken) { res.status(401).json({ error: 'Unauthorized' }); return; }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) { res.status(500).json({ error: 'ANTHROPIC_API_KEY mancante' }); return; }
-
   const body = req.body as Record<string, unknown>;
   const transcript = typeof body?.transcript === 'string' ? body.transcript.trim() : '';
   const contacts = Array.isArray(body?.contacts) ? (body.contacts as ContactHint[]) : [];
 
   if (!transcript) { res.status(400).json({ error: 'transcript richiesto' }); return; }
 
-  const models = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6'];
-  let lastErr = '';
-
-  for (const model of models) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 256,
-          messages: [{ role: 'user', content: buildPrompt(transcript, contacts) }],
-        }),
-      });
-
-      if (!response.ok) {
-        lastErr = `${model}: ${response.status}`;
-        continue;
-      }
-
-      const json = await response.json() as { content: Array<{ type: string; text?: string }> };
-      const text = json.content.find(b => b.type === 'text')?.text ?? '';
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) { res.status(502).json({ error: 'Risposta AI non valida' }); return; }
-
-      res.json(JSON.parse(match[0]));
-      return;
-    } catch (err) {
-      lastErr = String(err);
-      continue;
-    }
+  let text: string;
+  try {
+    text = await callGemini(buildPrompt(transcript, contacts), { maxOutputTokens: 256 });
+  } catch (err) {
+    const message = err instanceof GeminiError ? err.message : String(err);
+    res.status(502).json({ error: `Modello non disponibile (${message})` });
+    return;
   }
 
-  res.status(502).json({ error: `Modello non disponibile (${lastErr})` });
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) { res.status(502).json({ error: 'Risposta AI non valida' }); return; }
+
+  res.json(JSON.parse(match[0]));
 }
