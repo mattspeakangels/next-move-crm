@@ -16,9 +16,9 @@ export function QuickLogFAB() {
         onClick={() => setOpen(true)}
         aria-label="Registra attività"
         title="Registra attività"
-        className="fixed right-4 md:right-8 bottom-20 md:bottom-8 z-[80] w-14 h-14 rounded-full bg-[var(--accent-600)] text-white shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        className="fixed right-4 md:right-8 bottom-20 md:bottom-8 z-[80] w-14 h-14 rounded-full bg-blue-700 shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
       >
-        <Mic size={24} />
+        <Mic size={24} className="text-amber-400" />
       </button>
       {open && <QuickLogPanel onClose={() => setOpen(false)} />}
     </>
