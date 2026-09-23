@@ -27,9 +27,18 @@ const OpenActivityHintSchema = z.object({
 
 const RequestSchema = z.object({
   transcript: z.string().min(1).max(2000),
-  contacts: z.array(ContactHintSchema).max(100).default([]),
+  // .catch([]) invece di rifiuto secco: voci malformate/orfane nei dati
+  // esistenti dell'utente (es. contactId vuoto su attività legacy) non
+  // devono far fallire l'intera richiesta con 400.
+  contacts: z.array(ContactHintSchema.catch(null as unknown as z.infer<typeof ContactHintSchema>))
+    .max(100)
+    .default([])
+    .transform(list => list.filter((c): c is z.infer<typeof ContactHintSchema> => c !== null)),
   now: z.string().min(1).max(40).optional(),
-  openActivitiesHint: z.array(OpenActivityHintSchema).max(50).optional(),
+  openActivitiesHint: z.array(OpenActivityHintSchema.catch(null as unknown as z.infer<typeof OpenActivityHintSchema>))
+    .max(50)
+    .optional()
+    .transform(list => list?.filter((h): h is z.infer<typeof OpenActivityHintSchema> => h !== null)),
 });
 
 const ACTIVITY_TYPES = [

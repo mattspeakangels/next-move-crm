@@ -187,9 +187,12 @@ export function QuickLogPanel({ onClose }: Props) {
     setErrorMsg(null);
     try {
       const token = import.meta.env.VITE_ADMIN_API_TOKEN;
-      const contactHints = contactList.slice(0, 100).map(c => ({ id: c.id, company: c.company, city: c.city || undefined }));
+      const contactHints = contactList
+        .filter(c => c.id && c.company)
+        .slice(0, 100)
+        .map(c => ({ id: c.id, company: c.company, city: c.city || undefined }));
       const openHints = Object.values(activities)
-        .filter(a => a.outcome === 'da-fare')
+        .filter(a => a.contactId && a.type && a.outcome === 'da-fare')
         .slice(0, 50)
         .map(a => ({ contactId: a.contactId, type: a.type, date: new Date(a.date).toISOString().split('T')[0] }));
 
