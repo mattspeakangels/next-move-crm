@@ -2,8 +2,8 @@
 // Uses raw fetch to Anthropic API with fallback to cheapest models
 
 import { z } from 'zod';
-import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit';
-import { applyCors, handleCorsPreFlight } from './cors';
+import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
+import { applyCors, handleCorsPreFlight } from './cors.js';
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {

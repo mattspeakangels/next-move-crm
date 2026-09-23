@@ -4,8 +4,8 @@
 // Output: JSON strutturato server-side, pattern api/parse-activity.ts.
 
 import { z } from 'zod';
-import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit';
-import { applyCors, handleCorsPreFlight } from './cors';
+import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
+import { applyCors, handleCorsPreFlight } from './cors.js';
 
 function logError(message: string, context: Record<string, unknown>) {
   console.error(`[API Error] ${message}`, JSON.stringify(context, null, 2));
