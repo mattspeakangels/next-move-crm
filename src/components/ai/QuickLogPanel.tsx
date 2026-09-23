@@ -3,6 +3,7 @@ import { Mic, Square, Loader2, X, Check, AlertTriangle, Trash2 } from 'lucide-re
 import { useStore } from '../../store/useStore';
 import { useToast } from '../ui/ToastContext';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
+import { useMediaRecorderVoice } from '../../hooks/useMediaRecorderVoice';
 import { SearchDropdown, type SearchDropdownItem } from '../ui/SearchDropdown';
 import type { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita } from '../../types';
 
@@ -65,7 +66,19 @@ export function QuickLogPanel({ onClose }: Props) {
   const updateActivity = useStore(s => s.updateActivity);
   const addTodo = useStore(s => s.addTodo);
   const { showToast } = useToast();
-  const voice = useVoiceInput();
+  // Percorso primario: registrazione audio + trascrizione server (affidabile
+  // anche su PWA Android, dove la Web Speech API nativa spesso fallisce con
+  // 'not-allowed'/'service-not-allowed' pur col permesso microfono concesso).
+  // Fallback: Web Speech API nativa, per i browser senza MediaRecorder/opus
+  // funzionante (es. Safari).
+  const mediaVoice = useMediaRecorderVoice();
+  const legacyVoice = useVoiceInput();
+  const useMediaPath = mediaVoice.isSupported;
+  const voiceSupported = useMediaPath || legacyVoice.isSupported;
+  const voiceRecording = useMediaPath ? mediaVoice.isRecording : legacyVoice.isRecording;
+  const voiceTranscribing = useMediaPath && mediaVoice.isTranscribing;
+  const voiceError = useMediaPath ? mediaVoice.error : legacyVoice.error;
+  const voiceInterim = useMediaPath ? '' : legacyVoice.transcript;
 
   const [phase, setPhase] = useState<Phase>('capture');
   const [text, setText] = useState('');
@@ -204,8 +217,19 @@ export function QuickLogPanel({ onClose }: Props) {
   };
 
   const handleStartVoice = () => {
-    voice.reset();
-    voice.start({ onFinal: (finalText) => { if (finalText) analyze(finalText); } });
+    const onFinal = (finalText: string) => { if (finalText) analyze(finalText); };
+    if (useMediaPath) {
+      mediaVoice.reset();
+      mediaVoice.start({ onFinal });
+    } else {
+      legacyVoice.reset();
+      legacyVoice.start({ onFinal });
+    }
+  };
+
+  const handleStopVoice = () => {
+    if (useMediaPath) mediaVoice.stop();
+    else legacyVoice.stop();
   };
 
   const toggleTodo = (idx: number) => {
@@ -304,20 +328,23 @@ export function QuickLogPanel({ onClose }: Props) {
 
               <div className="flex items-center justify-center py-4">
                 <button
-                  onClick={voice.isRecording ? voice.stop : handleStartVoice}
-                  disabled={!voice.isSupported}
+                  onClick={voiceRecording ? handleStopVoice : handleStartVoice}
+                  disabled={!voiceSupported || voiceTranscribing}
                   className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all ${
-                    voice.isRecording ? 'bg-red-500 animate-pulse' : 'bg-[var(--accent-600)]'
+                    voiceRecording ? 'bg-red-500 animate-pulse' : 'bg-[var(--accent-600)]'
                   } text-white disabled:opacity-40`}
                 >
-                  {voice.isRecording ? <Square size={26} /> : <Mic size={28} />}
+                  {voiceTranscribing ? <Loader2 size={26} className="animate-spin" /> : voiceRecording ? <Square size={26} /> : <Mic size={28} />}
                 </button>
               </div>
-              {voice.isRecording && (
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400 min-h-[1.5em]">{voice.transcript || 'Ascolto…'}</p>
+              {voiceRecording && (
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400 min-h-[1.5em]">{voiceInterim || 'Ascolto…'}</p>
               )}
-              {voice.error && <p className="text-center text-xs text-red-500">{voice.error}</p>}
-              {!voice.isSupported && (
+              {voiceTranscribing && (
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400">Sto trascrivendo l'audio…</p>
+              )}
+              {voiceError && <p className="text-center text-xs text-red-500">{voiceError}</p>}
+              {!voiceSupported && (
                 <p className="text-center text-xs text-amber-600">Dettatura vocale non supportata su questo browser, usa il testo qui sotto.</p>
               )}
 
