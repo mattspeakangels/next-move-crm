@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
 import { applyCors, handleCorsPreFlight } from './cors.js';
-import { callGemini, GeminiError } from './gemini.js';
+import { callGemini, GeminiError } from './_gemini.js';
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {

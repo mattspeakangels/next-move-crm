@@ -1,5 +1,5 @@
 // Endpoint autocontenuto — nessun import locale
-import { callGemini, GeminiError } from './gemini.js';
+import { callGemini, GeminiError } from './_gemini.js';
 
 interface ContactHint {
   id: string;

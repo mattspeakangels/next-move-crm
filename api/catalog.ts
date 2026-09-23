@@ -1,5 +1,5 @@
 // Endpoint autocontenuto — nessun import da file locali per isolare il problema di bundle
-import { callGemini, GeminiError } from './gemini.js';
+import { callGemini, GeminiError } from './_gemini.js';
 
 interface ContactItem {
   id: string;

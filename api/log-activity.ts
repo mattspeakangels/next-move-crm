@@ -6,7 +6,7 @@
 import { z } from 'zod';
 import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
 import { applyCors, handleCorsPreFlight } from './cors.js';
-import { callGemini, GeminiError } from './gemini.js';
+import { callGemini, GeminiError } from './_gemini.js';
 
 function logError(message: string, context: Record<string, unknown>) {
   console.error(`[API Error] ${message}`, JSON.stringify(context, null, 2));
