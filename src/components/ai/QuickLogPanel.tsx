@@ -334,7 +334,7 @@ export function QuickLogPanel({ onClose }: Props) {
                   onClick={voiceRecording ? handleStopVoice : handleStartVoice}
                   disabled={!voiceSupported || voiceTranscribing}
                   className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all ${
-                    voiceRecording ? 'bg-red-500 animate-pulse' : 'bg-[var(--accent-600)]'
+                    voiceRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-700'
                   } text-white disabled:opacity-40`}
                 >
                   {voiceTranscribing ? <Loader2 size={26} className="animate-spin" /> : voiceRecording ? <Square size={26} /> : <Mic size={28} />}
@@ -360,12 +360,12 @@ export function QuickLogPanel({ onClose }: Props) {
                 onChange={e => setText(e.target.value)}
                 placeholder="Es: ho fatto un sopralluogo da Rossi Srl, serve un preventivo DPI entro fine mese, richiamarlo giovedì"
                 rows={4}
-                className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-[var(--accent-400)] dark:text-white resize-none"
+                className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-blue-400 dark:text-white resize-none"
               />
               <button
                 onClick={() => analyze(text)}
                 disabled={!text.trim()}
-                className="w-full py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm uppercase tracking-wide disabled:opacity-40"
+                className="w-full py-3 rounded-2xl bg-blue-700 text-white font-black text-sm uppercase tracking-wide disabled:opacity-40"
               >
                 Analizza
               </button>
@@ -374,7 +374,7 @@ export function QuickLogPanel({ onClose }: Props) {
 
           {phase === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 size={32} className="animate-spin text-[var(--accent-600)]" />
+              <Loader2 size={32} className="animate-spin text-blue-700" />
               <p className="text-sm text-gray-500 dark:text-gray-400">Sto analizzando il resoconto…</p>
             </div>
           )}
@@ -383,7 +383,7 @@ export function QuickLogPanel({ onClose }: Props) {
             <div className="flex flex-col items-center justify-center py-10 gap-3">
               <AlertTriangle size={28} className="text-red-500" />
               <p className="text-sm text-red-500 text-center">{errorMsg}</p>
-              <button onClick={() => setPhase('capture')} className="text-sm font-bold text-[var(--accent-600)]">Riprova</button>
+              <button onClick={() => setPhase('capture')} className="text-sm font-bold text-blue-700">Riprova</button>
             </div>
           )}
 
@@ -408,7 +408,7 @@ export function QuickLogPanel({ onClose }: Props) {
                       <button
                         key={id}
                         onClick={() => { setContactId(id); setContactQuery(contacts[id].company); const open = findOpenActivity(id, date); setCloseExistingId(open?.id || null); setSaveMode(open ? 'close' : 'new'); }}
-                        className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[var(--accent-50)] text-[var(--accent-700)] dark:bg-[var(--accent-900)] dark:text-[var(--accent-200)]"
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
                       >
                         {contacts[id].company}
                       </button>
@@ -490,8 +490,8 @@ export function QuickLogPanel({ onClose }: Props) {
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">To-do estratti</label>
                   <div className="space-y-2 mt-1.5">
                     {todos.map((t, idx) => (
-                      <div key={idx} className={`flex items-start gap-2 rounded-xl px-3 py-2.5 border-2 ${t.selected ? 'border-[var(--accent-200)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
-                        <button onClick={() => toggleTodo(idx)} className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${t.selected ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-200 dark:bg-gray-600'}`}>
+                      <div key={idx} className={`flex items-start gap-2 rounded-xl px-3 py-2.5 border-2 ${t.selected ? 'border-blue-200 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
+                        <button onClick={() => toggleTodo(idx)} className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${t.selected ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-600'}`}>
                           {t.selected && <Check size={12} />}
                         </button>
                         <div className="flex-1 min-w-0">
@@ -510,7 +510,7 @@ export function QuickLogPanel({ onClose }: Props) {
               <button
                 onClick={handleSave}
                 disabled={!contactId || phase !== 'review'}
-                className="w-full py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm uppercase tracking-wide disabled:opacity-40 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-2xl bg-blue-700 text-white font-black text-sm uppercase tracking-wide disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {phase === 'saving' ? <Loader2 size={16} className="animate-spin" /> : null}
                 {saveMode === 'close' ? 'Chiudi appuntamento e salva' : 'Salva attività'}
