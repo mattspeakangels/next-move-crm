@@ -4,30 +4,43 @@
 // l'uso diretto di @anthropic-ai/sdk (dangerouslyAllowBrowser) in
 // AgendaView.tsx e ConversationRecorder.tsx.
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// gemini-2.0-flash deprecato da Google (404 "no longer available");
+// cascata sul modello corrente + alias "latest" come rete di sicurezza
+// contro future deprecazioni (stesso pattern di api/_gemini.ts).
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
 
 export async function callGeminiClient(apiKey: string, prompt: string, maxOutputTokens = 1024): Promise<string> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens },
-      }),
-    },
-  );
+  const errors: string[] = [];
+  for (const model of GEMINI_MODELS) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens },
+          }),
+        },
+      );
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`${res.status} ${body.slice(0, 200)}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        errors.push(`${model}: ${res.status} ${body.slice(0, 200)}`);
+        continue;
+      }
+
+      const json = await res.json() as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const text = json.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
+      if (!text) { errors.push(`${model}: risposta vuota`); continue; }
+      return text;
+    } catch (err) {
+      errors.push(`${model}: ${err instanceof Error ? err.message : 'error'}`);
+      continue;
+    }
   }
-
-  const json = await res.json() as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  const text = json.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
-  if (!text) throw new Error('Risposta vuota da Gemini');
-  return text;
+  throw new Error(`Nessun modello Gemini disponibile [${errors.join(' | ')}]`);
 }

@@ -4,7 +4,9 @@
 // ritorno (testo grezzo), così i chiamanti (api/claude.ts, api/log-activity.ts,
 // api/parse-activity.ts, api/catalog.ts) restano quasi identici.
 
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+// gemini-2.5-flash/2.0-flash/1.5-flash deprecati da Google (404 "no longer
+// available"); modello attuale segnalato dall'errore stesso di Google.
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
 
 export class GeminiError extends Error {}
 
