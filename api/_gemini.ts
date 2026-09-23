@@ -8,11 +8,51 @@
 // available"); modello attuale segnalato dall'errore stesso di Google.
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
 
+// 503 "UNAVAILABLE / high demand" è un sovraccarico temporaneo lato Google,
+// non un errore del modello: un solo retry con breve attesa lo assorbe nella
+// maggior parte dei casi senza rischiare il maxDuration della function (30s).
+const RETRY_ON_503_DELAY_MS = 1200;
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export class GeminiError extends Error {}
+
+async function callOnce(
+  model: string,
+  apiKey: string,
+  prompt: string,
+  maxOutputTokens: number,
+): Promise<{ ok: true; text: string } | { ok: false; status: number; body: string }> {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => '');
+    return { ok: false, status: response.status, body: errBody.slice(0, 200) };
+  }
+
+  const json = await response.json() as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
+  };
+  const text = json.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
+  return text ? { ok: true, text } : { ok: false, status: 0, body: 'risposta vuota' };
+}
 
 export async function callGemini(prompt: string, opts?: { maxOutputTokens?: number }): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new GeminiError('GEMINI_API_KEY non configurata su Vercel');
+  const maxOutputTokens = opts?.maxOutputTokens ?? 1024;
 
   // Accumula l'errore di OGNI modello tentato (non solo l'ultimo): un
   // fallimento sistemico (es. chiave con permessi/versione API sbagliata)
@@ -21,33 +61,15 @@ export async function callGemini(prompt: string, opts?: { maxOutputTokens?: numb
   const errors: string[] = [];
   for (const model of GEMINI_MODELS) {
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: opts?.maxOutputTokens ?? 1024 },
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errBody = await response.text().catch(() => '');
-        errors.push(`${model}: ${response.status} ${errBody.slice(0, 200)}`);
-        continue;
+      let result = await callOnce(model, apiKey, prompt, maxOutputTokens);
+      if (!result.ok && result.status === 503) {
+        await sleep(RETRY_ON_503_DELAY_MS);
+        result = await callOnce(model, apiKey, prompt, maxOutputTokens);
       }
-
-      const json = await response.json() as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
-      };
-      const text = json.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
-      if (!text) { errors.push(`${model}: risposta vuota`); continue; }
-      return text;
+      if (result.ok) return result.text;
+      errors.push(`${model}: ${result.status} ${result.body}`);
     } catch (err) {
       errors.push(`${model}: ${err instanceof Error ? err.message : 'error'}`);
-      continue;
     }
   }
 
