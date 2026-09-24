@@ -730,7 +730,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   const [topFilter, setTopFilter] = useState<'dealer' | 'end-user' | null>(null);
   const [subFilter, setSubFilter] = useState<'industria' | 'edilizia' | null>(null);
   const [visibleCount, setVisibleCount] = useState(50);
-  const [sortBy, setSortBy] = useState<'nome' | 'data' | 'citta'>('nome');
+  const [sortBy, setSortBy] = useState<'nome' | 'data' | 'citta' | 'interazione'>('nome');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Debounce ricerca — evita filter su ogni keystroke con 9k+ contatti
@@ -743,6 +743,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   // Badge counts — memoizzati per evitare iterazione completa ad ogni render
   const clientiCount  = useMemo(() => Object.values(contacts).filter(c => c.status === 'cliente').length,   [contacts]);
   const prospectCount = useMemo(() => Object.values(contacts).filter(c => c.status === 'potenziale').length, [contacts]);
+
+  // Data dell'ultima interazione (attività) per contatto — usata per l'ordinamento "Ultima interazione"
+  const lastActivityByContact = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const a of Object.values(activities)) {
+      if (!a.contactId) continue;
+      if (!map[a.contactId] || a.date > map[a.contactId]) map[a.contactId] = a.date;
+    }
+    return map;
+  }, [activities]);
 
   // Lista filtrata completa — memoizzata
   const filteredList = useMemo(() => {
@@ -762,9 +772,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
         const dir = sortDir === 'asc' ? 1 : -1;
         if (sortBy === 'data') return ((a.createdAt || 0) - (b.createdAt || 0)) * dir;
         if (sortBy === 'citta') return (a.city || '').localeCompare(b.city || '', 'it', { sensitivity: 'base' }) * dir;
+        if (sortBy === 'interazione') return ((lastActivityByContact[a.id] || 0) - (lastActivityByContact[b.id] || 0)) * dir;
         return (a.company || a.contactName || '').localeCompare(b.company || b.contactName || '', 'it', { sensitivity: 'base' }) * dir;
       });
-  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch, sortBy, sortDir]);
+  }, [contacts, activeTab, topFilter, subFilter, debouncedSearch, sortBy, sortDir, lastActivityByContact]);
 
   // Mentre si sta cercando, anteponi i risultati più rilevanti (nome/azienda che iniziano
   // per il termine cercato) a parità di criterio di ordinamento scelto dall'utente.
@@ -1708,13 +1719,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
                   <select
                     value={sortBy}
-                    onChange={e => setSortBy(e.target.value as 'nome' | 'data' | 'citta')}
+                    onChange={e => setSortBy(e.target.value as 'nome' | 'data' | 'citta' | 'interazione')}
                     className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3.5 font-bold outline-none focus:border-[var(--accent-400)] transition-all shadow-sm text-sm text-gray-600 dark:text-gray-300"
                     title="Ordina per"
                   >
                     <option value="nome">Nome</option>
                     <option value="data">Data creazione</option>
                     <option value="citta">Città</option>
+                    <option value="interazione">Ultima interazione</option>
                   </select>
                   <button
                     type="button"

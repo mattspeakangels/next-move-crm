@@ -383,6 +383,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     scadenza: string;
     note: string;
     selected: boolean;
+    creaAppuntamento: boolean;
   }
   const [aiTodos, setAiTodos] = useState<AiExtractedTodo[]>([]);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
@@ -487,6 +488,14 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     voiceClose.reset();
   };
 
+  // Tipi di to-do che rappresentano un contatto reale col cliente a una data precisa
+  // (visita, richiamata, demo) → possono generare anche un appuntamento in Agenda.
+  const TODO_TO_ACTIVITY_TYPE: Partial<Record<TodoTipo, ActivityType>> = {
+    visita: 'visita',
+    'chiamata-follow': 'chiamata',
+    demo: 'demo',
+  };
+
   const analyzeResoconto = async () => {
     if (!closeNotes.trim()) return;
     const apiKey = useStore.getState().claudeApiKey.trim();
@@ -550,8 +559,8 @@ Regole:
       const raw = (msg.content[0] as { text: string }).text.trim();
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Risposta non valida');
-      const parsed: Omit<AiExtractedTodo, 'selected'>[] = JSON.parse(match[0]);
-      setAiTodos(parsed.map(t => ({ ...t, selected: true })));
+      const parsed: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] = JSON.parse(match[0]);
+      setAiTodos(parsed.map(t => ({ ...t, selected: true, creaAppuntamento: !!TODO_TO_ACTIVITY_TYPE[t.tipo] })));
     } catch (err: any) {
       setAiError(err.message ?? 'Errore analisi. Riprova.');
     } finally {
@@ -559,17 +568,19 @@ Regole:
     }
   };
 
-  // Se l'AI estrae un'azione di tipo "visita" con una data di esecuzione esplicita,
-  // crea subito l'appuntamento in Agenda oltre al To Do (nessuna conferma extra richiesta).
-  const scheduleVisitIfNeeded = (t: AiExtractedTodo, contactId?: string, dealId?: string): boolean => {
-    if (t.tipo !== 'visita' || !t.dataEsecuzione || !contactId) return false;
+  // Se l'AI estrae un'azione con una data di esecuzione esplicita e l'utente non ha
+  // disattivato il toggle "crea anche appuntamento", crea subito l'appuntamento in Agenda
+  // oltre al To Do.
+  const scheduleActivityIfNeeded = (t: AiExtractedTodo, contactId?: string, dealId?: string): boolean => {
+    const activityType = TODO_TO_ACTIVITY_TYPE[t.tipo];
+    if (!activityType || !t.creaAppuntamento || !t.dataEsecuzione || !contactId) return false;
     const date = new Date(`${t.dataEsecuzione}T09:00:00`);
     if (Number.isNaN(date.getTime())) return false;
     addActivity({
       id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       contactId,
       dealId,
-      type: 'visita',
+      type: activityType,
       date: date.getTime(),
       outcome: 'da-fare',
       notes: t.note || t.titolo,
@@ -593,7 +604,7 @@ Regole:
         source: 'visita',
         sourceActivityId: closingActivity?.id,
       });
-      if (scheduleVisitIfNeeded(t, closingActivity?.contactId, closingActivity?.dealId)) scheduled++;
+      if (scheduleActivityIfNeeded(t, closingActivity?.contactId, closingActivity?.dealId)) scheduled++;
     }
     if (selected.length > 0) showToast(`${selected.length} attività aggiunte al To Do${scheduled > 0 ? ` · ${scheduled} appuntamento/i creato/i in Agenda` : ''}`, 'success');
     setAiTodos([]);
@@ -679,7 +690,7 @@ Regole:
       const raw = (msg.content[0] as { text: string }).text.trim();
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Risposta non valida');
-      const parsed: { id: string; todos: Omit<AiExtractedTodo, 'selected'>[] }[] = JSON.parse(match[0]);
+      const parsed: { id: string; todos: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] }[] = JSON.parse(match[0]);
 
       const groups: BatchGroup[] = parsed.map(p => {
         const activity = batch.find(a => a.id === p.id);
@@ -687,7 +698,7 @@ Regole:
           activityId: p.id,
           contactName: activity?.contactId ? contacts[activity.contactId]?.company ?? '' : '',
           date: activity?.date ?? 0,
-          todos: (p.todos || []).map(t => ({ ...t, selected: true })),
+          todos: (p.todos || []).map(t => ({ ...t, selected: true, creaAppuntamento: !!TODO_TO_ACTIVITY_TYPE[t.tipo] })),
         };
       });
       setBatchGroups(groups);
@@ -718,7 +729,7 @@ Regole:
           sourceActivityId: group.activityId,
         });
         count++;
-        if (scheduleVisitIfNeeded(t, sourceActivity?.contactId, sourceActivity?.dealId)) scheduled++;
+        if (scheduleActivityIfNeeded(t, sourceActivity?.contactId, sourceActivity?.dealId)) scheduled++;
       }
     }
     // Segna come analizzate tutte le visite passate nel batch, anche quelle senza azioni,
@@ -2077,6 +2088,14 @@ Regole:
                                   className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
                               </div>
                             </div>
+                            {TODO_TO_ACTIVITY_TYPE[todo.tipo] && (
+                              <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                <input type="checkbox" checked={todo.creaAppuntamento}
+                                  onChange={() => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, creaAppuntamento: !t.creaAppuntamento } : t))}
+                                  className="accent-[var(--accent-600)]" />
+                                📅 Crea anche appuntamento in Agenda
+                              </label>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -2197,6 +2216,14 @@ Regole:
                                   </span>
                                 )}
                               </div>
+                              {TODO_TO_ACTIVITY_TYPE[todo.tipo] && todo.dataEsecuzione && (
+                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                  <input type="checkbox" checked={todo.creaAppuntamento}
+                                    onChange={() => setBatchGroups(gs => gs.map((g, j) => j === gi ? { ...g, todos: g.todos.map((t, k) => k === ti ? { ...t, creaAppuntamento: !t.creaAppuntamento } : t) } : g))}
+                                    className="accent-purple-600" />
+                                  📅 Crea anche appuntamento il {new Date(todo.dataEsecuzione).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                                </label>
+                              )}
                             </div>
                           </div>
                         </div>
