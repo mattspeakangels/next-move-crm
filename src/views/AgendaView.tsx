@@ -547,7 +547,14 @@ Regole:
 - "bassa" se non c'è urgenza definita
 - dataEsecuzione = quando iniziare; scadenza = deadline massima
 - Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
-- Includi SOLO azioni concrete, non osservazioni generiche`;
+- Includi SOLO azioni concrete, non osservazioni generiche
+
+Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
+- Usa "visita" quando si fissa un incontro di persona con il cliente a una data precisa (es. "fissato appuntamento", "ci vediamo", "passo a trovarlo", "devo tornare/ripassare da lui")
+- Usa "chiamata-follow" quando si tratta di richiamarlo telefonicamente a una data precisa, senza incontro di persona
+- Usa "demo" quando si tratta di una dimostrazione prodotto pianificata a una data precisa
+- Qualsiasi frase che indica un impegno preso con il cliente per una data specifica (appuntamento, visita, richiamata, demo) DEVE avere dataEsecuzione valorizzata con la data esatta, non lasciata vuota
+- Per le date relative usa Data oggi come riferimento: "giovedì della prossima settimana" = il giovedì della settimana successiva a quella corrente (non della settimana in corso), "lunedì prossimo"/"martedì prossimo" ecc. = stessa logica`;
 
       const raw = (await callGeminiClient(apiKey, prompt)).trim();
       const match = raw.match(/\[[\s\S]*\]/);
@@ -670,7 +677,14 @@ Regole:
 - dataEsecuzione = quando iniziare; scadenza = deadline massima
 - Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
 - Includi SOLO azioni concrete, non osservazioni generiche
-- Non omettere nessun id: se una visita non genera azioni, restituisci "todos": []`;
+- Non omettere nessun id: se una visita non genera azioni, restituisci "todos": []
+
+Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
+- Usa "visita" quando si fissa un incontro di persona con il cliente a una data precisa (es. "fissato appuntamento", "ci vediamo", "passo a trovarlo", "devo tornare/ripassare da lui")
+- Usa "chiamata-follow" quando si tratta di richiamarlo telefonicamente a una data precisa, senza incontro di persona
+- Usa "demo" quando si tratta di una dimostrazione prodotto pianificata a una data precisa
+- Qualsiasi frase che indica un impegno preso con il cliente per una data specifica (appuntamento, visita, richiamata, demo) DEVE avere dataEsecuzione valorizzata con la data esatta, non lasciata vuota
+- Per le date relative usa Data oggi come riferimento: "giovedì della prossima settimana" = il giovedì della settimana successiva a quella corrente (non della settimana in corso), "lunedì prossimo"/"martedì prossimo" ecc. = stessa logica`;
 
       const raw = (await callGeminiClient(apiKey, prompt, Math.min(8192, 500 + items.length * 300))).trim();
       const match = raw.match(/\[[\s\S]*\]/);
