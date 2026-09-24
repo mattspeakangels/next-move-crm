@@ -180,7 +180,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         {/* Footer label */}
         <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
           <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center">
-            Generato da Claude AI (Anthropic) — verifica sempre le informazioni prima di usarle
+            Generato da Gemini AI (Google) — verifica sempre le informazioni prima di usarle
           </p>
         </div>
       </div>

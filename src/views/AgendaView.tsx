@@ -1,8 +1,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw } from 'lucide-react';
+import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw, Route } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../types';
-import Anthropic from '@anthropic-ai/sdk';
+import { callGeminiClient } from '../lib/geminiClient';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
@@ -318,11 +318,12 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
 
 interface AgendaViewProps {
   onNavigateToContact?: (contactId: string) => void;
+  onViewItinerary?: (date: string) => void;
 }
 
 type CloseVisitType = 'prima-visita' | 'follow-up' | 'offerta' | 'chiamata';
 
-export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) => {
+export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onViewItinerary }) => {
   const {
     activities, addActivity, updateActivity, deleteActivity, contacts, updateContact, addTodo,
     sequences, prospectingTracks, addProspectingTrack, updateProspectingTrack, addProspectEmailDraftsBatch, addDeal,
@@ -499,7 +500,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
   const analyzeResoconto = async () => {
     if (!closeNotes.trim()) return;
     const apiKey = useStore.getState().claudeApiKey.trim();
-    if (!apiKey) { setAiError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.'); return; }
+    if (!apiKey) { setAiError('API Key assente. Vai in Impostazioni → Gemini AI e inserisci la tua chiave Gemini.'); return; }
 
     setAiAnalyzing(true);
     setAiError(null);
@@ -516,13 +517,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact }) =
     };
 
     try {
-      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-      const msg = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: `Sei un assistente per un agente commerciale Blaklader (workwear premium).
+      const prompt = `Sei un assistente per un agente commerciale Blaklader (workwear premium).
 Data oggi: ${today}. Cliente: "${contactName}".
 Tipo di contatto: ${visitContext[derivedVisitType]}
 
@@ -552,11 +547,9 @@ Regole:
 - "bassa" se non c'è urgenza definita
 - dataEsecuzione = quando iniziare; scadenza = deadline massima
 - Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
-- Includi SOLO azioni concrete, non osservazioni generiche`,
-        }],
-      });
+- Includi SOLO azioni concrete, non osservazioni generiche`;
 
-      const raw = (msg.content[0] as { text: string }).text.trim();
+      const raw = (await callGeminiClient(apiKey, prompt)).trim();
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Risposta non valida');
       const parsed: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] = JSON.parse(match[0]);
@@ -626,7 +619,7 @@ Regole:
 
   const analyzeAllResoconti = async () => {
     const apiKey = useStore.getState().claudeApiKey.trim();
-    if (!apiKey) { setBatchError('API Key assente. Vai in Impostazioni → Claude AI e inserisci la tua chiave Anthropic.'); return; }
+    if (!apiKey) { setBatchError('API Key assente. Vai in Impostazioni → Gemini AI e inserisci la tua chiave Gemini.'); return; }
     const batch = pendingBatchActivities.slice(0, MAX_BATCH_SIZE);
     if (batch.length === 0) return;
 
@@ -643,13 +636,7 @@ Regole:
     }));
 
     try {
-      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-      const msg = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: Math.min(8192, 500 + items.length * 300),
-        messages: [{
-          role: 'user',
-          content: `Sei un assistente per un agente commerciale Blaklader (workwear premium).
+      const prompt = `Sei un assistente per un agente commerciale Blaklader (workwear premium).
 Data oggi: ${today}.
 
 Di seguito trovi i resoconti di ${items.length} visite/appuntamenti commerciali GIA CONCLUSI, ognuno identificato da un "id" esatto. Per OGNUNO, estrai TUTTE le azioni concrete da fare (offerte, campionature, schede tecniche, follow-up, appuntamenti, ecc.), con data di esecuzione e scadenza basate sulle urgenze menzionate nel testo.
@@ -683,11 +670,9 @@ Regole:
 - dataEsecuzione = quando iniziare; scadenza = deadline massima
 - Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
 - Includi SOLO azioni concrete, non osservazioni generiche
-- Non omettere nessun id: se una visita non genera azioni, restituisci "todos": []`,
-        }],
-      });
+- Non omettere nessun id: se una visita non genera azioni, restituisci "todos": []`;
 
-      const raw = (msg.content[0] as { text: string }).text.trim();
+      const raw = (await callGeminiClient(apiKey, prompt, Math.min(8192, 500 + items.length * 300))).trim();
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Risposta non valida');
       const parsed: { id: string; todos: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] }[] = JSON.parse(match[0]);
@@ -860,6 +845,13 @@ Regole:
   const listActivities = selectedDay
     ? activitiesForDay(selectedDay)
     : allActivities.filter(a => a.date >= today.getTime()).sort((a, b) => a.date - b.date);
+
+  // Il giorno selezionato ha almeno una visita/sopralluogo con un cliente geolocalizzato?
+  // Serve per mostrare il tasto "Vedi itinerario" solo quando ha senso aprire la mappa.
+  const dayHasMappedVisits = !!selectedDay && listActivities.some(a =>
+    (a.type === 'visita' || a.type === 'sopralluogo') &&
+    contacts[a.contactId]?.lat && contacts[a.contactId]?.lng
+  );
 
   // ── Modal helpers ──
 
@@ -1577,9 +1569,17 @@ Regole:
             }
           </h2>
           {selectedDay && (
-            <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">
-              + Aggiungi in questa data
-            </button>
+            <div className="flex items-center gap-2">
+              {dayHasMappedVisits && onViewItinerary && (
+                <button onClick={() => onViewItinerary(toLocalDateStr(selectedDay))}
+                  className="flex items-center gap-1 text-[10px] font-black text-orange-500 bg-orange-50 dark:bg-orange-900/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-orange-100 transition-colors">
+                  <Route size={11} /> Vedi itinerario
+                </button>
+              )}
+              <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">
+                + Aggiungi in questa data
+              </button>
+            </div>
           )}
         </div>
 

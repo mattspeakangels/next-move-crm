@@ -33,3 +33,6 @@ build/
 clienti vink/
 prototipo-pipeline.html
 ANALISI-SALESFORCE-VS-NEXTMOVE.md
+
+# Artefatti locali di playwright-cli (screenshot/yaml di debug)
+.playwright-cli/

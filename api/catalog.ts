@@ -1,4 +1,5 @@
 // Endpoint autocontenuto — nessun import da file locali per isolare il problema di bundle
+import { callGemini, GeminiError } from './_gemini.js';
 
 interface ContactItem {
   id: string;
@@ -70,12 +71,6 @@ export default async function handler(
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'ANTHROPIC_API_KEY non configurata' });
-    return;
-  }
-
   // Validazione
   const body = req.body as Record<string, unknown>;
   if (!Array.isArray(body?.contacts) || body.contacts.length === 0) {
@@ -85,50 +80,23 @@ export default async function handler(
   const contacts = (body.contacts as ContactItem[]).slice(0, 50);
 
   const prompt = buildPrompt(contacts);
-  const models = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-haiku-4-5'];
-  let lastErr = '';
 
-  for (const model of models) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 2048,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error(`[catalog] ${model}: ${response.status}`, errText.substring(0, 200));
-        lastErr = `${model}: ${response.status}`;
-        continue;
-      }
-
-      const json = await response.json() as { content: Array<{ type: string; text?: string }> };
-      const text = json.content.find(b => b.type === 'text')?.text ?? '';
-
-      const match = text.match(/\[[\s\S]*\]/);
-      if (!match) {
-        console.error('[catalog] No JSON in response:', text.substring(0, 300));
-        res.status(502).json({ error: 'Risposta AI non valida' });
-        return;
-      }
-
-      res.json({ results: JSON.parse(match[0]) });
-      return;
-
-    } catch (err) {
-      lastErr = `${model}: ${String(err)}`;
-      continue;
-    }
+  let text: string;
+  try {
+    text = await callGemini(prompt, { maxOutputTokens: 2048 });
+  } catch (err) {
+    const message = err instanceof GeminiError ? err.message : String(err);
+    console.error('[catalog]', message);
+    res.status(502).json({ error: `Nessun modello disponibile (${message})` });
+    return;
   }
 
-  res.status(502).json({ error: `Nessun modello disponibile (${lastErr})` });
+  const match = text.match(/\[[\s\S]*\]/);
+  if (!match) {
+    console.error('[catalog] No JSON in response:', text.substring(0, 300));
+    res.status(502).json({ error: 'Risposta AI non valida' });
+    return;
+  }
+
+  res.json({ results: JSON.parse(match[0]) });
 }

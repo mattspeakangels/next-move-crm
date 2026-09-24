@@ -9,6 +9,7 @@ import { SEED_SEQUENCES } from './data/prospectingSequences';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
 import { SelectionAI } from './components/ai/SelectionAI';
+import { QuickLogFAB } from './components/ai/QuickLogFAB';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
@@ -90,6 +91,12 @@ function AppContent() {
     goTo('contacts');
   };
 
+  const [pendingItineraryDate, setPendingItineraryDate] = useState<string | null>(null);
+  const viewItinerary = (date: string) => {
+    setPendingItineraryDate(date);
+    goTo('map');
+  };
+
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
@@ -118,10 +125,10 @@ function AppContent() {
       case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
       case 'deals': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       case 'offers': return <OffersView />;
-      case 'agenda': return <AgendaView onNavigateToContact={navigateToContact} />;
+      case 'agenda': return <AgendaView onNavigateToContact={navigateToContact} onViewItinerary={viewItinerary} />;
       case 'products': return <ProductsView />;
-      case 'map': return <MapView onNavigateToContact={navigateToContact} onGoFullscreen={() => goTo('map-full')} />;
-      case 'map-full': return <MapView onNavigateToContact={navigateToContact} isFullscreen onExitFullscreen={() => goTo('map')} />;
+      case 'map': return <MapView onNavigateToContact={navigateToContact} onGoFullscreen={() => goTo('map-full')} initialItineraryDate={pendingItineraryDate} onItineraryDateConsumed={() => setPendingItineraryDate(null)} />;
+      case 'map-full': return <MapView onNavigateToContact={navigateToContact} isFullscreen onExitFullscreen={() => goTo('map')} initialItineraryDate={pendingItineraryDate} onItineraryDateConsumed={() => setPendingItineraryDate(null)} />;
       case 'attivita': return <ActivityLogView />;
       case 'analytics': return <AnalyticsView />;
       case 'storico': return <StoricoView />;
@@ -268,6 +275,7 @@ function AppContent() {
         </div>
       )}
 
+      <QuickLogFAB />
     </div>
   );
 }

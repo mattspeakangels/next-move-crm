@@ -76,7 +76,10 @@ export const OffersView: React.FC = () => {
   const [pdfModalContactSearch, setPdfModalContactSearch] = useState('');
   const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
   const [pdfModalAmount, setPdfModalAmount] = useState(0);
+  const [pdfModalEmailBody, setPdfModalEmailBody] = useState('');
   const [pdfModalUploading, setPdfModalUploading] = useState(false);
+  const [editingEmailBodyId, setEditingEmailBodyId] = useState<string | null>(null);
+  const [editingEmailBodyDraft, setEditingEmailBodyDraft] = useState('');
 
   // ── Nuovo Ordine diretto (senza passare da un'offerta vinta) ──
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -172,6 +175,7 @@ export const OffersView: React.FC = () => {
         followUpDate: Date.now() + 14 * 24 * 60 * 60 * 1000,
         pdfUrl: url,
         pdfName: name,
+        ...(pdfModalEmailBody.trim() ? { emailBody: pdfModalEmailBody.trim() } : {}),
       });
       showToast('PDF caricato e offerta creata!', 'success');
       setShowPdfModal(false);
@@ -179,6 +183,7 @@ export const OffersView: React.FC = () => {
       setPdfModalContactSearch('');
       setPdfModalFile(null);
       setPdfModalAmount(0);
+      setPdfModalEmailBody('');
     } catch (err: any) {
       showToast(err?.message ?? 'Errore caricamento PDF', 'error');
     } finally {
@@ -358,6 +363,7 @@ export const OffersView: React.FC = () => {
     const contact = contacts[offer.contactId];
     if (!contact) return;
     const subject = `Preventivo ${offer.offerNumber} - ${profile?.company || 'CRM'}`;
+    const bodyParam = offer.emailBody?.trim() ? `&body=${encodeURIComponent(offer.emailBody.trim())}` : '';
 
     if (offer.pdfUrl) {
       try {
@@ -380,7 +386,7 @@ export const OffersView: React.FC = () => {
 
         // Open email client after a short delay
         setTimeout(() => {
-          window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}`;
+          window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}${bodyParam}`;
         }, 600);
       } catch (err: any) {
         showToast(err?.message ?? 'Errore', 'error');
@@ -388,7 +394,7 @@ export const OffersView: React.FC = () => {
       return;
     }
 
-    window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}`;
+    window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}${bodyParam}`;
   };
 
   const handlePrint = async (offer: Offer) => {
@@ -509,7 +515,7 @@ export const OffersView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black uppercase dark:text-white">Carica PDF Offerta</h2>
-              <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); setPdfModalContactSearch(''); setPdfModalAmount(0); }}>
+              <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); setPdfModalContactSearch(''); setPdfModalAmount(0); setPdfModalEmailBody(''); }}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
@@ -558,6 +564,17 @@ export const OffersView: React.FC = () => {
                   )}
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setPdfModalFile(e.target.files?.[0] || null)} />
                 </label>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Testo email di accompagnamento (opzionale)</label>
+                <textarea
+                  value={pdfModalEmailBody}
+                  onChange={e => setPdfModalEmailBody(e.target.value)}
+                  placeholder="Es: In allegato trova il preventivo richiesto. Resto a disposizione per qualsiasi chiarimento."
+                  rows={4}
+                  className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-orange-400 dark:text-white resize-none"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Se compilato, verrà usato come corpo del messaggio quando invii l'offerta via email.</p>
               </div>
               <button
                 onClick={handlePdfModalConfirm}
@@ -842,6 +859,37 @@ export const OffersView: React.FC = () => {
                     className="px-3 py-1.5 rounded-xl bg-orange-500 text-white font-black text-[10px] uppercase hover:bg-orange-600 transition-colors flex-shrink-0 flex items-center gap-1.5">
                     <Download size={12} /> Visualizza
                   </PdfButton>
+                </div>
+              )}
+              {offer.pdfUrl && editingEmailBodyId !== offer.id && (
+                <button
+                  onClick={() => { setEditingEmailBodyId(offer.id); setEditingEmailBodyDraft(offer.emailBody || ''); }}
+                  className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 hover:text-[var(--accent-600)] uppercase tracking-wide"
+                >
+                  <Edit2 size={11} /> {offer.emailBody ? 'Modifica testo email' : 'Aggiungi testo email'}
+                </button>
+              )}
+              {offer.pdfUrl && editingEmailBodyId === offer.id && (
+                <div className="space-y-2">
+                  <textarea
+                    value={editingEmailBodyDraft}
+                    onChange={e => setEditingEmailBodyDraft(e.target.value)}
+                    placeholder="Testo email di accompagnamento (opzionale)"
+                    rows={3}
+                    autoFocus
+                    className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-[var(--accent-400)] dark:text-white resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { updateOffer(offer.id, { emailBody: editingEmailBodyDraft.trim() || undefined }); setEditingEmailBodyId(null); showToast('Testo email salvato', 'success'); }}
+                      className="px-3 py-1.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-[10px] uppercase"
+                    >
+                      Salva
+                    </button>
+                    <button onClick={() => setEditingEmailBodyId(null)} className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-[10px] uppercase">
+                      Annulla
+                    </button>
+                  </div>
                 </div>
               )}
               <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">

@@ -357,6 +357,54 @@ async function runTests() {
   console.log('');
 
   // ────────────────────────────────────────────────────────────────────────────
+  // TEST 8: /api/log-activity ("Registra attività" endpoint)
+  // ────────────────────────────────────────────────────────────────────────────
+  log('cyan', 'TEST', '8. /api/log-activity Validation');
+
+  try {
+    const token = process.env.ADMIN_API_TOKEN || 'test';
+
+    // No auth header
+    const noAuth = await request('POST', '/api/log-activity',
+      { transcript: 'Ho fatto una visita da Rossi Srl' },
+      { 'Origin': 'http://localhost:5173' }
+    );
+    assert(noAuth.status === 401, 'log-activity: missing token rejected (401)');
+
+    // Invalid origin
+    const invalidCors = await request('OPTIONS', '/api/log-activity', null, {}, 'https://malicious-site.com');
+    assert(invalidCors.status === 403 || invalidCors.status === 200, 'log-activity: malicious origin rejected or preflight handled');
+
+    // Missing transcript
+    const missingTranscript = await request('POST', '/api/log-activity',
+      { contacts: [] },
+      { 'Authorization': `Bearer ${token}`, 'Origin': 'http://localhost:5173' }
+    );
+    assert(missingTranscript.status === 400, 'log-activity: missing transcript rejected (400)');
+
+    // Oversized transcript (> 2000 char limit)
+    const oversizedTranscript = await request('POST', '/api/log-activity',
+      { transcript: 'A'.repeat(3000), contacts: [] },
+      { 'Authorization': `Bearer ${token}`, 'Origin': 'http://localhost:5173' }
+    );
+    assert(oversizedTranscript.status === 400, 'log-activity: oversized transcript rejected (400)');
+
+    // Malformed contacts array (not an array of objects)
+    const malformedContacts = await request('POST', '/api/log-activity',
+      { transcript: 'Ho fatto una visita', contacts: 'not-an-array' },
+      { 'Authorization': `Bearer ${token}`, 'Origin': 'http://localhost:5173' }
+    );
+    assert(malformedContacts.status === 400, 'log-activity: malformed contacts payload rejected (400)');
+
+    // Wrong method
+    const getReq = await request('GET', '/api/log-activity', null, { 'Origin': 'http://localhost:5173' });
+    assert(getReq.status === 405 || getReq.status === 400, 'log-activity: GET rejected (405 or 400)');
+  } catch (e) {
+    log('yellow', 'INFO', `log-activity tests skipped (${e.message})`);
+  }
+  console.log('');
+
+  // ────────────────────────────────────────────────────────────────────────────
   // SUMMARY
   // ────────────────────────────────────────────────────────────────────────────
   console.log('');
