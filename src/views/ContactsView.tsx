@@ -1744,10 +1744,6 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <input type="file" accept=".csv,.xlsx,.xls" className="hidden" ref={fileInputRefProspect}
                     onChange={e => handleFileUpload(e, 'potenziale')} />
 
-                  <button onClick={() => csvRef.current?.click()}
-                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}>
-                    <Upload size={18} /> <span className="hidden md:inline">Importa CSV</span>
-                  </button>
                   <button onClick={() => setShowImportModal(true)}
                     className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
                     title="Crea contatto da sito web">
@@ -1940,11 +1936,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </div>
                 )}
 
-                <div className="flex justify-center pb-6">
+                <div className="flex flex-wrap justify-center items-center gap-4 pb-6">
+                  <button onClick={() => csvRef.current?.click()}
+                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-10 py-6 rounded-2xl font-bold flex items-center gap-3 transition-all text-xl ${accentCls}`}>
+                    <Upload size={36} /> Importa CSV
+                  </button>
                   <button onClick={recheckDealerClassification}
-                    className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full text-[10px] font-bold text-gray-400 dark:text-gray-500 hover:text-[var(--accent-600)] hover:border-[var(--accent-300)] transition-all flex items-center gap-1"
+                    className="px-10 py-6 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-xl font-black text-gray-400 dark:text-gray-500 hover:text-[var(--accent-600)] hover:border-[var(--accent-300)] transition-all flex items-center gap-3"
                     title="Ricontrolla in blocco i contatti già importati e correggi i Dealer classificati come End User">
-                    <RefreshCw size={11} /> Ricontrolla Dealer
+                    <RefreshCw size={36} /> Ricontrolla Dealer
                   </button>
                 </div>
               </>
