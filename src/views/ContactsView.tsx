@@ -1936,15 +1936,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </div>
                 )}
 
-                <div className="flex flex-wrap justify-center items-center gap-4 pb-6">
+                <div className="flex flex-wrap justify-center items-center gap-3 pb-6">
                   <button onClick={() => csvRef.current?.click()}
-                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-10 py-6 rounded-2xl font-bold flex items-center gap-3 transition-all text-xl ${accentCls}`}>
-                    <Upload size={36} /> Importa CSV
+                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-[30px] py-[18px] rounded-2xl font-bold flex items-center gap-[9px] transition-all text-[15px] ${accentCls}`}>
+                    <Upload size={27} /> Importa CSV
                   </button>
                   <button onClick={recheckDealerClassification}
-                    className="px-10 py-6 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-xl font-black text-gray-400 dark:text-gray-500 hover:text-[var(--accent-600)] hover:border-[var(--accent-300)] transition-all flex items-center gap-3"
+                    className="px-[30px] py-[18px] bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-[15px] font-black text-gray-400 dark:text-gray-500 hover:text-[var(--accent-600)] hover:border-[var(--accent-300)] transition-all flex items-center gap-[9px]"
                     title="Ricontrolla in blocco i contatti già importati e correggi i Dealer classificati come End User">
-                    <RefreshCw size={36} /> Ricontrolla Dealer
+                    <RefreshCw size={27} /> Ricontrolla Dealer
                   </button>
                 </div>
               </>
