@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles, ChevronDown, ChevronUp, CheckCircle, XCircle, Upload, Download, ShoppingBag } from 'lucide-react';
 import { uploadOfferPdf, openOfferPdf } from '../lib/uploadPdf';
@@ -10,7 +10,12 @@ import { AiPanel } from '../components/ai/AiPanel';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
 
-export const OffersView: React.FC = () => {
+interface OffersViewProps {
+  initialContactId?: string | null;
+  onInitialContactConsumed?: () => void;
+}
+
+export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInitialContactConsumed }) => {
   const { contacts, products, offers, addOffer, updateOffer, removeOffer, profile, deals, addDeal, updateDeal } = useStore();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'offerte' | 'ordini'>('offerte');
@@ -247,6 +252,16 @@ export const OffersView: React.FC = () => {
     }
     setShowModal(true);
   };
+
+  useEffect(() => {
+    if (!initialContactId) return;
+    setActiveTab('offerte');
+    openModal();
+    setSelectedContact(initialContactId);
+    setContactSearch(contacts[initialContactId]?.company || '');
+    onInitialContactConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialContactId]);
 
   const addLineItem = () => {
     const newItem: OfferItem = {

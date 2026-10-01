@@ -97,6 +97,12 @@ function AppContent() {
     goTo('map');
   };
 
+  const [pendingNewOfferContactId, setPendingNewOfferContactId] = useState<string | null>(null);
+  const newOfferForContact = (contactId: string) => {
+    setPendingNewOfferContactId(contactId);
+    goTo('offers');
+  };
+
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
@@ -122,9 +128,9 @@ function AppContent() {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <Dashboard onNavigate={goTo} />;
-      case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} />;
+      case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} onNewOfferForContact={newOfferForContact} />;
       case 'deals': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
-      case 'offers': return <OffersView />;
+      case 'offers': return <OffersView initialContactId={pendingNewOfferContactId} onInitialContactConsumed={() => setPendingNewOfferContactId(null)} />;
       case 'agenda': return <AgendaView onNavigateToContact={navigateToContact} onViewItinerary={viewItinerary} />;
       case 'products': return <ProductsView />;
       case 'map': return <MapView onNavigateToContact={navigateToContact} onGoFullscreen={() => goTo('map-full')} initialItineraryDate={pendingItineraryDate} onItineraryDateConsumed={() => setPendingItineraryDate(null)} />;

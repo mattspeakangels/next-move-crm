@@ -713,9 +713,10 @@ interface ContactsViewProps {
   onClearFilter?: () => void;
   selectedContactId?: string | null;
   onClearSelectedContact?: () => void;
+  onNewOfferForContact?: (contactId: string) => void;
 }
 
-export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact }) => {
+export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', onClearFilter, selectedContactId, onClearSelectedContact, onNewOfferForContact }) => {
   const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, addContactsBatch, bulkUpdateSegments, deals, activities, groups, customSectors } = useStore();
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1161,6 +1162,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       <ContactHistoryView
         contact={historyContact}
         onBack={() => setHistoryContact(null)}
+        onNewOfferForContact={onNewOfferForContact}
       />
     );
   }

@@ -59,6 +59,7 @@ const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Lugl
 interface Props {
   contact: Contact;
   onBack: () => void;
+  onNewOfferForContact?: (contactId: string) => void;
 }
 
 function normalizeName(s: string): string {
@@ -80,7 +81,7 @@ function matchWords(a: string, b: string): number {
   return wa.filter(w => wb.includes(w)).length;
 }
 
-export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
+export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOfferForContact }) => {
   const { activities, offers, salesTransactions, deals, products, addActivity, deleteActivity } = useStore();
   const { showToast } = useToast();
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -464,12 +465,22 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack }) => {
             </button>
           ))}
         </div>
-        <button
-          onClick={() => setShowEmailModal(true)}
-          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-        >
-          <Plus size={12} /> Aggiungi email
-        </button>
+        <div className="flex gap-2">
+          {onNewOfferForContact && (
+            <button
+              onClick={() => onNewOfferForContact(contact.id)}
+              className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+            >
+              <Plus size={12} /> Nuova offerta
+            </button>
+          )}
+          <button
+            onClick={() => setShowEmailModal(true)}
+            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          >
+            <Plus size={12} /> Aggiungi email
+          </button>
+        </div>
       </div>
 
       {/* Timeline */}
