@@ -47,6 +47,7 @@ interface ParsedResponse {
   contactCandidates: { id: string; score: number }[];
   activityType: string;
   outcomeType: string | null;
+  isFuture: boolean;
   date: string | null;
   time: string | null;
   notes: string;
@@ -90,7 +91,9 @@ export function QuickLogPanel({ onClose }: Props) {
   const [suggestedContactIds, setSuggestedContactIds] = useState<string[]>([]);
   const [activityType, setActivityType] = useState<ActivityType>('nota');
   const [outcomeType, setOutcomeType] = useState<ActivityOutcome>('nota');
+  const [isFuture, setIsFuture] = useState(false);
   const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
   const [todos, setTodos] = useState<ParsedTodo[]>([]);
   const [closeExistingId, setCloseExistingId] = useState<string | null>(null);
@@ -135,7 +138,9 @@ export function QuickLogPanel({ onClose }: Props) {
     const validOutcome = OUTCOME_TYPES.some(o => o.id === data.outcomeType) ? (data.outcomeType as ActivityOutcome) : 'nota';
     setActivityType(validType);
     setOutcomeType(validOutcome);
+    setIsFuture(data.isFuture === true);
     setDate(data.date || new Date().toISOString().split('T')[0]);
+    setTime(data.time || '');
     setNotes(data.notes || '');
     setTodos((data.todos || []).map(t => ({
       titolo: t.titolo,
@@ -248,10 +253,38 @@ export function QuickLogPanel({ onClose }: Props) {
     if (!contactId) return;
     setPhase('saving');
     try {
-      const dateMs = date ? new Date(date).getTime() : Date.now();
+      const dateMs = (() => {
+        if (!date) return Date.now();
+        const [y, mo, d] = date.split('-').map(Number);
+        if (isFuture && time) {
+          const [h, m] = time.split(':').map(Number);
+          return new Date(y, (mo || 1) - 1, d || 1, h || 0, m || 0, 0, 0).getTime();
+        }
+        return new Date(y, (mo || 1) - 1, d || 1).getTime();
+      })();
       let activityId: string;
 
-      if (saveMode === 'close' && closeExistingId) {
+      if (isFuture) {
+        if (saveMode === 'close' && closeExistingId) {
+          activityId = closeExistingId;
+          updateActivity(closeExistingId, {
+            type: activityType,
+            date: dateMs,
+            notes,
+          });
+        } else {
+          activityId = `act_${Date.now()}`;
+          addActivity({
+            id: activityId,
+            contactId,
+            type: activityType,
+            date: dateMs,
+            outcome: 'da-fare',
+            notes,
+            createdAt: Date.now(),
+          });
+        }
+      } else if (saveMode === 'close' && closeExistingId) {
         activityId = closeExistingId;
         updateActivity(closeExistingId, {
           outcome: 'fatto',
@@ -420,6 +453,21 @@ export function QuickLogPanel({ onClose }: Props) {
                 )}
               </div>
 
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsFuture(false)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${!isFuture ? 'bg-blue-700 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400'}`}
+                >
+                  Attività svolta
+                </button>
+                <button
+                  onClick={() => setIsFuture(true)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${isFuture ? 'bg-blue-700 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400'}`}
+                >
+                  Appuntamento futuro
+                </button>
+              </div>
+
               {closeExistingId && selectedContact && (
                 <div className="rounded-2xl bg-orange-50 dark:bg-orange-900/20 px-4 py-3 space-y-2">
                   <p className="text-[11px] font-bold text-orange-700 dark:text-orange-300">
@@ -430,7 +478,7 @@ export function QuickLogPanel({ onClose }: Props) {
                       onClick={() => setSaveMode('close')}
                       className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${saveMode === 'close' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500'}`}
                     >
-                      Chiudi esistente
+                      {isFuture ? 'Aggiorna esistente' : 'Chiudi esistente'}
                     </button>
                     <button
                       onClick={() => setSaveMode('new')}
@@ -454,19 +502,35 @@ export function QuickLogPanel({ onClose }: Props) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Esito</label>
-                  <select
-                    value={outcomeType}
-                    onChange={e => setOutcomeType(e.target.value as ActivityOutcome)}
-                    className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
-                  >
-                    {OUTCOME_TYPES.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
-                  </select>
+                  {isFuture ? (
+                    <>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Ora</label>
+                      <input
+                        type="time"
+                        value={time}
+                        onChange={e => setTime(e.target.value)}
+                        className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Esito</label>
+                      <select
+                        value={outcomeType}
+                        onChange={e => setOutcomeType(e.target.value as ActivityOutcome)}
+                        className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
+                      >
+                        {OUTCOME_TYPES.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+                      </select>
+                    </>
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Data</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">
+                  {isFuture ? 'Data appuntamento' : 'Data'}
+                </label>
                 <input
                   type="date"
                   value={date}
@@ -513,7 +577,9 @@ export function QuickLogPanel({ onClose }: Props) {
                 className="w-full py-3 rounded-2xl bg-blue-700 text-white font-black text-sm uppercase tracking-wide disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {phase === 'saving' ? <Loader2 size={16} className="animate-spin" /> : null}
-                {saveMode === 'close' ? 'Chiudi appuntamento e salva' : 'Salva attività'}
+                {isFuture
+                  ? (saveMode === 'close' ? 'Aggiorna appuntamento' : 'Crea appuntamento')
+                  : (saveMode === 'close' ? 'Chiudi appuntamento e salva' : 'Salva attività')}
               </button>
             </div>
           )}

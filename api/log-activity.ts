@@ -87,6 +87,8 @@ Regole:
 - Estrai SOLO i to-do esplicitamente menzionati o chiaramente implicati (es. "richiamarlo giovedì", "serve un preventivo", "mandare scheda tecnica"). Nessun to-do inventato.
 - Date relative: "oggi"=${today}, "domani"=giorno dopo, "dopodomani"=+2gg, "lunedì/martedì/..."=prossima occorrenza, "giovedì prossimo" ecc. Formato YYYY-MM-DD. Se assente → null.
 - "notes" è il riassunto del resoconto in italiano, discorsivo, max 300 caratteri.
+- "isFuture": true SOLO se il venditore sta pianificando/fissando un appuntamento o un'attività futura non ancora svolta (es. "ho fissato un appuntamento da Rossi giovedì alle 10", "devo andare da Bianchi lunedì prossimo", "segna una visita da Verdi il 15"). false se sta riportando un'attività già svolta (passato: "sono stato da", "ho chiamato", "ho fatto"). In caso di ambiguità, false.
+- Se "isFuture" è true: "outcomeType" deve essere null (l'esito non esiste ancora, l'appuntamento è da fare), e "date"/"time" indicano quando si terrà l'appuntamento futuro.
 
 Rispondi ESCLUSIVAMENTE con un oggetto JSON valido, nessun testo prima o dopo:
 {
@@ -94,6 +96,7 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido, nessun testo prima o dopo:
   "contactCandidates": [{"id": "id_contatto", "score": 0.0}],
   "activityType": "uno tra i tipi validi",
   "outcomeType": "uno tra gli esiti validi o null",
+  "isFuture": true o false,
   "date": "YYYY-MM-DD o null",
   "time": "HH:MM o null",
   "notes": "riassunto del resoconto",
@@ -106,6 +109,7 @@ interface ParsedResult {
   contactCandidates: { id: string; score: number }[];
   activityType: string;
   outcomeType: string | null;
+  isFuture: boolean;
   date: string | null;
   time: string | null;
   notes: string;
@@ -142,7 +146,8 @@ function sanitizeResult(raw: unknown): ParsedResult {
     companyNameRaw: typeof r.companyNameRaw === 'string' ? r.companyNameRaw.slice(0, 200) : null,
     contactCandidates,
     activityType,
-    outcomeType,
+    outcomeType: r.isFuture === true ? null : outcomeType,
+    isFuture: r.isFuture === true,
     date: typeof r.date === 'string' ? r.date : null,
     time: typeof r.time === 'string' ? r.time : null,
     notes: typeof r.notes === 'string' ? r.notes.slice(0, 1000) : '',
