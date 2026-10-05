@@ -655,8 +655,9 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
       {/* ── MAPPA (occupa tutto, o sx su desktop) ── */}
       <div className="flex-1 relative">
 
-        {/* Top bar — sopra la mappa */}
-        <div className="absolute top-0 left-0 right-0 z-[700] px-4 pt-4 flex flex-col gap-2">
+        {/* Top bar — sopra la mappa e sopra lo sheet tappe (z-800), altrimenti
+            l'overlay dello sheet intercetta i tap sui risultati di ricerca */}
+        <div className="absolute top-0 left-0 right-0 z-[900] px-4 pt-4 flex flex-col gap-2">
           <div className="flex items-center gap-2 w-full">
             <button onClick={onClose}
               className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-700 dark:text-white rounded-2xl px-4 py-2.5 font-black text-xs uppercase flex items-center gap-2 shadow-lg flex-shrink-0">
