@@ -1,7 +1,7 @@
 export type DealStage = 'lead' | 'qualificato' | 'proposta' | 'negoziazione' | 'chiuso-vinto' | 'chiuso-perso';
 export type NextActionType = 'chiama' | 'email' | 'invia-offerta' | 'fissa-visita' | 'altro';
 export type NextActionPriority = 'alta' | 'media' | 'bassa';
-export type ActivityType = 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio' | 'fiera';
+export type ActivityType = 'chiamata' | 'email' | 'visita' | 'visita-freddo' | 'nota' | 'demo' | 'call-remota' | 'sopralluogo' | 'formazione' | 'smart-working' | 'ufficio' | 'fiera' | 'giornata-banco' | 'mini-fiera';
 export type ActivityOutcome =
   | 'riuscita' | 'parziale' | 'nessun-contatto' | 'promessa-callback' | 'rifiuto' | 'nota'
   // esiti specifici visita a freddo (Manuale Prospezione Blaklader §4)
@@ -229,11 +229,15 @@ export interface Deal {
 export interface Activity {
   id: string;
   contactId: string;
+  /** Tutti i clienti coinvolti (es. Formazione con più clienti). Il primo coincide con contactId. */
+  contactIds?: string[];
   dealId?: string;
   type: ActivityType;
   date: number;
   /** Orario di fine appuntamento (timestamp ms). Assente = durata non specificata. */
   endDate?: number;
+  /** Evento per tutto il giorno lavorativo (l'orario è impostato sull'intera giornata). */
+  allDay?: boolean;
   outcome: string;
   notes: string;
   outcomeType?: ActivityOutcome;

@@ -18,25 +18,32 @@ import { convertToLead, startSequenceForContact } from '../lib/prospecting';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormData = {
-  contactId: string;
+  /** Clienti selezionati (uno solo per la maggior parte dei tipi, più di uno per Formazione). */
+  contactIds: string[];
   type: ActivityType;
   date: string;
   time: string;
   endTime: string;
   /** Giorno di fine per attività multi-giorno (es. Fiera). Vuoto = un solo giorno. */
   endDateDay: string;
+  /** Evento per tutto il giorno lavorativo (orari fissati a WORK_DAY_START/END). */
+  allDay: boolean;
   notes: string;
 };
 
 type CalendarMode = 'month' | 'week' | 'list';
 
+const WORK_DAY_START = '08:00';
+const WORK_DAY_END = '18:00';
+
 const defaultForm = (): FormData => ({
-  contactId: '',
+  contactIds: [],
   type: 'visita',
   date: '',
   time: '08:00',
   endTime: '09:00',
   endDateDay: '',
+  allDay: false,
   notes: '',
 });
 
@@ -60,10 +67,15 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   'smart-working': 'Smart Working',
   ufficio: 'Ufficio',
   fiera: 'Fiera',
+  'giornata-banco': 'Giornata al banco',
+  'mini-fiera': 'Mini fiera dal cliente',
 };
 
 // Categorie che non richiedono un'azienda/contatto per essere salvate
 const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio', 'fiera'];
+
+// Categorie che possono coinvolgere più clienti nello stesso appuntamento
+const MULTI_CONTACT_TYPES: ActivityType[] = ['formazione'];
 
 // Categorie che possono estendersi su più giorni consecutivi (mostra il campo "Fino al")
 const MULTI_DAY_TYPES: ActivityType[] = ['fiera'];
@@ -83,6 +95,8 @@ const TYPE_COLORS: Record<ActivityType, string> = {
   'smart-working': 'bg-cyan-500',
   ufficio: 'bg-slate-500',
   fiera: 'bg-fuchsia-500',
+  'giornata-banco': 'bg-amber-500',
+  'mini-fiera': 'bg-violet-500',
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
@@ -98,6 +112,8 @@ const TYPE_BG: Record<ActivityType, string> = {
   'smart-working': 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300',
   ufficio: 'bg-slate-100 dark:bg-slate-700/40 text-slate-700 dark:text-slate-300',
   fiera: 'bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300',
+  'giornata-banco': 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+  'mini-fiera': 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300',
 };
 
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -443,12 +459,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
       const time = data.time ?? '09:00';
 
       setFormData({
-        contactId: matchedContact?.id ?? '',
+        contactIds: matchedContact ? [matchedContact.id] : [],
         endDateDay: '',
         type,
         date,
         time,
         endTime: addMinutesToTime(time, 60),
+        allDay: false,
         notes: data.notes ?? '',
       });
       setContactSearch(matchedContact?.company ?? data.companyName ?? '');
@@ -890,16 +907,18 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
     const time = d.toTimeString().slice(0, 5);
     const endD = activity.endDate ? new Date(activity.endDate) : null;
     setEditingId(activity.id);
+    const contactIds = activity.contactIds?.length ? activity.contactIds : (activity.contactId ? [activity.contactId] : []);
     setFormData({
-      contactId: activity.contactId,
+      contactIds,
       type: activity.type,
       date: toLocalDateStr(d),
       time,
       endTime: endD ? endD.toTimeString().slice(0, 5) : addMinutesToTime(time, 60),
       endDateDay: endD && !isSameDay(d, endD) ? toLocalDateStr(endD) : '',
+      allDay: !!activity.allDay,
       notes: activity.notes || '',
     });
-    setContactSearch(contacts[activity.contactId]?.company || '');
+    setContactSearch(MULTI_CONTACT_TYPES.includes(activity.type) ? '' : contacts[activity.contactId]?.company || '');
     setShowModal(true);
   };
 
@@ -908,8 +927,9 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const noContact = NO_CONTACT_TYPES.includes(formData.type);
-    if (!noContact && !formData.contactId) { showToast("Seleziona un'azienda", 'error'); return; }
-    const contactId = noContact ? '' : formData.contactId;
+    if (!noContact && formData.contactIds.length === 0) { showToast("Seleziona un'azienda", 'error'); return; }
+    const contactIds = noContact ? [] : formData.contactIds;
+    const contactId = contactIds[0] ?? '';
     const dateTime = new Date(`${formData.date}T${formData.time}`).getTime();
     const endDay = (MULTI_DAY_TYPES.includes(formData.type) && formData.endDateDay) ? formData.endDateDay : formData.date;
     const endDateTime = formData.endTime ? new Date(`${endDay}T${formData.endTime}`).getTime() : undefined;
@@ -918,10 +938,10 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
       return;
     }
     if (editingId) {
-      updateActivity(editingId, { contactId, type: formData.type, date: dateTime, endDate: endDateTime, notes: formData.notes });
+      updateActivity(editingId, { contactId, contactIds, type: formData.type, date: dateTime, endDate: endDateTime, allDay: formData.allDay, notes: formData.notes });
       showToast('Attività aggiornata!', 'success');
     } else {
-      addActivity({ id: `act_${Date.now()}`, contactId, type: formData.type, date: dateTime, endDate: endDateTime, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
+      addActivity({ id: `act_${Date.now()}`, contactId, contactIds, type: formData.type, date: dateTime, endDate: endDateTime, allDay: formData.allDay, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
       showToast('Attività salvata!', 'success');
     }
     closeModal();
@@ -1769,22 +1789,39 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               {!NO_CONTACT_TYPES.includes(formData.type) && (
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">
-                  Cliente / Azienda
-                  {formData.contactId && (
+                  {MULTI_CONTACT_TYPES.includes(formData.type) ? 'Clienti' : 'Cliente / Azienda'}
+                  {!MULTI_CONTACT_TYPES.includes(formData.type) && formData.contactIds.length > 0 && (
                     <span className="ml-2 normal-case font-bold text-[var(--accent-600)]">✓ selezionato</span>
                   )}
                 </label>
+                {MULTI_CONTACT_TYPES.includes(formData.type) && formData.contactIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.contactIds.map(id => (
+                      <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300">
+                        {contacts[id]?.company || '(senza nome)'}
+                        <button type="button" aria-label="Rimuovi cliente" onClick={() => setFormData({ ...formData, contactIds: formData.contactIds.filter(x => x !== id) })}>
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <SearchDropdown
                   value={contactSearch}
                   onChange={v => {
                     setContactSearch(v);
-                    if (formData.contactId) setFormData({ ...formData, contactId: '' });
+                    if (!MULTI_CONTACT_TYPES.includes(formData.type) && formData.contactIds.length > 0) setFormData({ ...formData, contactIds: [] });
                   }}
                   onSelect={c => {
-                    setFormData({ ...formData, contactId: c.id });
-                    setContactSearch(c.company || '(senza nome)');
+                    if (MULTI_CONTACT_TYPES.includes(formData.type)) {
+                      setFormData({ ...formData, contactIds: [...formData.contactIds, c.id] });
+                      setContactSearch('');
+                    } else {
+                      setFormData({ ...formData, contactIds: [c.id] });
+                      setContactSearch(c.company || '(senza nome)');
+                    }
                   }}
-                  results={filteredContacts.map(c => ({
+                  results={(MULTI_CONTACT_TYPES.includes(formData.type) ? filteredContacts.filter(c => !formData.contactIds.includes(c.id)) : filteredContacts).map(c => ({
                     key: c.id,
                     item: c,
                     label: c.company || '(senza nome)',
@@ -1809,7 +1846,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tipo</label>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.keys(TYPE_LABELS) as ActivityType[]).map(t => (
-                    <button key={t} type="button" onClick={() => setFormData({ ...formData, type: t })} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${formData.type === t ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>{TYPE_LABELS[t]}</button>
+                    <button key={t} type="button" onClick={() => setFormData({ ...formData, type: t, contactIds: MULTI_CONTACT_TYPES.includes(t) ? formData.contactIds : formData.contactIds.slice(0, 1) })} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${formData.type === t ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>{TYPE_LABELS[t]}</button>
                   ))}
                 </div>
               </div>
@@ -1829,6 +1866,17 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                   />
                 </div>
               )}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => prev.allDay
+                  ? { ...prev, allDay: false, time: '08:00', endTime: '09:00' }
+                  : { ...prev, allDay: true, time: WORK_DAY_START, endTime: WORK_DAY_END })}
+                className={`w-full flex items-center justify-between border-2 rounded-2xl p-4 font-bold text-sm transition-all ${formData.allDay ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-300'}`}
+              >
+                Tutto il giorno
+                <span className="text-[10px] font-black uppercase tracking-widest">{formData.allDay ? `${WORK_DAY_START}–${WORK_DAY_END}` : 'No'}</span>
+              </button>
+              {!formData.allDay && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora inizio</label>
@@ -1861,6 +1909,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                   />
                 </div>
               </div>
+              )}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase block">Note</label>
