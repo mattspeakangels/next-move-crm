@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import {
   Phone, MapPin, Mail, FileText, Target, Plus, X, Pencil,
   ChevronDown, ChevronUp, TrendingUp, Activity, ChevronLeft, ChevronRight,
-  Video, MonitorPlay, Wrench, GraduationCap, Laptop, Building2, Store,
+  Video, MonitorPlay, Wrench, GraduationCap, Laptop, Building2, Store, Car,
 } from 'lucide-react';
 import { ActivityType, Activity as ActivityRecord } from '../types';
 import { useToast } from '../components/ui/ToastContext';
@@ -79,6 +79,7 @@ const ACTIVITY_ICON: Record<ActivityType, React.ReactNode> = {
   fiera:        <MapPin size={14} />,
   'giornata-banco': <Store size={14} />,
   'mini-fiera':  <MapPin size={14} />,
+  'manutenzione-auto': <Car size={14} />,
 };
 
 const ACTIVITY_COLOR: Record<ActivityType, string> = {
@@ -96,6 +97,7 @@ const ACTIVITY_COLOR: Record<ActivityType, string> = {
   fiera:        'bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600',
   'giornata-banco': "bg-amber-100 dark:bg-amber-900/40 text-amber-600",
   'mini-fiera':  "bg-violet-100 dark:bg-violet-900/40 text-violet-600",
+  'manutenzione-auto': "bg-zinc-100 dark:bg-zinc-700/40 text-zinc-600",
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -126,12 +128,12 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
   const [type, setType] = useState<ActivityType>('visita');
   const [notes, setNotes] = useState('');
 
-  const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio', 'giornata-banco', 'mini-fiera'];
+  const TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio', 'giornata-banco', 'mini-fiera', 'manutenzione-auto'];
   const TYPE_LABELS: Record<ActivityType, string> = {
     visita: 'Visita', 'visita-freddo': 'Visita a freddo', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
     demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
     'smart-working': 'Smart Working', ufficio: 'Ufficio', fiera: 'Fiera',
-    'giornata-banco': 'Giornata al banco', 'mini-fiera': 'Mini fiera dal cliente',
+    'giornata-banco': 'Giornata al banco', 'mini-fiera': 'Mini fiera dal cliente', 'manutenzione-auto': 'Manutenzione auto',
   };
 
   return (
@@ -195,12 +197,12 @@ interface EditActivityModalProps {
   onSave: (updates: Partial<ActivityRecord>) => void;
 }
 
-const EDIT_TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio', 'giornata-banco', 'mini-fiera'];
+const EDIT_TYPES: ActivityType[] = ['visita', 'chiamata', 'email', 'nota', 'demo', 'call-remota', 'sopralluogo', 'formazione', 'smart-working', 'ufficio', 'giornata-banco', 'mini-fiera', 'manutenzione-auto'];
 const EDIT_TYPE_LABELS: Record<ActivityType, string> = {
   visita: 'Visita', 'visita-freddo': 'Visita a freddo', chiamata: 'Chiamata', email: 'Email', nota: 'Nota',
   demo: 'Demo', 'call-remota': 'Call Rem.', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
   'smart-working': 'Smart Working', ufficio: 'Ufficio', fiera: 'Fiera',
-    'giornata-banco': 'Giornata al banco', 'mini-fiera': 'Mini fiera dal cliente',
+    'giornata-banco': 'Giornata al banco', 'mini-fiera': 'Mini fiera dal cliente', 'manutenzione-auto': 'Manutenzione auto',
 };
 
 const toLocalDateTimeInput = (ts: number): string => {

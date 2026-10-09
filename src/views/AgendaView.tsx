@@ -69,10 +69,11 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   fiera: 'Fiera',
   'giornata-banco': 'Giornata al banco',
   'mini-fiera': 'Mini fiera dal cliente',
+  'manutenzione-auto': 'Manutenzione auto',
 };
 
 // Categorie che non richiedono un'azienda/contatto per essere salvate
-const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio', 'fiera'];
+const NO_CONTACT_TYPES: ActivityType[] = ['smart-working', 'ufficio', 'fiera', 'manutenzione-auto'];
 
 // Categorie che possono coinvolgere più clienti nello stesso appuntamento
 const MULTI_CONTACT_TYPES: ActivityType[] = ['formazione'];
@@ -97,6 +98,7 @@ const TYPE_COLORS: Record<ActivityType, string> = {
   fiera: 'bg-fuchsia-500',
   'giornata-banco': 'bg-amber-500',
   'mini-fiera': 'bg-violet-500',
+  'manutenzione-auto': 'bg-zinc-500',
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
@@ -114,6 +116,7 @@ const TYPE_BG: Record<ActivityType, string> = {
   fiera: 'bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300',
   'giornata-banco': 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
   'mini-fiera': 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300',
+  'manutenzione-auto': 'bg-zinc-100 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300',
 };
 
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
