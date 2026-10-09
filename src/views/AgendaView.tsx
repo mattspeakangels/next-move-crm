@@ -12,6 +12,7 @@ import {
   useDroppable, useDraggable,
 } from '@dnd-kit/core';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { ClockTimeInput } from '../components/ui/ClockTimeInput';
 import { ConversationRecorder, mergeProfilingPatch } from '../components/ai/ConversationRecorder';
 import { convertToLead, startSequenceForContact } from '../lib/prospecting';
 
@@ -1782,7 +1783,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
       {/* ── Add / Edit Modal ── */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black dark:text-white">{editingId ? 'Modifica Appuntamento' : 'Nuovo Appuntamento'}</h2>
               <button onClick={closeModal}><X size={24} className="text-gray-400" /></button>
@@ -1883,32 +1884,26 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora inizio</label>
-                  <input
-                    type="time"
-                    required
+                  <ClockTimeInput
                     min={VISIT_TYPES.includes(formData.type) ? '08:00' : undefined}
                     max={VISIT_TYPES.includes(formData.type) ? '18:00' : undefined}
                     value={formData.time}
-                    onChange={e => {
-                      const newTime = e.target.value;
+                    onChange={newTime => {
                       // Sposta l'ora di fine mantenendo la stessa durata, così non finisce mai prima dell'inizio
                       const prevMins = formData.time.split(':').map(Number);
                       const nextMins = newTime.split(':').map(Number);
                       const deltaMin = (nextMins[0] * 60 + nextMins[1]) - (prevMins[0] * 60 + prevMins[1]);
                       setFormData({ ...formData, time: newTime, endTime: addMinutesToTime(formData.endTime, deltaMin) });
                     }}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora fine</label>
-                  <input
-                    type="time"
+                  <ClockTimeInput
                     min={VISIT_TYPES.includes(formData.type) ? '08:00' : undefined}
                     max={VISIT_TYPES.includes(formData.type) ? '18:00' : undefined}
                     value={formData.endTime}
-                    onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"
+                    onChange={endTime => setFormData({ ...formData, endTime })}
                   />
                 </div>
               </div>
