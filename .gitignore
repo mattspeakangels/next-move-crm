@@ -36,3 +36,6 @@ ANALISI-SALESFORCE-VS-NEXTMOVE.md
 
 # Artefatti locali di playwright-cli (screenshot/yaml di debug)
 .playwright-cli/
+
+# DUO collaboration mailbox
+.duo/

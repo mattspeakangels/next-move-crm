@@ -29,15 +29,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
   ];
 
   return (
-    <div className={`min-h-screen flex ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen flex ${theme === 'dark' ? 'dark bg-canvas' : 'bg-canvas'}`}>
       {/* Sidebar Desktop */}
-      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 hidden md:flex flex-col">
+      <aside className="w-64 bg-surface dark:bg-surface border-r border-line dark:border-line hidden md:flex flex-col">
         <div className="p-8">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg shadow-indigo-200">
+            <div className="w-10 h-10 bg-action rounded-panel flex items-center justify-center text-action-foreground font-semibold italic shadow-panel shadow-panel">
               N
             </div>
-            <span className="font-black text-xl tracking-tighter dark:text-white uppercase">Next Move</span>
+            <span className="font-semibold text-xl tracking-normal dark:text-foreground uppercase">SYRIO</span>
           </div>
 
           <nav className="space-y-2">
@@ -45,10 +45,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl font-bold transition-all ${
+                className={`w-full flex items-center gap-4 px-4 py-4 rounded-panel font-bold transition-all ${
                   currentView === item.id
-                    ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100'
-                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-action text-action-foreground shadow-panel shadow-panel'
+                    : 'text-muted hover:bg-canvas dark:hover:bg-raised'
                 }`}
               >
                 <item.icon size={22} />
@@ -67,13 +67,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
       </main>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-100 p-2 flex justify-around items-center z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface dark:bg-surface border-t border-line p-2 flex justify-around items-center z-40">
         {menuItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
             className={`p-3 rounded-xl transition-colors ${
-              currentView === item.id ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-gray-400'
+              currentView === item.id ? 'text-accent bg-accent-soft dark:bg-accent-soft/20' : 'text-muted'
             }`}
           >
             <item.icon size={20} />

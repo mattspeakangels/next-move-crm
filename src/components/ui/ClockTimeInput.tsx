@@ -63,10 +63,10 @@ export const ClockTimeInput: React.FC<Props> = ({ value, onChange, min, max }) =
   const faceButtonClass = (active: boolean, disabled: boolean) =>
     `absolute flex items-center justify-center rounded-full text-xs font-bold transition-colors ${
       disabled
-        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+        ? 'text-muted dark:text-secondary cursor-not-allowed'
         : active
-          ? 'bg-[var(--accent-600)] text-white'
-          : 'text-gray-700 dark:text-gray-200 hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/40'
+          ? 'bg-action text-action-foreground'
+          : 'text-foreground dark:text-muted hover:bg-accent-soft dark:hover:bg-accent-soft/40'
     }`;
 
   return (
@@ -74,21 +74,21 @@ export const ClockTimeInput: React.FC<Props> = ({ value, onChange, min, max }) =
       <button
         type="button"
         onClick={() => { setMode('hour'); setOpen(true); }}
-        className="w-full flex items-center justify-between border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)] font-bold"
+        className="w-full flex items-center justify-between border-2 border-line dark:border-line rounded-panel p-4 bg-transparent dark:text-foreground outline-none focus:border-accent font-bold"
       >
         <span className="text-base tabular-nums">{value}</span>
-        <Clock size={16} className="text-gray-400" />
+        <Clock size={16} className="text-muted" />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-4 w-[272px]">
-            <div className="flex items-center justify-center gap-1 mb-3 text-3xl font-black tabular-nums dark:text-white">
+          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-surface dark:bg-surface rounded-panel shadow-panel p-4 w-[272px]">
+            <div className="flex items-center justify-center gap-1 mb-3 text-3xl font-semibold tabular-nums dark:text-foreground">
               <button
                 type="button"
                 onClick={() => setMode('hour')}
-                className={`px-2 rounded-xl ${mode === 'hour' ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)]' : ''}`}
+                className={`px-2 rounded-xl ${mode === 'hour' ? 'bg-accent-soft dark:bg-accent-soft/40 text-accent' : ''}`}
               >
                 {pad(hour)}
               </button>
@@ -96,16 +96,16 @@ export const ClockTimeInput: React.FC<Props> = ({ value, onChange, min, max }) =
               <button
                 type="button"
                 onClick={() => setMode('minute')}
-                className={`px-2 rounded-xl ${mode === 'minute' ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)]' : ''}`}
+                className={`px-2 rounded-xl ${mode === 'minute' ? 'bg-accent-soft dark:bg-accent-soft/40 text-accent' : ''}`}
               >
                 {pad(minute)}
               </button>
             </div>
 
-            <div className="relative mx-auto rounded-full bg-gray-50 dark:bg-gray-900/60" style={{ width: FACE, height: FACE }}>
+            <div className="relative mx-auto rounded-full bg-canvas dark:bg-canvas/60" style={{ width: FACE, height: FACE }}>
               <svg className="absolute inset-0 pointer-events-none" width={FACE} height={FACE}>
-                <line x1={CENTER} y1={CENTER} x2={handEnd.x} y2={handEnd.y} className="stroke-[var(--accent-500)]" strokeWidth={2} />
-                <circle cx={CENTER} cy={CENTER} r={4} className="fill-[var(--accent-600)]" />
+                <line x1={CENTER} y1={CENTER} x2={handEnd.x} y2={handEnd.y} className="stroke-accent" strokeWidth={2} />
+                <circle cx={CENTER} cy={CENTER} r={4} className="fill-accent" />
               </svg>
 
               {mode === 'hour' && Array.from({ length: 24 }, (_, h) => {

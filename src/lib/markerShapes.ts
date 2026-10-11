@@ -28,9 +28,9 @@ export const MARKER_CATEGORY_LABELS: Record<MarkerCategory, string> = {
 
 export const DEFAULT_MARKER_STYLE: Record<MarkerCategory, { shape: MarkerShape; color: string }> = {
   cliente: { shape: 'circle', color: '#22c55e' },
-  dealer: { shape: 'circle', color: '#38bdf8' },
-  edilizia: { shape: 'circle', color: '#eab308' },
-  industria: { shape: 'circle', color: '#f87171' },
+  dealer: { shape: 'circle', color: '#c3b9aa' },
+  edilizia: { shape: 'circle', color: '#b89469' },
+  industria: { shape: 'circle', color: '#c08d62' },
   altro: { shape: 'circle', color: '#94a3b8' },
 };
 
@@ -143,7 +143,7 @@ export function priorityStarDivIcon(size = 24): L.DivIcon {
     html: `<div style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.45));width:${size}px;height:${size}px;">
       <svg viewBox="0 0 24 24" width="${size}" height="${size}">
         <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z"
-          fill="#d946ef" stroke="#facc15" stroke-width="1.8" stroke-linejoin="round"/>
+          fill="#e2bc93" stroke="#131617" stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
     </div>`,
     iconSize: [size, size],

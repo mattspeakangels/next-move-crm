@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import { useMemo, useState } from 'react';
 import { Mic, Square, Loader2, X, Check, AlertTriangle, Trash2 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
@@ -343,14 +344,14 @@ export function QuickLogPanel({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end md:items-center justify-center bg-black/50" onClick={onClose}>
+    <DialogFrame className="fixed inset-0 z-[90] flex items-end md:items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="w-full md:max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-t-3xl md:rounded-3xl shadow-2xl"
+        className="w-full md:max-w-lg max-h-[90vh] overflow-y-auto bg-surface dark:bg-surface rounded-t-3xl md:rounded-panel shadow-panel"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 sticky top-0 bg-white dark:bg-gray-800 z-10">
-          <h2 className="text-base font-black dark:text-white">Registra attività</h2>
-          <button onClick={onClose} className="p-2 -m-2 text-gray-400 hover:text-gray-600 dark:hover:text-white">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 sticky top-0 bg-surface dark:bg-surface z-10">
+          <h2 className="text-base font-semibold dark:text-foreground">Registra attività</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="p-2 -m-2 text-muted hover:text-secondary dark:hover:text-foreground">
             <X size={20} />
           </button>
         </div>
@@ -358,7 +359,7 @@ export function QuickLogPanel({ onClose }: Props) {
         <div className="px-5 pb-6">
           {phase === 'capture' && (
             <div className="space-y-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-secondary dark:text-muted">
                 Racconta cosa è successo: cliente, tipo di attività, esito, cosa resta da fare. Verrà tutto proposto per la revisione prima di salvare.
               </p>
 
@@ -366,26 +367,26 @@ export function QuickLogPanel({ onClose }: Props) {
                 <button
                   onClick={voiceRecording ? handleStopVoice : handleStartVoice}
                   disabled={!voiceSupported || voiceTranscribing}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all ${
-                    voiceRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-700'
-                  } text-white disabled:opacity-40`}
+                  className={`w-20 h-20 rounded-full flex items-center justify-center shadow-panel transition-all ${
+                    voiceRecording ? 'bg-danger text-status-foreground animate-pulse' : 'bg-action text-action-foreground'
+                  } disabled:opacity-40`}
                 >
                   {voiceTranscribing ? <Loader2 size={26} className="animate-spin" /> : voiceRecording ? <Square size={26} /> : <Mic size={28} />}
                 </button>
               </div>
               {voiceRecording && (
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400 min-h-[1.5em]">{voiceInterim || 'Ascolto…'}</p>
+                <p className="text-center text-sm text-secondary dark:text-muted min-h-[1.5em]">{voiceInterim || 'Ascolto…'}</p>
               )}
               {voiceTranscribing && (
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400">Sto trascrivendo l'audio…</p>
+                <p className="text-center text-sm text-secondary dark:text-muted">Sto trascrivendo l'audio…</p>
               )}
-              {voiceError && <p className="text-center text-xs text-red-500">{voiceError}</p>}
+              {voiceError && <p className="text-center text-xs text-danger">{voiceError}</p>}
               {!voiceSupported && (
-                <p className="text-center text-xs text-amber-600">Dettatura vocale non supportata su questo browser, usa il testo qui sotto.</p>
+                <p className="text-center text-xs text-warning">Dettatura vocale non supportata su questo browser, usa il testo qui sotto.</p>
               )}
 
-              <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase">
-                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" /> oppure scrivi <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted dark:text-secondary uppercase">
+                <div className="flex-1 h-px bg-raised dark:bg-raised" /> oppure scrivi <div className="flex-1 h-px bg-raised dark:bg-raised" />
               </div>
 
               <textarea
@@ -393,12 +394,12 @@ export function QuickLogPanel({ onClose }: Props) {
                 onChange={e => setText(e.target.value)}
                 placeholder="Es: ho fatto un sopralluogo da Rossi Srl, serve un preventivo DPI entro fine mese, richiamarlo giovedì"
                 rows={4}
-                className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-blue-400 dark:text-white resize-none"
+                className="w-full bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-panel px-4 py-3 text-sm outline-none focus:border-accent dark:text-foreground resize-none"
               />
               <button
                 onClick={() => analyze(text)}
                 disabled={!text.trim()}
-                className="w-full py-3 rounded-2xl bg-blue-700 text-white font-black text-sm uppercase tracking-wide disabled:opacity-40"
+                className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm uppercase tracking-wide disabled:opacity-40"
               >
                 Analizza
               </button>
@@ -407,23 +408,23 @@ export function QuickLogPanel({ onClose }: Props) {
 
           {phase === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 size={32} className="animate-spin text-blue-700" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Sto analizzando il resoconto…</p>
+              <Loader2 size={32} className="animate-spin text-accent" />
+              <p className="text-sm text-secondary dark:text-muted">Sto analizzando il resoconto…</p>
             </div>
           )}
 
           {phase === 'error' && (
             <div className="flex flex-col items-center justify-center py-10 gap-3">
-              <AlertTriangle size={28} className="text-red-500" />
-              <p className="text-sm text-red-500 text-center">{errorMsg}</p>
-              <button onClick={() => setPhase('capture')} className="text-sm font-bold text-blue-700">Riprova</button>
+              <AlertTriangle size={28} className="text-danger" />
+              <p className="text-sm text-danger text-center">{errorMsg}</p>
+              <button onClick={() => setPhase('capture')} className="text-sm font-bold text-accent">Riprova</button>
             </div>
           )}
 
           {(phase === 'review' || phase === 'saving') && (
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Cliente</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wide">Cliente</label>
                 <SearchDropdown
                   value={contactQuery}
                   onChange={v => { setContactQuery(v); setContactId(''); }}
@@ -436,12 +437,12 @@ export function QuickLogPanel({ onClose }: Props) {
                 />
                 {!contactId && suggestedContactIds.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
-                    <span className="text-[10px] text-gray-400 self-center">Forse intendevi:</span>
+                    <span className="text-xs text-muted self-center">Forse intendevi:</span>
                     {suggestedContactIds.map(id => contacts[id] && (
                       <button
                         key={id}
                         onClick={() => { setContactId(id); setContactQuery(contacts[id].company); const open = findOpenActivity(id, date); setCloseExistingId(open?.id || null); setSaveMode(open ? 'close' : 'new'); }}
-                        className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                        className="text-xs font-bold px-2.5 py-1 rounded-full bg-accent-soft text-accent dark:bg-accent-soft dark:text-accent"
                       >
                         {contacts[id].company}
                       </button>
@@ -449,40 +450,40 @@ export function QuickLogPanel({ onClose }: Props) {
                   </div>
                 )}
                 {!contactId && (
-                  <p className="text-[11px] text-amber-600 mt-1.5">Seleziona un cliente per poter salvare.</p>
+                  <p className="text-xs text-warning mt-1.5">Seleziona un cliente per poter salvare.</p>
                 )}
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => setIsFuture(false)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${!isFuture ? 'bg-blue-700 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400'}`}
+                  className={`flex-1 py-2 rounded-md text-xs font-semibold uppercase ${!isFuture ? 'bg-action text-action-foreground' : 'bg-canvas dark:bg-raised text-muted'}`}
                 >
                   Attività svolta
                 </button>
                 <button
                   onClick={() => setIsFuture(true)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${isFuture ? 'bg-blue-700 text-white' : 'bg-gray-50 dark:bg-gray-700 text-gray-400'}`}
+                  className={`flex-1 py-2 rounded-md text-xs font-semibold uppercase ${isFuture ? 'bg-action text-action-foreground' : 'bg-canvas dark:bg-raised text-muted'}`}
                 >
                   Appuntamento futuro
                 </button>
               </div>
 
               {closeExistingId && selectedContact && (
-                <div className="rounded-2xl bg-orange-50 dark:bg-orange-900/20 px-4 py-3 space-y-2">
-                  <p className="text-[11px] font-bold text-orange-700 dark:text-orange-300">
+                <div className="rounded-panel bg-warning-soft dark:bg-warning-soft px-4 py-3 space-y-2">
+                  <p className="text-xs font-bold text-warning dark:text-warning">
                     Trovato un appuntamento già pianificato per {selectedContact.company}.
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSaveMode('close')}
-                      className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${saveMode === 'close' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500'}`}
+                      className={`flex-1 py-2 rounded-md text-xs font-semibold uppercase ${saveMode === 'close' ? 'bg-warning text-status-foreground' : 'bg-surface dark:bg-raised text-secondary'}`}
                     >
                       {isFuture ? 'Aggiorna esistente' : 'Chiudi esistente'}
                     </button>
                     <button
                       onClick={() => setSaveMode('new')}
-                      className={`flex-1 py-2 rounded-xl text-xs font-black uppercase ${saveMode === 'new' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500'}`}
+                      className={`flex-1 py-2 rounded-md text-xs font-semibold uppercase ${saveMode === 'new' ? 'bg-warning text-status-foreground' : 'bg-surface dark:bg-raised text-secondary'}`}
                     >
                       Crea nuova
                     </button>
@@ -492,11 +493,11 @@ export function QuickLogPanel({ onClose }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Tipo</label>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wide">Tipo</label>
                   <select
                     value={activityType}
                     onChange={e => setActivityType(e.target.value as ActivityType)}
-                    className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
+                    className="w-full mt-1 bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-md px-3 py-2.5 text-sm dark:text-foreground outline-none"
                   >
                     {ACTIVITY_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                   </select>
@@ -504,21 +505,21 @@ export function QuickLogPanel({ onClose }: Props) {
                 <div>
                   {isFuture ? (
                     <>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Ora</label>
+                      <label className="text-xs font-semibold text-muted uppercase tracking-wide">Ora</label>
                       <input
                         type="time"
                         value={time}
                         onChange={e => setTime(e.target.value)}
-                        className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
+                        className="w-full mt-1 bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-md px-3 py-2.5 text-sm dark:text-foreground outline-none"
                       />
                     </>
                   ) : (
                     <>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Esito</label>
+                      <label className="text-xs font-semibold text-muted uppercase tracking-wide">Esito</label>
                       <select
                         value={outcomeType}
                         onChange={e => setOutcomeType(e.target.value as ActivityOutcome)}
-                        className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
+                        className="w-full mt-1 bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-md px-3 py-2.5 text-sm dark:text-foreground outline-none"
                       >
                         {OUTCOME_TYPES.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                       </select>
@@ -528,41 +529,41 @@ export function QuickLogPanel({ onClose }: Props) {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">
+                <label className="text-xs font-semibold text-muted uppercase tracking-wide">
                   {isFuture ? 'Data appuntamento' : 'Data'}
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={e => setDate(e.target.value)}
-                  className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none"
+                  className="w-full mt-1 bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-md px-3 py-2.5 text-sm dark:text-foreground outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Note</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wide">Note</label>
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={3}
-                  className="w-full mt-1 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm dark:text-white outline-none resize-none"
+                  className="w-full mt-1 bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-md px-3 py-2.5 text-sm dark:text-foreground outline-none resize-none"
                 />
               </div>
 
               {todos.length > 0 && (
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide">To-do estratti</label>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wide">To-do estratti</label>
                   <div className="space-y-2 mt-1.5">
                     {todos.map((t, idx) => (
-                      <div key={idx} className={`flex items-start gap-2 rounded-xl px-3 py-2.5 border-2 ${t.selected ? 'border-blue-200 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
-                        <button onClick={() => toggleTodo(idx)} className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${t.selected ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-600'}`}>
+                      <div key={idx} className={`flex items-start gap-2 rounded-xl px-3 py-2.5 border-2 ${t.selected ? 'border-accent bg-accent-soft dark:bg-accent-soft/20' : 'border-line dark:border-line opacity-50'}`}>
+                        <button onClick={() => toggleTodo(idx)} className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${t.selected ? 'bg-action text-action-foreground' : 'bg-raised dark:bg-raised'}`}>
                           {t.selected && <Check size={12} />}
                         </button>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold dark:text-white truncate">{t.titolo}</p>
-                          <p className="text-[10px] text-gray-400">{t.tipo} · {t.priorita}{t.scadenza ? ` · scad. ${t.scadenza}` : ''}</p>
+                          <p className="text-sm font-bold dark:text-foreground truncate">{t.titolo}</p>
+                          <p className="text-xs text-muted">{t.tipo} · {t.priorita}{t.scadenza ? ` · scad. ${t.scadenza}` : ''}</p>
                         </div>
-                        <button onClick={() => removeTodo(idx)} className="text-gray-300 hover:text-red-500 flex-shrink-0">
+                        <button onClick={() => removeTodo(idx)} className="text-muted hover:text-danger flex-shrink-0">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -574,7 +575,7 @@ export function QuickLogPanel({ onClose }: Props) {
               <button
                 onClick={handleSave}
                 disabled={!contactId || phase !== 'review'}
-                className="w-full py-3 rounded-2xl bg-blue-700 text-white font-black text-sm uppercase tracking-wide disabled:opacity-40 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm uppercase tracking-wide disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {phase === 'saving' ? <Loader2 size={16} className="animate-spin" /> : null}
                 {isFuture
@@ -585,6 +586,6 @@ export function QuickLogPanel({ onClose }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </DialogFrame>
   );
 }

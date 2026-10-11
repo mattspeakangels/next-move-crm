@@ -23,7 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <p>Si è verificato un errore imprevisto.</p>
               <button
                 onClick={() => window.location.reload()}
-                style={{ padding: '0.6rem 1.2rem', borderRadius: '0.5rem', background: '#4f46e5', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '0.6rem 1.2rem', borderRadius: '0.5rem', background: 'rgb(var(--syrio-action))', color: 'rgb(var(--syrio-action-foreground))', border: 'none', fontWeight: 700, cursor: 'pointer' }}
               >
                 Ricarica
               </button>

@@ -70,9 +70,9 @@ export const SuggestedDealsView: React.FC = () => {
   if (clientiDettagliati.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <Lightbulb size={44} className="text-gray-200 dark:text-gray-700 mb-4" />
-        <p className="font-black text-gray-400 uppercase tracking-widest text-sm">Nessuno storico caricato</p>
-        <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Importa il file Excel dallo Storico per ricevere suggerimenti automatici</p>
+        <Lightbulb size={44} className="text-muted dark:text-foreground mb-4" />
+        <p className="font-semibold text-muted uppercase tracking-normal text-sm">Nessuno storico caricato</p>
+        <p className="text-xs text-muted dark:text-secondary mt-1">Importa il file Excel dallo Storico per ricevere suggerimenti automatici</p>
       </div>
     );
   }
@@ -80,18 +80,18 @@ export const SuggestedDealsView: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header info */}
-      <div className="flex items-center gap-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl px-4 py-3">
-        <Sparkles size={16} className="text-[var(--accent-500)] flex-shrink-0" />
-        <p className="text-xs font-bold text-[var(--accent-700)] dark:text-[var(--accent-300)]">
+      <div className="flex items-center gap-3 bg-accent-soft dark:bg-accent-soft/20 rounded-panel px-4 py-3">
+        <Sparkles size={16} className="text-accent flex-shrink-0" />
+        <p className="text-xs font-bold text-accent dark:text-accent">
           {visible.length} opportunità identificate dallo storico ordini — basate su trend stagionali e variazioni anno su anno.
         </p>
       </div>
 
       {/* Cards */}
       {visible.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-700">
-          <Check size={28} className="mx-auto text-green-400 mb-2" />
-          <p className="font-black text-gray-400 uppercase tracking-widest text-sm">Tutti i suggerimenti gestiti</p>
+        <div className="bg-surface dark:bg-surface rounded-panel p-10 text-center border border-line dark:border-line">
+          <Check size={28} className="mx-auto text-success mb-2" />
+          <p className="font-semibold text-muted uppercase tracking-normal text-sm">Tutti i suggerimenti gestiti</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -99,17 +99,17 @@ export const SuggestedDealsView: React.FC = () => {
             const isAdded = added.has(deal.clientId);
             const matched = findContact(deal.nomeCliente);
             const TrendIcon = deal.trend === 'crescita' ? TrendingUp : deal.trend === 'calo' ? TrendingDown : Minus;
-            const trendColor = deal.trend === 'crescita' ? 'text-green-500' : deal.trend === 'calo' ? 'text-rose-500' : 'text-amber-500';
+            const trendColor = deal.trend === 'crescita' ? 'text-success' : deal.trend === 'calo' ? 'text-danger' : 'text-warning';
             const prioBg = deal.priorita === 'alta'
-              ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+              ? 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger'
               : deal.priorita === 'media'
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
+              ? 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning'
+              : 'bg-raised text-secondary dark:bg-raised dark:text-muted';
 
             return (
               <div key={deal.clientId}
-                className={`bg-white dark:bg-gray-800 rounded-2xl border transition-all overflow-hidden
-                  ${isAdded ? 'border-green-200 dark:border-green-800' : 'border-gray-100 dark:border-gray-700'}`}>
+                className={`bg-surface dark:bg-surface rounded-panel border transition-all overflow-hidden
+                  ${isAdded ? 'border-success dark:border-success' : 'border-line dark:border-line'}`}>
                 {/* Top row */}
                 <div className="px-4 pt-4 pb-2 flex items-start gap-3">
                   {/* Trend icon */}
@@ -120,23 +120,23 @@ export const SuggestedDealsView: React.FC = () => {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <p className="font-black text-gray-900 dark:text-white text-sm uppercase truncate">
+                      <p className="font-semibold text-foreground dark:text-foreground text-sm uppercase truncate">
                         {deal.nomeCliente}
                       </p>
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg ${prioBg}`}>
+                      <span className={`text-xs font-semibold uppercase px-2 py-0.5 rounded-lg ${prioBg}`}>
                         {deal.priorita}
                       </span>
                       {matched && (
-                        <span className="text-[10px] font-black text-[var(--accent-500)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-2 py-0.5 rounded-lg">
+                        <span className="text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/20 px-2 py-0.5 rounded-lg">
                           CRM
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+                    <p className="text-xs text-secondary dark:text-muted font-medium leading-relaxed">
                       {deal.motivazione}
                     </p>
                     {deal.prodottiSuggeriti.length > 0 && (
-                      <p className="text-[10px] text-gray-400 mt-1 font-bold">
+                      <p className="text-xs text-muted mt-1 font-bold">
                         {deal.prodottiSuggeriti.join(' · ')}
                       </p>
                     )}
@@ -144,28 +144,28 @@ export const SuggestedDealsView: React.FC = () => {
 
                   {/* Value */}
                   <div className="text-right flex-shrink-0">
-                    <p className="font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] text-base">€{fmt(deal.valoreStimato)}</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">stimato</p>
+                    <p className="font-semibold text-accent dark:text-accent text-base">€{fmt(deal.valoreStimato)}</p>
+                    <p className="text-xs font-bold text-muted uppercase">stimato</p>
                   </div>
                 </div>
 
                 {/* Action bar */}
                 <div className="px-4 pb-3 flex items-center gap-2">
                   {isAdded ? (
-                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <div className="flex items-center gap-2 text-success dark:text-success">
                       <Check size={14} />
-                      <span className="text-xs font-black">Aggiunto alla Pipeline</span>
+                      <span className="text-xs font-semibold">Aggiunto alla Pipeline</span>
                     </div>
                   ) : (
                     <>
                       <button
                         onClick={() => handleAdd(deal)}
-                        className="flex items-center gap-1.5 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white px-4 py-1.5 rounded-xl text-xs font-black transition-colors">
+                        className="flex items-center gap-1.5 bg-action hover:bg-action-hover text-action-foreground px-4 py-1.5 rounded-md text-xs font-semibold transition-colors">
                         <Plus size={12} /> Aggiungi alla Pipeline
                       </button>
                       <button
                         onClick={() => setDismissed(prev => new Set(prev).add(deal.clientId))}
-                        className="text-xs font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        className="text-xs font-bold text-muted hover:text-secondary dark:hover:text-muted px-2 py-1.5 rounded-md hover:bg-raised dark:hover:bg-raised transition-colors">
                         Ignora
                       </button>
                     </>

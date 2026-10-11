@@ -24,10 +24,10 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/landing/],
       },
       manifest: {
-        name: 'Next Move',
-        short_name: 'NextMove',
-        theme_color: '#4F46E5',
-        background_color: '#F9FAFB',
+        name: 'SYRIO — Your sales guide',
+        short_name: 'SYRIO',
+        theme_color: '#0a0c0d',
+        background_color: '#0a0c0d',
         display: 'standalone',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },

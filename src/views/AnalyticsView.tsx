@@ -10,7 +10,7 @@ import { Upload, TrendingUp, Users, Zap, FileText, CheckCircle, XCircle, Send, A
 import { BarChart, PieChart, LineChart, Bar, Pie, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { useToast } from '../components/ui/ToastContext';
 
-const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+const COLORS = Array.from({ length: 8 }, (_, i) => `var(--syrio-chart-${i + 1})`);
 
 export const AnalyticsView: React.FC = () => {
   const state = useStore();
@@ -45,10 +45,10 @@ export const AnalyticsView: React.FC = () => {
 
   // Funnel per status
   const funnelData = [
-    { name: 'Bozza',     count: offersByStatus.bozza.length,     valore: Math.round(offersByStatus.bozza.reduce((s,o)=>s+o.totalAmount,0)),     fill: '#94a3b8' },
-    { name: 'Inviate',   count: offersByStatus.inviata.length,   valore: Math.round(offersByStatus.inviata.reduce((s,o)=>s+o.totalAmount,0)),   fill: '#3b82f6' },
-    { name: 'Accettate', count: offersByStatus.accettata.length, valore: Math.round(offersByStatus.accettata.reduce((s,o)=>s+o.totalAmount,0)), fill: '#10b981' },
-    { name: 'Rifiutate', count: offersByStatus.rifiutata.length, valore: Math.round(offersByStatus.rifiutata.reduce((s,o)=>s+o.totalAmount,0)), fill: '#ef4444' },
+    { name: 'Bozza',     count: offersByStatus.bozza.length,     valore: Math.round(offersByStatus.bozza.reduce((s,o)=>s+o.totalAmount,0)),     fill: 'var(--syrio-chart-7)' },
+    { name: 'Inviate',   count: offersByStatus.inviata.length,   valore: Math.round(offersByStatus.inviata.reduce((s,o)=>s+o.totalAmount,0)),   fill: 'var(--syrio-chart-3)' },
+    { name: 'Accettate', count: offersByStatus.accettata.length, valore: Math.round(offersByStatus.accettata.reduce((s,o)=>s+o.totalAmount,0)), fill: 'rgb(var(--syrio-success))' },
+    { name: 'Rifiutate', count: offersByStatus.rifiutata.length, valore: Math.round(offersByStatus.rifiutata.reduce((s,o)=>s+o.totalAmount,0)), fill: 'rgb(var(--syrio-danger))' },
   ];
 
   // Trend mensile offerte (ultimi 12 mesi)
@@ -148,12 +148,12 @@ export const AnalyticsView: React.FC = () => {
     <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-black dark:text-white uppercase">Analytics</h1>
-          <p className="text-gray-400 text-sm font-bold">Business Intelligence</p>
+          <h1 className="text-2xl  dark:text-foreground ">Analytics</h1>
+          <p className="text-muted text-sm font-bold">Business Intelligence</p>
         </div>
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white px-4 py-2 rounded-2xl font-bold flex items-center gap-2"
+          className="bg-action hover:bg-action-hover text-action-foreground px-4 py-2 rounded-panel font-bold flex items-center gap-2"
         >
           <Upload size={16} /> Importa CSV / Excel
         </button>
@@ -161,46 +161,46 @@ export const AnalyticsView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Fatturato</p>
-            <TrendingUp size={20} className="text-[var(--accent-600)]" />
+            <p className="text-secondary dark:text-muted text-xs font-bold uppercase">Fatturato</p>
+            <TrendingUp size={20} className="text-accent" />
           </div>
-          <p className="text-2xl font-black text-gray-900 dark:text-white">€{(totalRevenue / 1000).toFixed(0)}k</p>
-          <p className="text-xs text-gray-400 mt-1">{transactionCount} transazioni</p>
+          <p className="text-2xl font-semibold text-foreground dark:text-foreground">€{(totalRevenue / 1000).toFixed(0)}k</p>
+          <p className="text-xs text-muted mt-1">{transactionCount} transazioni</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Numero Deal</p>
-            <Zap size={20} className="text-cyan-500" />
+            <p className="text-secondary dark:text-muted text-xs font-bold uppercase">Numero Deal</p>
+            <Zap size={20} className="text-accent" />
           </div>
-          <p className="text-2xl font-black text-gray-900 dark:text-white">{transactionCount}</p>
-          <p className="text-xs text-gray-400 mt-1">ultimi {yearsBack} anni</p>
+          <p className="text-2xl font-semibold text-foreground dark:text-foreground">{transactionCount}</p>
+          <p className="text-xs text-muted mt-1">ultimi {yearsBack} anni</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Deal Medio</p>
-            <Zap size={20} className="text-emerald-500" />
+            <p className="text-secondary dark:text-muted text-xs font-bold uppercase">Deal Medio</p>
+            <Zap size={20} className="text-success" />
           </div>
-          <p className="text-2xl font-black text-gray-900 dark:text-white">€{(avgDealValue / 1000).toFixed(1)}k</p>
-          <p className="text-xs text-gray-400 mt-1">per transazione</p>
+          <p className="text-2xl font-semibold text-foreground dark:text-foreground">€{(avgDealValue / 1000).toFixed(1)}k</p>
+          <p className="text-xs text-muted mt-1">per transazione</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Top Cliente</p>
-            <Users size={20} className="text-amber-500" />
+            <p className="text-secondary dark:text-muted text-xs font-bold uppercase">Top Cliente</p>
+            <Users size={20} className="text-warning" />
           </div>
-          <p className="text-lg font-black text-gray-900 dark:text-white truncate">{topCustomerName}</p>
-          <p className="text-xs text-gray-400 mt-1">{topCustomers[0]?.count || 0} ordini</p>
+          <p className="text-lg font-semibold text-foreground dark:text-foreground truncate">{topCustomerName}</p>
+          <p className="text-xs text-muted mt-1">{topCustomers[0]?.count || 0} ordini</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-black uppercase mb-4">Trend Mensile</h3>
+        <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+          <h3 className="text-lg font-semibold  mb-4">Trend Mensile</h3>
           {monthlySales.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlySales}>
@@ -208,34 +208,34 @@ export const AnalyticsView: React.FC = () => {
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip formatter={(value) => `€${(value as number / 1000).toFixed(1)}k`} />
-                <Line type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={2} dot={{ fill: '#4f46e5', r: 4 }} />
+                <Line type="monotone" dataKey="revenue" stroke="var(--syrio-chart-1)" strokeWidth={2} dot={{ fill: 'var(--syrio-chart-1)', r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">Nessun dato</div>
+            <div className="h-[300px] flex items-center justify-center text-muted">Nessun dato</div>
           )}
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-black uppercase mb-4">Top 10 Clienti</h3>
+        <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+          <h3 className="text-lg font-semibold  mb-4">Top 10 Clienti</h3>
           {topCustomers.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={topCustomers} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value" label={({ name, percentage }) => `${name} (${percentage}%)`}>
+                <Pie data={topCustomers} cx="50%" cy="50%" outerRadius={80} fill="var(--syrio-chart-4)" dataKey="value" label={({ name, percentage }) => `${name} (${percentage}%)`}>
                   {topCustomers.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
                 <Tooltip formatter={(value) => `€${(value as number / 1000).toFixed(1)}k`} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">Nessun dato</div>
+            <div className="h-[300px] flex items-center justify-center text-muted">Nessun dato</div>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-black uppercase mb-4">Top 10 Prodotti</h3>
+        <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+          <h3 className="text-lg font-semibold  mb-4">Top 10 Prodotti</h3>
           {topProducts.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={topProducts} layout="vertical">
@@ -243,34 +243,34 @@ export const AnalyticsView: React.FC = () => {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={120} />
                 <Tooltip formatter={(value) => `${value} unità`} />
-                <Bar dataKey="value" fill="#06b6d4" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="value" fill="var(--syrio-chart-2)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">Nessun dato</div>
+            <div className="h-[300px] flex items-center justify-center text-muted">Nessun dato</div>
           )}
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-black uppercase mb-4">Per Stage</h3>
+        <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+          <h3 className="text-lg font-semibold  mb-4">Per Stage</h3>
           {salesByStage.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={salesByStage} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value" label={({ name, percentage }) => `${name} (${percentage}%)`}>
+                <Pie data={salesByStage} cx="50%" cy="50%" outerRadius={80} fill="var(--syrio-chart-4)" dataKey="value" label={({ name, percentage }) => `${name} (${percentage}%)`}>
                   {salesByStage.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
                 <Tooltip formatter={(value) => `${value} transazioni`} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">Nessun dato</div>
+            <div className="h-[300px] flex items-center justify-center text-muted">Nessun dato</div>
           )}
         </div>
       </div>
 
       {transactionCount > 0 && (
-        <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-4 border border-[var(--accent-100)] dark:border-[var(--accent-900)]/50">
-          <p className="text-sm text-[var(--accent-900)] dark:text-[var(--accent-200)]">
+        <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-panel p-4 border border-accent dark:border-accent/50">
+          <p className="text-sm text-accent dark:text-accent">
             <strong>{transactionCount}</strong> transazioni • <strong>€{(totalRevenue / 1000).toFixed(0)}k</strong> fatturato
           </p>
         </div>
@@ -279,14 +279,14 @@ export const AnalyticsView: React.FC = () => {
       {/* ── SEZIONE ATTIVITÀ ────────────────────────────────────────────────── */}
       <div className="pt-2">
         <div className="flex items-center gap-3 mb-4">
-          <Activity size={20} className="text-green-500" />
-          <h2 className="text-lg font-black uppercase tracking-tight dark:text-white">Attività Commerciali</h2>
+          <Activity size={20} className="text-success" />
+          <h2 className="text-lg font-semibold  tracking-tight dark:text-foreground">Attività Commerciali</h2>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Mix attività */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Mix Attività</h3>
-            <p className="text-xs text-gray-400 mb-4">Distribuzione per tipo</p>
+          <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+            <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Mix Attività</h3>
+            <p className="text-xs text-muted mb-4">Distribuzione per tipo</p>
             {activityMix.length > 0 ? (
               <div className="flex gap-4 items-center">
                 <ResponsiveContainer width="50%" height={160}>
@@ -301,38 +301,38 @@ export const AnalyticsView: React.FC = () => {
                   {activityMix.map(a => (
                     <div key={a.type} className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: a.color }} />
-                      <span className="text-xs font-bold text-gray-600 dark:text-gray-300 flex-1">{a.label}</span>
-                      <span className="text-xs font-black text-gray-500">{a.count}</span>
-                      <span className="text-[10px] text-gray-400">{a.percentage}%</span>
+                      <span className="text-xs font-bold text-secondary dark:text-muted flex-1">{a.label}</span>
+                      <span className="text-xs font-semibold text-secondary">{a.count}</span>
+                      <span className="text-xs text-muted">{a.percentage}%</span>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="h-[160px] flex items-center justify-center text-gray-300 text-sm font-bold">Nessuna attività</div>
+              <div className="h-[160px] flex items-center justify-center text-muted text-sm font-bold">Nessuna attività</div>
             )}
           </div>
 
           {/* Attività per settimana */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Attività per Settimana</h3>
-            <p className="text-xs text-gray-400 mb-4">Ultime 8 settimane per tipo</p>
+          <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+            <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Attività per Settimana</h3>
+            <p className="text-xs text-muted mb-4">Ultime 8 settimane per tipo</p>
             {activityPerWeek.some(w => w.visite + w.chiamate + w.email + w.demo > 0) ? (
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={activityPerWeek} barSize={10} barGap={1}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--syrio-line))" />
                   <XAxis dataKey="label" tick={{ fontSize: 9 }} />
                   <YAxis tick={{ fontSize: 9 }} allowDecimals={false} />
                   <Tooltip />
                   <Legend formatter={v => ({ visite: 'Visite', chiamate: 'Chiamate', email: 'Email', demo: 'Demo' } as Record<string, string>)[v] ?? v} />
-                  <Bar dataKey="visite" name="visite" fill="#4f46e5" stackId="a" radius={[0,0,0,0]} />
-                  <Bar dataKey="chiamate" name="chiamate" fill="#10b981" stackId="a" />
-                  <Bar dataKey="email" name="email" fill="#3b82f6" stackId="a" />
-                  <Bar dataKey="demo" name="demo" fill="#8b5cf6" stackId="a" radius={[4,4,0,0]} />
+                  <Bar dataKey="visite" name="visite" fill="var(--syrio-chart-1)" stackId="a" radius={[0,0,0,0]} />
+                  <Bar dataKey="chiamate" name="chiamate" fill="var(--syrio-chart-2)" stackId="a" />
+                  <Bar dataKey="email" name="email" fill="var(--syrio-chart-3)" stackId="a" />
+                  <Bar dataKey="demo" name="demo" fill="var(--syrio-chart-4)" stackId="a" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[160px] flex items-center justify-center text-gray-300 text-sm font-bold">Nessuna attività</div>
+              <div className="h-[160px] flex items-center justify-center text-muted text-sm font-bold">Nessuna attività</div>
             )}
           </div>
         </div>
@@ -342,16 +342,16 @@ export const AnalyticsView: React.FC = () => {
       {accountPipeline.length > 0 && (
         <div className="pt-2">
           <div className="flex items-center gap-3 mb-4">
-            <Target size={20} className="text-[var(--accent-500)]" />
-            <h2 className="text-lg font-black uppercase tracking-tight dark:text-white">Account Pipeline</h2>
-            <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">Top 10</span>
+            <Target size={20} className="text-accent" />
+            <h2 className="text-lg font-semibold  tracking-tight dark:text-foreground">Account Pipeline</h2>
+            <span className="text-xs font-bold text-muted bg-raised dark:bg-raised px-2 py-0.5 rounded-full">Top 10</span>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Pipeline per Cliente</h3>
-            <p className="text-xs text-gray-400 mb-4">Valore deal attivi per azienda</p>
+          <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+            <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Pipeline per Cliente</h3>
+            <p className="text-xs text-muted mb-4">Valore deal attivi per azienda</p>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={accountPipeline} layout="vertical" margin={{ left: 0, right: 30, top: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--syrio-line))" />
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10, fontWeight: 700 }} />
                 <Tooltip formatter={(v: number) => [`€${v.toLocaleString('it-IT')}`, 'Pipeline']} />
@@ -368,14 +368,14 @@ export const AnalyticsView: React.FC = () => {
       {(lostReasons.length > 0 || competitors.length > 0) && (
         <div className="pt-2">
           <div className="flex items-center gap-3 mb-4">
-            <ShieldAlert size={20} className="text-red-500" />
-            <h2 className="text-lg font-black uppercase tracking-tight dark:text-white">Analisi Perdite</h2>
+            <ShieldAlert size={20} className="text-danger" />
+            <h2 className="text-lg font-semibold  tracking-tight dark:text-foreground">Analisi Perdite</h2>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {lostReasons.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Motivi di Perdita</h3>
-                <p className="text-xs text-gray-400 mb-4">Distribuzione deal persi per causa</p>
+              <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+                <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Motivi di Perdita</h3>
+                <p className="text-xs text-muted mb-4">Distribuzione deal persi per causa</p>
                 <div className="flex gap-4 items-center">
                   <ResponsiveContainer width="50%" height={160}>
                     <PieChart>
@@ -389,9 +389,9 @@ export const AnalyticsView: React.FC = () => {
                     {lostReasons.map((r, i) => (
                       <div key={r.name} className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                        <span className="text-xs font-bold text-gray-600 dark:text-gray-300 flex-1">{r.name}</span>
-                        <span className="text-xs font-black text-gray-500">{r.count} deal</span>
-                        <span className="text-[10px] text-gray-400">{r.percentage}%</span>
+                        <span className="text-xs font-bold text-secondary dark:text-muted flex-1">{r.name}</span>
+                        <span className="text-xs font-semibold text-secondary">{r.count} deal</span>
+                        <span className="text-xs text-muted">{r.percentage}%</span>
                       </div>
                     ))}
                   </div>
@@ -399,15 +399,15 @@ export const AnalyticsView: React.FC = () => {
               </div>
             )}
             {competitors.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Competitor</h3>
-                <p className="text-xs text-gray-400 mb-4">Deal persi per competitor</p>
+              <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+                <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Competitor</h3>
+                <p className="text-xs text-muted mb-4">Deal persi per competitor</p>
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={competitors} layout="vertical" margin={{ left: 0, right: 30, top: 0, bottom: 0 }}>
                     <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
                     <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
                     <Tooltip formatter={(v: number) => [`${v} deal persi`, 'Perdite']} />
-                    <Bar dataKey="value" fill="#ef4444" radius={[0, 6, 6, 0]} />
+                    <Bar dataKey="value" fill="rgb(var(--syrio-danger))" radius={[0, 6, 6, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -419,16 +419,16 @@ export const AnalyticsView: React.FC = () => {
       {/* ── SEZIONE OFFERTE ─────────────────────────────────────────────────── */}
       <div className="pt-2">
         <div className="flex items-center gap-3 mb-4">
-          <FileText size={20} className="text-[var(--accent-500)]" />
-          <h2 className="text-lg font-black uppercase tracking-tight dark:text-white">Analisi Offerte</h2>
-          <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">{totalOfferte} totali</span>
+          <FileText size={20} className="text-accent" />
+          <h2 className="text-lg font-semibold  tracking-tight dark:text-foreground">Analisi Offerte</h2>
+          <span className="text-xs font-bold text-muted bg-raised dark:bg-raised px-2 py-0.5 rounded-full">{totalOfferte} totali</span>
         </div>
 
         {totalOfferte === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl py-12 text-center border border-dashed border-gray-200 dark:border-gray-700">
-            <FileText size={36} className="mx-auto mb-3 text-gray-200 dark:text-gray-600" />
-            <p className="text-gray-400 font-bold text-sm">Nessuna offerta registrata</p>
-            <p className="text-gray-300 text-xs mt-1">Crea offerte nella sezione Offerte per vedere le analisi</p>
+          <div className="bg-surface dark:bg-surface rounded-panel py-12 text-center border border-dashed border-line dark:border-line">
+            <FileText size={36} className="mx-auto mb-3 text-muted dark:text-secondary" />
+            <p className="text-muted font-bold text-sm">Nessuna offerta registrata</p>
+            <p className="text-muted text-xs mt-1">Crea offerte nella sezione Offerte per vedere le analisi</p>
           </div>
         ) : (
           <>
@@ -438,45 +438,45 @@ export const AnalyticsView: React.FC = () => {
                 {
                   label: 'Offerte Totali', value: String(totalOfferte),
                   sub: `${offersByStatus.inviata.length} in attesa`,
-                  icon: FileText, color: 'text-[var(--accent-500)]', bg: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20',
+                  icon: FileText, color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/20',
                 },
                 {
                   label: 'Tasso Conversione', value: `${tassoConversione}%`,
                   sub: `${offersByStatus.accettata.length} accettate / ${chiuse} chiuse`,
-                  icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20',
+                  icon: CheckCircle, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft',
                 },
                 {
                   label: 'Valore Accettate', value: `€${(valoreAccettate/1000).toFixed(1)}k`,
                   sub: `${offersByStatus.accettata.length} offerte vinte`,
-                  icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+                  icon: TrendingUp, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft',
                 },
                 {
                   label: 'Valore Medio', value: `€${(valMedioOfferta/1000).toFixed(1)}k`,
                   sub: `su tutte le offerte`,
-                  icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20',
+                  icon: Zap, color: 'text-warning', bg: 'bg-warning-soft dark:bg-warning-soft',
                 },
               ].map(({ label, value, sub, icon: Icon, color, bg }) => (
-                <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+                <div key={label} className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wide">{label}</p>
+                    <p className="text-secondary dark:text-muted text-xs font-bold uppercase tracking-wide">{label}</p>
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${bg}`}>
                       <Icon size={16} className={color} />
                     </div>
                   </div>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">{value}</p>
-                  <p className="text-xs text-gray-400 mt-1">{sub}</p>
+                  <p className="text-2xl font-semibold text-foreground dark:text-foreground">{value}</p>
+                  <p className="text-xs text-muted mt-1">{sub}</p>
                 </div>
               ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Funnel per stato */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Funnel Offerte</h3>
-                <p className="text-xs text-gray-400 mb-4">Numero offerte per stato</p>
+              <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+                <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Funnel Offerte</h3>
+                <p className="text-xs text-muted mb-4">Numero offerte per stato</p>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={funnelData} barSize={36}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--syrio-line))" />
                     <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 700 }} />
                     <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                     <Tooltip
@@ -493,41 +493,41 @@ export const AnalyticsView: React.FC = () => {
 
                 {/* Mini riepilogo valori */}
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-3 py-2">
+                  <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-md px-3 py-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <Send size={11} className="text-blue-500" />
-                      <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">Inv. in attesa</span>
+                      <Send size={11} className="text-accent" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-accent">Inv. in attesa</span>
                     </div>
-                    <span className="text-sm font-black text-blue-700 dark:text-blue-300">€{(valoreInviate/1000).toFixed(1)}k</span>
+                    <span className="text-sm font-semibold text-accent dark:text-accent">€{(valoreInviate/1000).toFixed(1)}k</span>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-xl px-3 py-2">
+                  <div className="bg-success-soft dark:bg-success-soft rounded-md px-3 py-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <CheckCircle size={11} className="text-green-500" />
-                      <span className="text-[10px] font-black uppercase tracking-wider text-green-600">Valore vinto</span>
+                      <CheckCircle size={11} className="text-success" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-success">Valore vinto</span>
                     </div>
-                    <span className="text-sm font-black text-green-700 dark:text-green-300">€{(valoreAccettate/1000).toFixed(1)}k</span>
+                    <span className="text-sm font-semibold text-success dark:text-success">€{(valoreAccettate/1000).toFixed(1)}k</span>
                   </div>
                 </div>
               </div>
 
               {/* Trend mensile */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-black uppercase tracking-widest mb-1 dark:text-white">Trend Mensile Offerte</h3>
-                <p className="text-xs text-gray-400 mb-4">Inviate vs Accettate (ultimi 12 mesi)</p>
+              <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
+                <h3 className="text-sm font-semibold   mb-1 dark:text-foreground">Trend Mensile Offerte</h3>
+                <p className="text-xs text-muted mb-4">Inviate vs Accettate (ultimi 12 mesi)</p>
                 {offerTrend.length > 0 ? (
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={offerTrend} barGap={2}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--syrio-line))" />
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                       <Tooltip formatter={(v: number, name: string) => [v, name === 'inviate' ? 'Inviate' : 'Accettate']} />
                       <Legend formatter={v => v === 'inviate' ? 'Inviate' : 'Accettate'} />
-                      <Bar dataKey="inviate" name="inviate" fill="#93c5fd" radius={[4,4,0,0]} />
-                      <Bar dataKey="accettate" name="accettate" fill="#10b981" radius={[4,4,0,0]} />
+                      <Bar dataKey="inviate" name="inviate" fill="var(--syrio-chart-2)" radius={[4,4,0,0]} />
+                      <Bar dataKey="accettate" name="accettate" fill="rgb(var(--syrio-success))" radius={[4,4,0,0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[220px] flex flex-col items-center justify-center text-gray-300">
+                  <div className="h-[220px] flex flex-col items-center justify-center text-muted">
                     <XCircle size={32} className="mb-2" />
                     <p className="text-sm font-bold">Nessun dato mensile disponibile</p>
                     <p className="text-xs mt-1">Le offerte verranno mostrate per mese di creazione</p>

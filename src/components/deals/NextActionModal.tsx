@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState } from 'react';
 import { X, Phone, Mail, FileText, Calendar, MoreHorizontal, Flag } from 'lucide-react';
 import { NextActionType, NextActionPriority } from '../../types';
@@ -23,9 +24,9 @@ const ACTION_CHIPS: { type: NextActionType; label: string; icon: React.ReactNode
 ];
 
 const PRIORITY_OPTIONS: { value: NextActionPriority; label: string; color: string }[] = [
-  { value: 'alta', label: 'Alta', color: 'bg-red-500' },
-  { value: 'media', label: 'Media', color: 'bg-yellow-400' },
-  { value: 'bassa', label: 'Bassa', color: 'bg-green-500' },
+  { value: 'alta', label: 'Alta', color: 'bg-danger' },
+  { value: 'media', label: 'Media', color: 'bg-warning' },
+  { value: 'bassa', label: 'Bassa', color: 'bg-success' },
 ];
 
 const QUICK_DAYS = [3, 7, 14, 30];
@@ -68,17 +69,17 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel shadow-panel overflow-hidden">
 
         {/* Header */}
-        <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-line dark:border-line">
           <div>
-            <h3 className="font-black uppercase tracking-tight text-gray-900 dark:text-white">Prossima Azione</h3>
-            {companyName && <p className="text-xs font-bold text-[var(--accent-600)] uppercase tracking-widest mt-0.5">{companyName}</p>}
+            <h3 className="font-semibold  tracking-tight text-foreground dark:text-foreground">Prossima Azione</h3>
+            {companyName && <p className="text-xs font-bold text-accent uppercase tracking-normal mt-0.5">{companyName}</p>}
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <X size={20} className="text-gray-400" />
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="p-2 rounded-md hover:bg-raised dark:hover:bg-raised transition-colors">
+            <X size={20} className="text-muted" />
           </button>
         </div>
 
@@ -86,7 +87,7 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
 
           {/* Tipo azione - chips */}
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Tipo azione</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-2">Tipo azione</label>
             <div className="flex flex-wrap gap-2">
               {ACTION_CHIPS.map(chip => (
                 <button
@@ -94,8 +95,8 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
                   onClick={() => setActionType(chip.type)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                     actionType === chip.type
-                      ? 'bg-[var(--accent-600)] text-white shadow-md'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                      ? 'bg-action text-action-foreground shadow-panel'
+                      : 'bg-raised dark:bg-raised text-secondary dark:text-muted hover:bg-raised'
                   }`}
                 >
                   {chip.icon} {chip.label}
@@ -106,26 +107,26 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
 
           {/* Descrizione */}
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Qual è il prossimo passo?</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-2">Qual è il prossimo passo?</label>
             <input
               type="text"
               value={actionText}
               onChange={e => setActionText(e.target.value)}
               placeholder="Es. Chiamare Mario per conferma ordine..."
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm"
+              className="w-full border-2 border-line dark:border-line rounded-panel px-4 py-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-colors text-sm"
               autoFocus
             />
           </div>
 
           {/* Data */}
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Quando?</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-2">Quando?</label>
             <div className="flex gap-2 mb-2 flex-wrap">
               {QUICK_DAYS.map(d => (
                 <button
                   key={d}
                   onClick={() => addDays(d)}
-                  className="px-3 py-1.5 rounded-full text-xs font-black bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] hover:bg-[var(--accent-100)] transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold bg-accent-soft dark:bg-accent-soft/30 text-accent hover:bg-accent-soft transition-colors"
                 >
                   +{d}gg
                 </button>
@@ -135,13 +136,13 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
               type="date"
               value={selectedDate}
               onChange={e => setSelectedDate(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm"
+              className="w-full border-2 border-line dark:border-line rounded-panel px-4 py-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-colors text-sm"
             />
           </div>
 
           {/* Priorità */}
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-2">
               <Flag size={10} className="inline mr-1" /> Priorità
             </label>
             <div className="flex gap-2">
@@ -149,10 +150,10 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
                 <button
                   key={p.value}
                   onClick={() => setPriority(p.value)}
-                  className={`flex items-center gap-2 flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all border-2 ${
+                  className={`flex items-center gap-2 flex-1 py-2 px-3 rounded-md text-xs font-semibold transition-all border-2 ${
                     priority === p.value
-                      ? 'border-gray-300 dark:border-gray-500 bg-gray-50 dark:bg-gray-700'
-                      : 'border-transparent bg-gray-100 dark:bg-gray-900 opacity-50'
+                      ? 'border-line dark:border-line bg-canvas dark:bg-raised'
+                      : 'border-transparent bg-raised dark:bg-canvas opacity-50'
                   }`}
                 >
                   <span className={`w-2.5 h-2.5 rounded-full ${p.color}`} />
@@ -164,13 +165,13 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
 
           {/* Note opzionale */}
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Note opzionale</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-2">Note opzionale</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Dettagli aggiuntivi..."
               rows={2}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-colors text-sm resize-none"
+              className="w-full border-2 border-line dark:border-line rounded-panel px-4 py-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-colors text-sm resize-none"
             />
           </div>
         </div>
@@ -180,10 +181,10 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
           <button
             onClick={handleSave}
             disabled={!actionText.trim()}
-            className={`w-full py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all ${
+            className={`w-full py-4 rounded-panel font-semibold uppercase text-sm tracking-normal transition-all ${
               actionText.trim()
-                ? 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)] shadow-lg'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-action text-action-foreground hover:bg-action-hover shadow-panel'
+                : 'bg-raised text-muted cursor-not-allowed'
             }`}
           >
             Salva Prossima Azione
@@ -191,6 +192,6 @@ export const NextActionModal: React.FC<NextActionModalProps> = ({
         </div>
 
       </div>
-    </div>
+    </DialogFrame>
   );
 };

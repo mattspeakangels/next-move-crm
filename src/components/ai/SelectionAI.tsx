@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sparkles, List, FileText, Wand2, CheckSquare, Copy, Check, X, Loader2 } from 'lucide-react';
 
@@ -123,16 +124,16 @@ export function SelectionAI() {
       {/* Barra contestuale sulla selezione */}
       {pos && selText && !sheetOpen && (
         <div
-          className="fixed z-[9998] -translate-x-1/2 -translate-y-full flex items-center gap-1 rounded-2xl bg-gray-900 text-white shadow-2xl ring-1 ring-black/10 px-1.5 py-1.5 dark:bg-gray-800"
+          className="fixed z-[9998] -translate-x-1/2 -translate-y-full flex items-center gap-1 rounded-panel bg-canvas text-foreground shadow-panel ring-1 ring-black/10 px-1.5 py-1.5 dark:bg-surface"
           style={{ top: pos.top, left: pos.left }}
           onMouseDown={(e) => e.preventDefault()}
         >
-          <Sparkles size={14} className="text-[var(--accent-300)] ml-1 mr-0.5 flex-shrink-0" />
+          <Sparkles size={14} className="text-accent ml-1 mr-0.5 flex-shrink-0" />
           {ACTIONS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => run(id)}
-              className="flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold hover:bg-white/15 transition-colors whitespace-nowrap"
+              className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold hover:bg-surface/15 transition-colors whitespace-nowrap"
             >
               <Icon size={13} /> {label}
             </button>
@@ -142,41 +143,41 @@ export function SelectionAI() {
 
       {/* Pannello risultato */}
       {sheetOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={closeSheet}>
+        <DialogFrame className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={closeSheet}>
           <div
-            className="bg-white dark:bg-gray-800 w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-[2rem] p-6 shadow-2xl max-h-[80vh] flex flex-col"
+            className="bg-surface dark:bg-surface w-full sm:max-w-lg rounded-t-panel sm:rounded-panel p-6 shadow-panel max-h-[80vh] flex flex-col"
             style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 font-black dark:text-white">
-                <Sparkles size={18} className="text-[var(--accent-500)]" /> Assistente AI
+              <div className="flex items-center gap-2 font-semibold dark:text-foreground">
+                <Sparkles size={18} className="text-accent" /> Assistente AI
               </div>
-              <button onClick={closeSheet} aria-label="Chiudi"><X size={22} className="text-gray-400" /></button>
+              <button onClick={closeSheet} aria-label="Chiudi"><X size={22} className="text-muted" /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {loading && (
-                <div className="flex items-center gap-3 text-gray-500 py-8 justify-center">
+                <div className="flex items-center gap-3 text-secondary py-8 justify-center">
                   <Loader2 size={20} className="animate-spin" /> Elaborazione in corso…
                 </div>
               )}
-              {error && <p className="text-sm text-red-500 py-4">{error}</p>}
+              {error && <p className="text-sm text-danger py-4">{error}</p>}
               {result && (
-                <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">{result}</p>
+                <p className="text-sm text-foreground dark:text-muted whitespace-pre-wrap break-words leading-relaxed">{result}</p>
               )}
             </div>
 
             {result && (
               <button
                 onClick={copy}
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white font-black py-3 rounded-2xl transition-colors"
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-action hover:bg-action-hover text-action-foreground font-semibold py-3 rounded-panel transition-colors"
               >
                 {copied ? <><Check size={16} /> Copiato</> : <><Copy size={16} /> Copia</>}
               </button>
             )}
           </div>
-        </div>
+        </DialogFrame>
       )}
     </>
   );

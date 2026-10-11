@@ -85,28 +85,28 @@ const ClientDetail: React.FC<{ cm: ClientMonth; month: string; onBack: () => voi
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={onBack}
-          className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-[var(--accent-600)] transition-colors shadow-sm">
+          className="p-2 rounded-md bg-surface dark:bg-surface border border-line dark:border-line text-secondary hover:text-accent transition-colors shadow-sm">
           <ArrowLeft size={16} />
         </button>
         <div>
-          <h2 className="font-black text-gray-900 dark:text-white text-base uppercase tracking-tight leading-tight">
+          <h2 className="font-semibold text-foreground dark:text-foreground text-base  tracking-tight leading-tight">
             {cm.cliente.nome}
           </h2>
-          <p className="text-xs font-bold text-gray-400 capitalize">{formatMonthLabel(month)}</p>
+          <p className="text-xs font-bold text-muted capitalize">{formatMonthLabel(month)}</p>
         </div>
       </div>
 
       {/* KPI strip */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Totale mese', value: `€${fmt(cm.total)}`, icon: TrendingUp, color: 'indigo' },
-          { label: 'N° ordini', value: String(cm.orderCount), icon: ShoppingCart, color: 'violet' },
-          { label: 'Ordine medio', value: `€${fmt(avgOrder)}`, icon: Package, color: 'amber' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className={`bg-${color}-50 dark:bg-${color}-900/20 rounded-2xl p-3 text-center`}>
-            <Icon size={14} className={`mx-auto mb-1 text-${color}-500`} />
-            <p className="font-black text-gray-900 dark:text-white text-sm">{value}</p>
-            <p className={`text-[10px] font-black text-${color}-500 uppercase tracking-widest mt-0.5`}>{label}</p>
+          { label: 'Totale mese', value: `€${fmt(cm.total)}`, icon: TrendingUp },
+          { label: 'N° ordini', value: String(cm.orderCount), icon: ShoppingCart },
+          { label: 'Ordine medio', value: `€${fmt(avgOrder)}`, icon: Package },
+        ].map(({ label, value, icon: Icon }) => (
+          <div key={label} className="bg-surface border border-line rounded-panel p-3 text-center">
+            <Icon size={14} className="mx-auto mb-1 text-accent" />
+            <p className="font-semibold text-foreground dark:text-foreground text-sm">{value}</p>
+            <p className="text-xs text-muted mt-0.5">{label}</p>
           </div>
         ))}
       </div>
@@ -119,14 +119,14 @@ const ClientDetail: React.FC<{ cm: ClientMonth; month: string; onBack: () => voi
           const dayLabel = dt ? dt.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }) : date;
 
           return (
-            <div key={date} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div key={date} className="bg-surface dark:bg-surface rounded-panel shadow-sm border border-line dark:border-line overflow-hidden">
               {/* Day header */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-canvas dark:bg-raised/50 border-b border-line dark:border-line">
                 <div className="flex items-center gap-2">
-                  <CalendarDays size={13} className="text-[var(--accent-400)]" />
-                  <span className="text-xs font-black text-gray-700 dark:text-gray-200 capitalize">{dayLabel}</span>
+                  <CalendarDays size={13} className="text-accent" />
+                  <span className="text-xs font-semibold text-foreground dark:text-muted capitalize">{dayLabel}</span>
                 </div>
-                <span className="text-xs font-black text-[var(--accent-600)] dark:text-[var(--accent-400)]">€{fmt(dayTotal)}</span>
+                <span className="text-xs font-semibold text-accent dark:text-accent">€{fmt(dayTotal)}</span>
               </div>
 
               {/* Products */}
@@ -134,14 +134,14 @@ const ClientDetail: React.FC<{ cm: ClientMonth; month: string; onBack: () => voi
                 {orders.map((o, i) => (
                   <div key={i} className="px-4 py-2.5 flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+                      <p className="text-xs font-bold text-foreground dark:text-muted truncate">
                         {o.productName || o.productId}
                       </p>
                       {o.productModel && (
-                        <p className="text-[10px] text-gray-400 font-bold truncate">{o.productModel}</p>
+                        <p className="text-xs text-muted font-bold truncate">{o.productModel}</p>
                       )}
                       {o.quantity > 0 && (
-                        <p className="text-[10px] text-gray-400 font-bold">
+                        <p className="text-xs text-muted font-bold">
                           {o.quantity} pz
                           {o.quantity > 0 && o.amount > 0
                             ? ` · €${fmt(o.amount / o.quantity)} cad.`
@@ -149,7 +149,7 @@ const ClientDetail: React.FC<{ cm: ClientMonth; month: string; onBack: () => voi
                         </p>
                       )}
                     </div>
-                    <span className="font-black text-sm text-gray-900 dark:text-white flex-shrink-0">
+                    <span className="font-semibold text-sm text-foreground dark:text-foreground flex-shrink-0">
                       €{fmt(o.amount)}
                     </span>
                   </div>
@@ -161,9 +161,9 @@ const ClientDetail: React.FC<{ cm: ClientMonth; month: string; onBack: () => voi
       </div>
 
       {/* Month total */}
-      <div className="bg-[var(--accent-600)] rounded-2xl p-4 flex items-center justify-between">
-        <span className="text-sm font-black text-[var(--accent-100)] uppercase tracking-widest">Totale {formatMonthLabel(month)}</span>
-        <span className="text-xl font-black text-white">€{fmt(cm.total)}</span>
+      <div className="bg-action rounded-panel p-4 flex items-center justify-between">
+        <span className="text-sm font-semibold text-action-foreground uppercase tracking-normal">Totale {formatMonthLabel(month)}</span>
+        <span className="text-xl font-semibold text-action-foreground">€{fmt(cm.total)}</span>
       </div>
     </div>
   );
@@ -239,9 +239,9 @@ export const MonthlyOrdersView: React.FC = () => {
   if (clientiDettagliati.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <ShoppingCart size={44} className="text-gray-200 dark:text-gray-700 mb-4" />
-        <p className="font-black text-gray-400 uppercase tracking-widest text-sm">Nessuno storico caricato</p>
-        <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Importa il file Excel dallo Storico per visualizzare gli ordini mensili</p>
+        <ShoppingCart size={44} className="text-muted dark:text-foreground mb-4" />
+        <p className="font-semibold text-muted uppercase tracking-normal text-sm">Nessuno storico caricato</p>
+        <p className="text-xs text-muted dark:text-secondary mt-1">Importa il file Excel dallo Storico per visualizzare gli ordini mensili</p>
       </div>
     );
   }
@@ -249,19 +249,19 @@ export const MonthlyOrdersView: React.FC = () => {
   return (
     <div className="space-y-5">
       {/* Month navigator */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between bg-surface dark:bg-surface rounded-panel px-4 py-3 shadow-sm border border-line dark:border-line">
         <button
           onClick={() => { setSelectedClient(null); setSelectedMonth(prevMonth(selectedMonth)); }}
           disabled={!canGoPrev}
-          className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+          className="p-2 rounded-md text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
           <ChevronLeft size={20} />
         </button>
 
         <div className="text-center">
-          <p className="font-black text-gray-900 dark:text-white text-base capitalize">
+          <p className="font-semibold text-foreground dark:text-foreground text-base capitalize">
             {formatMonthLabel(selectedMonth)}
           </p>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <p className="text-xs font-bold text-muted uppercase tracking-normal">
             {monthData.length} clienti · {monthOrders} ordini
           </p>
         </div>
@@ -269,7 +269,7 @@ export const MonthlyOrdersView: React.FC = () => {
         <button
           onClick={() => { setSelectedClient(null); setSelectedMonth(nextMonth(selectedMonth)); }}
           disabled={!canGoNext}
-          className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+          className="p-2 rounded-md text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
           <ChevronRight size={20} />
         </button>
       </div>
@@ -277,13 +277,13 @@ export const MonthlyOrdersView: React.FC = () => {
       {/* Month KPI */}
       {monthData.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[var(--accent-600)] rounded-2xl p-4">
-            <p className="text-[10px] font-black text-[var(--accent-200)] uppercase tracking-widest mb-1">Fatturato mese</p>
-            <p className="text-2xl font-black text-white">€{fmt(monthTotal)}</p>
+          <div className="bg-action rounded-panel p-4">
+            <p className="text-xs font-semibold text-action-foreground uppercase tracking-normal mb-1">Fatturato mese</p>
+            <p className="text-2xl font-semibold text-action-foreground">€{fmt(monthTotal)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Ordine medio</p>
-            <p className="text-2xl font-black text-gray-900 dark:text-white">
+          <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
+            <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-1">Ordine medio</p>
+            <p className="text-2xl font-semibold text-foreground dark:text-foreground">
               €{fmt(monthOrders > 0 ? monthTotal / monthOrders : 0)}
             </p>
           </div>
@@ -292,8 +292,8 @@ export const MonthlyOrdersView: React.FC = () => {
 
       {/* Client list */}
       {monthData.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-700">
-          <p className="font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest text-sm">
+        <div className="bg-surface dark:bg-surface rounded-panel p-10 text-center border border-line dark:border-line">
+          <p className="font-semibold text-muted dark:text-secondary uppercase tracking-normal text-sm">
             Nessun ordine in {formatMonthLabel(selectedMonth)}
           </p>
         </div>
@@ -305,32 +305,32 @@ export const MonthlyOrdersView: React.FC = () => {
               <button
                 key={cm.cliente.clientId}
                 onClick={() => setSelectedClient(cm)}
-                className="w-full bg-white dark:bg-gray-800 rounded-2xl px-4 py-3.5 border border-gray-100 dark:border-gray-700 hover:border-[var(--accent-300)] dark:hover:border-[var(--accent-600)] hover:shadow-md transition-all text-left group"
+                className="w-full bg-surface dark:bg-surface rounded-panel px-4 py-3.5 border border-line dark:border-line hover:border-accent dark:hover:border-accent hover:shadow-panel transition-all text-left group"
               >
                 <div className="flex items-center gap-3">
                   {/* Rank */}
-                  <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0
-                    ${idx === 0 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' :
-                      idx === 1 ? 'bg-gray-100 text-gray-500 dark:bg-gray-700' :
-                      idx === 2 ? 'bg-orange-50 text-orange-500 dark:bg-orange-900/20' :
-                      'bg-gray-50 text-gray-400 dark:bg-gray-700'}`}>
+                  <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0
+                    ${idx === 0 ? 'bg-warning-soft text-warning dark:bg-warning-soft' :
+                      idx === 1 ? 'bg-raised text-secondary dark:bg-raised' :
+                      idx === 2 ? 'bg-warning-soft text-warning dark:bg-warning-soft' :
+                      'bg-canvas text-muted dark:bg-raised'}`}>
                     {idx + 1}
                   </span>
 
                   {/* Name + orders */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-black text-gray-900 dark:text-white text-sm truncate uppercase">
+                    <p className="font-semibold text-foreground dark:text-foreground text-sm truncate uppercase">
                       {cm.cliente.nome}
                     </p>
                     <div className="flex items-center gap-3 mt-0.5">
                       {/* Progress bar */}
-                      <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1 bg-raised dark:bg-raised rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[var(--accent-500)] rounded-full transition-all"
+                          className="h-full bg-action rounded-full transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="text-[10px] font-black text-gray-400 flex-shrink-0">
+                      <span className="text-xs font-semibold text-muted flex-shrink-0">
                         {cm.orderCount} ordini · {pct.toFixed(0)}%
                       </span>
                     </div>
@@ -338,10 +338,10 @@ export const MonthlyOrdersView: React.FC = () => {
 
                   {/* Total */}
                   <div className="text-right flex-shrink-0">
-                    <p className="font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] text-sm">
+                    <p className="font-semibold text-accent dark:text-accent text-sm">
                       €{fmt(cm.total)}
                     </p>
-                    <ChevronRight size={14} className="text-gray-300 group-hover:text-[var(--accent-400)] transition-colors ml-auto" />
+                    <ChevronRight size={14} className="text-muted group-hover:text-accent transition-colors ml-auto" />
                   </div>
                 </div>
               </button>

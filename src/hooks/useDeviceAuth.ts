@@ -18,11 +18,11 @@ async function registerCredential(): Promise<string | null> {
     const credential = await navigator.credentials.create({
       publicKey: {
         challenge,
-        rp: { name: 'Next Move CRM', id: window.location.hostname },
+        rp: { name: 'SYRIO', id: window.location.hostname },
         user: {
           id: crypto.getRandomValues(new Uint8Array(16)),
           name: 'nextmove-user',
-          displayName: 'Next Move',
+          displayName: 'SYRIO',
         },
         pubKeyCredParams: [
           { alg: -7, type: 'public-key' },   // ES256

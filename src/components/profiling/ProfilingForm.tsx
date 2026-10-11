@@ -11,13 +11,13 @@ import { useStore } from '../../store/useStore';
 import { exportProfilingPDF, exportProfilingXLS, calcQualBadge, calcQualTotal } from '../../utils/profilingExport';
 
 const CAT_BADGE: Record<Obiezione['categoria'], string> = {
-  prezzo: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  'fornitore-attuale': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  qualita: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  timing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  brand: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  logistica: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
-  altro: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  prezzo: 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger',
+  'fornitore-attuale': 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning',
+  qualita: 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning',
+  timing: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
+  brand: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
+  logistica: 'bg-accent-soft text-accent',
+  altro: 'bg-raised text-foreground dark:bg-raised dark:text-muted',
 };
 
 const CAT_LABEL: Record<Obiezione['categoria'], string> = {
@@ -166,13 +166,13 @@ const Tip: React.FC<{ text: string }> = ({ text }) => {
   return (
     <div className="relative inline-block ml-1">
       <button type="button" onClick={() => setShow(s => !s)}
-        className="text-[var(--accent-400)] hover:text-[var(--accent-600)] transition-colors">
+        className="text-accent hover:text-accent transition-colors">
         <Info size={12} />
       </button>
       {show && (
-        <div className="absolute z-50 left-0 top-5 w-64 bg-[var(--accent-900)] text-white text-[10px] font-bold p-3 rounded-xl shadow-xl leading-relaxed">
+        <div className="absolute z-50 left-0 top-5 w-64 bg-accent-soft text-foreground text-xs font-bold p-3 rounded-md shadow-panel leading-relaxed">
           {text}
-          <button onClick={() => setShow(false)} className="block mt-2 text-[var(--accent-300)] hover:text-white">Chiudi</button>
+          <button onClick={() => setShow(false)} className="block mt-2 text-accent hover:text-foreground">Chiudi</button>
         </div>
       )}
     </div>
@@ -189,14 +189,14 @@ const CheckGroup: React.FC<{
     {options.map(opt => {
       const active = selected.includes(opt);
       return (
-        <label key={opt} className={`flex items-center gap-2 p-2 rounded-xl cursor-pointer text-[10px] font-bold border-2 transition-all
-          ${active ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
-            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-[var(--accent-200)]'}`}>
+        <label key={opt} className={`flex items-center gap-2 p-2 rounded-md cursor-pointer text-xs font-bold border-2 transition-all
+          ${active ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
+            : 'border-line dark:border-line bg-surface dark:bg-surface text-secondary dark:text-muted hover:border-accent'}`}>
           <input type="checkbox" className="sr-only" checked={active}
             onChange={() => onChange(active ? selected.filter(s => s !== opt) : [...selected, opt])} />
           <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0
-            ${active ? 'bg-[var(--accent-500)]' : 'border-2 border-gray-300 dark:border-gray-600'}`}>
-            {active && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
+            ${active ? 'bg-action text-action-foreground' : 'border-2 border-line dark:border-line'}`}>
+            {active && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
           </div>
           {opt}
         </label>
@@ -214,10 +214,10 @@ const RadioGroup: React.FC<{
     {options.map(opt => (
       <button key={opt.value} type="button"
         onClick={() => onChange(opt.value)}
-        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide border-2 transition-all
+        className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border-2 transition-all
           ${value === opt.value
-            ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
-            : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-[var(--accent-200)]'}`}>
+            ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
+            : 'border-line dark:border-line bg-surface dark:bg-surface text-secondary dark:text-muted hover:border-accent'}`}>
         {opt.label}
       </button>
     ))}
@@ -229,15 +229,15 @@ const ScoreRow: React.FC<{
   value: QualificationScore;
   onChange: (v: QualificationScore) => void;
 }> = ({ label, value, onChange }) => (
-  <div className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-    <span className="text-xs font-bold text-gray-600 dark:text-gray-300 flex-1">{label}</span>
+  <div className="flex items-center gap-3 py-2 border-b border-line dark:border-line last:border-0">
+    <span className="text-xs font-bold text-secondary dark:text-muted flex-1">{label}</span>
     <div className="flex gap-1">
       {([1,2,3,4,5] as QualificationScore[]).map(n => (
         <button key={n} type="button" onClick={() => onChange(n)}
-          className={`w-7 h-7 rounded-lg text-xs font-black border-2 transition-all
+          className={`w-7 h-7 rounded-lg text-xs font-semibold border-2 transition-all
             ${value >= n
-              ? 'border-[var(--accent-400)] bg-[var(--accent-500)] text-white'
-              : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:border-[var(--accent-300)]'}`}>
+              ? 'border-accent bg-action text-action-foreground'
+              : 'border-line dark:border-line text-muted hover:border-accent'}`}>
           {n}
         </button>
       ))}
@@ -250,37 +250,37 @@ const TextField: React.FC<{
   placeholder?: string; multiline?: boolean; tip?: string;
 }> = ({ label, value, onChange, placeholder, multiline, tip }) => (
   <div>
-    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 flex items-center gap-1">
+    <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5 flex items-center gap-1">
       {label}{tip && <Tip text={tip} />}
     </label>
     {multiline
       ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white outline-none resize-none min-h-[72px] focus:border-[var(--accent-400)]" />
+          className="w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-3 text-sm font-bold dark:text-foreground outline-none resize-none min-h-[72px] focus:border-accent" />
       : <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+          className="w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
     }
   </div>
 );
 
 const BADGE_STYLE: Record<string, string> = {
-  HOT: 'bg-red-500 text-white',
-  WARM: 'bg-amber-400 text-white',
-  COLD: 'bg-green-500 text-white',
-  TRASH: 'bg-gray-400 text-white',
+  HOT: 'bg-danger text-status-foreground',
+  WARM: 'bg-warning text-status-foreground',
+  COLD: 'bg-success text-status-foreground',
+  TRASH: 'bg-raised text-foreground',
 };
 
 // ─── Section (defined outside ProfilingForm to prevent remount on state change) ─
 
 const Section: React.FC<{ open: boolean; onToggle: () => void; title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ open, onToggle, title, icon, children }) => (
-  <div className="border-2 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+  <div className="border-2 border-line dark:border-line rounded-panel overflow-hidden">
     <button type="button" onClick={onToggle}
-      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-      <span className="flex items-center gap-2 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest">
+      className="w-full flex items-center justify-between px-4 py-3 bg-canvas dark:bg-surface hover:bg-raised dark:hover:bg-raised transition-colors">
+      <span className="flex items-center gap-2 text-xs font-semibold text-secondary dark:text-muted uppercase tracking-normal">
         {icon} {title}
       </span>
-      {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+      {open ? <ChevronUp size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
     </button>
-    {open && <div className="p-4 space-y-4 bg-white dark:bg-gray-900">{children}</div>}
+    {open && <div className="p-4 space-y-4 bg-surface dark:bg-canvas">{children}</div>}
   </div>
 );
 
@@ -333,26 +333,26 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <ClipboardList size={16} className="text-[var(--accent-600)] flex-shrink-0" />
-          <span className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+          <ClipboardList size={16} className="text-accent flex-shrink-0" />
+          <span className="text-xs font-semibold text-secondary dark:text-muted uppercase tracking-normal">
             Profilazione {isDealer ? 'Dealer' : 'End User'}
           </span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${BADGE_STYLE[badge]}`}>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${BADGE_STYLE[badge]}`}>
             {badge} · {total}/25
           </span>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button type="button" onClick={() => exportProfilingPDF(contact, form)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 text-[10px] font-black uppercase tracking-wide hover:bg-red-100 transition-all">
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-danger-soft dark:bg-danger-soft text-danger text-xs font-semibold uppercase tracking-wide hover:bg-danger-soft transition-all">
             <FileText size={12} /> PDF
           </button>
           <button type="button" onClick={() => exportProfilingXLS(contact, form)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 text-[10px] font-black uppercase tracking-wide hover:bg-green-100 transition-all">
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-success-soft text-success text-xs font-semibold uppercase tracking-wide hover:bg-success-soft transition-all">
             <FileSpreadsheet size={12} /> XLS
           </button>
           <button type="button" onClick={handleSave}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all
-              ${saved ? 'bg-green-500 text-white' : 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]'}`}>
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all
+              ${saved ? 'bg-success text-status-foreground' : 'bg-action text-action-foreground hover:bg-action-hover'}`}>
             {saved ? '✓ Salvato' : 'Salva'}
           </button>
         </div>
@@ -360,10 +360,10 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
 
       {/* Data visita */}
       <div className="flex items-center gap-3 px-1">
-        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data Visita</label>
+        <label className="text-xs font-semibold text-muted uppercase tracking-normal">Data Visita</label>
         <input type="date" value={form.dataVisita}
           onChange={e => isDealer ? upD({ dataVisita: e.target.value }) : upE({ dataVisita: e.target.value })}
-          className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-1.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+          className="bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md px-3 py-1.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
       </div>
 
       {/* ─── DEALER FORM ─── */}
@@ -373,7 +373,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
           <div className="space-y-3">
             <Section open={openSections.has(0)} onToggle={() => toggleSection(0)} title="1. Profilo Rivenditore" icon={<Users size={13} />}>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Segmento</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Segmento</p>
                 <RadioGroup value={d.segmento} onChange={v => upD({ segmento: v as any })} options={[
                   { value: 'A1', label: 'A1 · Grossista' },
                   { value: 'A2', label: 'A2 · Safety Specialist' },
@@ -386,22 +386,22 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 <TextField label="Fatturato est." value={d.fatturatoEst} onChange={v => upD({ fatturatoEst: v })} placeholder="es. €2M" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Canale Vendita</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Canale Vendita</p>
                 <CheckGroup cols={2} options={['Solo retail B2C', 'Prevalenza B2B', 'Misto', 'Grossista / cooperative']}
                   selected={d.canaleVendita} onChange={v => upD({ canaleVendita: v })} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Modello Ordini</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Modello Ordini</p>
                 <CheckGroup cols={2} options={['Solo negozio', 'Venditori esterni B2B', 'E-commerce', 'Portale ordini B2B']}
                   selected={d.modelloOrdini} onChange={v => upD({ modelloOrdini: v })} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Cliente Finale</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Cliente Finale</p>
                 <CheckGroup cols={2} options={['Artigiani autonomi', 'Imprese edili', 'Industria', 'Facility management', 'Misto']}
                   selected={d.clienteFinale} onChange={v => upD({ clienteFinale: v })} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">% Workwear su Fatturato</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">% Workwear su Fatturato</p>
                 <RadioGroup value={d.percWorkwear} onChange={v => upD({ percWorkwear: v })} options={[
                   { value: '<5%', label: '<5%' },
                   { value: '5-15%', label: '5-15%' },
@@ -414,7 +414,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
 
             <Section open={openSections.has(1)} onToggle={() => toggleSection(1)} title="2. Fornitore Attuale & Brand Trattati" icon={<AlertCircle size={13} />}>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   Brand Workwear Attuali <Tip text={TIPS.brandAttuali} />
                 </p>
                 <CheckGroup cols={2} options={BRANDS.filter(b => b !== 'Altro')}
@@ -422,21 +422,21 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 {d.brandAttuali.includes('Altro') && (
                   <input type="text" placeholder="Specifica brand..." value={d.brandAltro}
                     onChange={e => upD({ brandAltro: e.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                    className="mt-2 w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
                 )}
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 flex items-center gap-1">
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5 flex items-center gap-1">
                   Brand Dominante (rotazione) <Tip text={TIPS.brandDominante} />
                 </label>
                 <select value={d.brandDominante} onChange={e => upD({ brandDominante: e.target.value })}
-                  className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]">
+                  className="w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent">
                   <option value="">— Seleziona —</option>
                   {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   DPI Cat. III Trattati <Tip text={TIPS.dpiCatIII} />
                 </p>
                 <RadioGroup value={d.dpiCatIII} onChange={v => upD({ dpiCatIII: v as any })} options={[
@@ -448,22 +448,22 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 {d.dpiCatIII === 'siParziale' && (
                   <input type="text" placeholder="Quali prodotti..." value={d.dpiParziale}
                     onChange={e => upD({ dpiParziale: e.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                    className="mt-2 w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Reclami / Resi Frequenti</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Reclami / Resi Frequenti</p>
                 <RadioGroup value={d.reclamiResi} onChange={v => upD({ reclamiResi: v as any })} options={[
                   { value: 'no', label: 'No' }, { value: 'si', label: 'Sì' },
                 ]} />
                 {d.reclamiResi === 'si' && (
                   <input type="text" placeholder="Motivo principale..." value={d.reclamiMotivo}
                     onChange={e => upD({ reclamiMotivo: e.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                    className="mt-2 w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Processo Riordino</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Processo Riordino</p>
                 <CheckGroup cols={2} options={['Agente fisico', 'Email / Tel', 'Portale B2B', 'EDI / ERP', 'App']}
                   selected={d.processoRiordino} onChange={v => upD({ processoRiordino: v })} />
               </div>
@@ -471,13 +471,13 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
 
             <Section open={openSections.has(2)} onToggle={() => toggleSection(2)} title="3. Pain Points Emersi" icon={<AlertCircle size={13} />}>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   Seleziona i pain points <Tip text={TIPS.painPoints} />
                 </p>
                 <CheckGroup cols={1} options={DEALER_PAIN_POINTS} selected={d.painPoints} onChange={v => upD({ painPoints: v })} />
                 <input type="text" placeholder="Altro pain point..." value={d.painAltro}
                   onChange={e => upD({ painAltro: e.target.value })}
-                  className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                  className="mt-2 w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
               </div>
               <TextField label="Pain Prioritario #1" value={d.painPrioritario} onChange={v => upD({ painPrioritario: v })}
                 placeholder="Il problema principale emerso..." />
@@ -490,16 +490,16 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 onChange={v => upD({ prodottiInteresse: v })} />
               <input type="text" placeholder="Altro prodotto..." value={d.prodottiAltro}
                 onChange={e => upD({ prodottiAltro: e.target.value })}
-                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                className="w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
               <TextField label="Campionatura Lasciata" value={d.campionaturaLasciata}
                 onChange={v => upD({ campionaturaLasciata: v })} placeholder="Es. Pantalone 1990 tg. L/XL" />
             </Section>
 
             <Section open={openSections.has(4)} onToggle={() => toggleSection(4)} title="5. Qualificazione" icon={<Star size={13} />}>
-              <p className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+              <p className="text-xs text-muted font-bold flex items-center gap-1">
                 Score 1→5 per ciascun criterio <Tip text={TIPS.qualificazione} />
               </p>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-4 py-2">
+              <div className="bg-canvas dark:bg-surface rounded-panel px-4 py-2">
                 {([
                   ['esigenzaReale', 'Esigenza reale espressa'],
                   ['decisionMaker', 'Decisore identificato'],
@@ -512,8 +512,8 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 ))}
               </div>
               <div className="flex items-center justify-between px-2">
-                <span className="text-xs font-bold text-gray-500">Totale: <strong>{total}/25</strong></span>
-                <span className={`text-sm font-black px-3 py-1 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>
+                <span className="text-xs font-bold text-secondary">Totale: <strong>{total}/25</strong></span>
+                <span className={`text-sm font-semibold px-3 py-1 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>
               </div>
               <TextField label="Note Qualificazione" value={d.noteQualificazione}
                 onChange={v => upD({ noteQualificazione: v })} multiline placeholder="Osservazioni aggiuntive..." />
@@ -525,19 +525,19 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                   <div key={i} className="grid grid-cols-2 gap-2 items-center">
                     <input type="text" placeholder="Brand citato" value={c.brand}
                       onChange={e => { const nc = [...d.competitor]; nc[i] = { ...nc[i], brand: e.target.value }; upD({ competitor: nc }); }}
-                      className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                      className="bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
                     <div className="flex gap-1">
                       <input type="text" placeholder="Parole usate / tono" value={c.tone}
                         onChange={e => { const nc = [...d.competitor]; nc[i] = { ...nc[i], tone: e.target.value }; upD({ competitor: nc }); }}
-                        className="flex-1 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                        className="flex-1 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
                       <button type="button" onClick={() => upD({ competitor: d.competitor.filter((_, j) => j !== i) })}
-                        className="px-2 text-red-400 hover:text-red-600 bg-red-50 dark:bg-red-900/20 rounded-xl transition-colors">✕</button>
+                        className="px-2 text-danger hover:text-danger bg-danger-soft dark:bg-danger-soft rounded-md transition-colors">✕</button>
                     </div>
                   </div>
                 ))}
                 <button type="button" onClick={() => upD({ competitor: [...d.competitor, { brand: '', tone: '' }] })}
-                  className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] uppercase tracking-wide hover:text-[var(--accent-800)] transition-colors">
-                  <span className="w-5 h-5 rounded-full bg-[var(--accent-100)] flex items-center justify-center text-sm">+</span>
+                  className="flex items-center gap-1.5 text-xs font-semibold text-accent uppercase tracking-wide hover:text-accent transition-colors">
+                  <span className="w-5 h-5 rounded-full bg-accent-soft flex items-center justify-center text-sm">+</span>
                   Aggiungi competitor
                 </button>
               </div>
@@ -571,7 +571,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
 
             <Section open={openSections.has(1)} onToggle={() => toggleSection(1)} title="2. Profilo Azienda" icon={<Users size={13} />}>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Segmento Edilizia</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Segmento Edilizia</p>
                 <RadioGroup value={e.segmentoEdilizia} onChange={v => upE({ segmentoEdilizia: v as any })} options={[
                   { value: 'B1', label: 'B1 · PNRR / GC' },
                   { value: 'B2', label: 'B2 · Impiantistica' },
@@ -580,7 +580,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 ]} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Segmento Industria</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Segmento Industria</p>
                 <RadioGroup value={e.segmentoIndustria} onChange={v => upE({ segmentoIndustria: v as any })} options={[
                   { value: 'C1', label: 'C1 · Metal / Fonderia' },
                   { value: 'C2', label: 'C2 · Power & Utilities' },
@@ -593,19 +593,19 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 <TextField label="N° con DPI Workwear" value={e.numDipendentiDPI} onChange={v => upE({ numDipendentiDPI: v })} placeholder="es. 60" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fatturato Stimato</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Fatturato Stimato</p>
                 <RadioGroup value={e.fatturatoStimato} onChange={v => upE({ fatturatoStimato: v })} options={[
                   { value: '<1M€', label: '<1M€' }, { value: '1-5M€', label: '1-5M€' },
                   { value: '5-20M€', label: '5-20M€' }, { value: '20-100M€', label: '20-100M€' }, { value: '>100M€', label: '>100M€' },
                 ]} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Certificazioni</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Certificazioni</p>
                 <CheckGroup cols={2} options={['ISO 45001', 'ISO 14001', 'SOA', 'SUVA (Ticino)', 'Nessuna dichiarata']}
                   selected={e.certificazioni} onChange={v => upE({ certificazioni: v })} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Obiettivi ESG</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Obiettivi ESG</p>
                 <RadioGroup value={e.obiettiviESG} onChange={v => upE({ obiettiviESG: v })} options={[
                   { value: 'Sì — rendicontazione committente', label: 'Sì (rendicontazione)' },
                   { value: 'In sviluppo', label: 'In sviluppo' },
@@ -617,7 +617,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
 
             <Section open={openSections.has(2)} onToggle={() => toggleSection(2)} title="3. Sicurezza & Compliance" icon={<CheckSquare size={13} />}>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Livello DPI Richiesti</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Livello DPI Richiesti</p>
                 <RadioGroup value={e.livelloDPI} onChange={v => upE({ livelloDPI: v as any })} options={[
                   { value: 'catI', label: 'Cat. I — uso generico' },
                   { value: 'catII', label: 'Cat. II — rischi medi' },
@@ -626,14 +626,14 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 ]} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   Rischi Specifici <Tip text={TIPS.rischiSpecifici} />
                 </p>
                 <CheckGroup cols={2} options={['Antifiamma', 'Arco elettrico', 'Schizzi metallo fuso', 'Rischio chimico', 'Alta visibilità', 'Lavoro in quota', 'Freddo / intemperie', 'Abrasione meccanica']}
                   selected={e.rischiSpecifici} onChange={v => upE({ rischiSpecifici: v })} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   DVR Aggiornato <Tip text={TIPS.dvrAggiornato} />
                 </p>
                 <RadioGroup value={e.dvrAggiornato} onChange={v => upE({ dvrAggiornato: v as any })} options={[
@@ -641,18 +641,18 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 ]} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ispezioni Recenti (INAIL/ASL)</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Ispezioni Recenti (INAIL/ASL)</p>
                 <RadioGroup value={e.ispezioniRecenti} onChange={v => upE({ ispezioniRecenti: v as any })} options={[
                   { value: 'no', label: 'No' }, { value: 'si', label: 'Sì' },
                 ]} />
                 {e.ispezioniRecenti === 'si' && (
                   <input type="text" placeholder="Esito ispezione..." value={e.ispezioniEsito}
                     onChange={ev => upE({ ispezioniEsito: ev.target.value })}
-                    className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                    className="mt-2 w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Conservano Schede Tecniche EN?</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Conservano Schede Tecniche EN?</p>
                 <RadioGroup value={e.schedeEN} onChange={v => upE({ schedeEN: v as any })} options={[
                   { value: 'siCompleto', label: 'Sì — archivio completo' },
                   { value: 'soloRziale', label: 'Solo parzialmente' },
@@ -666,12 +666,12 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
               <TextField label="Fornitore / Brand Attuale" value={e.fornitoreAttuale}
                 onChange={v => upE({ fornitoreAttuale: v })} placeholder="es. U-Power tramite dealer locale" />
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Canale Acquisto</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Canale Acquisto</p>
                 <CheckGroup cols={2} options={['Diretto produttore', 'Dealer / ferramenta', 'E-commerce', 'Grossista', 'Misto']}
                   selected={e.canaleAcquisto} onChange={v => upE({ canaleAcquisto: v })} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Frequenza Rinnovo</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Frequenza Rinnovo</p>
                 <RadioGroup value={e.frequenzaRinnovo} onChange={v => upE({ frequenzaRinnovo: v })} options={[
                   { value: 'Quando si rompe', label: 'Quando si rompe' },
                   { value: 'Ogni 6 mesi', label: 'Ogni 6 mesi' },
@@ -687,7 +687,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
               <TextField label="Lamentele Lavoratori" value={e.lamenteleLavoratori}
                 onChange={v => upE({ lamenteleLavoratori: v })} multiline placeholder="Cosa si lamentano i lavoratori dei capi attuali?" />
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Chi Gestisce Logistica Taglie</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Chi Gestisce Logistica Taglie</p>
                 <CheckGroup cols={2} options={['HR / Admin', 'Responsabile acquisti', 'Magazziniere', 'Titolare', 'Non gestito']}
                   selected={e.chiGestisceLogistica} onChange={v => upE({ chiGestisceLogistica: v })} />
               </div>
@@ -695,14 +695,14 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
 
             <Section open={openSections.has(4)} onToggle={() => toggleSection(4)} title="5. Pain Points & Trigger di Cambio" icon={<AlertCircle size={13} />}>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   Seleziona i pain points <Tip text={TIPS.painPoints} />
                 </p>
                 <CheckGroup cols={1} options={ENDUSER_PAIN_POINTS} selected={e.painPoints}
                   onChange={v => upE({ painPoints: v })} />
                 <input type="text" placeholder="Altro pain point..." value={e.painAltro}
                   onChange={ev => upE({ painAltro: ev.target.value })}
-                  className="mt-2 w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                  className="mt-2 w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
               </div>
               <TextField label="Pain Prioritario #1" value={e.painPrioritario}
                 onChange={v => upE({ painPrioritario: v })} placeholder="Il problema principale emerso..." />
@@ -727,16 +727,16 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 onChange={v => upE({ prodottiInteresse: v })} />
               <input type="text" placeholder="Altro prodotto..." value={e.prodottiAltro}
                 onChange={ev => upE({ prodottiAltro: ev.target.value })}
-                className="w-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                className="w-full bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent" />
               <TextField label="Campionatura Lasciata" value={e.campionaturaLasciata}
                 onChange={v => upE({ campionaturaLasciata: v })} placeholder="Es. Pantalone 1990 Cat. III tg. L" />
             </Section>
 
             <Section open={openSections.has(7)} onToggle={() => toggleSection(7)} title="8. Qualificazione (MEDDIC)" icon={<Star size={13} />}>
-              <p className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+              <p className="text-xs text-muted font-bold flex items-center gap-1">
                 Score 1→5 per ciascun criterio <Tip text={TIPS.qualificazione} />
               </p>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-4 py-2">
+              <div className="bg-canvas dark:bg-surface rounded-panel px-4 py-2">
                 {([
                   ['esigenzaReale', 'Esigenza reale (dolore concreto)'],
                   ['decisionMaker', 'Decision Maker identificato'],
@@ -749,8 +749,8 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 ))}
               </div>
               <div className="flex items-center justify-between px-2">
-                <span className="text-xs font-bold text-gray-500">Totale: <strong>{total}/25</strong></span>
-                <span className={`text-sm font-black px-3 py-1 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>
+                <span className="text-xs font-bold text-secondary">Totale: <strong>{total}/25</strong></span>
+                <span className={`text-sm font-semibold px-3 py-1 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>
               </div>
               <TextField label="Note Qualificazione" value={e.noteQualificazione}
                 onChange={v => upE({ noteQualificazione: v })} multiline placeholder="Osservazioni aggiuntive..." />
@@ -774,23 +774,23 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
       {form.obiezioni && form.obiezioni.length > 0 && (() => {
         const ob = form.obiezioni!;
         return (
-          <div className="border-2 border-red-100 dark:border-red-900/40 rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-900/20">
-              <span className="flex items-center gap-2 text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest">
+          <div className="border-2 border-danger dark:border-danger rounded-panel overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-danger-soft dark:bg-danger-soft">
+              <span className="flex items-center gap-2 text-xs font-semibold text-danger dark:text-danger uppercase tracking-normal">
                 <MessageSquare size={13} />
                 Obiezioni Cliente ({ob.length})
               </span>
-              <span className="text-[9px] text-red-400 font-bold">estratte via AI</span>
+              <span className="text-xs text-danger font-bold">estratte via AI</span>
             </div>
-            <div className="p-4 space-y-3 bg-white dark:bg-gray-900">
+            <div className="p-4 space-y-3 bg-surface dark:bg-canvas">
               {ob.map((o, i) => (
-                <div key={i} className="border border-gray-100 dark:border-gray-700 rounded-xl p-3 space-y-1.5 group">
+                <div key={i} className="border border-line dark:border-line rounded-xl p-3 space-y-1.5 group">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2 flex-1">
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${CAT_BADGE[o.categoria]}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${CAT_BADGE[o.categoria]}`}>
                         {CAT_LABEL[o.categoria]}
                       </span>
-                      <p className="text-xs font-bold text-gray-800 dark:text-gray-200">&ldquo;{o.testo}&rdquo;</p>
+                      <p className="text-xs font-bold text-foreground dark:text-muted">&ldquo;{o.testo}&rdquo;</p>
                     </div>
                     <button
                       type="button"
@@ -800,15 +800,15 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                           ? upD({ obiezioni: newOb } as any)
                           : upE({ obiezioni: newOb } as any);
                       }}
-                      className="p-1 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all flex-shrink-0"
+                      className="p-1 opacity-0 group-hover:opacity-100 text-muted hover:text-danger transition-all flex-shrink-0"
                     >
                       <Trash2 size={12} />
                     </button>
                   </div>
                   {o.risposta && (
                     <div className="flex gap-2 items-start pl-1">
-                      <span className="text-green-500 mt-0.5 flex-shrink-0 text-xs">→</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">{o.risposta}</p>
+                      <span className="text-success mt-0.5 flex-shrink-0 text-xs">→</span>
+                      <p className="text-xs text-secondary dark:text-muted italic">{o.risposta}</p>
                     </div>
                   )}
                 </div>
@@ -821,8 +821,8 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
       {/* Salva bottom */}
       <div className="flex justify-end pt-2">
         <button type="button" onClick={handleSave}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-black text-sm transition-all
-            ${saved ? 'bg-green-500 text-white' : 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)] shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]'}`}>
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-panel font-semibold text-sm transition-all
+            ${saved ? 'bg-success text-status-foreground' : 'bg-action text-action-foreground hover:bg-action-hover shadow-panel  '}`}>
           {saved ? '✓ Profilazione salvata' : 'Salva Profilazione'}
         </button>
       </div>

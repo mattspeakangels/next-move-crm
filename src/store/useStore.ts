@@ -17,6 +17,7 @@ interface StoreState {
   textSize: 'small' | 'medium' | 'large';
   fontFamily: 'sans' | 'serif' | 'rounded' | 'mono';
   sectionColors: Record<string, string>;
+  globalAccent: string;
   mapMarkerStyles: Record<string, { shape: string; color: string }>;
   mapMarkerSize: 'small' | 'medium' | 'large';
   customSectors: string[];
@@ -40,6 +41,7 @@ interface StoreState {
   setTextSize: (textSize: 'small' | 'medium' | 'large') => void;
   setFontFamily: (fontFamily: 'sans' | 'serif' | 'rounded' | 'mono') => void;
   setSectionColor: (sectionId: string, palette: string) => void;
+  setGlobalAccent: (palette: string) => void;
   setMapMarkerStyle: (category: string, updates: Partial<{ shape: string; color: string }>) => void;
   setMapMarkerSize: (size: 'small' | 'medium' | 'large') => void;
   addCustomSector: (sector: string) => void;
@@ -148,10 +150,11 @@ export const useStore = create<StoreState>()(
       checkIns: {},
       targets: {},
       profile: null,
-      theme: 'light',
+      theme: 'dark',
       textSize: 'medium',
       fontFamily: 'sans',
       sectionColors: {},
+      globalAccent: '',
       mapMarkerStyles: {},
       mapMarkerSize: 'medium',
       customSectors: [],
@@ -175,6 +178,7 @@ export const useStore = create<StoreState>()(
       setTextSize: (textSize) => set({ textSize }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
       setSectionColor: (sectionId, palette) => set((state) => ({ sectionColors: { ...state.sectionColors, [sectionId]: palette } })),
+      setGlobalAccent: (palette) => set({ globalAccent: palette }),
       setMapMarkerStyle: (category, updates) => set((state) => ({
         mapMarkerStyles: {
           ...state.mapMarkerStyles,
@@ -434,6 +438,7 @@ export const useStore = create<StoreState>()(
         textSize: state.textSize,
         fontFamily: state.fontFamily,
         sectionColors: state.sectionColors,
+        globalAccent: state.globalAccent,
         mapMarkerStyles: state.mapMarkerStyles,
         mapMarkerSize: state.mapMarkerSize,
         customSectors: state.customSectors,

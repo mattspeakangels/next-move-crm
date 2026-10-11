@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState } from 'react';
 import { X, Phone, Mail, StickyNote, MapPin } from 'lucide-react';
 import { ActivityType } from '../../types';
@@ -29,14 +30,14 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-black text-gray-900 dark:text-white">Registra contatto</h2>
-            <p className="text-xs font-bold text-gray-400">{companyName}</p>
+            <h2 className="text-base font-semibold text-foreground dark:text-foreground">Registra contatto</h2>
+            <p className="text-xs font-bold text-muted">{companyName}</p>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
 
         <div className="flex gap-2">
@@ -45,7 +46,7 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
               key={t.type}
               type="button"
               onClick={() => setType(t.type)}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${type === t.type ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-md text-xs font-semibold uppercase transition-all ${type === t.type ? 'bg-action text-action-foreground' : 'bg-canvas dark:bg-surface text-secondary dark:text-muted'}`}
             >
               {t.icon}{t.label}
             </button>
@@ -53,7 +54,7 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
         </div>
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">
             {type === 'email' ? 'Oggetto / testo email' : 'Note, esito, prossimi passi'}
           </label>
           <textarea
@@ -62,14 +63,14 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
             rows={type === 'email' ? 6 : 3}
             autoFocus
             placeholder={type === 'email' ? "Incolla qui oggetto e corpo dell'email inviata/ricevuta..." : undefined}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] resize-none"
+            className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent resize-none"
           />
         </div>
 
-        <button type="submit" className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]">
+        <button type="submit" className="w-full py-3 rounded-md bg-action text-action-foreground font-semibold hover:bg-action-hover">
           Registra ora
         </button>
       </form>
-    </div>
+    </DialogFrame>
   );
 };

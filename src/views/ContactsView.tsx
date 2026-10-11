@@ -1,3 +1,5 @@
+import { showNotice, confirmAction } from '../components/ui/Feedback';
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown, StickyNote, Star, RefreshCw } from 'lucide-react';
@@ -39,19 +41,19 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
   };
 
   const TYPE_CONFIG = {
-    visita:   { label: 'Visita',    color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40' },
-    chiamata: { label: 'Chiamata',  color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/40'   },
-    email:    { label: 'Email',     color: 'text-blue-600',   bg: 'bg-blue-100 dark:bg-blue-900/40'     },
+    visita:   { label: 'Visita',    color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/40' },
+    chiamata: { label: 'Chiamata',  color: 'text-success',  bg: 'bg-success-soft dark:bg-success-soft'   },
+    email:    { label: 'Email',     color: 'text-accent',   bg: 'bg-accent-soft dark:bg-accent-soft/40'     },
   };
 
   return (
     <section>
-      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+      <h3 className="text-xs font-semibold text-muted   mb-4 flex items-center gap-2">
         <Calendar size={16} /> 5. Programma Attività
-        <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{planned.length} programmate</span>
+        <span className="text-xs bg-raised dark:bg-raised text-muted px-2 py-0.5 rounded-full font-semibold">{planned.length} programmate</span>
       </h3>
       {planned.length === 0 && !showForm && (
-        <p className="text-xs text-gray-400 font-bold italic mb-3">Nessuna attività programmata</p>
+        <p className="text-xs text-muted font-bold italic mb-3">Nessuna attività programmata</p>
       )}
       {planned.length > 0 && (
         <div className="space-y-2 mb-3">
@@ -59,21 +61,21 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
             const cfg = TYPE_CONFIG[act.type as 'visita' | 'chiamata' | 'email'] ?? TYPE_CONFIG['visita'];
             const isPast = act.date < Date.now();
             return (
-              <div key={act.id} className={`bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm ${isPast ? 'border border-orange-200 dark:border-orange-700' : ''}`}>
-                <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${cfg.bg} ${cfg.color} text-xs font-black`}>
+              <div key={act.id} className={`bg-surface dark:bg-surface rounded-panel p-3 flex items-center gap-3 shadow-sm ${isPast ? 'border border-warning dark:border-warning' : ''}`}>
+                <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${cfg.bg} ${cfg.color} text-xs font-semibold`}>
                   {cfg.label[0]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-black text-xs dark:text-white">{cfg.label}</p>
-                    <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${isPast ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                    <p className="font-semibold text-xs dark:text-foreground">{cfg.label}</p>
+                    <span className={`text-xs font-semibold uppercase px-1.5 py-0.5 rounded-full ${isPast ? 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning' : 'bg-raised text-secondary dark:bg-raised dark:text-muted'}`}>
                       {isPast ? 'Scaduta' : 'In attesa'}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-400 font-bold">{new Date(act.date).toLocaleDateString('it-IT')}{act.notes ? ` · ${act.notes}` : ''}</p>
+                  <p className="text-xs text-muted font-bold">{new Date(act.date).toLocaleDateString('it-IT')}{act.notes ? ` · ${act.notes}` : ''}</p>
                 </div>
                 <button onClick={() => deleteActivity(act.id)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                  className="p-1.5 text-muted hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft rounded-lg transition-colors">
                   <Trash2 size={12} />
                 </button>
               </div>
@@ -82,28 +84,28 @@ const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contactId }) 
         </div>
       )}
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] mb-3 space-y-3">
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border-2 border-accent dark:border-accent mb-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <select value={newType} onChange={e => setNewType(e.target.value as any)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]">
+              className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-raised dark:text-foreground text-sm font-bold outline-none focus:border-accent">
               <option value="visita">Visita</option>
               <option value="chiamata">Chiamata</option>
               <option value="email">Email</option>
             </select>
             <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]" />
+              className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-transparent dark:text-foreground text-sm font-bold outline-none focus:border-accent" />
           </div>
           <input type="text" placeholder="Note (opzionale)" value={newNotes} onChange={e => setNewNotes(e.target.value)}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]" />
+            className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-transparent dark:text-foreground text-sm font-bold outline-none focus:border-accent" />
           <div className="flex gap-2">
-            <button onClick={handleAdd} className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-xs uppercase">Aggiungi</button>
-            <button onClick={() => setShowForm(false)} className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
+            <button onClick={handleAdd} className="flex-1 py-2.5 rounded-md bg-action text-action-foreground font-semibold text-xs uppercase">Aggiungi</button>
+            <button onClick={() => setShowForm(false)} className="py-2.5 px-4 rounded-md bg-raised dark:bg-raised text-secondary font-semibold text-xs uppercase">Annulla</button>
           </div>
         </div>
       )}
       {!showForm && (
         <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-3 py-2 rounded-xl uppercase hover:bg-[var(--accent-100)] transition-colors">
+          className="flex items-center gap-1.5 text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/20 px-3 py-2 rounded-md uppercase hover:bg-accent-soft transition-colors">
           <Plus size={12} /> Programma attività
         </button>
       )}
@@ -121,29 +123,29 @@ const ProfilingCollapsible: React.FC<{ contact: Contact }> = ({ contact }) => {
       })()
     : null;
   const BADGE_STYLE: Record<string, string> = {
-    HOT: 'bg-red-500 text-white', WARM: 'bg-amber-400 text-white',
-    COLD: 'bg-green-500 text-white', TRASH: 'bg-gray-400 text-white',
+    HOT: 'bg-danger text-status-foreground', WARM: 'bg-warning text-status-foreground',
+    COLD: 'bg-success text-status-foreground', TRASH: 'bg-raised text-foreground',
   };
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+        <h3 className="text-xs font-semibold text-muted   flex items-center gap-2">
           <ClipboardList size={16} /> 2. Profilazione Blaklader
-          {badge && <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>}
-          {!contact.profiling && <span className="text-[10px] font-bold text-gray-300 normal-case tracking-normal">Non compilata</span>}
+          {badge && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${BADGE_STYLE[badge]}`}>{badge}</span>}
+          {!contact.profiling && <span className="text-xs font-bold text-muted normal-case tracking-normal">Non compilata</span>}
         </h3>
         <button
           onClick={() => setOpen(o => !o)}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wide transition-all
             ${open
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-              : 'bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)] shadow-md shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]'}`}>
+              ? 'bg-raised dark:bg-raised text-secondary dark:text-muted'
+              : 'bg-action text-action-foreground hover:bg-action-hover shadow-panel  '}`}>
           <ClipboardList size={12} />
           {open ? 'Chiudi' : contact.profiling ? 'Modifica' : 'Compila'}
         </button>
       </div>
       {open && (
-        <div className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-5 border border-gray-100 dark:border-gray-700">
+        <div className="bg-canvas dark:bg-canvas rounded-panel p-5 border border-line dark:border-line">
           <ProfilingForm contact={contact} key={contact.id} />
         </div>
       )}
@@ -176,7 +178,7 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       const { url, name } = await uploadOfferPdf(offerId, file);
       updateOffer(offerId, { pdfUrl: url, pdfName: name });
     } catch (err: any) {
-      alert(err?.message ?? 'Errore caricamento PDF');
+      showNotice(err?.message ?? 'Errore caricamento PDF');
     } finally {
       setUploadingPdfId(null);
     }
@@ -205,7 +207,7 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       setShowPdfQuick(false);
       setQuickPdfFile(null);
     } catch (err: any) {
-      alert(err?.message ?? 'Errore caricamento PDF');
+      showNotice(err?.message ?? 'Errore caricamento PDF');
     } finally {
       setQuickPdfUploading(false);
     }
@@ -257,10 +259,10 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
   };
 
   const STATUS_BADGE: Record<string, string> = {
-    bozza: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300',
-    inviata: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    accettata: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-    rifiutata: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    bozza: 'bg-raised text-secondary dark:bg-raised dark:text-muted',
+    inviata: 'bg-accent-soft text-accent dark:bg-accent-soft/40 dark:text-accent',
+    accettata: 'bg-success-soft text-success dark:bg-success-soft dark:text-success',
+    rifiutata: 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger',
   };
 
   const STATUS_LABELS: Record<string, string> = { bozza: 'Bozza', inviata: 'Inviata', accettata: 'Accettata', rifiutata: 'Rifiutata' };
@@ -271,13 +273,13 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       <input ref={existingPdfRef} type="file" accept="application/pdf" className="hidden" onChange={handleExistingPdfChange} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+        <h3 className="text-xs font-semibold text-muted   flex items-center gap-2">
           <FileText size={16} /> 7. Offerte
-          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactOffers.length}</span>
+          <span className="text-xs bg-raised dark:bg-raised text-muted px-2 py-0.5 rounded-full font-semibold">{contactOffers.length}</span>
         </h3>
         <button
           onClick={() => { setShowPdfQuick(v => !v); setShowForm(false); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-[10px] uppercase tracking-wide hover:bg-orange-100 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-warning-soft dark:bg-warning-soft text-warning font-semibold text-xs uppercase tracking-wide hover:bg-warning-soft transition-colors"
         >
           <Upload size={12} /> Carica PDF
         </button>
@@ -285,14 +287,14 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
 
       {/* Quick PDF upload panel */}
       {showPdfQuick && (
-        <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-2xl p-4 mb-3 space-y-3">
-          <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Nuova offerta da PDF</p>
-          <label className={`flex items-center gap-3 w-full border-2 border-dashed rounded-xl px-4 py-4 cursor-pointer transition-colors ${quickPdfFile ? 'border-orange-400 bg-white dark:bg-gray-800' : 'border-orange-200 hover:border-orange-400'}`}>
-            <FileText size={20} className={quickPdfFile ? 'text-orange-500' : 'text-orange-300'} />
+        <div className="bg-warning-soft dark:bg-warning-soft border-2 border-warning dark:border-warning rounded-panel p-4 mb-3 space-y-3">
+          <p className="text-xs font-semibold text-warning uppercase tracking-normal">Nuova offerta da PDF</p>
+          <label className={`flex items-center gap-3 w-full border-2 border-dashed rounded-xl px-4 py-4 cursor-pointer transition-colors ${quickPdfFile ? 'border-warning bg-surface dark:bg-surface' : 'border-warning hover:border-warning'}`}>
+            <FileText size={20} className={quickPdfFile ? 'text-warning' : 'text-warning'} />
             <div className="flex-1 min-w-0">
               {quickPdfFile
-                ? <span className="text-xs font-black text-orange-700 dark:text-orange-300 break-all">{quickPdfFile.name}</span>
-                : <span className="text-xs font-bold text-orange-400">Clicca per selezionare il PDF...</span>
+                ? <span className="text-xs font-semibold text-warning dark:text-warning break-all">{quickPdfFile.name}</span>
+                : <span className="text-xs font-bold text-warning">Clicca per selezionare il PDF...</span>
               }
             </div>
             <input type="file" accept="application/pdf" className="hidden" onChange={e => setQuickPdfFile(e.target.files?.[0] || null)} />
@@ -301,14 +303,14 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
             <button
               onClick={handleQuickPdfSave}
               disabled={!quickPdfFile || quickPdfUploading}
-              className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl font-black text-xs uppercase tracking-wide hover:bg-orange-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 bg-warning text-status-foreground rounded-md font-semibold text-xs uppercase tracking-wide hover:bg-warning transition-all disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {quickPdfUploading
-                ? <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" /> Caricamento...</>
+                ? <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-line border-t-transparent rounded-full" /> Caricamento...</>
                 : <><Upload size={13} /> Crea Offerta</>
               }
             </button>
-            <button onClick={() => { setShowPdfQuick(false); setQuickPdfFile(null); }} className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
+            <button onClick={() => { setShowPdfQuick(false); setQuickPdfFile(null); }} className="px-4 py-2.5 rounded-md bg-raised dark:bg-raised text-secondary font-semibold text-xs uppercase">Annulla</button>
           </div>
         </div>
       )}
@@ -316,22 +318,22 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       {contactOffers.length > 0 && (
         <div className="space-y-2 mb-3">
           {contactOffers.map(offer => (
-            <div key={offer.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+            <div key={offer.id} className="bg-surface dark:bg-surface rounded-panel p-3 flex items-center gap-3 shadow-sm">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-black text-xs dark:text-white">{offer.offerNumber}</p>
-                  <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${STATUS_BADGE[offer.status] ?? STATUS_BADGE['bozza']}`}>
+                  <p className="font-semibold text-xs dark:text-foreground">{offer.offerNumber}</p>
+                  <span className={`text-xs font-semibold uppercase px-1.5 py-0.5 rounded-full ${STATUS_BADGE[offer.status] ?? STATUS_BADGE['bozza']}`}>
                     {STATUS_LABELS[offer.status] ?? offer.status}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 font-bold mt-0.5">{new Date(offer.date).toLocaleDateString('it-IT')} · {offer.manualTotal ? 'valore ordine' : `${offer.items.length} articoli`}</p>
+                <p className="text-xs text-muted font-bold mt-0.5">{new Date(offer.date).toLocaleDateString('it-IT')} · {offer.manualTotal ? 'valore ordine' : `${offer.items.length} articoli`}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-black text-sm text-[var(--accent-600)]">€{offer.totalAmount.toLocaleString('it-IT')}</span>
+                <span className="font-semibold text-sm text-accent">€{offer.totalAmount.toLocaleString('it-IT')}</span>
                 <select
                   value={offer.status}
                   onChange={e => updateOffer(offer.id, { status: e.target.value as any })}
-                  className="text-[9px] font-black border border-gray-200 dark:border-gray-600 rounded-lg px-1.5 py-1 bg-white dark:bg-gray-700 dark:text-white outline-none"
+                  className="text-xs font-semibold border border-line dark:border-line rounded-lg px-1.5 py-1 bg-surface dark:bg-raised dark:text-foreground outline-none"
                 >
                   <option value="bozza">Bozza</option>
                   <option value="inviata">Inviata</option>
@@ -340,7 +342,7 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
                 </select>
                 {offer.pdfUrl && (
                   <PdfButton pdfUrl={offer.pdfUrl} pdfName={offer.pdfName}
-                    className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-500 hover:bg-orange-100 transition-colors">
+                    className="p-1.5 rounded-lg bg-warning-soft dark:bg-warning-soft text-warning hover:bg-warning-soft transition-colors">
                     <Download size={12} />
                   </PdfButton>
                 )}
@@ -348,10 +350,10 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
                   title={offer.pdfUrl ? 'Sostituisci PDF' : 'Allega PDF'}
                   disabled={uploadingPdfId === offer.id}
                   onClick={() => { pendingPdfOfferId.current = offer.id; existingPdfRef.current?.click(); }}
-                  className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-orange-50 hover:text-orange-500 transition-colors disabled:opacity-40"
+                  className="p-1.5 rounded-lg bg-canvas dark:bg-raised text-muted hover:bg-warning-soft hover:text-warning transition-colors disabled:opacity-40"
                 >
                   {uploadingPdfId === offer.id
-                    ? <span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" />
+                    ? <span className="animate-spin inline-block w-3 h-3 border-2 border-warning border-t-transparent rounded-full" />
                     : <Upload size={12} />
                   }
                 </button>
@@ -362,14 +364,14 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       )}
 
       {contactOffers.length === 0 && !showForm && (
-        <p className="text-xs text-gray-400 font-bold italic mb-3">Nessuna offerta per questo cliente</p>
+        <p className="text-xs text-muted font-bold italic mb-3">Nessuna offerta per questo cliente</p>
       )}
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] mb-3 space-y-3">
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border-2 border-accent dark:border-accent mb-3 space-y-3">
           {openDeals.length > 0 && (
             <select value={formDealId} onChange={e => setFormDealId(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-700 dark:text-white text-sm font-bold outline-none focus:border-[var(--accent-400)]">
+              className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-raised dark:text-foreground text-sm font-bold outline-none focus:border-accent">
               <option value="">Collega a un deal (opzionale)</option>
               {openDeals.map(d => <option key={d.id} value={d.id}>{d.stage} · €{d.value.toLocaleString('it-IT')}</option>)}
             </select>
@@ -380,58 +382,58 @@ const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId }) => {
               <div key={item.id} className="grid grid-cols-12 gap-1.5 items-center">
                 <div className="col-span-12 sm:col-span-5">
                   <select value={item.productId} onChange={e => selectProduct(item.id, e.target.value)}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-white dark:bg-gray-700 dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]">
+                    className="w-full border-2 border-line dark:border-line rounded-md px-2 py-2 bg-surface dark:bg-raised dark:text-foreground text-xs font-bold outline-none focus:border-accent">
                     <option value="">Seleziona prodotto...</option>
                     {catalogProducts.map(p => <option key={p.id} value={p.id}>{p.description}</option>)}
                   </select>
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   <input type="number" min="1" value={item.quantity} onChange={e => updateFormItem(item.id, 'quantity', Number(e.target.value))}
-                    placeholder="Qtà" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
+                    placeholder="Qtà" className="w-full border-2 border-line dark:border-line rounded-md px-2 py-2 bg-transparent dark:text-foreground text-xs font-bold outline-none focus:border-accent" />
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   <input type="number" min="0" value={item.price} onChange={e => updateFormItem(item.id, 'price', Number(e.target.value))}
-                    placeholder="€ prezzo" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
+                    placeholder="€ prezzo" className="w-full border-2 border-line dark:border-line rounded-md px-2 py-2 bg-transparent dark:text-foreground text-xs font-bold outline-none focus:border-accent" />
                 </div>
                 <div className="col-span-3 sm:col-span-2">
                   <input type="number" min="0" max="100" value={item.discount} onChange={e => updateFormItem(item.id, 'discount', Number(e.target.value))}
-                    placeholder="Sc%" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-2 py-2 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
+                    placeholder="Sc%" className="w-full border-2 border-line dark:border-line rounded-md px-2 py-2 bg-transparent dark:text-foreground text-xs font-bold outline-none focus:border-accent" />
                 </div>
                 <div className="col-span-1">
-                  <button onClick={() => removeFormItem(item.id)} className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors"><Trash2 size={12} /></button>
+                  <button onClick={() => removeFormItem(item.id)} className="p-1.5 text-muted hover:text-danger rounded-lg transition-colors"><Trash2 size={12} /></button>
                 </div>
               </div>
             ))}
           </div>
 
           <button onClick={addFormItem}
-            className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-3 py-2 rounded-xl uppercase hover:bg-[var(--accent-100)] transition-colors">
+            className="flex items-center gap-1.5 text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/20 px-3 py-2 rounded-md uppercase hover:bg-accent-soft transition-colors">
             <Plus size={12} /> Aggiungi prodotto
           </button>
 
           <div className="grid grid-cols-2 gap-2">
             <input type="text" placeholder="Tempi consegna (es. 2 settimane)" value={formDelivery} onChange={e => setFormDelivery(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
+              className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-transparent dark:text-foreground text-xs font-bold outline-none focus:border-accent" />
             <input type="number" min="0" placeholder="Spese spedizione €" value={formShipping || ''} onChange={e => setFormShipping(Number(e.target.value))}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-transparent dark:text-white text-xs font-bold outline-none focus:border-[var(--accent-400)]" />
+              className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-transparent dark:text-foreground text-xs font-bold outline-none focus:border-accent" />
           </div>
 
           {formItems.length > 0 && (
-            <p className="text-xs font-black text-[var(--accent-600)]">Totale: €{calcTotal().toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-xs font-semibold text-accent">Totale: €{calcTotal().toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           )}
 
           <div className="flex gap-2">
             <button onClick={handleSave} disabled={formItems.length === 0}
-              className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-xs uppercase disabled:opacity-40">Salva Offerta</button>
+              className="flex-1 py-2.5 rounded-md bg-action text-action-foreground font-semibold text-xs uppercase disabled:opacity-40">Salva Offerta</button>
             <button onClick={() => { setShowForm(false); setFormItems([]); }}
-              className="py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-xs uppercase">Annulla</button>
+              className="py-2.5 px-4 rounded-md bg-raised dark:bg-raised text-secondary font-semibold text-xs uppercase">Annulla</button>
           </div>
         </div>
       )}
 
       {!showForm && (
         <button onClick={() => { setShowForm(true); setFormItems([]); }}
-          className="flex items-center gap-1.5 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 px-3 py-2 rounded-xl uppercase hover:bg-[var(--accent-100)] transition-colors">
+          className="flex items-center gap-1.5 text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/20 px-3 py-2 rounded-md uppercase hover:bg-accent-soft transition-colors">
           <Plus size={12} /> Nuova Offerta
         </button>
       )}
@@ -466,7 +468,7 @@ const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       const current = contacts[contactId]?.biDocuments ?? [];
       updateContact(contactId, { biDocuments: [...current, doc] });
     } catch (err: any) {
-      alert(err?.message ?? 'Errore caricamento documento');
+      showNotice(err?.message ?? 'Errore caricamento documento');
     } finally {
       setUploading(false);
     }
@@ -480,7 +482,7 @@ const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       const { downloadBiDocument } = await import('../lib/uploadBiDocument');
       await downloadBiDocument(doc);
     } catch (err: any) {
-      alert(err?.message ?? 'Errore download documento');
+      showNotice(err?.message ?? 'Errore download documento');
     } finally {
       setDownloadingId(null);
     }
@@ -496,7 +498,7 @@ const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       const current = contacts[contactId]?.biDocuments ?? [];
       updateContact(contactId, { biDocuments: current.filter(d => d.id !== docId) });
     } catch (err: any) {
-      alert(err?.message ?? 'Errore eliminazione documento');
+      showNotice(err?.message ?? 'Errore eliminazione documento');
     } finally {
       setDeletingId(null);
     }
@@ -507,54 +509,54 @@ const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={handleFileChange} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+        <h3 className="text-xs font-semibold text-muted   flex items-center gap-2">
           <FileText size={16} /> 8. Business Intelligence
-          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{docs.length}</span>
+          <span className="text-xs bg-raised dark:bg-raised text-muted px-2 py-0.5 rounded-full font-semibold">{docs.length}</span>
         </h3>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-[10px] uppercase tracking-wide hover:bg-orange-100 transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-warning-soft dark:bg-warning-soft text-warning font-semibold text-xs uppercase tracking-wide hover:bg-warning-soft transition-colors disabled:opacity-40"
         >
           {uploading
-            ? <><span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" /> Caricamento...</>
+            ? <><span className="animate-spin inline-block w-3 h-3 border-2 border-warning border-t-transparent rounded-full" /> Caricamento...</>
             : <><Upload size={12} /> Carica Documento</>
           }
         </button>
       </div>
 
       {docs.length === 0 && (
-        <p className="text-xs text-gray-400 font-bold italic">Nessun documento caricato per questo cliente</p>
+        <p className="text-xs text-muted font-bold italic">Nessun documento caricato per questo cliente</p>
       )}
 
       {docs.length > 0 && (
         <div className="space-y-2">
           {docs.map(doc => (
-            <div key={doc.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
-              <FileText size={18} className="text-orange-500 flex-shrink-0" />
+            <div key={doc.id} className="bg-surface dark:bg-surface rounded-panel p-3 flex items-center gap-3 shadow-sm">
+              <FileText size={18} className="text-warning flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-black text-xs dark:text-white truncate">{doc.name}</p>
-                <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                <p className="font-semibold text-xs dark:text-foreground truncate">{doc.name}</p>
+                <p className="text-xs text-muted font-bold mt-0.5">
                   {new Date(doc.uploadedAt).toLocaleDateString('it-IT')} · {fmtFileSize(doc.size)}
                 </p>
               </div>
               <button
                 onClick={() => handleDownload(doc.id)}
                 disabled={downloadingId === doc.id}
-                className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-500 hover:bg-orange-100 transition-colors disabled:opacity-40"
+                className="p-1.5 rounded-lg bg-warning-soft dark:bg-warning-soft text-warning hover:bg-warning-soft transition-colors disabled:opacity-40"
               >
                 {downloadingId === doc.id
-                  ? <span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" />
+                  ? <span className="animate-spin inline-block w-3 h-3 border-2 border-warning border-t-transparent rounded-full" />
                   : <Download size={12} />
                 }
               </button>
               <button
                 onClick={() => handleDelete(doc.id)}
                 disabled={deletingId === doc.id}
-                className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
+                className="p-1.5 rounded-lg bg-canvas dark:bg-raised text-muted hover:bg-danger-soft hover:text-danger transition-colors disabled:opacity-40"
               >
                 {deletingId === doc.id
-                  ? <span className="animate-spin inline-block w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full" />
+                  ? <span className="animate-spin inline-block w-3 h-3 border-2 border-danger border-t-transparent rounded-full" />
                   : <Trash2 size={12} />
                 }
               </button>
@@ -589,7 +591,7 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
         updateContact(contactId, { photos: [...current, photo] });
       }
     } catch (err: any) {
-      alert(err?.message ?? 'Errore caricamento foto');
+      showNotice(err?.message ?? 'Errore caricamento foto');
     } finally {
       setUploading(false);
     }
@@ -602,7 +604,7 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       const fullUrl = await getContactPhotoFullDataUrl(photo);
       setViewer({ photo, fullUrl, loading: false });
     } catch (err: any) {
-      alert(err?.message ?? 'Errore apertura foto');
+      showNotice(err?.message ?? 'Errore apertura foto');
       setViewer(null);
     }
   };
@@ -618,7 +620,7 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       updateContact(contactId, { photos: current.filter(p => p.id !== photoId) });
       setViewer(null);
     } catch (err: any) {
-      alert(err?.message ?? 'Errore eliminazione foto');
+      showNotice(err?.message ?? 'Errore eliminazione foto');
     } finally {
       setDeletingId(null);
     }
@@ -629,24 +631,24 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
       <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFilesChange} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+        <h3 className="text-xs font-semibold text-muted   flex items-center gap-2">
           <ImageIcon size={16} /> 9. Foto Punto Vendita / Assortimento
-          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{photos.length}</span>
+          <span className="text-xs bg-raised dark:bg-raised text-muted px-2 py-0.5 rounded-full font-semibold">{photos.length}</span>
         </h3>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-[10px] uppercase tracking-wide hover:bg-orange-100 transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-warning-soft dark:bg-warning-soft text-warning font-semibold text-xs uppercase tracking-wide hover:bg-warning-soft transition-colors disabled:opacity-40"
         >
           {uploading
-            ? <><span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" /> Caricamento...</>
+            ? <><span className="animate-spin inline-block w-3 h-3 border-2 border-warning border-t-transparent rounded-full" /> Caricamento...</>
             : <><Upload size={12} /> Carica Foto</>
           }
         </button>
       </div>
 
       {photos.length === 0 && (
-        <p className="text-xs text-gray-400 font-bold italic">Nessuna foto caricata per questo cliente</p>
+        <p className="text-xs text-muted font-bold italic">Nessuna foto caricata per questo cliente</p>
       )}
 
       {photos.length > 0 && (
@@ -655,14 +657,14 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
             <button
               key={photo.id}
               onClick={() => openViewer(photo)}
-              className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm group"
+              className="relative aspect-square rounded-panel overflow-hidden bg-raised dark:bg-surface shadow-sm group"
             >
               <img src={photo.thumb} alt={photo.name} className="w-full h-full object-cover" />
-              <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 text-white text-[8px] font-black">
+              <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 text-foreground text-xs font-semibold">
                 {fmtFileSize(photo.size)}
               </span>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <ZoomIn size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ZoomIn size={18} className="text-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </button>
           ))}
@@ -671,38 +673,38 @@ const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId }) => {
 
       {/* Lightbox */}
       {viewer && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
+        <DialogFrame className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
           <div className="max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+            <div className="bg-surface dark:bg-surface rounded-panel overflow-hidden shadow-panel">
+              <div className="aspect-square bg-raised dark:bg-canvas flex items-center justify-center">
                 {viewer.loading
-                  ? <span className="animate-spin inline-block w-6 h-6 border-2 border-[var(--accent-400)] border-t-transparent rounded-full" />
+                  ? <span className="animate-spin inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full" />
                   : <img src={viewer.fullUrl ?? viewer.photo.thumb} alt={viewer.photo.name} className="w-full h-full object-contain" />
                 }
               </div>
               <div className="p-3 flex items-center justify-between gap-2">
-                <p className="text-[10px] text-gray-400 font-bold truncate">
+                <p className="text-xs text-muted font-bold truncate">
                   {new Date(viewer.photo.uploadedAt).toLocaleDateString('it-IT')} · {fmtFileSize(viewer.photo.size)}
                 </p>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => handleDelete(viewer.photo.id)}
                     disabled={deletingId === viewer.photo.id}
-                    className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
+                    className="p-1.5 rounded-lg bg-canvas dark:bg-raised text-muted hover:bg-danger-soft hover:text-danger transition-colors disabled:opacity-40"
                   >
                     {deletingId === viewer.photo.id
-                      ? <span className="animate-spin inline-block w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full" />
+                      ? <span className="animate-spin inline-block w-3 h-3 border-2 border-danger border-t-transparent rounded-full" />
                       : <Trash2 size={12} />
                     }
                   </button>
-                  <button onClick={() => setViewer(null)} className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors">
+                  <button onClick={() => setViewer(null)} className="p-1.5 rounded-lg bg-canvas dark:bg-raised text-muted hover:bg-raised transition-colors">
                     <X size={12} />
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
     </section>
   );
@@ -1077,7 +1079,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     }
   };
 
-  const recheckDealerClassification = () => {
+  const recheckDealerClassification = async () => {
     const updates: Record<string, ContactSegment> = {};
     Object.values(contacts).forEach(c => {
       if (c.segment === 'dealer') return;
@@ -1086,14 +1088,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
     });
     const count = Object.keys(updates).length;
     if (count === 0) {
-      alert('Nessun contatto da correggere: in base a settore e ragione sociale, nessuno risulta erroneamente classificato come End User.');
+      showNotice('Nessun contatto da correggere: in base a settore e ragione sociale, nessuno risulta erroneamente classificato come End User.');
       return;
     }
     const names = Object.keys(updates).slice(0, 8).map(id => contacts[id].company).join(', ');
     const preview = count > 8 ? `${names}, +${count - 8} altri` : names;
-    if (!window.confirm(`Trovati ${count} contatti classificati come End User che, in base a settore/ragione sociale, sembrano in realtà Dealer:\n\n${preview}\n\nCorreggerli ora in Dealer?`)) return;
+    if (!await confirmAction(`Trovati ${count} contatti classificati come End User che, in base a settore/ragione sociale, sembrano in realtà Dealer:\n\n${preview}\n\nCorreggerli ora in Dealer?`)) return;
     bulkUpdateSegments(updates);
-    alert(`${count} contatti aggiornati a Dealer.`);
+    showNotice(`${count} contatti aggiornati a Dealer.`);
   };
 
   const geocodeOne = async (city?: string, province?: string, address?: string) => {
@@ -1116,7 +1118,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
   };
 
   const handleSave = async () => {
-    if (!editingContact?.company) return alert('Inserisci la ragione sociale');
+    if (!editingContact?.company) return showNotice('Inserisci la ragione sociale');
     const isNew = !contacts[editingContact.id];
     if (isNew) {
       addContact(editingContact as Contact);
@@ -1172,46 +1174,46 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
       {detailContact !== null ? (
         // FULL SCREEN DETAIL
-        <div className="min-h-screen -m-4 md:-m-8 bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen -m-4 md:-m-8 bg-canvas dark:bg-canvas">
           {/* Sticky header */}
-          <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 md:px-8 py-4 flex flex-col gap-3 shadow-sm">
+          <div className="sticky top-0 z-20 bg-surface dark:bg-surface border-b border-line dark:border-line px-4 md:px-8 py-4 flex flex-col gap-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   onClick={() => setDetailContact(null)}
-                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 flex-shrink-0"
+                  className="p-2 rounded-md hover:bg-raised dark:hover:bg-raised transition-colors text-secondary flex-shrink-0"
                 >
                   <ArrowLeft size={20} />
                 </button>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <h2 className="font-black text-lg dark:text-white uppercase tracking-tight truncate">
+                    <h2 className="font-semibold text-lg dark:text-foreground  tracking-tight truncate">
                       {editingContact?.company || 'Nuova Azienda'}
                     </h2>
                     <button
                       onClick={() => setEditingContact({ ...editingContact, priorityToVisit: !editingContact?.priorityToVisit })}
                       title={editingContact?.priorityToVisit ? 'Rimuovi priorità' : 'Segna come prioritario'}
-                      className={`p-1 rounded-lg transition-colors flex-shrink-0 ${editingContact?.priorityToVisit ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400'}`}
+                      className={`p-1 rounded-lg transition-colors flex-shrink-0 ${editingContact?.priorityToVisit ? 'text-warning' : 'text-muted hover:text-warning'}`}
                     >
                       <Star size={18} fill={editingContact?.priorityToVisit ? 'currentColor' : 'none'} />
                     </button>
                   </div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Scheda Azienda</p>
+                  <p className="text-xs text-muted font-bold uppercase tracking-normal">Scheda Azienda</p>
                 </div>
               </div>
               <button
                 onClick={handleSave}
-                className="flex-shrink-0 bg-[var(--accent-600)] text-white px-5 sm:px-6 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-[var(--accent-700)] transition-colors"
+                className="flex-shrink-0 bg-action text-action-foreground px-5 sm:px-6 py-2.5 rounded-panel font-semibold uppercase text-xs tracking-normal shadow-panel hover:bg-action-hover transition-colors"
               >
                 Salva
               </button>
             </div>
-            <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-200 dark:border-blue-800 rounded-2xl px-3 py-2">
-              <StickyNote size={14} className="text-blue-500 flex-shrink-0 mt-1" />
+            <div className="flex items-start gap-2 bg-accent-soft dark:bg-accent-soft/10 border-2 border-accent dark:border-accent rounded-panel px-3 py-2">
+              <StickyNote size={14} className="text-accent flex-shrink-0 mt-1" />
               <textarea
                 rows={2}
                 placeholder="Note rapide di identificazione (es. portineria, referente in loco, orari, accessi particolari...)"
-                className="w-full bg-transparent resize-none outline-none text-xs font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 placeholder:font-semibold max-h-20 overflow-y-auto"
+                className="w-full bg-transparent resize-none outline-none text-xs font-bold text-accent dark:text-accent placeholder:text-accent placeholder:font-semibold max-h-20 overflow-y-auto"
                 value={editingContact?.notes || ''}
                 onChange={e => setEditingContact({ ...editingContact, notes: e.target.value })}
               />
@@ -1220,7 +1222,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               {editingContact?.id && contacts[editingContact.id] && (
                 <button
                   onClick={() => setHistoryContact(contacts[editingContact.id])}
-                  className="flex items-center gap-1.5 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[var(--accent-100)] transition-colors"
+                  className="flex items-center gap-1.5 bg-accent-soft dark:bg-accent-soft/30 text-accent px-3 py-2.5 rounded-panel font-semibold uppercase text-xs tracking-normal hover:bg-accent-soft transition-colors"
                 >
                   <History size={14} /> <span className="hidden sm:inline">Storico</span>
                 </button>
@@ -1230,12 +1232,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 <button
                   onClick={handleGeocode}
                   disabled={geoLoading}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 rounded-2xl font-black uppercase text-xs tracking-widest transition-colors border ${
+                  className={`flex items-center gap-1.5 px-3 py-2.5 rounded-panel font-semibold uppercase text-xs tracking-normal transition-colors border ${
                     geoStatus === 'ok'
-                      ? 'bg-green-50 border-green-200 text-green-600'
+                      ? 'bg-success-soft border-success text-success'
                       : geoStatus === 'error'
-                      ? 'bg-red-50 border-red-200 text-red-500'
-                      : 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100'
+                      ? 'bg-danger-soft border-danger text-danger'
+                      : 'bg-warning-soft border-warning text-warning hover:bg-warning-soft'
                   } disabled:opacity-60`}
                 >
                   <MapPin size={14} className={geoLoading ? 'animate-bounce' : ''} />
@@ -1245,13 +1247,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 </button>
               )}
               {(editingContact?.lat && editingContact?.lng) && (
-                <span className="hidden sm:flex items-center gap-1 text-[10px] font-black text-green-500 uppercase tracking-widest">
+                <span className="hidden sm:flex items-center gap-1 text-xs font-semibold text-success uppercase tracking-normal">
                   <MapPin size={11} /> In mappa
                 </span>
               )}
               <button
                 onClick={() => setConfirmDeleteId(editingContact?.id ?? null)}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border-2 border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-black uppercase text-xs tracking-widest transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-panel border-2 border-danger dark:border-danger text-danger hover:bg-danger-soft dark:hover:bg-danger-soft font-semibold uppercase text-xs tracking-normal transition-colors"
               >
                 <Trash2 size={13} /> Elimina
               </button>
@@ -1263,39 +1265,39 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
             {/* SEZIONE 1 */}
             <section>
-              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Building2 size={16}/> 1. Dati Anagrafici</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm">
+              <h3 className="text-xs font-semibold text-muted   mb-4 flex items-center gap-2"><Building2 size={16}/> 1. Dati Anagrafici</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface dark:bg-surface p-6 rounded-panel shadow-sm">
                 <div className="md:col-span-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Ragione Sociale *</label>
-                  <input type="text" style={{ textTransform: 'uppercase' }} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.company || ''} onChange={e => setEditingContact({...editingContact, company: e.target.value.toUpperCase()})} />
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Ragione Sociale *</label>
+                  <input type="text" style={{ textTransform: 'uppercase' }} className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.company || ''} onChange={e => setEditingContact({...editingContact, company: e.target.value.toUpperCase()})} />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Tipologia</label>
-                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.segment === 'dealer' ? 'dealer' : 'end-user'} onChange={e => setEditingContact({...editingContact, segment: e.target.value as ContactSegment, customerType: e.target.value})}>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Tipologia</label>
+                  <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.segment === 'dealer' ? 'dealer' : 'end-user'} onChange={e => setEditingContact({...editingContact, segment: e.target.value as ContactSegment, customerType: e.target.value})}>
                     <option value="end-user">End User (Utilizzatore Finale)</option>
                     <option value="dealer">Dealer (Rivenditore)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Status CRM</label>
-                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.status || 'potenziale'} onChange={e => setEditingContact({...editingContact, status: e.target.value})}>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Status CRM</label>
+                  <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.status || 'potenziale'} onChange={e => setEditingContact({...editingContact, status: e.target.value})}>
                     <option value="potenziale">Potenziale</option>
                     <option value="cliente">Cliente Attivo</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Gruppo strategico</label>
-                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.groupId || ''} onChange={e => setEditingContact({...editingContact, groupId: e.target.value || undefined})}>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Gruppo strategico</label>
+                  <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.groupId || ''} onChange={e => setEditingContact({...editingContact, groupId: e.target.value || undefined})}>
                     <option value="">— Nessun gruppo —</option>
                     {Object.values(groups).sort((a, b) => a.nome.localeCompare(b.nome, 'it')).map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Settore di Riferimento</label>
-                  <select className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none" value={editingContact?.sector || ''} onChange={e => setEditingContact({...editingContact, sector: e.target.value})}>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Settore di Riferimento</label>
+                  <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.sector || ''} onChange={e => setEditingContact({...editingContact, sector: e.target.value})}>
                     <option value="">— Seleziona settore —</option>
                     {allSectors(customSectors).map(s => (
                       <option key={s} value={s}>{sectorLabel(s)}</option>
@@ -1303,39 +1305,39 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Partita IVA</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all font-mono" placeholder="es. 01234567890" value={editingContact?.vatNumber || ''} onChange={e => setEditingContact({...editingContact, vatNumber: e.target.value})} />
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Partita IVA</label>
+                  <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all font-mono" placeholder="es. 01234567890" value={editingContact?.vatNumber || ''} onChange={e => setEditingContact({...editingContact, vatNumber: e.target.value})} />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Telefono Gen.</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.phone || ''} onChange={e => setEditingContact({...editingContact, phone: e.target.value})} />
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Telefono Gen.</label>
+                  <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.phone || ''} onChange={e => setEditingContact({...editingContact, phone: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Email Gen.</label>
-                  <input type="email" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.email || ''} onChange={e => setEditingContact({...editingContact, email: e.target.value})} />
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Email Gen.</label>
+                  <input type="email" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.email || ''} onChange={e => setEditingContact({...editingContact, email: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Sito Web</label>
-                  <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" placeholder="es. www.azienda.it" value={editingContact?.website || ''} onChange={e => setEditingContact({...editingContact, website: e.target.value})} />
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Sito Web</label>
+                  <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" placeholder="es. www.azienda.it" value={editingContact?.website || ''} onChange={e => setEditingContact({...editingContact, website: e.target.value})} />
                 </div>
 
                 <div className="md:col-span-2 grid grid-cols-12 gap-2 mt-2">
                   <div className="col-span-12 md:col-span-6">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Indirizzo</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.address || ''} onChange={e => setEditingContact({...editingContact, address: e.target.value})} />
+                    <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Indirizzo</label>
+                    <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.address || ''} onChange={e => setEditingContact({...editingContact, address: e.target.value})} />
                   </div>
                   <div className="col-span-4 md:col-span-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">CAP</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.zipCode || ''} onChange={e => setEditingContact({...editingContact, zipCode: e.target.value})} />
+                    <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">CAP</label>
+                    <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.zipCode || ''} onChange={e => setEditingContact({...editingContact, zipCode: e.target.value})} />
                   </div>
                   <div className="col-span-5 md:col-span-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Città</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.city || ''} onChange={e => setEditingContact({...editingContact, city: e.target.value})} />
+                    <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Città</label>
+                    <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.city || ''} onChange={e => setEditingContact({...editingContact, city: e.target.value})} />
                   </div>
                   <div className="col-span-3 md:col-span-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Prov.</label>
-                    <input type="text" className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all" value={editingContact?.province || ''} onChange={e => setEditingContact({...editingContact, province: e.target.value})} />
+                    <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Prov.</label>
+                    <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all" value={editingContact?.province || ''} onChange={e => setEditingContact({...editingContact, province: e.target.value})} />
                   </div>
                 </div>
               </div>
@@ -1344,8 +1346,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             {/* SEZIONE 1A-BIS - Sedi Aggiuntive */}
             {(() => {
               const locations: any[] = editingContact?.locations || [];
-              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all text-sm";
-              const labelCls = "text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1";
+              const inputCls = "w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all text-sm";
+              const labelCls = "text-xs font-semibold text-muted uppercase tracking-normal block mb-1";
 
               const updateLocation = (id: string, field: string, val: string) => {
                 setEditingContact({ ...editingContact, locations: locations.map(l => l.id === id ? { ...l, [field]: val } : l) });
@@ -1359,13 +1361,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
               return (
                 <section>
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-muted   mb-4 flex items-center gap-2">
                     <MapPin size={16}/> Sedi Aggiuntive
                   </h3>
                   <div className="space-y-4">
                     {locations.map(l => (
-                      <div key={l.id} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-gray-100 dark:border-gray-700 relative">
-                        <button onClick={() => removeLocation(l.id)} className="absolute top-4 right-4 p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                      <div key={l.id} className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm border-2 border-line dark:border-line relative">
+                        <button onClick={() => removeLocation(l.id)} className="absolute top-4 right-4 p-1.5 rounded-lg text-danger hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors">
                           <Trash2 size={14} />
                         </button>
                         <div className="mb-3">
@@ -1393,7 +1395,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       </div>
                     ))}
 
-                    <button onClick={addLocation} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-[var(--accent-300)] hover:text-[var(--accent-500)] transition-colors flex items-center justify-center gap-2">
+                    <button onClick={addLocation} className="w-full py-3 rounded-panel border-2 border-dashed border-line dark:border-line text-xs font-semibold text-muted uppercase tracking-normal hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2">
                       <Plus size={14} /> Aggiungi Sede
                     </button>
                   </div>
@@ -1428,18 +1430,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 setEditingContact({ ...editingContact, stakeholders: allSh.filter((s: any) => s.id !== id) });
               };
 
-              const inputCls = "w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] transition-all text-sm";
-              const labelCls = "text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1";
+              const inputCls = "w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all text-sm";
+              const labelCls = "text-xs font-semibold text-muted uppercase tracking-normal block mb-1";
 
               return (
                 <section>
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-muted   mb-4 flex items-center gap-2">
                     <Users size={16}/> 1b. Persone di Riferimento
                   </h3>
                   <div className="space-y-4">
                     {/* Titolare */}
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-[var(--accent-100)] dark:border-[var(--accent-900)]/40">
-                      <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-3">Titolare</p>
+                    <div className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm border-2 border-accent dark:border-accent/40">
+                      <p className="text-xs font-semibold text-accent uppercase tracking-normal mb-3">Titolare</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className={labelCls}>Nome</label>
@@ -1462,11 +1464,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
                     {/* Altre figure */}
                     {altre.map((s: any) => (
-                      <div key={s.id} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border-2 border-gray-100 dark:border-gray-700 relative">
-                        <button onClick={() => removeAltra(s.id)} className="absolute top-4 right-4 p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                      <div key={s.id} className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm border-2 border-line dark:border-line relative">
+                        <button onClick={() => removeAltra(s.id)} className="absolute top-4 right-4 p-1.5 rounded-lg text-danger hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors">
                           <Trash2 size={14} />
                         </button>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Figura di Riferimento</p>
+                        <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-3">Figura di Riferimento</p>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className={labelCls}>Nome</label>
@@ -1492,7 +1494,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       </div>
                     ))}
 
-                    <button onClick={addAltra} className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-xs font-black text-gray-400 uppercase tracking-widest hover:border-[var(--accent-300)] hover:text-[var(--accent-500)] transition-colors flex items-center justify-center gap-2">
+                    <button onClick={addAltra} className="w-full py-3 rounded-panel border-2 border-dashed border-line dark:border-line text-xs font-semibold text-muted uppercase tracking-normal hover:border-accent hover:text-accent transition-colors flex items-center justify-center gap-2">
                       <Plus size={14} /> Aggiungi Figura di Riferimento
                     </button>
                   </div>
@@ -1522,32 +1524,32 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 acc[a.type] = (acc[a.type] || 0) + 1; return acc;
               }, {} as Record<string, number>);
               return (
-                <section className={`rounded-3xl p-4 border-2 ${isSilent ? 'border-orange-200 bg-orange-50 dark:bg-orange-900/10 dark:border-orange-800' : 'border-green-100 bg-green-50 dark:bg-green-900/10 dark:border-green-800'}`}>
+                <section className={`rounded-panel p-4 border-2 ${isSilent ? 'border-warning bg-warning-soft dark:bg-warning-soft dark:border-warning' : 'border-success bg-success-soft dark:bg-success-soft dark:border-success'}`}>
                   <div className="flex items-center gap-2 mb-3">
-                    <Activity size={16} className={isSilent ? 'text-orange-500' : 'text-green-500'} />
-                    <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Interaction Score</h3>
-                    {isSilent && <span className="text-[9px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">SILENTE</span>}
+                    <Activity size={16} className={isSilent ? 'text-warning' : 'text-success'} />
+                    <h3 className="text-xs font-semibold text-secondary  ">Interaction Score</h3>
+                    {isSilent && <span className="text-xs font-semibold bg-warning-soft text-warning px-2 py-0.5 rounded-full uppercase">SILENTE</span>}
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
-                      <p className="text-2xl font-black dark:text-white">{recent90.length}</p>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Attività 90gg</p>
+                      <p className="text-2xl font-semibold dark:text-foreground">{recent90.length}</p>
+                      <p className="text-xs font-semibold uppercase text-muted tracking-normal">Attività 90gg</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-black dark:text-white">{contactActivities.length}</p>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Totali</p>
+                      <p className="text-2xl font-semibold dark:text-foreground">{contactActivities.length}</p>
+                      <p className="text-xs font-semibold uppercase text-muted tracking-normal">Totali</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-black dark:text-white">
+                      <p className="text-sm font-semibold dark:text-foreground">
                         {lastActivity ? `${Math.floor((Date.now() - lastActivity) / (24 * 60 * 60 * 1000))}gg fa` : '—'}
                       </p>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Ultima att.</p>
+                      <p className="text-xs font-semibold uppercase text-muted tracking-normal">Ultima att.</p>
                     </div>
                   </div>
                   {Object.keys(activityTypes).length > 0 && (
                     <div className="flex gap-2 flex-wrap mt-3">
                       {Object.entries(activityTypes).map(([type, count]) => (
-                        <span key={type} className="text-[9px] font-black bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-lg uppercase">
+                        <span key={type} className="text-xs font-semibold bg-surface dark:bg-surface border border-line dark:border-line text-secondary dark:text-muted px-2 py-1 rounded-lg uppercase">
                           {type}: {count}
                         </span>
                       ))}
@@ -1563,48 +1565,48 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 d => d.contactId === editingContact.id && !['chiuso-vinto', 'chiuso-perso'].includes(d.stage)
               );
               const stageBadge: Record<string, string> = {
-                lead: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300',
-                qualificato: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300',
-                proposta: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300',
-                negoziazione: 'bg-[var(--accent-100)] text-[var(--accent-600)] dark:bg-[var(--accent-900)]/30 dark:text-[var(--accent-300)]',
+                lead: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
+                qualificato: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
+                proposta: 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning',
+                negoziazione: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
               };
               const stageLabels: Record<string, string> = { lead: 'Lead', qualificato: 'Qualificato', proposta: 'Proposta', negoziazione: 'Trattativa' };
               return (
                 <section>
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-muted   mb-4 flex items-center gap-2">
                     <TrendingUp size={16}/> 6. Deal Aperti
-                    <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-black">{contactDeals.length}</span>
+                    <span className="text-xs bg-raised dark:bg-raised text-muted px-2 py-0.5 rounded-full font-semibold">{contactDeals.length}</span>
                   </h3>
-                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm">
+                  <div className="bg-surface dark:bg-surface rounded-panel p-4 shadow-sm">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Opportunità aperte</span>
+                      <span className="text-xs font-semibold text-muted uppercase tracking-normal">Opportunità aperte</span>
                       <button
                         onClick={() => setAddDealForContact(editingContact.id)}
-                        className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-[var(--accent-100)] transition-colors"
+                        className="text-xs font-semibold text-accent bg-accent-soft px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-accent-soft transition-colors"
                       >
                         <Plus size={10}/> Aggiungi
                       </button>
                     </div>
                     {contactDeals.length === 0 ? (
-                      <p className="text-xs text-gray-400 font-bold italic">Nessun deal aperto</p>
+                      <p className="text-xs text-muted font-bold italic">Nessun deal aperto</p>
                     ) : (
                       <div className="space-y-2">
                         {contactDeals.map(deal => {
                           const isPastClosing = deal.closingDate && deal.closingDate < Date.now();
                           const daysToClose = deal.closingDate ? Math.ceil((deal.closingDate - Date.now()) / (1000 * 60 * 60 * 24)) : null;
                           return (
-                            <div key={deal.id} className={`rounded-2xl p-3 flex items-center gap-2 ${isPastClosing ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-900'}`}>
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex-shrink-0 ${stageBadge[deal.stage] || 'bg-gray-100 text-gray-600'}`}>
+                            <div key={deal.id} className={`rounded-panel p-3 flex items-center gap-2 ${isPastClosing ? 'bg-danger-soft dark:bg-danger-soft border border-danger dark:border-danger' : 'bg-canvas dark:bg-canvas'}`}>
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase flex-shrink-0 ${stageBadge[deal.stage] || 'bg-raised text-secondary'}`}>
                                 {stageLabels[deal.stage] || deal.stage}
                               </span>
-                              <span className="font-bold text-xs text-[var(--accent-600)]">€{deal.value.toLocaleString('it-IT')}</span>
+                              <span className="font-bold text-xs text-accent">€{deal.value.toLocaleString('it-IT')}</span>
                               {deal.closingDate && (
-                                <span className={`text-[9px] font-black ml-auto flex-shrink-0 ${isPastClosing ? 'text-red-500' : daysToClose && daysToClose <= 7 ? 'text-orange-500' : 'text-gray-400'}`}>
+                                <span className={`text-xs font-semibold ml-auto flex-shrink-0 ${isPastClosing ? 'text-danger' : daysToClose && daysToClose <= 7 ? 'text-warning' : 'text-muted'}`}>
                                   {isPastClosing ? `Scaduto ${Math.abs(daysToClose!)}gg fa` : `Chiusura: ${new Date(deal.closingDate).toLocaleDateString('it-IT')}`}
                                 </span>
                               )}
                               {deal.nextAction && !deal.closingDate && (
-                                <span className="text-[10px] text-gray-500 truncate flex-1">{deal.nextAction}</span>
+                                <span className="text-xs text-secondary truncate flex-1">{deal.nextAction}</span>
                               )}
                             </div>
                           );
@@ -1639,17 +1641,17 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
-              <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Clienti</h1>
+              <h1 className="text-2xl  dark:text-foreground  ">Clienti</h1>
               <div className="flex gap-2 mt-2 flex-wrap">
                 {searchTerm && initialSearch && (
                   <button onClick={() => { setSearchTerm(''); onClearFilter?.(); }}
-                    className="flex items-center gap-1 text-[var(--accent-600)] font-black uppercase text-[10px] tracking-widest bg-[var(--accent-50)] px-2 py-1 rounded-md hover:bg-[var(--accent-100)] transition-colors">
+                    className="flex items-center gap-1 text-accent font-semibold uppercase text-xs tracking-normal bg-accent-soft px-2 py-1 rounded-md hover:bg-accent-soft transition-colors">
                     Filtro Mappa: {searchTerm} <X size={12} />
                   </button>
                 )}
                 {Object.values(contacts).length > 0 && (
                   <button onClick={() => setPendingDeleteAll(true)}
-                    className="flex items-center gap-1 text-red-600 font-black uppercase text-[10px] tracking-widest bg-red-50 px-2 py-1 rounded-md hover:bg-red-100 transition-colors">
+                    className="flex items-center gap-1 text-danger font-semibold uppercase text-xs tracking-normal bg-danger-soft px-2 py-1 rounded-md hover:bg-danger-soft transition-colors">
                     <Trash2 size={12} /> Pulisci DB
                   </button>
                 )}
@@ -1658,20 +1660,20 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
+          <div className="flex flex-wrap gap-1 bg-raised dark:bg-surface p-1 rounded-panel w-fit max-w-full">
             <button onClick={() => setActiveTab('clienti')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'clienti' ? 'bg-white dark:bg-gray-700 shadow text-[var(--accent-600)]' : 'text-gray-500 hover:text-gray-700'}`}>
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold uppercase tracking-wide transition-all ${activeTab === 'clienti' ? 'bg-surface dark:bg-raised shadow text-accent' : 'text-secondary hover:text-foreground'}`}>
               <Users size={16} />
               Clienti
-              <span className="text-xs bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)] px-2 py-0.5 rounded-full font-black">
+              <span className="text-xs bg-accent-soft dark:bg-accent-soft/40 text-accent px-2 py-0.5 rounded-full font-semibold">
                 {clientiCount}
               </span>
             </button>
             <button onClick={() => setActiveTab('prospect')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'prospect' ? 'bg-white dark:bg-gray-700 shadow text-amber-500' : 'text-gray-500 hover:text-gray-700'}`}>
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold uppercase tracking-wide transition-all ${activeTab === 'prospect' ? 'bg-surface dark:bg-raised shadow text-warning' : 'text-secondary hover:text-foreground'}`}>
               <UserPlus size={16} />
               Prospect
-              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded-full font-black">
+              <span className="text-xs bg-warning-soft dark:bg-warning-soft text-warning px-2 py-0.5 rounded-full font-semibold">
                 {prospectCount}
               </span>
             </button>
@@ -1682,8 +1684,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
             const isProspect = activeTab === 'prospect';
             const statusFilter = isProspect ? 'potenziale' : 'cliente';
             const csvRef    = isProspect ? fileInputRefProspect : fileInputRef;
-            const accentCls = isProspect ? 'text-amber-500 border-amber-100 hover:bg-amber-50' : 'text-[var(--accent-600)] border-[var(--accent-100)] hover:bg-[var(--accent-50)]';
-            const btnCls    = isProspect ? 'bg-amber-500 hover:bg-amber-600' : 'bg-[var(--accent-600)] hover:bg-[var(--accent-700)]';
+            const accentCls = isProspect ? 'text-warning border-warning hover:bg-warning-soft' : 'text-accent border-accent hover:bg-accent-soft';
+            const btnCls = 'bg-action text-action-foreground hover:bg-action-hover';
 
             const list = rankedFilteredList;
 
@@ -1704,7 +1706,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     onChange={setSearchTerm}
                     onSelect={c => setSearchTerm(c.company || c.contactName)}
                     placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} per nome, azienda, città, email, telefono…`}
-                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all shadow-sm text-sm'}
+                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-accent transition-all shadow-sm text-sm'}
                     results={searchPreview.map(c => ({
                       key: c.id,
                       item: c,
@@ -1713,8 +1715,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       badge: {
                         text: c.status === 'cliente' ? 'Cliente' : 'Prospect',
                         className: c.status === 'cliente'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                          ? 'bg-success-soft text-success dark:bg-success-soft dark:text-success'
+                          : 'bg-accent-soft text-accent dark:bg-accent-soft/40 dark:text-accent',
                       },
                     }))}
                   />
@@ -1722,7 +1724,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value as 'nome' | 'data' | 'citta' | 'interazione')}
-                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3.5 font-bold outline-none focus:border-[var(--accent-400)] transition-all shadow-sm text-sm text-gray-600 dark:text-gray-300"
+                    className="bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel px-4 py-3.5 font-bold outline-none focus:border-accent transition-all shadow-sm text-sm text-secondary dark:text-muted"
                     title="Ordina per"
                   >
                     <option value="nome">Nome</option>
@@ -1733,7 +1735,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <button
                     type="button"
                     onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
-                    className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-3.5 py-3.5 font-bold outline-none focus:border-[var(--accent-400)] transition-all shadow-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel px-3.5 py-3.5 font-bold outline-none focus:border-accent transition-all shadow-sm text-secondary dark:text-muted hover:bg-canvas dark:hover:bg-raised"
                     title={sortDir === 'asc' ? 'Crescente' : 'Decrescente'}
                   >
                     {sortDir === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
@@ -1747,7 +1749,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     onChange={e => handleFileUpload(e, 'potenziale')} />
 
                   <button onClick={() => setShowImportModal(true)}
-                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
+                    className={`bg-surface dark:bg-surface border-2 dark:border-line px-5 py-3 rounded-panel font-bold flex items-center gap-2 transition-all text-sm ${accentCls}`}
                     title="Crea contatto da sito web">
                     <Link size={18} /> <span className="hidden md:inline">Da URL</span>
                   </button>
@@ -1762,7 +1764,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     setDetailContact(newContact);
                     setEditingContact(newContact);
                   }}
-                    className={`text-white px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all text-sm ${btnCls}`}>
+                    className={`text-action-foreground px-5 py-3 rounded-panel font-bold flex items-center justify-center gap-2 shadow-panel transition-all text-sm ${btnCls}`}>
                     <Plus size={18} /> {isProspect ? 'Nuovo Prospect' : 'Nuovo Cliente'}
                   </button>
                 </div>
@@ -1772,30 +1774,30 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => { setTopFilter(null); setSubFilter(null); }}
-                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                      className={`px-4 py-2 rounded-md font-bold text-xs uppercase transition-all ${
                         topFilter === null
-                          ? 'bg-[var(--accent-600)] text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                          ? 'bg-action text-action-foreground'
+                          : 'bg-raised dark:bg-raised text-secondary dark:text-muted hover:bg-raised'
                       }`}
                     >
                       Tutti ({Object.values(contacts).filter(c => c.status === statusFilter).length})
                     </button>
                     <button
                       onClick={() => { setTopFilter('dealer'); setSubFilter(null); }}
-                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                      className={`px-4 py-2 rounded-md font-bold text-xs uppercase transition-all ${
                         topFilter === 'dealer'
-                          ? 'bg-[var(--accent-600)] text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                          ? 'bg-action text-action-foreground'
+                          : 'bg-raised dark:bg-raised text-secondary dark:text-muted hover:bg-raised'
                       }`}
                     >
                       🏪 Dealer ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === 'dealer').length})
                     </button>
                     <button
                       onClick={() => { setTopFilter('end-user'); setSubFilter(null); }}
-                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase transition-all ${
+                      className={`px-4 py-2 rounded-md font-bold text-xs uppercase transition-all ${
                         topFilter === 'end-user'
-                          ? 'bg-[var(--accent-600)] text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                          ? 'bg-action text-action-foreground'
+                          : 'bg-raised dark:bg-raised text-secondary dark:text-muted hover:bg-raised'
                       }`}
                     >
                       👤 End User ({Object.values(contacts).filter(c => c.status === statusFilter && (c.segment === 'end-user' || c.segment === 'industria' || c.segment === 'edilizia')).length})
@@ -1803,13 +1805,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                   </div>
 
                   {topFilter === 'end-user' && (
-                    <div className="flex flex-wrap gap-2 pl-3 border-l-2 border-gray-100 dark:border-gray-700">
+                    <div className="flex flex-wrap gap-2 pl-3 border-l-2 border-line dark:border-line">
                       <button
                         onClick={() => setSubFilter(null)}
-                        className={`px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase transition-all ${
+                        className={`px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${
                           subFilter === null
-                            ? 'bg-[var(--accent-500)] text-white'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100'
+                            ? 'bg-action text-action-foreground'
+                            : 'bg-canvas dark:bg-surface text-secondary dark:text-muted hover:bg-raised'
                         }`}
                       >
                         Tutti End User
@@ -1821,10 +1823,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                         <button
                           key={key}
                           onClick={() => setSubFilter(key)}
-                          className={`px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase transition-all ${
+                          className={`px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${
                             subFilter === key
-                              ? 'bg-[var(--accent-500)] text-white'
-                              : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100'
+                              ? 'bg-action text-action-foreground'
+                              : 'bg-canvas dark:bg-surface text-secondary dark:text-muted hover:bg-raised'
                           }`}
                         >
                           {label} ({Object.values(contacts).filter(c => c.status === statusFilter && c.segment === key).length})
@@ -1837,30 +1839,30 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {list.length === 0 ? (
-                    <div className="col-span-3 bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
-                      {isProspect ? <UserPlus size={44} className="mx-auto mb-4 text-amber-200" /> : <Users size={44} className="mx-auto mb-4 text-[var(--accent-200)]" />}
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+                    <div className="col-span-3 bg-surface dark:bg-surface rounded-panel py-20 text-center border-2 border-dashed border-line dark:border-line">
+                      {isProspect ? <UserPlus size={44} className="mx-auto mb-4 text-warning" /> : <Users size={44} className="mx-auto mb-4 text-accent" />}
+                      <p className="text-muted font-bold uppercase tracking-normal text-sm">
                         Nessun {isProspect ? 'prospect' : 'cliente'} trovato
                       </p>
-                      <p className="text-gray-300 text-xs mt-1">Importa un CSV o aggiungi manualmente</p>
+                      <p className="text-muted text-xs mt-1">Importa un CSV o aggiungi manualmente</p>
                     </div>
                   ) : list.slice(0, visibleCount).map(contact => (
                     <div key={contact.id} onClick={() => openDetail(contact)}
-                      className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-all cursor-pointer ${
+                      className={`bg-surface dark:bg-surface p-6 rounded-panel shadow-sm border-2 transition-all cursor-pointer ${
                         isProspect
-                          ? 'border-amber-100 dark:border-amber-900/30 hover:border-amber-300'
-                          : 'border-gray-100 dark:border-gray-700 hover:border-[var(--accent-200)]'
+                          ? 'border-warning dark:border-warning hover:border-warning'
+                          : 'border-line dark:border-line hover:border-accent'
                       }`}>
 
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${isProspect ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-500' : 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)]'}`}>
+                          <div className={`w-11 h-11 rounded-panel flex items-center justify-center flex-shrink-0 ${isProspect ? 'bg-warning-soft dark:bg-warning-soft text-warning' : 'bg-accent-soft dark:bg-accent-soft/30 text-accent'}`}>
                             {isProspect ? <UserPlus size={22} /> : <Building2 size={22} />}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-black dark:text-white uppercase leading-tight break-words">{contact.company}</h3>
-                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                              (contact as any).customerType === 'dealer' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
+                            <h3 className="font-semibold dark:text-foreground  leading-tight break-words">{contact.company}</h3>
+                            <span className={`text-xs font-semibold uppercase tracking-normal px-2 py-0.5 rounded-full ${
+                              (contact as any).customerType === 'dealer' ? 'bg-accent-soft text-accent' : 'bg-accent-soft text-accent'
                             }`}>
                               {(contact as any).customerType === 'dealer' ? 'Dealer' : 'End User'}
                             </span>
@@ -1871,27 +1873,27 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                           <button
                             onClick={e => { e.stopPropagation(); updateContact(contact.id, { priorityToVisit: !contact.priorityToVisit }); }}
                             title={contact.priorityToVisit ? 'Rimuovi priorità' : 'Segna come prioritario'}
-                            className={`p-2 rounded-xl transition-colors ${contact.priorityToVisit ? 'text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}>
+                            className={`p-2 rounded-xl transition-colors ${contact.priorityToVisit ? 'text-warning hover:bg-warning-soft dark:hover:bg-warning-soft' : 'text-muted hover:text-warning hover:bg-warning-soft dark:hover:bg-warning-soft'}`}>
                             <Star size={15} fill={contact.priorityToVisit ? 'currentColor' : 'none'} />
                           </button>
-                          <button onClick={e => { e.stopPropagation(); if (window.confirm(`Elimina ${contact.company}?`)) deleteContact(contact.id); }}
-                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                          <button aria-label={`Elimina ${contact.company}`} onClick={async e => { e.stopPropagation(); if (await confirmAction(`Elimina ${contact.company}?`)) deleteContact(contact.id); }}
+                            className="p-2 text-muted hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft rounded-md transition-colors">
                             <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <p className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                          <MapPin size={13} className="text-gray-300 flex-shrink-0" />
+                        <p className="flex items-center gap-2 text-xs font-bold text-secondary dark:text-muted">
+                          <MapPin size={13} className="text-muted flex-shrink-0" />
                           {contact.city || 'Città non inserita'} {(contact as any).province ? `(${(contact as any).province})` : ''}
                         </p>
-                        <p className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                          <Phone size={13} className="text-gray-300 flex-shrink-0" />
+                        <p className="flex items-center gap-2 text-xs font-bold text-secondary dark:text-muted">
+                          <Phone size={13} className="text-muted flex-shrink-0" />
                           {contact.phone || 'Nessun telefono'}
                         </p>
                         {(contact as any).stakeholders?.length > 0 && (
-                          <p className={`flex items-center gap-1.5 text-xs font-bold w-max px-2 py-1 rounded-lg mt-2 ${isProspect ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20'}`}>
+                          <p className={`flex items-center gap-1.5 text-xs font-bold w-max px-2 py-1 rounded-lg mt-2 ${isProspect ? 'text-warning bg-warning-soft dark:bg-warning-soft' : 'text-accent bg-accent-soft dark:bg-accent-soft/20'}`}>
                             <Users size={13} /> {(contact as any).stakeholders.length} Referent{(contact as any).stakeholders.length === 1 ? 'e' : 'i'}
                           </p>
                         )}
@@ -1901,19 +1903,19 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                       <div className="mt-4 flex gap-2">
                         <button
                           onClick={e => { e.stopPropagation(); setHistoryContact(contact); }}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs font-black uppercase tracking-wide hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 hover:text-[var(--accent-600)] transition-all"
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-canvas dark:bg-raised text-secondary dark:text-muted text-xs font-semibold uppercase tracking-wide hover:bg-accent-soft dark:hover:bg-accent-soft/20 hover:text-accent transition-all"
                         >
                           <History size={13} /> Storico
                         </button>
                         {isProspect && (
                           <button
-                            onClick={e => {
+                            onClick={async e => {
                               e.stopPropagation();
-                              if (window.confirm(`Converti "${contact.company}" in Cliente?`)) {
+                              if (await confirmAction(`Converti "${contact.company}" in Cliente?`)) {
                                 updateContact(contact.id, { status: 'cliente' });
                               }
                             }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 text-[var(--accent-600)] text-xs font-black uppercase tracking-wide hover:bg-[var(--accent-600)] hover:text-white transition-all"
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-accent-soft dark:bg-accent-soft/20 text-accent text-xs font-semibold uppercase tracking-wide hover:bg-action-hover hover:text-action-foreground transition-all"
                           >
                             <Users size={13} /> Converti
                           </button>
@@ -1926,12 +1928,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 {/* Paginazione */}
                 {list.length > visibleCount && (
                   <div className="flex flex-col items-center gap-2 pt-2 pb-6">
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted">
                       Mostrati <strong>{visibleCount}</strong> di <strong>{list.length}</strong>
                     </p>
                     <button
                       onClick={() => setVisibleCount(v => v + 50)}
-                      className="px-6 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-black text-gray-500 dark:text-gray-300 hover:border-[var(--accent-300)] hover:text-[var(--accent-600)] transition-all"
+                      className="px-6 py-2.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel text-sm font-semibold text-secondary dark:text-muted hover:border-accent hover:text-accent transition-all"
                     >
                       Carica altri 50
                     </button>
@@ -1940,11 +1942,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
                 <div className="flex flex-wrap justify-center items-center gap-3 pb-6">
                   <button onClick={() => csvRef.current?.click()}
-                    className={`bg-white dark:bg-gray-800 border-2 dark:border-gray-700 px-[30px] py-[18px] rounded-2xl font-bold flex items-center gap-[9px] transition-all text-[15px] ${accentCls}`}>
+                    className={`bg-surface dark:bg-surface border-2 dark:border-line px-[30px] py-[18px] rounded-panel font-bold flex items-center gap-[9px] transition-all text-[15px] ${accentCls}`}>
                     <Upload size={27} /> Importa CSV
                   </button>
                   <button onClick={recheckDealerClassification}
-                    className="px-[30px] py-[18px] bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-[15px] font-black text-gray-400 dark:text-gray-500 hover:text-[var(--accent-600)] hover:border-[var(--accent-300)] transition-all flex items-center gap-[9px]"
+                    className="px-[30px] py-[18px] bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel text-[15px] font-semibold text-muted dark:text-secondary hover:text-accent hover:border-accent transition-all flex items-center gap-[9px]"
                     title="Ricontrolla in blocco i contatti già importati e correggi i Dealer classificati come End User">
                     <RefreshCw size={27} /> Ricontrolla Dealer
                   </button>
@@ -1977,20 +1979,20 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       {confirmDeleteId && (() => {
         const c = contacts[confirmDeleteId];
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+          <DialogFrame className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-surface dark:bg-surface rounded-panel p-6 shadow-panel max-w-sm w-full mx-4">
               <div className="flex items-center gap-3 mb-3">
-                <Trash2 size={20} className="text-red-500 shrink-0" />
-                <h4 className="font-black text-gray-800 dark:text-white">Elimina contatto</h4>
+                <Trash2 size={20} className="text-danger shrink-0" />
+                <h4 className="font-semibold text-foreground dark:text-foreground">Elimina contatto</h4>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+              <p className="text-sm text-secondary dark:text-muted mb-1">
                 Stai per eliminare <strong>{c?.company}</strong>.
               </p>
-              <p className="text-xs text-red-500 mb-5">Questa azione non è reversibile.</p>
+              <p className="text-xs text-danger mb-5">Questa azione non è reversibile.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDeleteId(null)}
-                  className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex-1 py-2 border border-line dark:border-line rounded-md text-sm font-bold text-secondary dark:text-muted hover:bg-canvas dark:hover:bg-raised"
                 >
                   Annulla
                 </button>
@@ -2000,13 +2002,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                     setConfirmDeleteId(null);
                     setEditingContact(null);
                   }}
-                  className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl"
+                  className="flex-1 py-2 bg-danger hover:bg-danger text-status-foreground text-sm font-bold rounded-md"
                 >
                   Sì, elimina
                 </button>
               </div>
             </div>
-          </div>
+          </DialogFrame>
         );
       })()}
 

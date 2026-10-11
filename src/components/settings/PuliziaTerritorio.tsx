@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import { useState, useMemo } from 'react';
 import { MapPin, ChevronDown, Trash2, AlertTriangle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
@@ -75,21 +76,21 @@ export function PuliziaTerritorio() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+    <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MapPin size={18} className="text-red-500" />
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pulizia Territorio</h3>
+          <MapPin size={18} className="text-danger" />
+          <h3 className="text-xs font-semibold text-muted  ">Pulizia Territorio</h3>
         </div>
         {selected.size > 0 && (
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger">
             {toDelete.length} prospect selezionati
           </span>
         )}
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+      <p className="text-xs text-secondary dark:text-muted mb-4">
         Seleziona le province da eliminare. Vengono eliminati solo i <strong>prospect</strong>, non i clienti attivi.
       </p>
 
@@ -102,9 +103,9 @@ export function PuliziaTerritorio() {
           const regionTotal = provs.reduce((n, p) => n + (countByProv[p] || 0), 0);
 
           return (
-            <div key={reg} className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div key={reg} className="border border-line dark:border-line rounded-xl overflow-hidden">
               {/* Riga regione */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50">
+              <div className="flex items-center gap-2 px-3 py-2 bg-canvas dark:bg-raised/50">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -116,26 +117,26 @@ export function PuliziaTerritorio() {
                   onClick={() => toggleExpanded(reg)}
                   className="flex-1 flex items-center justify-between text-left"
                 >
-                  <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{reg}</span>
+                  <span className="text-xs font-bold text-foreground dark:text-muted">{reg}</span>
                   <div className="flex items-center gap-2">
                     {regionTotal > 0 && (
-                      <span className="text-[10px] text-gray-400">{regionTotal} prospect</span>
+                      <span className="text-xs text-muted">{regionTotal} prospect</span>
                     )}
-                    <ChevronDown size={13} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={13} className={`text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </button>
               </div>
 
               {/* Province */}
               {isOpen && (
-                <div className="grid grid-cols-3 gap-1 p-2 bg-white dark:bg-gray-800">
+                <div className="grid grid-cols-3 gap-1 p-2 bg-surface dark:bg-surface">
                   {provs.map(prov => (
                     <label
                       key={prov}
                       className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer text-xs transition-colors ${
                         selected.has(prov)
-                          ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-bold'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
+                          ? 'bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger font-bold'
+                          : 'hover:bg-canvas dark:hover:bg-raised text-secondary dark:text-muted'
                       }`}
                     >
                       <input
@@ -146,7 +147,7 @@ export function PuliziaTerritorio() {
                       />
                       <span className="font-mono font-bold">{prov}</span>
                       {countByProv[prov] && (
-                        <span className="text-[10px] opacity-60">({countByProv[prov]})</span>
+                        <span className="text-xs opacity-60">({countByProv[prov]})</span>
                       )}
                     </label>
                   ))}
@@ -160,12 +161,12 @@ export function PuliziaTerritorio() {
       {/* Bottone elimina */}
       {selected.size > 0 && (
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {selected.size} province selezionate → <strong className="text-red-600">{toDelete.length} prospect</strong> da eliminare
+          <span className="text-xs text-secondary">
+            {selected.size} province selezionate → <strong className="text-danger">{toDelete.length} prospect</strong> da eliminare
           </span>
           <button
             onClick={() => setShowConfirm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-danger hover:bg-danger text-status-foreground text-sm font-bold rounded-md transition-colors"
           >
             <Trash2 size={14} />
             Elimina prospect
@@ -175,32 +176,32 @@ export function PuliziaTerritorio() {
 
       {/* Modal conferma */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4">
+        <DialogFrame className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-surface dark:bg-surface rounded-panel p-6 shadow-panel max-w-sm w-full mx-4">
             <div className="flex items-center gap-3 mb-3">
-              <AlertTriangle size={22} className="text-red-500 shrink-0" />
-              <h4 className="font-black text-gray-800 dark:text-white">Conferma eliminazione</h4>
+              <AlertTriangle size={22} className="text-danger shrink-0" />
+              <h4 className="font-semibold text-foreground dark:text-foreground">Conferma eliminazione</h4>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+            <p className="text-sm text-secondary dark:text-muted mb-1">
               Stai per eliminare <strong>{toDelete.length} prospect</strong> nelle province selezionate.
             </p>
-            <p className="text-xs text-red-500 mb-5">Questa azione non è reversibile.</p>
+            <p className="text-xs text-danger mb-5">Questa azione non è reversibile.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex-1 py-2 border border-line dark:border-line rounded-md text-sm font-bold text-secondary dark:text-muted hover:bg-canvas dark:hover:bg-raised"
               >
                 Annulla
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl"
+                className="flex-1 py-2 bg-danger hover:bg-danger text-status-foreground text-sm font-bold rounded-md"
               >
                 Sì, elimina
               </button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
     </div>
   );

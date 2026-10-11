@@ -1,0 +1,30 @@
+[
+  {
+    "name": "cliente → offerta → salvataggio",
+    "passed": true
+  },
+  {
+    "name": "opportunità → esito → prossima azione",
+    "passed": true
+  },
+  {
+    "name": "appuntamento → esito",
+    "passed": true
+  },
+  {
+    "name": "importazione → consultazione risultati locali",
+    "passed": true
+  },
+  {
+    "name": "conferma annullata e tastiera",
+    "passed": true
+  },
+  {
+    "name": "tema chiaro e dimensione testo conservati",
+    "passed": true
+  },
+  {
+    "name": "pannello AI: apertura e chiusura da tastiera",
+    "passed": true
+  }
+]

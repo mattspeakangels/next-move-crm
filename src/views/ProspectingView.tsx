@@ -1,3 +1,4 @@
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useMemo, useState } from 'react';
 import {
   Radar, X, Mail, Phone, Linkedin, Clock, AlertCircle, CheckCircle2,
@@ -36,11 +37,11 @@ const MOTIVO_SCARTO_LABEL: Record<ProspectingMotivoScarto, string> = {
 };
 
 const STATO_BADGE: Record<ProspectingStato, { label: string; cls: string }> = {
-  in_sequenza: { label: 'In sequenza', cls: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]' },
-  risposto: { label: 'Risposto', cls: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
-  convertito: { label: 'Convertito', cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
-  in_pausa: { label: 'In pausa', cls: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
-  scartato: { label: 'Scartato', cls: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+  in_sequenza: { label: 'In sequenza', cls: 'bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent' },
+  risposto: { label: 'Risposto', cls: 'bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent' },
+  convertito: { label: 'Convertito', cls: 'bg-success-soft dark:bg-success-soft text-success dark:text-success' },
+  in_pausa: { label: 'In pausa', cls: 'bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning' },
+  scartato: { label: 'Scartato', cls: 'bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger' },
 };
 
 function formatDate(ts?: number): string {
@@ -48,8 +49,8 @@ function formatDate(ts?: number): string {
   return new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(ts));
 }
 
-const inputCls = 'w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]';
-const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5';
+const inputCls = 'w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent';
+const labelCls = 'text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5';
 
 // ─── Modale: scarto prospect ─────────────────────────────────────────────────
 
@@ -72,11 +73,11 @@ const DiscardModal: React.FC<DiscardModalProps> = ({ contact, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Scarta {contact.company}</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Scarta {contact.company}</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
         <div>
           <label className={labelCls}>Motivo *</label>
@@ -89,11 +90,11 @@ const DiscardModal: React.FC<DiscardModalProps> = ({ contact, onClose }) => {
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className={inputCls + ' resize-none'} />
         </div>
         <div className="flex gap-3 pt-1">
-          <button type="submit" className="flex-1 py-3 rounded-2xl bg-red-600 text-white font-black text-sm hover:bg-red-700 transition-colors">Scarta prospect</button>
-          <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+          <button type="submit" className="flex-1 py-3 rounded-panel bg-danger text-status-foreground font-semibold text-sm hover:bg-danger transition-colors">Scarta prospect</button>
+          <button type="button" onClick={onClose} className="px-5 py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors">Annulla</button>
         </div>
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -125,20 +126,20 @@ const ConvertModal: React.FC<ConvertModalProps> = ({ contact, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Converti {contact.company} in Lead</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Converti {contact.company} in Lead</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
-        <p className="text-xs text-gray-400">Qual è stato l'esito che sposta il prospect in pipeline?</p>
+        <p className="text-xs text-muted">Qual è stato l'esito che sposta il prospect in pipeline?</p>
         <div className="flex flex-col gap-2">
-          <button onClick={() => handleConvert('richiesta-offerta')} className="w-full py-3 rounded-2xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-black text-sm hover:bg-brand-200 transition-colors">Richiede offerta</button>
-          <button onClick={() => handleConvert('appuntamento-fissato')} className="w-full py-3 rounded-2xl bg-brand-600 text-white font-black text-sm hover:bg-brand-700 transition-colors">Appuntamento fissato</button>
-          <button type="button" onClick={onClose} className="w-full py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+          <button onClick={() => handleConvert('richiesta-offerta')} className="w-full py-3 rounded-panel bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent font-semibold text-sm hover:bg-accent-soft transition-colors">Richiede offerta</button>
+          <button onClick={() => handleConvert('appuntamento-fissato')} className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors">Appuntamento fissato</button>
+          <button type="button" onClick={onClose} className="w-full py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors">Annulla</button>
         </div>
       </div>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -197,11 +198,11 @@ const EditProspectModal: React.FC<EditProspectModalProps> = ({ contact, onClose 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Modifica {contact.company}</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Modifica {contact.company}</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
 
         <div>
@@ -234,25 +235,25 @@ const EditProspectModal: React.FC<EditProspectModalProps> = ({ contact, onClose 
         )}
 
         <div className="flex gap-3 pt-1">
-          <button type="submit" className="flex-1 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors">Salva</button>
-          <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+          <button type="submit" className="flex-1 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors">Salva</button>
+          <button type="button" onClick={onClose} className="px-5 py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors">Annulla</button>
         </div>
 
-        <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+        <div className="pt-2 border-t border-line dark:border-line">
           {confirmDelete ? (
             <div className="flex items-center gap-2 pt-2">
-              <p className="flex-1 text-xs font-bold text-red-500">Eliminare definitivamente questa attività di prospecting?</p>
-              <button type="button" onClick={handleDelete} className="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-700">Conferma</button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-black">Annulla</button>
+              <p className="flex-1 text-xs font-bold text-danger">Eliminare definitivamente questa attività di prospecting?</p>
+              <button type="button" onClick={handleDelete} className="px-3 py-2 rounded-md bg-danger text-status-foreground text-xs font-semibold hover:bg-danger">Conferma</button>
+              <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-md bg-raised dark:bg-surface text-secondary text-xs font-semibold">Annulla</button>
             </div>
           ) : (
-            <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-black text-red-500 hover:text-red-600">
+            <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-danger hover:text-danger">
               <Trash2 size={13} />Elimina attività di prospecting
             </button>
           )}
         </div>
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -280,11 +281,11 @@ const EditEmailDraftModal: React.FC<EditEmailDraftModalProps> = ({ draft, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-surface dark:bg-canvas w-full sm:max-w-lg sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Personalizza email</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Personalizza email</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
         <div>
           <label className={labelCls}>Oggetto</label>
@@ -295,22 +296,22 @@ const EditEmailDraftModal: React.FC<EditEmailDraftModalProps> = ({ draft, onClos
           <textarea value={corpo} onChange={e => setCorpo(e.target.value)} rows={10} className={inputCls + ' resize-none'} />
         </div>
         <div className="flex gap-3 pt-1">
-          <button type="submit" className="flex-1 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors">Salva email personalizzata</button>
-          <button type="button" onClick={onClose} className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors">Annulla</button>
+          <button type="submit" className="flex-1 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors">Salva email personalizzata</button>
+          <button type="button" onClick={onClose} className="px-5 py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors">Annulla</button>
         </div>
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
 // ─── Cronostoria prospecting per azienda ────────────────────────────────────
 
 const ESITO_LABEL: Record<ProspectHistoryEntry['esito'], { label: string; color: string }> = {
-  inviata: { label: 'Inviata', color: 'text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30' },
-  risposta: { label: 'Risposta ricevuta', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
-  'nessuna-risposta': { label: 'Nessuna risposta', color: 'text-gray-500 bg-gray-100 dark:bg-gray-800' },
-  'richiesta-offerta': { label: 'Richiede offerta → Lead', color: 'text-brand-600 bg-brand-50 dark:bg-brand-900/30' },
-  'appuntamento-fissato': { label: 'Appuntamento fissato → Lead', color: 'text-brand-600 bg-brand-50 dark:bg-brand-900/30' },
+  inviata: { label: 'Inviata', color: 'text-accent bg-accent-soft dark:bg-accent-soft/30' },
+  risposta: { label: 'Risposta ricevuta', color: 'text-success bg-success-soft dark:bg-success-soft' },
+  'nessuna-risposta': { label: 'Nessuna risposta', color: 'text-secondary bg-raised dark:bg-surface' },
+  'richiesta-offerta': { label: 'Richiede offerta → Lead', color: 'text-accent bg-accent-soft dark:bg-accent-soft/30' },
+  'appuntamento-fissato': { label: 'Appuntamento fissato → Lead', color: 'text-accent bg-accent-soft dark:bg-accent-soft/30' },
 };
 
 interface HistoryModalProps {
@@ -347,47 +348,47 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-3xl sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-surface dark:bg-canvas w-full sm:max-w-3xl sm:rounded-panel rounded-t-3xl p-6 shadow-panel h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <History size={18} className="text-gray-400" />
-            <h2 className="text-base font-black text-gray-900 dark:text-white">Cronostoria — {contact.company}</h2>
+            <History size={18} className="text-muted" />
+            <h2 className="text-base font-semibold text-foreground dark:text-foreground">Cronostoria — {contact.company}</h2>
           </div>
           <div className="flex items-center gap-2">
             {entries.length >= 2 && (
               <button
                 type="button"
                 onClick={runAnalysis}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white text-xs font-black rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-action hover:bg-action-hover text-action-foreground text-xs font-semibold rounded-md transition-all"
               >
                 <Sparkles size={14} /> Analizza con AI
               </button>
             )}
-            <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+            <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
           </div>
         </div>
 
         {entries.length === 0 ? (
-          <p className="text-sm text-gray-400 font-bold text-center py-8">Nessuna azione registrata finora per questo prospect.</p>
+          <p className="text-sm text-muted font-bold text-center py-8">Nessuna azione registrata finora per questo prospect.</p>
         ) : (
           <div className="space-y-3 overflow-y-auto pr-1">
             {entries.map(e => (
-              <div key={e.id} className="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-3.5">
+              <div key={e.id} className="border-2 border-line dark:border-line rounded-panel p-3.5">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    {e.tipo === 'email' ? <Mail size={14} className="text-gray-400" /> : <Phone size={14} className="text-gray-400" />}
-                    <span className="text-xs font-black text-gray-700 dark:text-gray-200">Tocco {e.tocco}</span>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${ESITO_LABEL[e.esito].color}`}>{ESITO_LABEL[e.esito].label}</span>
+                    {e.tipo === 'email' ? <Mail size={14} className="text-muted" /> : <Phone size={14} className="text-muted" />}
+                    <span className="text-xs font-semibold text-foreground dark:text-muted">Tocco {e.tocco}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ESITO_LABEL[e.esito].color}`}>{ESITO_LABEL[e.esito].label}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400">{new Date(e.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-xs font-bold text-muted">{new Date(e.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                {e.oggetto && <p className="text-xs font-black text-gray-600 dark:text-gray-300 mt-1">{e.oggetto}</p>}
-                {e.corpo && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap">{e.corpo}</p>}
+                {e.oggetto && <p className="text-xs font-semibold text-secondary dark:text-muted mt-1">{e.oggetto}</p>}
+                {e.corpo && <p className="text-xs text-secondary dark:text-muted mt-1 whitespace-pre-wrap">{e.corpo}</p>}
                 {e.note && (
-                  <div className="mt-1.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg p-2">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Risposta del prospect</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{e.note}</p>
+                  <div className="mt-1.5 bg-canvas dark:bg-surface/60 rounded-lg p-2">
+                    <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-0.5">Risposta del prospect</p>
+                    <p className="text-xs text-secondary dark:text-muted whitespace-pre-wrap">{e.note}</p>
                   </div>
                 )}
               </div>
@@ -407,7 +408,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ contact, onClose }) => {
           onRetry={runAnalysis}
         />
       )}
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -549,64 +550,64 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
   if (!touch) return null;
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 ${overdue ? 'border-red-200 dark:border-red-800' : 'border-gray-100 dark:border-gray-700'}`}>
+    <div className={`bg-surface dark:bg-surface rounded-panel p-4 border-2 ${overdue ? 'border-danger dark:border-danger' : 'border-line dark:border-line'}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-black text-gray-900 dark:text-white">{contact.company}</p>
-            {contact.prospectingSettore && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500">{SETTORE_LABEL[contact.prospectingSettore]}</span>}
-            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)]">Tocco {track.toccoCorrente}/{sequence.touches.length}</span>
+            <p className="text-sm font-semibold text-foreground dark:text-foreground">{contact.company}</p>
+            {contact.prospectingSettore && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-raised dark:bg-raised text-secondary">{SETTORE_LABEL[contact.prospectingSettore]}</span>}
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-soft dark:bg-accent-soft/40 text-accent">Tocco {track.toccoCorrente}/{sequence.touches.length}</span>
           </div>
-          {contact.contactName && <p className="text-xs text-gray-400 mt-0.5">{contact.contactName}{contact.role ? ` · ${contact.role}` : ''}</p>}
-          <p className={`flex items-center gap-1 text-[10px] font-bold mt-1 ${overdue ? 'text-red-500' : 'text-gray-400'}`}>
+          {contact.contactName && <p className="text-xs text-muted mt-0.5">{contact.contactName}{contact.role ? ` · ${contact.role}` : ''}</p>}
+          <p className={`flex items-center gap-1 text-xs font-bold mt-1 ${overdue ? 'text-danger' : 'text-muted'}`}>
             <Clock size={10} />
             {overdue ? `In ritardo di ${ritardoGiorni}g` : `Previsto ${formatDate(track.dataProssimoTocco)}`}
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={onHistory} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+          <button onClick={onHistory} title="Cronostoria" className="p-1.5 text-muted hover:text-secondary dark:hover:text-muted rounded-lg hover:bg-raised dark:hover:bg-raised">
             <History size={16} />
           </button>
-          <button onClick={onEdit} title="Modifica" className="p-1.5 text-gray-300 hover:text-[var(--accent-500)] rounded-lg hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20">
+          <button onClick={onEdit} title="Modifica" className="p-1.5 text-muted hover:text-accent rounded-lg hover:bg-accent-soft dark:hover:bg-accent-soft/20">
             <Pencil size={16} />
           </button>
-          <button onClick={onDiscard} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+          <button onClick={onDiscard} title="Scarta prospect" className="p-1.5 text-muted hover:text-danger rounded-lg hover:bg-danger-soft dark:hover:bg-danger-soft">
             <XCircle size={16} />
           </button>
         </div>
       </div>
 
       {touch.tipo === 'email' && draft && (
-        <div className="mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 space-y-2">
+        <div className="mt-3 bg-canvas dark:bg-canvas/50 rounded-md p-3 space-y-2">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-bold text-gray-700 dark:text-gray-300 flex-1">{draft.oggetto}</p>
+            <p className="text-xs font-bold text-foreground dark:text-muted flex-1">{draft.oggetto}</p>
             {draft.modificataAMano && (
-              <span className="flex-shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600">Personalizzata</span>
+              <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft dark:bg-success-soft text-success">Personalizzata</span>
             )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line line-clamp-3">{draft.corpo}</p>
+          <p className="text-xs text-secondary dark:text-muted whitespace-pre-line line-clamp-3">{draft.corpo}</p>
           <div className="flex flex-wrap gap-2 pt-1">
-            <button onClick={() => setEditingDraft(true)} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 border border-[var(--accent-100)] dark:border-[var(--accent-800)] text-[var(--accent-600)] dark:text-[var(--accent-300)]"><Pencil size={10} />Personalizza</button>
-            <button onClick={() => copia(draft.oggetto, 'Oggetto')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Oggetto</button>
-            <button onClick={() => copia(draft.corpo, 'Corpo')} className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Corpo</button>
+            <button onClick={() => setEditingDraft(true)} className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-accent-soft dark:bg-accent-soft/30 border border-accent dark:border-accent text-accent dark:text-accent"><Pencil size={10} />Personalizza</button>
+            <button onClick={() => copia(draft.oggetto, 'Oggetto')} className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface dark:bg-surface border border-line dark:border-line text-secondary dark:text-muted"><Copy size={10} />Oggetto</button>
+            <button onClick={() => copia(draft.corpo, 'Corpo')} className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface dark:bg-surface border border-line dark:border-line text-secondary dark:text-muted"><Copy size={10} />Corpo</button>
             {!contact.email && (
-              <span className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600">Nessuna email sul contatto: aggiungila per inviare direttamente</span>
+              <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-warning-soft dark:bg-warning-soft text-warning">Nessuna email sul contatto: aggiungila per inviare direttamente</span>
             )}
           </div>
           {touch.messaggioLinkedin && (
-            <div className="pt-1 border-t border-gray-200 dark:border-gray-700 mt-2">
-              <p className="text-[10px] font-black text-gray-400 uppercase mb-1 flex items-center gap-1"><Linkedin size={10} />LinkedIn{touch.linkedinSaltabile ? ' (saltabile)' : ''}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{touch.messaggioLinkedin}</p>
-              <button onClick={() => copia(touch.messaggioLinkedin!, 'Messaggio LinkedIn')} className="mt-1 flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Copy size={10} />Copia</button>
+            <div className="pt-1 border-t border-line dark:border-line mt-2">
+              <p className="text-xs font-semibold text-muted uppercase mb-1 flex items-center gap-1"><Linkedin size={10} />LinkedIn{touch.linkedinSaltabile ? ' (saltabile)' : ''}</p>
+              <p className="text-xs text-secondary dark:text-muted line-clamp-2">{touch.messaggioLinkedin}</p>
+              <button onClick={() => copia(touch.messaggioLinkedin!, 'Messaggio LinkedIn')} className="mt-1 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface dark:bg-surface border border-line dark:border-line text-secondary dark:text-muted"><Copy size={10} />Copia</button>
             </div>
           )}
         </div>
       )}
 
       {touch.tipo === 'telefonata' && (
-        <div className="mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 space-y-2">
-          <p className="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-4">{touch.scriptTelefonata}</p>
-          {contact.phone && <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"><Phone size={10} />{contact.phone}</a>}
+        <div className="mt-3 bg-canvas dark:bg-canvas/50 rounded-md p-3 space-y-2">
+          <p className="text-xs font-bold text-foreground dark:text-muted whitespace-pre-line line-clamp-4">{touch.scriptTelefonata}</p>
+          {contact.phone && <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface dark:bg-surface border border-line dark:border-line text-secondary dark:text-muted"><Phone size={10} />{contact.phone}</a>}
         </div>
       )}
 
@@ -614,103 +615,103 @@ const QueueRow: React.FC<QueueRowProps> = ({ contact, track, sequence, onDiscard
         {touch.tipo === 'email' ? (
           <>
             {draft && contact.email && (
-              <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]"><Mail size={13} />Invia email</button>
+              <button onClick={apriEmail} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-action text-action-foreground hover:bg-action-hover"><Mail size={13} />Invia email</button>
             )}
-            <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]"><CheckCircle2 size={13} />Segna inviata</button>
-            <button onClick={() => apriModalRisposta('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"><Mail size={13} />Registra risposta</button>
+            <button onClick={segnaInviata} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent"><CheckCircle2 size={13} />Segna inviata</button>
+            <button onClick={() => apriModalRisposta('risposta')} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-success-soft dark:bg-success-soft text-success dark:text-success"><Mail size={13} />Registra risposta</button>
           </>
         ) : (
-          <button onClick={() => esitoTelefonata('risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]"><Phone size={13} />Registra esito chiamata</button>
+          <button onClick={() => esitoTelefonata('risposta')} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-action text-action-foreground hover:bg-action-hover"><Phone size={13} />Registra esito chiamata</button>
         )}
         {touch.tipo === 'telefonata' && (
-          <button onClick={() => esitoTelefonata('nessuna-risposta')} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Nessuna risposta</button>
+          <button onClick={() => esitoTelefonata('nessuna-risposta')} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-raised dark:bg-raised text-secondary dark:text-muted">Nessuna risposta</button>
         )}
         {/* Sempre visibili: non si presuppone di dover completare tutti i 6 tocchi
             prima di ottenere l'obiettivo (offerta/appuntamento) su qualunque tocco. */}
         <button
           onClick={() => (touch.tipo === 'email' ? apriModalRisposta('richiesta-offerta') : esitoTelefonata('richiesta-offerta'))}
-          className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300"
+          className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent"
         >Richiede offerta</button>
         <button
           onClick={() => (touch.tipo === 'email' ? apriModalRisposta('appuntamento-fissato') : esitoTelefonata('appuntamento-fissato'))}
-          className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700"
+          className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-action text-action-foreground hover:bg-action-hover"
         >Appuntamento fissato</button>
-        <button onClick={posticipa} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Clock size={13} />Posticipa 3gg</button>
-        <button onClick={apriModalSchedula} className="flex items-center gap-1 text-xs font-black px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><Calendar size={13} />Schedula</button>
+        <button onClick={posticipa} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-raised dark:bg-raised text-secondary dark:text-muted"><Clock size={13} />Posticipa 3gg</button>
+        <button onClick={apriModalSchedula} className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-md bg-raised dark:bg-raised text-secondary dark:text-muted"><Calendar size={13} />Schedula</button>
       </div>
 
       {editingDraft && draft && <EditEmailDraftModal draft={draft} onClose={() => setEditingDraft(false)} />}
 
       {showScheduleModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowScheduleModal(false); }}>
-          <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-3 shadow-2xl">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowScheduleModal(false); }}>
+          <div className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-3 shadow-panel">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-gray-900 dark:text-white">Schedula prossimo tocco</h2>
-              <button type="button" onClick={() => setShowScheduleModal(false)} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+              <h2 className="text-base font-semibold text-foreground dark:text-foreground">Schedula prossimo tocco</h2>
+              <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={() => setShowScheduleModal(false)} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
             </div>
-            <p className="text-xs text-gray-400 font-bold">Scegli quando far ricomparire {contact.company} in coda, ad esempio al rientro dalle ferie.</p>
+            <p className="text-xs text-muted font-bold">Scegli quando far ricomparire {contact.company} in coda, ad esempio al rientro dalle ferie.</p>
             <input
               type="date"
               autoFocus
               value={scheduleDate}
               onChange={e => setScheduleDate(e.target.value)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] text-sm"
+              className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent text-sm"
             />
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={confermaSchedula}
                 disabled={!scheduleDate}
-                className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)] disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-md bg-action text-action-foreground font-semibold hover:bg-action-hover disabled:opacity-50"
               >
                 Schedula
               </button>
               <button
                 type="button"
                 onClick={() => setShowScheduleModal(false)}
-                className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 font-black"
+                className="px-4 py-2.5 rounded-md bg-raised dark:bg-surface text-secondary font-semibold"
               >
                 Annulla
               </button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {pendingEsito && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setPendingEsito(null); }}>
-          <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-3 shadow-2xl">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setPendingEsito(null); }}>
+          <div className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-3 shadow-panel">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-gray-900 dark:text-white">Testo della risposta ricevuta</h2>
-              <button type="button" onClick={() => setPendingEsito(null)} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+              <h2 className="text-base font-semibold text-foreground dark:text-foreground">Testo della risposta ricevuta</h2>
+              <button type="button" onClick={() => setPendingEsito(null)} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
             </div>
-            <p className="text-xs text-gray-400 font-bold">Incolla qui cosa ha risposto {contact.company}, per tenerne traccia nella cronostoria (facoltativo).</p>
+            <p className="text-xs text-muted font-bold">Incolla qui cosa ha risposto {contact.company}, per tenerne traccia nella cronostoria (facoltativo).</p>
             <textarea
               autoFocus
               value={rispostaTesto}
               onChange={e => setRispostaTesto(e.target.value)}
               rows={5}
               placeholder="Es. Al momento non siamo interessati..."
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] resize-none text-sm"
+              className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent resize-none text-sm"
             />
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => { registraRisposta(pendingEsito, rispostaTesto.trim() || undefined); setPendingEsito(null); }}
-                className="flex-1 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]"
+                className="flex-1 py-2.5 rounded-md bg-action text-action-foreground font-semibold hover:bg-action-hover"
               >
                 Salva
               </button>
               <button
                 type="button"
                 onClick={() => setPendingEsito(null)}
-                className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 font-black"
+                className="px-4 py-2.5 rounded-md bg-raised dark:bg-surface text-secondary font-semibold"
               >
                 Annulla
               </button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
     </div>
   );
@@ -755,38 +756,38 @@ const OggiTab: React.FC<OggiTabProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 text-xs font-bold text-gray-500">
+      <div className="flex items-center gap-3 text-xs font-bold text-secondary">
         <span>{queue.length} in coda</span>
-        {inRitardo > 0 && <span className="text-red-500 flex items-center gap-1"><AlertCircle size={12} />{inRitardo} in ritardo</span>}
+        {inRitardo > 0 && <span className="text-danger flex items-center gap-1"><AlertCircle size={12} />{inRitardo} in ritardo</span>}
       </div>
 
       {inProgramma.length > 0 && (
-        <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 border-2 border-[var(--accent-100)] dark:border-[var(--accent-800)] rounded-2xl p-4 space-y-2">
-          <p className="text-xs font-black text-[var(--accent-700)] dark:text-[var(--accent-300)] flex items-center gap-1.5"><Calendar size={14} />Visite a freddo in programma ({inProgramma.length})</p>
-          <p className="text-[10px] text-[var(--accent-400)]">Per avviare la sequenza email/chiamate registra l'esito della visita dall'Agenda: gli step 1-2-3-4 compaiono qui sotto solo dopo la chiusura.</p>
+        <div className="bg-accent-soft dark:bg-accent-soft/20 border-2 border-accent dark:border-accent rounded-panel p-4 space-y-2">
+          <p className="text-xs font-semibold text-accent dark:text-accent flex items-center gap-1.5"><Calendar size={14} />Visite a freddo in programma ({inProgramma.length})</p>
+          <p className="text-xs text-accent">Per avviare la sequenza email/chiamate registra l'esito della visita dall'Agenda: gli step 1-2-3-4 compaiono qui sotto solo dopo la chiusura.</p>
           {inProgramma.map(({ activity, contact }) => (
             <button
               key={activity.id}
               onClick={() => onNavigate?.('agenda')}
-              className="w-full flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2 text-left hover:bg-[var(--accent-100)]/60 dark:hover:bg-[var(--accent-900)]/40 transition-colors"
+              className="w-full flex items-center justify-between bg-surface dark:bg-surface rounded-md px-3 py-2 text-left hover:bg-accent-soft/60 dark:hover:bg-accent-soft/40 transition-colors"
             >
               <div className="min-w-0">
-                <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{contact.company}</p>
-                <p className="text-[10px] text-gray-400">{new Date(activity.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}</p>
+                <p className="text-xs font-bold text-foreground dark:text-muted truncate">{contact.company}</p>
+                <p className="text-xs text-muted">{new Date(activity.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}</p>
               </div>
-              <span className="text-[10px] font-black text-[var(--accent-500)] uppercase flex-shrink-0">Chiudi in Agenda →</span>
+              <span className="text-xs font-semibold text-accent uppercase flex-shrink-0">Chiudi in Agenda →</span>
             </button>
           ))}
         </div>
       )}
 
       {risvegliati.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-100 dark:border-amber-800 rounded-2xl p-4 space-y-2">
-          <p className="text-xs font-black text-amber-700 dark:text-amber-300 flex items-center gap-1.5"><PauseCircle size={14} />Prospect risvegliati ({risvegliati.length})</p>
+        <div className="bg-warning-soft dark:bg-warning-soft border-2 border-warning dark:border-warning rounded-panel p-4 space-y-2">
+          <p className="text-xs font-semibold text-warning dark:text-warning flex items-center gap-1.5"><PauseCircle size={14} />Prospect risvegliati ({risvegliati.length})</p>
           {risvegliati.map(c => (
-            <div key={c.id} className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl px-3 py-2">
-              <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{c.company}</span>
-              <button onClick={() => updateContact(c.id, { prospectingStato: undefined, prospectingDataRisveglio: undefined })} className="text-[10px] font-black text-[var(--accent-600)]">Rimetti in gioco</button>
+            <div key={c.id} className="flex items-center justify-between bg-surface dark:bg-surface rounded-md px-3 py-2">
+              <span className="text-xs font-bold text-foreground dark:text-muted">{c.company}</span>
+              <button onClick={() => updateContact(c.id, { prospectingStato: undefined, prospectingDataRisveglio: undefined })} className="text-xs font-semibold text-accent">Rimetti in gioco</button>
             </div>
           ))}
         </div>
@@ -829,9 +830,9 @@ const ProspectTab: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <button onClick={() => setFilter('tutti')} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border-2 ${filter === 'tutti' ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)]' : 'border-transparent bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>Tutti</button>
+        <button onClick={() => setFilter('tutti')} className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold border-2 ${filter === 'tutti' ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent' : 'border-transparent bg-raised dark:bg-raised text-secondary'}`}>Tutti</button>
         {(Object.keys(STATO_BADGE) as ProspectingStato[]).map(s => (
-          <button key={s} onClick={() => setFilter(s)} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border-2 ${filter === s ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)]' : `border-transparent ${STATO_BADGE[s].cls}`}`}>{STATO_BADGE[s].label}</button>
+          <button key={s} onClick={() => setFilter(s)} className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold border-2 ${filter === s ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent' : `border-transparent ${STATO_BADGE[s].cls}`}`}>{STATO_BADGE[s].label}</button>
         ))}
       </div>
 
@@ -840,23 +841,23 @@ const ProspectTab: React.FC = () => {
       ) : (
         <div className="space-y-2.5">
           {filtered.map(contact => (
-            <div key={contact.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
+            <div key={contact.id} className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-black text-gray-900 dark:text-white truncate">{contact.company}</p>
-                  {contact.prospectingStato && <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${STATO_BADGE[contact.prospectingStato].cls}`}>{STATO_BADGE[contact.prospectingStato].label}</span>}
-                  {contact.prospectingSettore && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500">{SETTORE_LABEL[contact.prospectingSettore]}</span>}
+                  <p className="text-sm font-semibold text-foreground dark:text-foreground truncate">{contact.company}</p>
+                  {contact.prospectingStato && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATO_BADGE[contact.prospectingStato].cls}`}>{STATO_BADGE[contact.prospectingStato].label}</span>}
+                  {contact.prospectingSettore && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-raised dark:bg-raised text-secondary">{SETTORE_LABEL[contact.prospectingSettore]}</span>}
                 </div>
-                {contact.contactName && <p className="text-xs text-gray-400 mt-0.5">{contact.contactName}{contact.role ? ` · ${contact.role}` : ''}</p>}
-                {contact.prospectingMotivoScarto && <p className="text-[10px] text-red-400 mt-0.5">{MOTIVO_SCARTO_LABEL[contact.prospectingMotivoScarto]}{contact.prospectingMotivoScartoNote ? ` — ${contact.prospectingMotivoScartoNote}` : ''}</p>}
+                {contact.contactName && <p className="text-xs text-muted mt-0.5">{contact.contactName}{contact.role ? ` · ${contact.role}` : ''}</p>}
+                {contact.prospectingMotivoScarto && <p className="text-xs text-danger mt-0.5">{MOTIVO_SCARTO_LABEL[contact.prospectingMotivoScarto]}{contact.prospectingMotivoScartoNote ? ` — ${contact.prospectingMotivoScartoNote}` : ''}</p>}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => setHistoryContact(contact)} title="Cronostoria" className="p-1.5 text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><History size={16} /></button>
-                <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-gray-300 hover:text-[var(--accent-500)] rounded-lg hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20"><Pencil size={16} /></button>
+                <button onClick={() => setHistoryContact(contact)} title="Cronostoria" className="p-1.5 text-muted hover:text-secondary dark:hover:text-muted rounded-lg hover:bg-raised dark:hover:bg-raised"><History size={16} /></button>
+                <button onClick={() => setEditContact(contact)} title="Modifica o elimina" className="p-1.5 text-muted hover:text-accent rounded-lg hover:bg-accent-soft dark:hover:bg-accent-soft/20"><Pencil size={16} /></button>
                 {contact.prospectingStato !== 'scartato' && contact.prospectingStato !== 'convertito' && (
                   <>
-                    <button onClick={() => setConvertContact(contact)} title="Converti in Lead" className="p-1.5 text-gray-300 hover:text-brand-600 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20"><CheckCircle2 size={16} /></button>
-                    <button onClick={() => setDiscardContact(contact)} title="Scarta prospect" className="p-1.5 text-gray-300 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"><XCircle size={16} /></button>
+                    <button onClick={() => setConvertContact(contact)} title="Converti in Lead" className="p-1.5 text-muted hover:text-accent rounded-lg hover:bg-accent-soft dark:hover:bg-accent-soft/20"><CheckCircle2 size={16} /></button>
+                    <button onClick={() => setDiscardContact(contact)} title="Scarta prospect" className="p-1.5 text-muted hover:text-warning rounded-lg hover:bg-warning-soft dark:hover:bg-warning-soft"><XCircle size={16} /></button>
                   </>
                 )}
               </div>
@@ -878,18 +879,18 @@ const ProspectTab: React.FC = () => {
 interface Benchmark { label: string; value: number; unit: '%'; low: number; high: number; }
 
 const BenchmarkBar: React.FC<Benchmark> = ({ label, value, low, high }) => {
-  const color = value < low ? 'bg-red-500' : value <= high ? 'bg-amber-400' : 'bg-green-500';
-  const textColor = value < low ? 'text-red-600' : value <= high ? 'text-amber-600' : 'text-green-600';
+  const color = value < low ? 'bg-danger' : value <= high ? 'bg-warning' : 'bg-success';
+  const textColor = value < low ? 'text-danger' : value <= high ? 'text-warning' : 'text-success';
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+    <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{label}</span>
-        <span className={`text-sm font-black ${textColor}`}>{value.toFixed(0)}%</span>
+        <span className="text-xs font-bold text-secondary dark:text-muted">{label}</span>
+        <span className={`text-sm font-semibold ${textColor}`}>{value.toFixed(0)}%</span>
       </div>
-      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-raised dark:bg-raised rounded-full overflow-hidden">
         <div className={`h-full ${color} transition-all`} style={{ width: `${Math.min(100, value)}%` }} />
       </div>
-      <p className="text-[9px] font-bold text-gray-400 mt-1">Benchmark: {low}-{high}%</p>
+      <p className="text-xs font-bold text-muted mt-1">Benchmark: {low}-{high}%</p>
     </div>
   );
 };
@@ -936,13 +937,13 @@ const ReportTab: React.FC = () => {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-          <p className="text-[10px] font-black text-gray-400 uppercase">Sequenze avviate</p>
-          <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{stats.sequenzeAvviate}</p>
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
+          <p className="text-xs font-semibold text-muted uppercase">Sequenze avviate</p>
+          <p className="text-2xl font-semibold text-foreground dark:text-foreground mt-1">{stats.sequenzeAvviate}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-          <p className="text-[10px] font-black text-gray-400 uppercase">Prospect → Lead</p>
-          <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{stats.conversioneLeadDeal.toFixed(0)}%</p>
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
+          <p className="text-xs font-semibold text-muted uppercase">Prospect → Lead</p>
+          <p className="text-2xl font-semibold text-foreground dark:text-foreground mt-1">{stats.conversioneLeadDeal.toFixed(0)}%</p>
         </div>
       </div>
 
@@ -952,26 +953,26 @@ const ReportTab: React.FC = () => {
         <BenchmarkBar label="Risposte da break-up" value={stats.quotaBreakup} unit="%" low={20} high={30} />
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><BarChart3 size={13} />Per settore</p>
+      <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
+        <p className="text-xs font-semibold text-secondary uppercase tracking-normal mb-3 flex items-center gap-1.5"><BarChart3 size={13} />Per settore</p>
         <div className="space-y-2">
           {stats.perSettore.map(s => (
             <div key={s.settore} className="flex items-center justify-between text-sm">
-              <span className="font-bold text-gray-600 dark:text-gray-300">{SETTORE_LABEL[s.settore]}</span>
-              <span className="text-gray-400 text-xs">{s.totale} prospect · {s.convertiti} convertiti</span>
+              <span className="font-bold text-secondary dark:text-muted">{SETTORE_LABEL[s.settore]}</span>
+              <span className="text-muted text-xs">{s.totale} prospect · {s.convertiti} convertiti</span>
             </div>
           ))}
         </div>
       </div>
 
       {Object.keys(stats.motiviScarto).length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-          <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Motivi di scarto</p>
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">
+          <p className="text-xs font-semibold text-secondary uppercase tracking-normal mb-3">Motivi di scarto</p>
           <div className="space-y-2">
             {Object.entries(stats.motiviScarto).map(([motivo, count]) => (
               <div key={motivo} className="flex items-center justify-between text-sm">
-                <span className="font-bold text-gray-600 dark:text-gray-300">{MOTIVO_SCARTO_LABEL[motivo as ProspectingMotivoScarto]}</span>
-                <span className="text-gray-400 text-xs">{count}</span>
+                <span className="font-bold text-secondary dark:text-muted">{MOTIVO_SCARTO_LABEL[motivo as ProspectingMotivoScarto]}</span>
+                <span className="text-muted text-xs">{count}</span>
               </div>
             ))}
           </div>
@@ -1020,25 +1021,25 @@ const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Nuova sequenza post visita a freddo</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Nuova sequenza post visita a freddo</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
 
         {selectedContact ? (
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-            <Building2 size={16} className="text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-3 bg-canvas dark:bg-surface rounded-md p-3">
+            <Building2 size={16} className="text-muted flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{selectedContact.company}</p>
-              {selectedContact.city && <p className="text-[10px] text-gray-400">{selectedContact.city}</p>}
+              <p className="text-sm font-bold text-foreground dark:text-foreground truncate">{selectedContact.company}</p>
+              {selectedContact.city && <p className="text-xs text-muted">{selectedContact.city}</p>}
             </div>
-            <button onClick={() => setSelectedContact(null)} className="text-gray-300 hover:text-gray-500"><X size={14} /></button>
+            <button onClick={() => setSelectedContact(null)} className="text-muted hover:text-secondary"><X size={14} /></button>
           </div>
         ) : (
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Prospect visitato</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Prospect visitato</label>
             <SearchDropdown
               value={contactSearch}
               onChange={setContactSearch}
@@ -1059,37 +1060,37 @@ const NewSequenceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         )}
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Settore</label>
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Settore</label>
           <select
             value={settore}
             onChange={e => setSettore(e.target.value as ProspectingSettore)}
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)]"
+            className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent"
           >
             {Object.entries(SETTORE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Dettaglio visita (facoltativo)</label>
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Dettaglio visita (facoltativo)</label>
           <textarea
             value={dettaglioVisita}
             onChange={e => setDettaglioVisita(e.target.value)}
             rows={3}
             placeholder="Es. Lasciato il catalogo, parlato con il titolare..."
-            className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)] resize-none text-sm"
+            className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent resize-none text-sm"
           />
-          <p className="text-[10px] text-gray-400 mt-1">Viene usato per personalizzare i template email della sequenza.</p>
+          <p className="text-xs text-muted mt-1">Viene usato per personalizzare i template email della sequenza.</p>
         </div>
 
         <button
           onClick={handleStart}
           disabled={!selectedContact}
-          className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--accent-700)]"
+          className="w-full py-3 rounded-md bg-action text-action-foreground font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-action-hover"
         >
           Avvia sequenza
         </button>
       </div>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -1114,26 +1115,26 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
 
   return (
     <div className="space-y-5 pb-6">
-      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-gray-50 dark:bg-gray-900">
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-canvas dark:bg-canvas">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-            <Radar size={24} className="text-[var(--accent-600)]" />
+          <h1 className="text-2xl  text-foreground dark:text-foreground flex items-center gap-2.5">
+            <Radar size={24} className="text-accent" />
             Prospecting
           </h1>
           <button
             onClick={() => setShowNewSequence(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors shadow-panel  "
           >
             <Plus size={15} />
             <span className="hidden sm:inline">Nuova sequenza</span>
           </button>
         </div>
-        <p className="text-xs text-gray-400 font-bold mt-1">
+        <p className="text-xs text-muted font-bold mt-1">
           Registra le visite a freddo dall'Agenda: qui gestisci i tocchi email/telefonata che portano il prospect a richiedere un'offerta.
         </p>
         <div className="flex gap-2 mt-3">
           {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${tab === id ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <button key={id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${tab === id ? 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent' : 'text-muted hover:bg-raised dark:hover:bg-surface'}`}>
               <Icon size={13} />{label}
             </button>
           ))}
@@ -1141,14 +1142,14 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
       </div>
 
       {notifStatus === 'default' && (
-        <div className="flex items-center justify-between gap-3 bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 border-2 border-[var(--accent-100)] dark:border-[var(--accent-800)] rounded-2xl px-4 py-3">
+        <div className="flex items-center justify-between gap-3 bg-accent-soft dark:bg-accent-soft/20 border-2 border-accent dark:border-accent rounded-panel px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <BellRing size={16} className="text-[var(--accent-600)] flex-shrink-0" />
-            <p className="text-xs font-bold text-[var(--accent-800)] dark:text-[var(--accent-200)]">Attiva le notifiche per essere avvisato quando è il momento di fare un tocco.</p>
+            <BellRing size={16} className="text-accent flex-shrink-0" />
+            <p className="text-xs font-bold text-accent dark:text-accent">Attiva le notifiche per essere avvisato quando è il momento di fare un tocco.</p>
           </div>
           <button
             onClick={async () => setNotifStatus(await requestProspectingNotificationPermission())}
-            className="flex-shrink-0 text-xs font-black px-3 py-1.5 rounded-xl bg-[var(--accent-600)] text-white hover:bg-[var(--accent-700)]"
+            className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-md bg-action text-action-foreground hover:bg-action-hover"
           >
             Attiva
           </button>

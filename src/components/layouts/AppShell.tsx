@@ -25,22 +25,22 @@ export const AppShell: React.FC = () => {
   }, [drawerOpen]);
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-4 px-5 py-3.5 rounded-2xl font-bold text-sm transition-all
+    `flex items-center gap-4 px-5 py-3.5 rounded-panel font-bold text-sm transition-all
      ${isActive
-       ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900'
-       : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'}`;
+       ? 'bg-action text-action-foreground shadow-panel shadow-panel dark:shadow-panel'
+       : 'text-secondary dark:text-muted hover:bg-raised dark:hover:bg-raised/50 hover:text-foreground dark:hover:text-foreground'}`;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden font-sans transition-colors duration-200">
+    <div className="flex h-screen bg-canvas dark:bg-canvas text-foreground dark:text-muted overflow-hidden font-sans transition-colors duration-200">
 
       {/* ── Sidebar desktop (md+) ── */}
-      <aside className="hidden md:flex w-[260px] flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 transition-colors flex-shrink-0">
+      <aside className="hidden md:flex w-[260px] flex-col border-r border-line dark:border-line bg-surface dark:bg-surface transition-colors flex-shrink-0">
         <div className="p-6 pb-4">
-          <h2 className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2.5">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 text-white shadow-md">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground dark:text-foreground flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-action text-action-foreground shadow-panel">
               <Zap size={18} className="fill-white" />
             </span>
-            Next Move
+            SYRIO
           </h2>
         </div>
         <nav className="flex-1 px-4 space-y-1 mt-2">
@@ -50,7 +50,7 @@ export const AppShell: React.FC = () => {
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+        <div className="p-4 border-t border-line dark:border-line">
           <NavLink to="/settings" className={navLinkClass}>
             <SettingsIcon size={19} /> Impostazioni
           </NavLink>
@@ -69,21 +69,21 @@ export const AppShell: React.FC = () => {
 
       {/* Drawer panel */}
       <aside
-        className={`md:hidden fixed top-0 left-0 h-full w-72 z-50 bg-white dark:bg-gray-900 flex flex-col shadow-2xl
+        className={`md:hidden fixed top-0 left-0 h-full w-72 z-50 bg-surface dark:bg-canvas flex flex-col shadow-panel
           transition-transform duration-300 ease-in-out
           ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between px-5 pt-6 pb-4">
-          <h2 className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-2.5">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 text-white shadow-md">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground dark:text-foreground flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-action text-action-foreground shadow-panel">
               <Zap size={18} className="fill-white" />
             </span>
-            Next Move
+            SYRIO
           </h2>
-          <button
+          <button aria-label="Chiudi dialogo" data-dialog-close
             onClick={() => setDrawerOpen(false)}
-            className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-md text-muted hover:text-secondary hover:bg-raised dark:hover:bg-surface transition-colors"
           >
             <X size={20} />
           </button>
@@ -99,7 +99,7 @@ export const AppShell: React.FC = () => {
         </nav>
 
         {/* Impostazioni in fondo */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800 mb-safe">
+        <div className="p-4 border-t border-line dark:border-line mb-safe">
           <NavLink to="/settings" className={navLinkClass}>
             <SettingsIcon size={20} /> Impostazioni
           </NavLink>

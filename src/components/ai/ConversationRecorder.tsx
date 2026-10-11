@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { callGeminiClient } from '../../lib/geminiClient';
 import {
@@ -63,13 +64,13 @@ const ENDUSER_PRODUCTS = [
 const BRANDS = ['Diadora', 'U-Power', 'Snickers', 'E.Strauss', 'Cofra', 'Kapriol', 'Sparco', 'Mascot', 'Fristads', 'Portwest', 'Clique', 'Helly Hansen', 'Altro'];
 
 const CAT_BADGE: Record<Obiezione['categoria'], string> = {
-  prezzo: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  'fornitore-attuale': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  qualita: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  timing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  brand: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  logistica: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
-  altro: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  prezzo: 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger',
+  'fornitore-attuale': 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning',
+  qualita: 'bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning',
+  timing: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
+  brand: 'bg-accent-soft text-accent dark:bg-accent-soft/30 dark:text-accent',
+  logistica: 'bg-accent-soft text-accent',
+  altro: 'bg-raised text-foreground dark:bg-raised dark:text-muted',
 };
 
 const CAT_LABEL: Record<Obiezione['categoria'], string> = {
@@ -747,25 +748,25 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div
+    <DialogFrame
       className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+      <div className="bg-surface dark:bg-canvas w-full sm:max-w-2xl sm:rounded-panel rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-panel">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+        <div className="flex items-center justify-between p-5 border-b border-line dark:border-line sticky top-0 bg-surface dark:bg-canvas z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
-              <MessageSquare size={16} className="text-[var(--accent-600)] dark:text-[var(--accent-400)]" />
+            <div className="w-9 h-9 rounded-panel bg-accent-soft dark:bg-accent-soft/40 flex items-center justify-center">
+              <MessageSquare size={16} className="text-accent dark:text-accent" />
             </div>
             <div>
-              <h2 className="text-base font-black text-gray-900 dark:text-white">Registra Conversazione</h2>
-              <p className="text-[11px] text-gray-400 font-bold">{contact.company}</p>
+              <h2 className="text-base font-semibold text-foreground dark:text-foreground">Registra Conversazione</h2>
+              <p className="text-xs text-muted font-bold">{contact.company}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <X size={20} className="text-gray-400" />
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="p-2 rounded-md hover:bg-raised dark:hover:bg-surface transition-colors">
+            <X size={20} className="text-muted" />
           </button>
         </div>
 
@@ -774,47 +775,47 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
           {/* ── IDLE ── */}
           {phase === 'idle' && (
             <div className="text-center space-y-4 py-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-secondary dark:text-muted">
                 Registra la conversazione con il cliente in tempo reale.<br />
                 Claude AI estrarrà automaticamente <strong>dati di profilazione</strong> e <strong>obiezioni</strong>.
               </p>
               {isSupported ? (
                 <button
                   onClick={startRecording}
-                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-[var(--accent-600)] text-white font-black text-base hover:bg-[var(--accent-700)] transition-all shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-panel bg-action text-action-foreground font-semibold text-base hover:bg-action-hover transition-all shadow-panel  "
                 >
                   <Mic size={20} />
                   Inizia Registrazione
                 </button>
               ) : (
-                <p className="text-xs text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+                <p className="text-xs text-warning dark:text-warning font-bold bg-warning-soft dark:bg-warning-soft rounded-md p-3">
                   Il riconoscimento vocale non è supportato da questo browser.<br />
                   Usa Chrome o Safari su mobile.
                 </p>
               )}
               <button
                 onClick={() => setPhase('manual')}
-                className="block w-full text-center text-xs text-gray-400 hover:text-[var(--accent-500)] transition-colors mt-2 font-bold"
+                className="block w-full text-center text-xs text-muted hover:text-accent transition-colors mt-2 font-bold"
               >
                 Preferisci scrivere manualmente →
               </button>
               {transcript && (
-                <div className="mt-4 bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 text-left">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                <div className="mt-4 bg-canvas dark:bg-surface rounded-panel p-4 text-left">
+                  <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">
                     {recoveredDraft ? 'Trascrizione recuperata da un\'interruzione precedente' : 'Trascritto precedente'}
                   </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{transcript}</p>
+                  <p className="text-sm text-foreground dark:text-muted whitespace-pre-wrap">{transcript}</p>
                   {recoveredDraft && (
                     <div className="flex items-center gap-3 mt-3">
                       <button
                         onClick={() => setPhase('manual')}
-                        className="text-xs font-black text-[var(--accent-600)] hover:text-[var(--accent-700)] transition-colors"
+                        className="text-xs font-semibold text-accent hover:text-accent transition-colors"
                       >
                         Continua a modificare →
                       </button>
                       <button
                         onClick={() => { clearDraft(); setTranscript(''); fullTranscriptRef.current = ''; setRecoveredDraft(false); }}
-                        className="text-xs font-black text-gray-400 hover:text-red-500 transition-colors"
+                        className="text-xs font-semibold text-muted hover:text-danger transition-colors"
                       >
                         Elimina bozza
                       </button>
@@ -831,13 +832,13 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               {/* Status bar */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-sm font-black text-red-600 dark:text-red-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-danger animate-pulse" />
+                  <span className="text-sm font-semibold text-danger dark:text-danger">
                     {mediaSupported ? (
                       <>
                         REC {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}
                         {(liveStats.transcribed > 0 || liveStats.pending > 0) && (
-                          <span className="ml-2 text-[10px] font-bold text-gray-400 normal-case">
+                          <span className="ml-2 text-xs font-bold text-muted normal-case">
                             {liveStats.transcribed} trascritti{liveStats.pending > 0 ? ` · ${liveStats.pending} in coda` : ''}
                           </span>
                         )}
@@ -855,13 +856,13 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={switchToManual}
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-black text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold text-muted hover:text-secondary hover:bg-raised dark:hover:bg-surface transition-colors"
                   >
                     ✏️ Scrivi
                   </button>
                   <button
                     onClick={stopRecording}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-black hover:bg-gray-200 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-raised dark:bg-surface text-secondary dark:text-muted text-xs font-semibold hover:bg-raised transition-colors"
                   >
                     <Square size={12} /> Stop
                   </button>
@@ -869,22 +870,22 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               </div>
 
               {/* Transcript box */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 min-h-[160px] max-h-[300px] overflow-y-auto text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+              <div className="bg-canvas dark:bg-surface rounded-panel p-4 min-h-[160px] max-h-[300px] overflow-y-auto text-sm text-foreground dark:text-muted whitespace-pre-wrap leading-relaxed">
                 {transcript || (
-                  <span className="text-gray-300 dark:text-gray-600 italic">
+                  <span className="text-muted dark:text-secondary italic">
                     {mediaSupported
                       ? 'Sto registrando l’audio. Puoi spegnere lo schermo o mettere il telefono in tasca: la registrazione continua. La trascrizione appare qui man mano, blocco per blocco.'
                       : 'Parla vicino al microfono... il testo apparirà qui'}
                   </span>
                 )}
-                {interim && <span className="text-[var(--accent-400)] italic"> {interim}</span>}
+                {interim && <span className="text-accent italic"> {interim}</span>}
               </div>
 
               {mediaSupported ? (
                 <button
                   onClick={stopRecording}
                   disabled={recSeconds < 2}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-600 text-white font-black text-sm hover:bg-red-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-panel bg-danger text-status-foreground font-semibold text-sm hover:bg-danger transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Square size={16} /> Termina Registrazione
                 </button>
@@ -892,7 +893,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                 <button
                   onClick={analyze}
                   disabled={!transcript && !interim}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Sparkles size={16} /> Stop e Analizza con Claude AI
                 </button>
@@ -904,17 +905,17 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               la registrazione, qui si aspetta solo che si svuoti la coda residua ── */}
           {phase === 'stopped' && (
             <div className="text-center space-y-4 py-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
-                <Loader2 size={24} className="text-[var(--accent-600)] animate-spin" />
+              <div className="w-14 h-14 mx-auto rounded-panel bg-accent-soft dark:bg-accent-soft/40 flex items-center justify-center">
+                <Loader2 size={24} className="text-accent animate-spin" />
               </div>
               <div>
-                <p className="font-black text-gray-900 dark:text-white text-sm">Completamento trascrizione…</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="font-semibold text-foreground dark:text-foreground text-sm">Completamento trascrizione…</p>
+                <p className="text-xs text-muted mt-1">
                   Durata {String(Math.floor(recSeconds / 60)).padStart(2, '0')}:{String(recSeconds % 60).padStart(2, '0')}
                   {liveStats.pending > 0 && ` · ${liveStats.pending} ${liveStats.pending === 1 ? 'blocco rimasto' : 'blocchi rimasti'}`}
                 </p>
                 {liveStats.failed > 0 && (
-                  <p className="text-xs text-amber-500 font-bold mt-1">
+                  <p className="text-xs text-warning font-bold mt-1">
                     {liveStats.failed} {liveStats.failed === 1 ? 'blocco non trascritto' : 'blocchi non trascritti'} — riprova disponibile nel testo
                   </p>
                 )}
@@ -922,13 +923,13 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={startRecording}
-                  className="text-xs font-black text-gray-400 hover:text-[var(--accent-500)] transition-colors"
+                  className="text-xs font-semibold text-muted hover:text-accent transition-colors"
                 >
                   🎙 Registra di nuovo
                 </button>
                 <button
                   onClick={() => { pendingChunksRef.current = []; failedChunksRef.current = []; clearDraft(); setPhase('idle'); }}
-                  className="text-xs font-black text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-xs font-semibold text-muted hover:text-danger transition-colors"
                 >
                   Scarta
                 </button>
@@ -940,34 +941,34 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
           {phase === 'manual' && (
             <div className="space-y-4">
               {liveStats.failed > 0 && (
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-900/20 rounded-2xl px-4 py-3">
-                  <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                <div className="flex items-center justify-between bg-warning-soft dark:bg-warning-soft rounded-panel px-4 py-3">
+                  <p className="text-xs font-bold text-warning dark:text-warning">
                     {liveStats.failed} {liveStats.failed === 1 ? 'blocco audio non trascritto' : 'blocchi audio non trascritti'}
                   </p>
                   <button
                     onClick={retryFailedChunks}
                     disabled={liveStats.processing}
-                    className="text-xs font-black text-amber-600 hover:text-amber-700 transition-colors disabled:opacity-40"
+                    className="text-xs font-semibold text-warning hover:text-warning transition-colors disabled:opacity-40"
                   >
                     {liveStats.processing ? 'Riprovo...' : 'Riprova →'}
                   </button>
                 </div>
               )}
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-2">
                   Trascrivi o riassumi la conversazione
                 </label>
                 <textarea
                   value={transcript}
                   onChange={e => setTranscript(e.target.value)}
                   placeholder="Scrivi qui tutto ciò che è emerso dalla conversazione col cliente: problemi, obiezioni, interessi, accordi..."
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 text-sm dark:text-white outline-none resize-none min-h-[220px] focus:border-[var(--accent-400)]"
+                  className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-panel p-4 text-sm dark:text-foreground outline-none resize-none min-h-[220px] focus:border-accent"
                 />
               </div>
               <button
                 onClick={analyze}
                 disabled={!transcript.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles size={16} /> Analizza con Claude AI
               </button>
@@ -977,12 +978,12 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
           {/* ── ANALYZING ── */}
           {phase === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
-                <Loader2 size={24} className="text-[var(--accent-600)] animate-spin" />
+              <div className="w-14 h-14 rounded-panel bg-accent-soft dark:bg-accent-soft/40 flex items-center justify-center">
+                <Loader2 size={24} className="text-accent animate-spin" />
               </div>
               <div className="text-center">
-                <p className="font-black text-gray-900 dark:text-white text-sm">Analisi in corso...</p>
-                <p className="text-xs text-gray-400 mt-1">Claude sta estraendo profilazione e obiezioni</p>
+                <p className="font-semibold text-foreground dark:text-foreground text-sm">Analisi in corso...</p>
+                <p className="text-xs text-muted mt-1">Claude sta estraendo profilazione e obiezioni</p>
               </div>
             </div>
           )}
@@ -993,31 +994,31 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
               {/* Riassunto */}
               {result.riassunto && (
-                <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-4 border border-[var(--accent-100)] dark:border-[var(--accent-800)]">
-                  <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-1.5">Riassunto Visita</p>
-                  <p className="text-sm text-[var(--accent-900)] dark:text-[var(--accent-200)] font-medium leading-relaxed">{result.riassunto}</p>
+                <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-panel p-4 border border-accent dark:border-accent">
+                  <p className="text-xs font-semibold text-accent uppercase tracking-normal mb-1.5">Riassunto Visita</p>
+                  <p className="text-sm text-accent dark:text-accent font-medium leading-relaxed">{result.riassunto}</p>
                 </div>
               )}
 
               {/* Dati Profilazione */}
-              <div className="border-2 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+              <div className="border-2 border-line dark:border-line rounded-panel overflow-hidden">
                 <button
                   onClick={() => setShowProfiling(s => !s)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-canvas dark:bg-surface"
                 >
-                  <span className="flex items-center gap-2 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest">
+                  <span className="flex items-center gap-2 text-xs font-semibold text-secondary dark:text-muted uppercase tracking-normal">
                     <ClipboardList size={13} />
                     Dati Profilazione Estratti
-                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-600)] dark:text-[var(--accent-300)] text-[9px]">
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent text-xs">
                       {appliedFields.length} campi
                     </span>
                   </span>
-                  {showProfiling ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                  {showProfiling ? <ChevronUp size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
                 </button>
                 {showProfiling && (
-                  <div className="p-4 space-y-2 bg-white dark:bg-gray-900">
+                  <div className="p-4 space-y-2 bg-surface dark:bg-canvas">
                     {appliedFields.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic">Nessun campo estratto dalla conversazione.</p>
+                      <p className="text-xs text-muted italic">Nessun campo estratto dalla conversazione.</p>
                     ) : (
                       appliedFields.map(field => {
                         const val = (result.profiling as any)[field];
@@ -1028,8 +1029,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                             : String(val);
                         return (
                           <div key={field} className="flex gap-3 items-start">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest w-32 flex-shrink-0 mt-0.5">{field}</span>
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium flex-1">{display}</span>
+                            <span className="text-xs font-semibold text-muted uppercase tracking-normal w-32 flex-shrink-0 mt-0.5">{field}</span>
+                            <span className="text-xs text-foreground dark:text-muted font-medium flex-1">{display}</span>
                           </div>
                         );
                       })
@@ -1040,33 +1041,33 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
               {/* Obiezioni */}
               {result.obiezioni.length > 0 && (
-                <div className="border-2 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+                <div className="border-2 border-line dark:border-line rounded-panel overflow-hidden">
                   <button
                     onClick={() => setShowObiezioni(s => !s)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-canvas dark:bg-surface"
                   >
-                    <span className="flex items-center gap-2 text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest">
+                    <span className="flex items-center gap-2 text-xs font-semibold text-secondary dark:text-muted uppercase tracking-normal">
                       <AlertCircle size={13} />
                       Obiezioni Rilevate
-                      <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-[9px]">
+                      <span className="ml-1 px-1.5 py-0.5 rounded-full bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger text-xs">
                         {result.obiezioni.length}
                       </span>
                     </span>
-                    {showObiezioni ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                    {showObiezioni ? <ChevronUp size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
                   </button>
                   {showObiezioni && (
-                    <div className="p-4 space-y-3 bg-white dark:bg-gray-900">
+                    <div className="p-4 space-y-3 bg-surface dark:bg-canvas">
                       {result.obiezioni.map((ob, i) => (
-                        <div key={i} className="border border-gray-100 dark:border-gray-700 rounded-xl p-3 space-y-1.5">
+                        <div key={i} className="border border-line dark:border-line rounded-xl p-3 space-y-1.5">
                           <div className="flex items-start gap-2">
-                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${CAT_BADGE[ob.categoria]}`}>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${CAT_BADGE[ob.categoria]}`}>
                               {CAT_LABEL[ob.categoria]}
                             </span>
-                            <p className="text-xs font-bold text-gray-800 dark:text-gray-200">&ldquo;{ob.testo}&rdquo;</p>
+                            <p className="text-xs font-bold text-foreground dark:text-muted">&ldquo;{ob.testo}&rdquo;</p>
                           </div>
                           <div className="flex gap-2 items-start pl-1">
-                            <span className="text-green-500 mt-0.5 flex-shrink-0 text-xs">→</span>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">{ob.risposta}</p>
+                            <span className="text-success mt-0.5 flex-shrink-0 text-xs">→</span>
+                            <p className="text-xs text-secondary dark:text-muted italic">{ob.risposta}</p>
                           </div>
                         </div>
                       ))}
@@ -1078,12 +1079,12 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               {/* Transcript preview */}
               {transcript && (
                 <details className="group">
-                  <summary className="text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-600 transition-colors list-none flex items-center gap-1">
+                  <summary className="text-xs font-semibold text-muted uppercase tracking-normal cursor-pointer hover:text-secondary transition-colors list-none flex items-center gap-1">
                     <ChevronDown size={10} className="group-open:rotate-180 transition-transform" />
                     Vedi trascrizione completa
                   </summary>
-                  <div className="mt-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 max-h-[200px] overflow-y-auto">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">{transcript}</p>
+                  <div className="mt-2 bg-canvas dark:bg-surface rounded-panel p-4 max-h-[200px] overflow-y-auto">
+                    <p className="text-xs text-secondary dark:text-muted whitespace-pre-wrap leading-relaxed">{transcript}</p>
                   </div>
                 </details>
               )}
@@ -1092,18 +1093,18 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleApply}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-all shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-all shadow-panel  "
                 >
                   <CheckCircle size={16} /> Applica al Contatto
                 </button>
                 <button
                   onClick={() => { setPhase('idle'); setResult(null); }}
-                  className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors"
+                  className="px-4 py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors"
                 >
                   Scarta
                 </button>
               </div>
-              <p className="text-center text-[10px] text-gray-400">
+              <p className="text-center text-xs text-muted">
                 I dati estratti verranno <strong>uniti</strong> alla profilazione esistente senza sovrascrivere i campi già compilati.
               </p>
             </div>
@@ -1111,26 +1112,26 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-2xl p-4">
-              <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 bg-danger-soft dark:bg-danger-soft border border-danger dark:border-danger rounded-panel p-4">
+              <AlertCircle size={16} className="text-danger flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm text-red-700 dark:text-red-300 font-bold">{error}</p>
+                <p className="text-sm text-danger dark:text-danger font-bold">{error}</p>
                 <div className="flex items-center gap-3 mt-2">
                   {phase !== 'manual' && (
                     <button
                       onClick={switchToManual}
-                      className="text-xs font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] hover:underline"
+                      className="text-xs font-semibold text-accent dark:text-accent hover:underline"
                     >
                       ✏️ Scrivi manualmente
                     </button>
                   )}
-                  <button onClick={() => setError(null)} className="text-xs text-red-400 hover:text-red-600">Chiudi</button>
+                  <button onClick={() => setError(null)} className="text-xs text-danger hover:text-danger">Chiudi</button>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </DialogFrame>
   );
 };

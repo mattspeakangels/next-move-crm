@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'info';
 interface Toast { id: string; message: string; type: ToastType; }
@@ -20,8 +21,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
       <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4">
         {toasts.map(toast => (
-          <div key={toast.id} className="animate-slide-up px-4 py-3 rounded-xl shadow-lg text-sm font-bold text-white pointer-events-auto bg-gray-900 dark:bg-indigo-600">
-            {toast.message}
+          <div key={toast.id} role={toast.type === 'error' ? 'alert' : 'status'} className={`flex items-start gap-2 px-4 py-3 rounded-md shadow-panel border text-sm font-medium pointer-events-auto bg-surface ${toast.type === 'error' ? 'border-danger text-danger' : toast.type === 'success' ? 'border-success text-success' : 'border-accent text-foreground'}`}>
+            {toast.type === 'error' ? <AlertCircle size={18} className="shrink-0" /> : toast.type === 'success' ? <CheckCircle2 size={18} className="shrink-0" /> : <Info size={18} className="shrink-0 text-accent" />}{toast.message}
           </div>
         ))}
       </div>

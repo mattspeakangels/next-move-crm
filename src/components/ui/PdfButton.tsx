@@ -1,3 +1,4 @@
+import { showNotice } from './Feedback';
 import React, { useState } from 'react';
 import { openOfferPdf } from '../../lib/uploadPdf';
 
@@ -19,7 +20,7 @@ export const PdfButton: React.FC<Props> = ({ pdfUrl, pdfName, className, childre
       // openOfferPdf opens the window synchronously inside, before any await
       await openOfferPdf(pdfUrl, triggerPrint);
     } catch (err: any) {
-      alert(err?.message ?? 'Errore apertura PDF');
+      showNotice(err?.message ?? 'Errore apertura PDF');
     } finally {
       setLoading(false);
     }

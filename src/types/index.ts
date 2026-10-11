@@ -32,8 +32,10 @@ export interface TodoItem {
   createdAt: number;
   completedAt?: number;
   statusHistory?: { status: TodoStatus; at: number }[];
-  source: 'manuale' | 'visita' | 'ai';
+  source: 'manuale' | 'visita' | 'ai' | 'follow-up';
   sourceActivityId?: string;
+  /** Offerta che ha generato questo to-do (promemoria di follow-up automatico). */
+  offerId?: string;
   /** Testo dell'email effettivamente inviata, incollato per tenerne traccia. */
   emailContent?: string;
   emailSavedAt?: number;

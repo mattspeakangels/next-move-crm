@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { Panel } from '../components/ui/Syrio';
 import { useStore } from '../store/useStore';
 import {
   TrendingUp,
   Users,
   Target,
-  Clock,
   CheckCircle2,
   AlarmClock,
   Zap,
@@ -84,26 +84,26 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
   const selectedDeals = selectedDay ? dealsForDay(selectedDay) : [];
 
   const stageDot: Record<string, string> = {
-    lead: 'bg-blue-400',
-    qualificato: 'bg-purple-400',
-    proposta: 'bg-orange-400',
-    negoziazione: 'bg-[var(--accent-400)]',
+    lead: 'bg-accent',
+    qualificato: 'bg-accent',
+    proposta: 'bg-warning',
+    negoziazione: 'bg-accent',
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-700 overflow-hidden">
+    <div className="bg-surface dark:bg-surface rounded-panel shadow-sm border border-line dark:border-line overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-50 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <Calendar size={14} className="text-[var(--accent-500)]" />
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Scadenze Deal</span>
+      <div className="flex flex-wrap gap-2 items-center justify-between px-4 pt-4 pb-3 border-b border-line">
+        <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+          <Calendar size={14} className="text-accent" />
+          <span className="text-xs font-semibold text-muted uppercase tracking-normal">Scadenze Deal</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
           <button
             onClick={() => viewMode === 'week' ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
+            className="p-1 rounded-lg hover:bg-raised dark:hover:bg-raised text-muted transition-colors"
           ><ChevronLeft size={16} /></button>
-          <span className="text-xs font-black dark:text-white min-w-[120px] text-center">
+          <span className="text-xs font-semibold dark:text-foreground min-w-[120px] text-center">
             {viewMode === 'week'
               ? `${weekDays[0].getDate()} ${MONTHS_IT[weekDays[0].getMonth()]} – ${weekDays[6].getDate()} ${MONTHS_IT[weekDays[6].getMonth()]}`
               : `${MONTHS_IT[monthAnchor.getMonth()]} ${monthAnchor.getFullYear()}`
@@ -111,17 +111,17 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
           </span>
           <button
             onClick={() => viewMode === 'week' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
+            className="p-1 rounded-lg hover:bg-raised dark:hover:bg-raised text-muted transition-colors"
           ><ChevronRight size={16} /></button>
           <button
             onClick={() => { setWeekOffset(0); setMonthOffset(0); setSelectedDay(null); }}
-            className="text-[9px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-2 py-1 rounded-full uppercase"
+            className="text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/30 px-2 py-1 rounded-full uppercase"
           >Oggi</button>
           {/* View toggle */}
-          <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg ml-1">
+          <div className="flex gap-0.5 bg-raised dark:bg-raised p-0.5 rounded-lg ml-1">
             {(['week', 'month'] as const).map(m => (
               <button key={m} onClick={() => { setViewMode(m); setSelectedDay(null); }}
-                className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all ${viewMode === m ? 'bg-white dark:bg-gray-800 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}>
+                className={`px-2 py-1 rounded-md text-xs font-semibold uppercase transition-all ${viewMode === m ? 'bg-surface dark:bg-surface text-accent shadow-sm' : 'text-muted'}`}>
                 {m === 'week' ? 'Sett.' : 'Mese'}
               </button>
             ))}
@@ -138,14 +138,14 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
             const isSel = selectedDay && isSameDay(day, selectedDay);
             return (
               <button key={i} onClick={() => setSelectedDay(isSel ? null : day)}
-                className={`flex flex-col items-center py-2.5 rounded-xl transition-all ${isSel ? 'bg-[var(--accent-600)]' : isToday ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                <span className={`text-[10px] font-black uppercase tracking-wide mb-1 ${isSel ? 'text-[var(--accent-200)]' : 'text-gray-400'}`}>{DAYS_IT[i]}</span>
-                <span className={`text-base font-black ${isSel ? 'text-white' : isToday ? 'text-[var(--accent-600)]' : 'text-gray-700 dark:text-gray-200'}`}>{day.getDate()}</span>
+                className={`flex flex-col items-center py-2.5 rounded-xl transition-all ${isSel ? 'bg-action' : isToday ? 'bg-accent-soft dark:bg-accent-soft/30' : 'hover:bg-canvas dark:hover:bg-raised'}`}>
+                <span className={`text-xs font-semibold uppercase tracking-wide mb-1 ${isSel ? 'text-action-foreground' : 'text-muted'}`}>{DAYS_IT[i]}</span>
+                <span className={`text-base font-semibold ${isSel ? 'text-action-foreground' : isToday ? 'text-accent' : 'text-foreground dark:text-muted'}`}>{day.getDate()}</span>
                 <div className="flex gap-0.5 mt-1.5 flex-wrap justify-center max-w-[36px]">
                   {dayDeals.slice(0, 3).map((d, j) => (
-                    <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white/70' : stageDot[d.stage] ?? 'bg-gray-400'}`} />
+                    <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-surface/70' : stageDot[d.stage] ?? 'bg-raised'}`} />
                   ))}
-                  {dayDeals.length > 3 && <span className={`text-[8px] font-black ${isSel ? 'text-white/70' : 'text-gray-400'}`}>+{dayDeals.length - 3}</span>}
+                  {dayDeals.length > 3 && <span className={`text-xs font-semibold ${isSel ? 'text-action-foreground/70' : 'text-muted'}`}>+{dayDeals.length - 3}</span>}
                 </div>
               </button>
             );
@@ -157,7 +157,7 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
       {viewMode === 'month' && (
         <div className="p-3">
           <div className="grid grid-cols-7 mb-1">
-            {DAYS_IT.map(d => <div key={d} className="text-center text-[9px] font-black text-gray-400 uppercase py-1">{d}</div>)}
+            {DAYS_IT.map(d => <div key={d} className="text-center text-xs font-semibold text-muted uppercase py-1">{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-0.5">
             {monthDays.map((day, i) => {
@@ -167,13 +167,13 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
               const isSel = selectedDay && isSameDay(day, selectedDay);
               return (
                 <button key={i} onClick={() => setSelectedDay(isSel ? null : day)}
-                  className={`flex flex-col items-center py-1.5 rounded-lg transition-all min-h-[40px] ${isSel ? 'bg-[var(--accent-600)]' : isToday ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30' : inMonth ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}>
-                  <span className={`text-[11px] font-black ${isSel ? 'text-white' : isToday ? 'text-[var(--accent-600)]' : inMonth ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>{day.getDate()}</span>
+                  className={`flex flex-col items-center py-1.5 rounded-lg transition-all min-h-[40px] ${isSel ? 'bg-action' : isToday ? 'bg-accent-soft dark:bg-accent-soft/30' : inMonth ? 'hover:bg-canvas dark:hover:bg-raised' : ''}`}>
+                  <span className={`text-xs font-semibold ${isSel ? 'text-action-foreground' : isToday ? 'text-accent' : inMonth ? 'text-foreground dark:text-muted' : 'text-muted dark:text-secondary'}`}>{day.getDate()}</span>
                   <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[30px]">
                     {dayDeals.slice(0, 2).map((d, j) => (
-                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white/70' : stageDot[d.stage] ?? 'bg-gray-400'}`} />
+                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-surface/70' : stageDot[d.stage] ?? 'bg-raised'}`} />
                     ))}
-                    {dayDeals.length > 2 && <span className={`text-[8px] font-black ${isSel ? 'text-white/70' : 'text-gray-400'}`}>+{dayDeals.length - 2}</span>}
+                    {dayDeals.length > 2 && <span className={`text-xs font-semibold ${isSel ? 'text-action-foreground/70' : 'text-muted'}`}>+{dayDeals.length - 2}</span>}
                   </div>
                 </button>
               );
@@ -184,25 +184,25 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
 
       {/* Selected day deals */}
       {selectedDay && (
-        <div className="border-t border-gray-50 dark:border-gray-700 px-4 py-3 space-y-2">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+        <div className="border-t border-line dark:border-line px-4 py-3 space-y-2">
+          <p className="text-xs font-semibold text-muted uppercase tracking-normal">
             {selectedDay.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
           {selectedDeals.length === 0 && (
-            <p className="text-xs text-gray-400 font-bold">Nessun deal in scadenza</p>
+            <p className="text-xs text-muted font-bold">Nessun deal in scadenza</p>
           )}
           {selectedDeals.map(deal => {
             const diff = Math.floor((deal.nextActionDeadline - Date.now()) / 86400000);
             return (
-              <div key={deal.id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900 rounded-xl px-3 py-2">
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stageDot[deal.stage] ?? 'bg-gray-400'}`} />
+              <div key={deal.id} className="flex items-center gap-3 bg-canvas dark:bg-canvas rounded-md px-3 py-2">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stageDot[deal.stage] ?? 'bg-raised'}`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-black dark:text-white truncate">{contacts[deal.contactId]?.company ?? '—'}</p>
-                  <p className="text-[10px] text-gray-400 truncate">{deal.nextAction || 'Nessuna azione'}</p>
+                  <p className="text-xs font-semibold dark:text-foreground truncate">{contacts[deal.contactId]?.company ?? '—'}</p>
+                  <p className="text-xs text-muted truncate">{deal.nextAction || 'Nessuna azione'}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-xs font-black text-[var(--accent-600)]">€{(deal.value / 1000).toFixed(0)}k</p>
-                  <p className={`text-[9px] font-black ${diff < 0 ? 'text-red-500' : diff <= 3 ? 'text-yellow-500' : 'text-gray-400'}`}>
+                  <p className="text-xs font-semibold text-accent">€{(deal.value / 1000).toFixed(0)}k</p>
+                  <p className={`text-xs font-semibold ${diff < 0 ? 'text-danger' : diff <= 3 ? 'text-warning' : 'text-muted'}`}>
                     {diff < 0 ? `${Math.abs(diff)}gg fa` : diff === 0 ? 'oggi' : `+${diff}gg`}
                   </p>
                 </div>
@@ -213,11 +213,11 @@ const DealCalendar: React.FC<DealCalendarProps> = ({ deals, contacts }) => {
       )}
 
       {/* Legend */}
-      <div className="flex gap-3 px-5 pb-3 pt-1 flex-wrap border-t border-gray-50 dark:border-gray-700">
+      <div className="flex gap-3 px-5 pb-3 pt-1 flex-wrap border-t border-line dark:border-line">
         {Object.entries({ lead: 'Lead', qualificato: 'Qualificato', proposta: 'Proposta', negoziazione: 'Trattativa' }).map(([k, v]) => (
           <div key={k} className="flex items-center gap-1">
             <span className={`w-2 h-2 rounded-full ${stageDot[k]}`} />
-            <span className="text-[9px] font-bold text-gray-400">{v}</span>
+            <span className="text-xs font-bold text-muted">{v}</span>
           </div>
         ))}
       </div>
@@ -398,112 +398,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const coachMessage = getCoachSuggestion(urgentDeals, soonDeals, totalPipeline, contacts);
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="syrio-dashboard pb-8">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-black dark:text-white uppercase tracking-tighter">
-          {profile?.name ? `Ciao, ${profile.name.split(' ')[0]} 👋` : 'Dashboard'}
-        </h1>
-        <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
-          {new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </p>
+      <section className="syrio-hero hidden md:flex flex-col justify-center">
+        <p className="text-sm text-white/90 mb-3">{profile?.name ? `Buongiorno ${profile.name.split(' ')[0]}` : 'La tua giornata commerciale'}</p>
+        <h1>Ogni opportunità è una nuova <span className="text-[#e2bc93]">destinazione.</span></h1>
+        <p className="text-sm text-white/80 mt-4">Direzione, opportunità, risultati.</p>
+      </section>
+      <div className="md:hidden">
+        <h1 className="text-2xl">{profile?.name ? `Buongiorno ${profile.name.split(' ')[0]}` : 'La tua giornata'}</h1>
+        <p className="text-sm text-muted mt-2">{urgentDeals.length} azioni scadute · {soonDeals.length} entro 48 ore</p>
       </div>
-
-      {/* ── Coach AI Card ── */}
-      <div className="bg-gradient-to-br from-[var(--accent-600)] to-violet-600 rounded-3xl p-5 text-white shadow-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap size={16} className="text-yellow-300" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-200)]">Coach del Giorno</span>
-        </div>
-        <p className="font-bold text-sm leading-relaxed">{coachMessage}</p>
-      </div>
-
-      {/* ── Alert: Asset in scadenza / da sostituire ── */}
-      {(assetsDaSostituire > 0 || assetsInScadenza > 0) && (
-        <div className="space-y-2">
-          {assetsDaSostituire > 0 && (
-            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-2xl px-4 py-3 flex items-center gap-3">
-              <Package size={16} className="text-red-500 flex-shrink-0" />
-              <p className="text-sm font-bold text-red-700 dark:text-red-300 flex-1">
-                {assetsDaSostituire} asset da sostituire presso i clienti
-              </p>
-              <ChevronRight size={14} className="text-red-400" />
-            </div>
-          )}
-          {assetsInScadenza > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-2xl px-4 py-3 flex items-center gap-3">
-              <AlertTriangle size={16} className="text-yellow-500 flex-shrink-0" />
-              <p className="text-sm font-bold text-yellow-700 dark:text-yellow-300 flex-1">
-                {assetsInScadenza} contratti in scadenza nei prossimi 30 giorni
-              </p>
-              <ChevronRight size={14} className="text-yellow-400" />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Alert: Clienti silenti ── */}
-      {silentContacts.length > 0 && (
-        <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-2xl px-4 py-3 flex items-start gap-3">
-          <Users size={16} className="text-orange-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-black text-orange-700 dark:text-orange-300">
-              {silentContacts.length} clienti silenti (nessuna attività da 90+ giorni)
-            </p>
-            <p className="text-[10px] text-orange-500 font-bold mt-0.5">
-              {silentContacts.slice(0, 3).map(c => c.company).join(' · ')}{silentContacts.length > 3 ? ` +${silentContacts.length - 3}` : ''}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Metriche processo (Vitality / Progression / Win Rate) ── */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Activity size={14} className="text-[var(--accent-500)]" />
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Salute Pipeline</h2>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Vitality', value: vitality, target: 10, color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20', desc: '% nuovi 30gg' },
-            { label: 'Progression', value: progression, target: 20, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', desc: '% avanzati 30gg' },
-            { label: 'Win Rate', value: winRate, target: 30, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', desc: '% vinti totali' },
-          ].map(m => (
-            <div key={m.label} className={`${m.bg} rounded-2xl p-3 text-center`}>
-              <p className={`text-xl font-black ${m.color}`}>{m.value}%</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-0.5">{m.label}</p>
-              <p className="text-[8px] text-gray-400">{m.desc}</p>
-              {m.value < m.target && (
-                <p className={`text-[8px] font-black ${m.color} mt-0.5`}>T.{m.target}%</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── KPI chips ── */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className={`rounded-2xl p-4 text-center ${urgentDeals.length > 0 ? 'bg-red-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white'}`}>
-          <p className="text-2xl font-black">{urgentDeals.length}</p>
-          <p className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${urgentDeals.length > 0 ? 'text-red-100' : 'text-gray-400'}`}>Urgenti</p>
-        </div>
-        <div className={`rounded-2xl p-4 text-center ${soonDeals.length > 0 ? 'bg-yellow-400 text-gray-900' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white'}`}>
-          <p className="text-2xl font-black">{soonDeals.length}</p>
-          <p className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${soonDeals.length > 0 ? 'text-yellow-800' : 'text-gray-400'}`}>48 Ore</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
-          <p className="text-2xl font-black text-gray-800 dark:text-white">€{(totalPipeline / 1000).toFixed(0)}k</p>
-          <p className="text-[9px] font-black uppercase tracking-widest mt-0.5 text-gray-400">Pipeline</p>
-        </div>
-      </div>
-
+      <section className="syrio-dashboard-kpis grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Panoramica commerciale">
+        {[
+          { label: 'Clienti in portafoglio', value: activeContacts.toLocaleString('it-IT'), icon: Users },
+          { label: 'Opportunità attive', value: activeDeals.length.toLocaleString('it-IT'), icon: Target },
+          { label: 'Valore pipeline', value: `€ ${totalPipeline.toLocaleString('it-IT')}`, icon: TrendingUp },
+          { label: 'Offerte inviate', value: pendingOffers.toLocaleString('it-IT'), icon: FileText },
+        ].map(({ label, value, icon: Icon }) => <Panel key={label} className="p-4"><Icon size={20} className="text-accent mb-3" /><p className="text-sm text-muted">{label}</p><p className="text-xl font-medium tabular-nums mt-2">{value}</p></Panel>)}
+      </section>
+      <section className="syrio-dashboard-actions">
       {/* ── Da Fare Oggi ── */}
       {todayDeals.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <AlarmClock size={14} className="text-red-500" />
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Da Fare Oggi</h2>
+            <AlarmClock size={14} className="text-danger" />
+            <h2 className="text-lg font-medium text-foreground">Le tue prossime mosse</h2>
           </div>
 
           <div className="space-y-3">
@@ -515,10 +435,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={deal.id}
-                  className={`rounded-2xl border-2 overflow-hidden ${
+                  className={`rounded-panel border overflow-hidden ${
                     isOverdue
-                      ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
-                      : 'border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10'
+                      ? 'border-danger/40 bg-surface'
+                      : 'border-warning/40 bg-surface'
                   }`}
                 >
                   {/* Card top */}
@@ -526,30 +446,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     {/* Badge */}
                     <div className="flex items-center gap-2 mb-2">
                       {isOverdue ? (
-                        <span className="bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
+                        <span className="bg-danger text-status-foreground text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
                           URGENTE — FAI ORA
                         </span>
                       ) : (
-                        <span className="bg-yellow-400 text-yellow-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
+                        <span className="bg-warning text-warning text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
                           ENTRO {diff === 0 ? 'OGGI' : `${diff + 1}GG`}
                         </span>
                       )}
-                      <span className="text-[9px] text-gray-400 font-bold ml-auto">
+                      <span className="text-xs text-muted font-bold ml-auto">
                         {formatDate(deal.nextActionDeadline)}
                       </span>
                     </div>
 
                     {/* Company + action */}
-                    <p className="font-black text-sm text-gray-900 dark:text-white">{company}</p>
+                    <p className="font-semibold text-sm text-foreground dark:text-foreground">{company}</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {deal.nextActionType && (
-                        <span className="text-[var(--accent-500)]">{ACTION_ICON[deal.nextActionType]}</span>
+                        <span className="text-accent">{ACTION_ICON[deal.nextActionType]}</span>
                       )}
-                      <p className="text-xs text-gray-600 dark:text-gray-400 font-bold truncate">
+                      <p className="text-xs text-secondary dark:text-muted font-bold truncate">
                         {deal.nextAction || 'Nessuna azione definita'}
                       </p>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-xs text-muted mt-0.5">
                       €{(deal.value / 1000).toFixed(0)}k · {deal.stage}
                     </p>
                   </div>
@@ -560,10 +480,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     {/* ✓ Done */}
                     <button
                       onClick={() => handleDone(deal)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors ${
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors ${
                         isOverdue
-                          ? 'text-red-600 hover:bg-red-100 dark:hover:bg-red-800/30'
-                          : 'text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800/20'
+                          ? 'text-danger hover:bg-danger-soft dark:hover:bg-danger-soft'
+                          : 'text-warning hover:bg-warning-soft dark:hover:bg-warning-soft'
                       }`}
                     >
                       <CheckCircle2 size={14} /> Fatto
@@ -574,10 +494,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <button
                         key={days}
                         onClick={() => handleSnooze(deal, days)}
-                        className={`flex-1 py-3 text-xs font-black transition-colors ${
+                        className={`flex-1 py-3 text-xs font-semibold transition-colors ${
                           isOverdue
-                            ? 'text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30'
-                            : 'text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-800/20'
+                            ? 'text-danger hover:bg-danger-soft dark:hover:bg-danger-soft'
+                            : 'text-warning hover:bg-warning-soft dark:hover:bg-warning-soft'
                         }`}
                       >
                         +{days}gg
@@ -591,47 +511,114 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* ── Calendario Deal ── */}
+      {todayDeals.length === 0 && <Panel className="p-5"><h2 className="text-lg font-medium">Le tue prossime mosse</h2><p className="text-sm text-muted mt-2">Nessuna azione in scadenza nelle prossime 48 ore.</p><button onClick={() => onNavigate?.('deals')} className="text-accent text-sm mt-3">Consulta la pipeline <ChevronRight size={14} className="inline" /></button></Panel>}
+      </section>
+      <div className="syrio-dashboard-secondary space-y-5">
+        <div className="grid lg:grid-cols-2 gap-5"><div className="space-y-5 min-w-0">      {/* ── Calendario Deal ── */}
       <DealCalendar deals={activeDeals} contacts={contacts} />
 
-      {/* ── KPI cards ── */}
-      <div>
-        <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Panoramica</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
-            <Target className="text-[var(--accent-600)] mb-2" size={22} />
-            <h3 className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Pipeline</h3>
-            <p className="text-xl font-black dark:text-white tracking-tighter">€{totalPipeline.toLocaleString('it-IT')}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
-            <Users className="text-blue-600 mb-2" size={22} />
-            <h3 className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Aziende</h3>
-            <p className="text-xl font-black dark:text-white tracking-tighter">{activeContacts}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
-            <Clock className="text-orange-600 mb-2" size={22} />
-            <h3 className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Offerte Attive</h3>
-            <p className="text-xl font-black dark:text-white tracking-tighter">{pendingOffers}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border border-gray-50 dark:border-gray-700">
-            <TrendingUp className="text-green-600 mb-2" size={22} />
-            <h3 className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Vinte</h3>
-            <p className="text-xl font-black dark:text-white tracking-tighter">{wonDeals}</p>
-          </div>
+      {/* ── Coach AI Card ── */}
+      <div className="syrio-panel p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap size={16} className="text-warning" />
+          <span className="text-xs font-semibold uppercase tracking-normal text-accent">Coach del Giorno</span>
         </div>
+        <p className="font-bold text-sm leading-relaxed">{coachMessage}</p>
       </div>
 
-      {/* ── Quick link to Pipeline ── */}
-      {activeDeals.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center justify-between border border-gray-100 dark:border-gray-700">
-          <div>
-            <p className="font-black text-sm dark:text-white">{activeDeals.length} deal attivi</p>
-            <p className="text-[10px] text-gray-400 font-bold">Vai alla pipeline per gestirli</p>
-          </div>
-          <ChevronRight size={18} className="text-gray-300" />
+</div><div className="space-y-5 min-w-0">      {/* ── Alert: Asset in scadenza / da sostituire ── */}
+      {(assetsDaSostituire > 0 || assetsInScadenza > 0) && (
+        <div className="space-y-2">
+          {assetsDaSostituire > 0 && (
+            <div className="bg-danger-soft dark:bg-danger-soft border-2 border-danger dark:border-danger rounded-panel px-4 py-3 flex items-center gap-3">
+              <Package size={16} className="text-danger flex-shrink-0" />
+              <p className="text-sm font-bold text-danger dark:text-danger flex-1">
+                {assetsDaSostituire} asset da sostituire presso i clienti
+              </p>
+              <ChevronRight size={14} className="text-danger" />
+            </div>
+          )}
+          {assetsInScadenza > 0 && (
+            <div className="bg-warning-soft dark:bg-warning-soft border-2 border-warning dark:border-warning rounded-panel px-4 py-3 flex items-center gap-3">
+              <AlertTriangle size={16} className="text-warning flex-shrink-0" />
+              <p className="text-sm font-bold text-warning dark:text-warning flex-1">
+                {assetsInScadenza} contratti in scadenza nei prossimi 30 giorni
+              </p>
+              <ChevronRight size={14} className="text-warning" />
+            </div>
+          )}
         </div>
       )}
 
+      {/* ── Alert: Clienti silenti ── */}
+      {silentContacts.length > 0 && (
+        <div className="bg-warning-soft dark:bg-warning-soft border-2 border-warning dark:border-warning rounded-panel px-4 py-3 flex items-start gap-3">
+          <Users size={16} className="text-warning flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-warning dark:text-warning">
+              {silentContacts.length} clienti silenti (nessuna attività da 90+ giorni)
+            </p>
+            <p className="text-xs text-warning font-bold mt-0.5">
+              {silentContacts.slice(0, 3).map(c => c.company).join(' · ')}{silentContacts.length > 3 ? ` +${silentContacts.length - 3}` : ''}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Metriche processo (Vitality / Progression / Win Rate) ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Activity size={14} className="text-accent" />
+          <h2 className="text-xs font-semibold   text-muted">Salute Pipeline</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Vitality', value: vitality, target: 10, color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/20', desc: '% nuovi 30gg' },
+            { label: 'Progression', value: progression, target: 20, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft', desc: '% avanzati 30gg' },
+            { label: 'Win Rate', value: winRate, target: 30, color: 'text-warning', bg: 'bg-warning-soft dark:bg-warning-soft', desc: '% vinti totali' },
+          ].map(m => (
+            <div key={m.label} className={`${m.bg} rounded-panel p-3 text-center`}>
+              <p className={`text-xl font-semibold ${m.color}`}>{m.value}%</p>
+              <p className="text-xs font-semibold uppercase tracking-normal text-muted mt-0.5">{m.label}</p>
+              <p className="text-xs text-muted">{m.desc}</p>
+              {m.value < m.target && (
+                <p className={`text-xs font-semibold ${m.color} mt-0.5`}>T.{m.target}%</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── KPI chips ── */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className={`rounded-panel p-4 text-center ${urgentDeals.length > 0 ? 'bg-danger-soft text-danger border border-danger/30' : 'bg-surface dark:bg-surface text-foreground dark:text-foreground'}`}>
+          <p className="text-2xl font-semibold">{urgentDeals.length}</p>
+          <p className={`text-xs font-semibold uppercase tracking-normal mt-0.5 ${urgentDeals.length > 0 ? 'text-danger' : 'text-muted'}`}>Urgenti</p>
+        </div>
+        <div className={`rounded-panel p-4 text-center ${soonDeals.length > 0 ? 'bg-warning-soft text-warning border border-warning/30' : 'bg-surface dark:bg-surface text-foreground dark:text-foreground'}`}>
+          <p className="text-2xl font-semibold">{soonDeals.length}</p>
+          <p className={`text-xs font-semibold uppercase tracking-normal mt-0.5 ${soonDeals.length > 0 ? 'text-warning' : 'text-muted'}`}>48 Ore</p>
+        </div>
+        <div className="bg-surface dark:bg-surface rounded-panel p-4 text-center">
+          <p className="text-2xl font-semibold text-foreground dark:text-foreground">€{(totalPipeline / 1000).toFixed(0)}k</p>
+          <p className="text-xs font-semibold uppercase tracking-normal mt-0.5 text-muted">Pipeline</p>
+        </div>
+      </div>
+
+<Panel className="p-4"><p className="text-sm text-muted">Trattative vinte</p><p className="text-xl tabular-nums mt-1">{wonDeals}</p></Panel></div></div>
+              {/* ── Quick link to Pipeline ── */}
+      {activeDeals.length > 0 && (
+        <button onClick={() => onNavigate?.('deals')} className="w-full bg-surface rounded-panel p-4 flex items-center justify-between border border-line text-left">
+          <div>
+            <p className="font-semibold text-sm dark:text-foreground">{activeDeals.length} deal attivi</p>
+            <p className="text-xs text-muted font-bold">Vai alla pipeline per gestirli</p>
+          </div>
+          <ChevronRight size={18} className="text-muted" />
+        </button>
+      )}
+
+
+      </div>
       {/* OutcomeModal (when marking done) */}
       {outcomeDealId && activeDealForModal && (
         <OutcomeModal

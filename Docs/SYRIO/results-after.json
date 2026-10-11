@@ -1,0 +1,360 @@
+{
+  "phase": "after",
+  "errors": [],
+  "checks": [
+    {
+      "label": "Dashboard mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Clienti mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Pipeline mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "BUTTON",
+          "cls": "flex shrink-0 items-center gap-2 px-4 py-2 rounded-md text-xs font-medium transition-colors\n              text-muted dark:text-secondary hover:text-secondary dark:hover:text-muted"
+        }
+      ]
+    },
+    {
+      "label": "Offerte mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Prodotti mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all bg-surface dark:bg-surface text-secondary dark:text-muted border border-line dark:border-line hover:border-line"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all bg-surface dark:bg-surface text-secondary dark:text-muted border border-line dark:border-line hover:border-line"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all bg-surface dark:bg-surface text-secondary dark:text-muted border border-line dark:border-line hover:border-line"
+        }
+      ]
+    },
+    {
+      "label": "Agenda mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "DIV",
+          "cls": "flex gap-1 bg-raised dark:bg-raised p-1 rounded-md"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all bg-surface dark:bg-surface text-accent shadow-sm"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all text-muted hover:text-secondary"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all text-muted hover:text-secondary"
+        }
+      ]
+    },
+    {
+      "label": "Attività mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Mappa mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        },
+        {
+          "tag": "IMG",
+          "cls": "leaflet-tile"
+        }
+      ]
+    },
+    {
+      "label": "To Do mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Strategia mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors bg-raised dark:bg-surface text-secondary dark:text-muted hover:bg-raised dark:hover:bg-raised"
+        },
+        {
+          "tag": "SPAN",
+          "cls": "text-muted dark:text-secondary"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors bg-raised dark:bg-surface text-secondary dark:text-muted hover:bg-raised dark:hover:bg-raised"
+        },
+        {
+          "tag": "SPAN",
+          "cls": "text-muted dark:text-secondary"
+        }
+      ]
+    },
+    {
+      "label": "Analytics mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar-rectangles"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar-rectangle"
+        },
+        {
+          "tag": "path",
+          "cls": "recharts-rectangle"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar-rectangles"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer"
+        }
+      ]
+    },
+    {
+      "label": "Storico mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Legal mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Impostazioni mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Risultati importazione mobile",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-5 py-2 rounded-md text-sm font-bold capitalize transition-all text-secondary hover:text-foreground"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-5 py-2 rounded-md text-sm font-bold capitalize transition-all text-secondary hover:text-foreground"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar-rectangles"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer"
+        },
+        {
+          "tag": "g",
+          "cls": "recharts-layer recharts-bar-rectangle"
+        },
+        {
+          "tag": "path",
+          "cls": "recharts-rectangle"
+        },
+        {
+          "tag": "DIV",
+          "cls": "recharts-tooltip-wrapper recharts-tooltip-wrapper-left recharts-tooltip-wrapper-bottom"
+        }
+      ]
+    },
+    {
+      "label": "Tema chiaro, testo grande mobile",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Clienti chiaro testo grande",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Pipeline chiaro testo grande",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "BUTTON",
+          "cls": "flex shrink-0 items-center gap-2 px-4 py-2 rounded-md text-xs font-medium transition-colors\n              text-muted dark:text-secondary hover:text-secondary dark:hover:text-muted"
+        },
+        {
+          "tag": "svg",
+          "cls": "lucide lucide-lightbulb "
+        },
+        {
+          "tag": "path",
+          "cls": ""
+        },
+        {
+          "tag": "path",
+          "cls": ""
+        },
+        {
+          "tag": "path",
+          "cls": ""
+        }
+      ]
+    },
+    {
+      "label": "Agenda chiaro testo grande",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "DIV",
+          "cls": "flex gap-1 bg-raised dark:bg-raised p-1 rounded-md"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all bg-surface dark:bg-surface text-accent shadow-sm"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all text-muted hover:text-secondary"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all text-muted hover:text-secondary"
+        }
+      ]
+    },
+    {
+      "label": "Offerte chiaro testo grande",
+      "page": false,
+      "main": false,
+      "offenders": []
+    },
+    {
+      "label": "Storico chiaro testo grande",
+      "page": false,
+      "main": false,
+      "offenders": [
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-5 py-2 rounded-md text-sm font-bold capitalize transition-all text-secondary hover:text-foreground"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "flex-shrink-0 px-5 py-2 rounded-md text-sm font-bold capitalize transition-all text-secondary hover:text-foreground"
+        },
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-sm"
+        },
+        {
+          "tag": "THEAD",
+          "cls": ""
+        },
+        {
+          "tag": "TR",
+          "cls": "border-b border-line dark:border-line"
+        },
+        {
+          "tag": "TH",
+          "cls": "text-left px-4 py-3 text-xs font-semibold uppercase tracking-normal text-muted cursor-pointer hover:text-secondary select-none"
+        },
+        {
+          "tag": "SPAN",
+          "cls": "flex items-center gap-1"
+        },
+        {
+          "tag": "svg",
+          "cls": "lucide lucide-chevron-down "
+        }
+      ]
+    },
+    {
+      "label": "Impostazioni chiaro testo grande",
+      "page": false,
+      "main": false,
+      "offenders": []
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { ActivityType, Deal } from '../../types';
@@ -35,22 +36,22 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black dark:text-white">Nuova Attività</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
-            <X size={24} className="text-gray-400" />
+          <h2 className="text-xl font-semibold dark:text-foreground">Nuova Attività</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="p-2 hover:bg-raised dark:hover:bg-raised rounded-full">
+            <X size={24} className="text-muted" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase text-gray-400 mb-1">Tipo</label>
-            <select 
-              value={type} 
+            <label className="block text-xs font-semibold uppercase text-muted mb-1">Tipo</label>
+            <select
+              value={type}
               onChange={(e) => setType(e.target.value as ActivityType)}
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none focus:border-[var(--accent-600)]"
+              className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-transparent dark:text-foreground outline-none focus:border-accent"
             >
               <option value="chiamata">Chiamata</option>
               <option value="visita">Visita</option>
@@ -61,17 +62,17 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-black uppercase text-gray-400 mb-1">Data</label>
-              <input 
-                type="date" 
-                required 
-                value={date} 
+              <label className="block text-xs font-semibold uppercase text-muted mb-1">Data</label>
+              <input
+                type="date"
+                required
+                value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none" 
+                className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-transparent dark:text-foreground outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase text-gray-400 mb-1">Ora</label>
+              <label className="block text-xs font-semibold uppercase text-muted mb-1">Ora</label>
               <input
                 type="time"
                 required
@@ -79,27 +80,27 @@ export const ActivityFormModal: React.FC<Props> = ({ deal, onClose }) => {
                 max={isVisit ? '18:00' : undefined}
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none"
+                className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-transparent dark:text-foreground outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-gray-400 mb-1">Note</label>
-            <textarea 
-              rows={3} 
-              value={notes} 
+            <label className="block text-xs font-semibold uppercase text-muted mb-1">Note</label>
+            <textarea
+              rows={3}
+              value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Di cosa parlerete?"
-              className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-transparent dark:text-white outline-none resize-none focus:border-[var(--accent-600)]"
+              className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-transparent dark:text-foreground outline-none resize-none focus:border-accent"
             />
           </div>
 
-          <button type="submit" className="w-full bg-[var(--accent-600)] text-white font-black py-4 rounded-2xl shadow-xl hover:bg-[var(--accent-700)] transition-all uppercase">
+          <button type="submit" className="w-full bg-action text-action-foreground font-semibold py-4 rounded-panel shadow-panel hover:bg-action-hover transition-all uppercase">
             Pianifica
           </button>
         </form>
       </div>
-    </div>
+    </DialogFrame>
   );
 };

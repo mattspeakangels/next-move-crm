@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useStore } from '../../store/useStore';
@@ -81,11 +82,11 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-canvas/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-surface dark:bg-surface w-full max-w-lg rounded-panel p-6 shadow-panel">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold dark:text-white">Dettagli Deal</h3>
-          <button onClick={onClose} className="text-gray-400"><X size={24}/></button>
+          <h3 className="text-lg font-bold dark:text-foreground">Dettagli Deal</h3>
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="text-muted"><X size={24}/></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <SearchDropdown
@@ -98,7 +99,7 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
             totalCount={sortedContacts.length}
             emptyTitle="Nessun cliente trovato"
             emptySubtitle="Prova con un termine diverso"
-            inputWrapperClassName={() => 'w-full border rounded-xl p-3 bg-transparent dark:text-white flex items-center gap-2'}
+            inputWrapperClassName={() => 'w-full border rounded-md p-3 bg-transparent dark:text-foreground flex items-center gap-2'}
             dropdownClassName="z-50"
             results={filteredContacts.map(c => ({
               key: c.id,
@@ -107,44 +108,44 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({ onClose, initialCont
               badge: {
                 text: c.status === 'cliente' ? 'Cliente' : 'Prospect',
                 className: c.status === 'cliente'
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                  ? 'bg-success-soft text-success dark:bg-success-soft dark:text-success'
+                  : 'bg-accent-soft text-accent dark:bg-accent-soft/40 dark:text-accent',
               },
             }))}
           />
-          <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="Valore €" className="w-full border rounded-xl p-3 bg-transparent dark:text-white" />
+          <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="Valore €" className="w-full border rounded-md p-3 bg-transparent dark:text-foreground" />
           <div className="flex gap-2 items-center">
-             <label className="text-xs dark:text-gray-400">Probabilità {probability}%</label>
+             <label className="text-xs dark:text-muted">Probabilità {probability}%</label>
              <input type="range" min="0" max="100" value={probability} onChange={e => setProbability(Number(e.target.value))} className="flex-1" />
           </div>
-          <select value={stage} onChange={e => setStage(e.target.value as DealStage)} className="w-full border rounded-xl p-3 bg-transparent dark:text-white">
+          <select value={stage} onChange={e => setStage(e.target.value as DealStage)} className="w-full border rounded-md p-3 bg-transparent dark:text-foreground">
             <option value="lead">Lead</option><option value="qualificato">Qualificato</option><option value="proposta">Proposta</option><option value="negoziazione">Trattativa</option>
           </select>
-          <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full border rounded-xl p-3 bg-transparent dark:text-white" />
-          <input type="text" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Prossima azione" className="w-full border rounded-xl p-3 bg-transparent dark:text-white" />
+          <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full border rounded-md p-3 bg-transparent dark:text-foreground" />
+          <input type="text" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Prossima azione" className="w-full border rounded-md p-3 bg-transparent dark:text-foreground" />
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Data chiusura prevista</label>
+            <label className="text-xs text-secondary dark:text-muted block mb-1">Data chiusura prevista</label>
             <input
               type="date"
               value={closingDate}
               onChange={e => setClosingDate(e.target.value)}
-              className="w-full border rounded-xl p-3 bg-transparent dark:text-white"
+              className="w-full border rounded-md p-3 bg-transparent dark:text-foreground"
             />
           </div>
           <div className="p-2 border rounded-xl">
             <div className="flex flex-wrap gap-1 mb-2">
               {profile?.customProducts.map(p => (
-                <button key={p} type="button" onClick={() => toggleProduct(p)} className={`px-2 py-1 rounded-md text-[10px] ${selectedProducts.includes(p) ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>{p}</button>
+                <button key={p} type="button" onClick={() => toggleProduct(p)} className={`px-2 py-1 rounded-md text-xs ${selectedProducts.includes(p) ? 'bg-action text-action-foreground' : 'bg-raised dark:bg-raised'}`}>{p}</button>
               ))}
             </div>
             <div className="flex gap-2">
-              <input type="text" value={newProduct} onChange={e => setNewProduct(e.target.value)} placeholder="Altro prodotto..." className="flex-1 text-xs bg-transparent dark:text-white" />
-              <button type="button" onClick={handleAddNewProduct} className="text-xs text-[var(--accent-600)] font-bold">Aggiungi</button>
+              <input type="text" value={newProduct} onChange={e => setNewProduct(e.target.value)} placeholder="Altro prodotto..." className="flex-1 text-xs bg-transparent dark:text-foreground" />
+              <button type="button" onClick={handleAddNewProduct} className="text-xs text-accent font-bold">Aggiungi</button>
             </div>
           </div>
-          <button type="submit" className="w-full bg-[var(--accent-600)] text-white font-bold py-3 rounded-xl">Salva Deal</button>
+          <button type="submit" className="w-full bg-action text-action-foreground font-bold py-3 rounded-md">Salva Deal</button>
         </form>
       </div>
-    </div>
+    </DialogFrame>
   );
 };

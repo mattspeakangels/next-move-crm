@@ -102,7 +102,7 @@ ${isDealer ? renderDealerSections(p as DealerProfiling, badge, total, color) : r
 
 <div class="footer">
   <span>Blaklader · Scheda ${isDealer ? 'Dealer' : 'End User'} · Matt Parlangeli · Lombardia &amp; Ticino 2026</span>
-  <span>Generato il ${new Date().toLocaleDateString('it-IT')} · NextMove CRM</span>
+  <span>Generato il ${new Date().toLocaleDateString('it-IT')} · SYRIO</span>
 </div>
 </body>
 </html>`;

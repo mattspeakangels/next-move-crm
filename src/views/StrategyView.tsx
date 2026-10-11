@@ -1,3 +1,4 @@
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useMemo, useState } from 'react';
 import {
   Target, Plus, X, Trash2, Pencil, ChevronLeft, Building2,
@@ -53,33 +54,33 @@ const DialogoCard: React.FC<{ contact: Contact; onNavigateToContact: (contactId:
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-3">
+    <div className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MessageSquarePlus size={13} />Dialogo con l'azienda</p>
-        <button onClick={() => setShowLog(true)} className="text-[10px] font-black px-2.5 py-1.5 rounded-xl bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] dark:text-[var(--accent-300)] hover:bg-[var(--accent-100)]">
+        <p className="text-xs font-semibold text-muted uppercase tracking-normal flex items-center gap-1.5"><MessageSquarePlus size={13} />Dialogo con l'azienda</p>
+        <button onClick={() => setShowLog(true)} className="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent hover:bg-accent-soft">
           + Registra contatto
         </button>
       </div>
 
       {recent.length === 0 ? (
-        <p className="text-xs text-gray-400">Nessuno scambio registrato ancora. Ogni email o chiamata importante va annotata qui a mano.</p>
+        <p className="text-xs text-muted">Nessuno scambio registrato ancora. Ogni email o chiamata importante va annotata qui a mano.</p>
       ) : (
         <div className="space-y-2">
           {recent.map(a => (
-            <div key={a.id} className="flex items-start gap-2.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-2.5">
-              <div className="w-6 h-6 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-400 mt-0.5">
+            <div key={a.id} className="flex items-start gap-2.5 bg-canvas dark:bg-canvas/50 rounded-md p-2.5">
+              <div className="w-6 h-6 rounded-lg bg-surface dark:bg-surface flex items-center justify-center flex-shrink-0 text-muted mt-0.5">
                 {DIALOGO_ICON[a.type]}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-black text-gray-400">{fmtDateTime(a.date)}</p>
-                {a.notes && <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap line-clamp-3">{a.notes}</p>}
+                <p className="text-xs font-semibold text-muted">{fmtDateTime(a.date)}</p>
+                {a.notes && <p className="text-xs text-secondary dark:text-muted whitespace-pre-wrap line-clamp-3">{a.notes}</p>}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <button onClick={() => onNavigateToContact(contact.id)} className="flex items-center gap-1 text-[10px] font-black text-[var(--accent-500)] hover:text-[var(--accent-600)]">
+      <button onClick={() => onNavigateToContact(contact.id)} className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent">
         Vedi storico completo<ArrowRight size={11} />
       </button>
 
@@ -99,17 +100,17 @@ const TIPO_LABEL: Record<GroupTipo, string> = {
 };
 
 const PRIORITA_CONFIG: Record<GroupPriorita, { label: string; cls: string }> = {
-  alta: { label: 'Alta', cls: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
-  media: { label: 'Media', cls: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
-  bassa: { label: 'Bassa', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
+  alta: { label: 'Alta', cls: 'bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger' },
+  media: { label: 'Media', cls: 'bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning' },
+  bassa: { label: 'Bassa', cls: 'bg-raised dark:bg-raised text-secondary dark:text-muted' },
 };
 
 const STATO_CONFIG: Record<GroupStato, { label: string; cls: string }> = {
-  'da-avvicinare': { label: 'Da avvicinare', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
-  'in-corso': { label: 'In corso', cls: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]' },
-  attivo: { label: 'Attivo', cls: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' },
-  'completato-vinto': { label: 'Completato/Vinto', cls: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
-  abbandonato: { label: 'Abbandonato', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
+  'da-avvicinare': { label: 'Da avvicinare', cls: 'bg-raised dark:bg-raised text-secondary dark:text-muted' },
+  'in-corso': { label: 'In corso', cls: 'bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent' },
+  attivo: { label: 'Attivo', cls: 'bg-success-soft dark:bg-success-soft text-success dark:text-success' },
+  'completato-vinto': { label: 'Completato/Vinto', cls: 'bg-success-soft dark:bg-success-soft text-success dark:text-success' },
+  abbandonato: { label: 'Abbandonato', cls: 'bg-raised dark:bg-raised text-muted dark:text-secondary' },
 };
 
 const PROSPECTING_STATO_LABEL: Record<ProspectingStato, string> = {
@@ -137,8 +138,8 @@ const contactSublabel = (c: Contact) => {
   return parts.length > 0 ? parts.join(' · ') : undefined;
 };
 
-const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 dark:text-white font-bold outline-none focus:border-[var(--accent-400)]';
-const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1';
+const inputCls = 'w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent';
+const labelCls = 'text-xs font-semibold text-muted uppercase tracking-normal block mb-1';
 
 function fmtDate(iso?: string): string {
   if (!iso) return '';
@@ -211,12 +212,12 @@ const FocusSummaryBadges: React.FC<{ entry: { dataFinePrevista?: string; prossim
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {entry.prossimaAzioneScadenza && (
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 ${overdue ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' : 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]'}`}>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${overdue ? 'bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger' : 'bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent'}`}>
           <Clock size={10} />{overdue ? 'Scaduta' : 'Entro'} {fmtDate(entry.prossimaAzioneScadenza)}
         </span>
       )}
       {entry.dataFinePrevista && (
-        <span className="text-[9px] font-bold text-gray-400 flex items-center gap-1"><Calendar size={10} />fino al {fmtDate(entry.dataFinePrevista)}</span>
+        <span className="text-xs font-bold text-muted flex items-center gap-1"><Calendar size={10} />fino al {fmtDate(entry.dataFinePrevista)}</span>
       )}
     </div>
   );
@@ -275,11 +276,11 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">{group ? 'Modifica gruppo' : 'Nuovo gruppo strategico'}</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">{group ? 'Modifica gruppo' : 'Nuovo gruppo strategico'}</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
 
         <div>
@@ -338,14 +339,14 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
               placeholder="Cerca un contatto da aggiungere..."
               emptyTitle="🔍 Nessun risultato"
               emptySubtitle="Prova con un termine diverso"
-              inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'}`}
+              inputWrapperClassName={open => `flex items-center gap-2 bg-canvas dark:bg-surface border-2 rounded-md px-2.5 py-2.5 transition-colors ${open ? 'border-accent' : 'border-line dark:border-line'}`}
             />
             {selectedContacts.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {selectedContacts.map(c => (
-                  <span key={c.id} className="flex items-center gap-1 text-[11px] font-bold bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)] pl-2.5 pr-1.5 py-1 rounded-full">
+                  <span key={c.id} className="flex items-center gap-1 text-xs font-bold bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent pl-2.5 pr-1.5 py-1 rounded-full">
                     {c.company || c.contactName}
-                    <button type="button" onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))} className="text-[var(--accent-400)] hover:text-[var(--accent-600)]">
+                    <button type="button" onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))} className="text-accent hover:text-accent">
                       <X size={11} />
                     </button>
                   </span>
@@ -360,7 +361,7 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className={inputCls} />
         </div>
 
-        <button type="submit" className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]">
+        <button type="submit" className="w-full py-3 rounded-md bg-action text-action-foreground font-semibold hover:bg-action-hover">
           {group ? 'Salva modifiche' : 'Crea gruppo'}
         </button>
 
@@ -368,19 +369,19 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ group, onSave, onDelete
           <div>
             {confirmDelete ? (
               <div className="flex items-center gap-2 pt-2">
-                <p className="flex-1 text-xs font-bold text-red-500">Eliminare il gruppo? I contatti collegati restano nel CRM, solo scollegati.</p>
-                <button type="button" onClick={onDelete} className="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-700">Conferma</button>
-                <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-black">Annulla</button>
+                <p className="flex-1 text-xs font-bold text-danger">Eliminare il gruppo? I contatti collegati restano nel CRM, solo scollegati.</p>
+                <button type="button" onClick={onDelete} className="px-3 py-2 rounded-md bg-danger text-status-foreground text-xs font-semibold hover:bg-danger">Conferma</button>
+                <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-md bg-raised dark:bg-surface text-secondary text-xs font-semibold">Annulla</button>
               </div>
             ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-black text-red-500 hover:text-red-600">
+              <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-danger hover:text-danger">
                 <Trash2 size={13} />Elimina gruppo
               </button>
             )}
           </div>
         )}
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -421,14 +422,14 @@ const FocusFormModal: React.FC<FocusFormModalProps> = ({ contact, focus, onSave,
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={handleSubmit} className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-black text-gray-900 dark:text-white">{focus ? 'Modifica focus strategico' : 'Nuovo focus strategico'}</h2>
-            <p className="text-xs font-bold text-gray-400">{contact.company}</p>
+            <h2 className="text-base font-semibold text-foreground dark:text-foreground">{focus ? 'Modifica focus strategico' : 'Nuovo focus strategico'}</h2>
+            <p className="text-xs font-bold text-muted">{contact.company}</p>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -463,7 +464,7 @@ const FocusFormModal: React.FC<FocusFormModalProps> = ({ contact, focus, onSave,
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className={inputCls} />
         </div>
 
-        <button type="submit" className="w-full py-3 rounded-xl bg-[var(--accent-600)] text-white font-black hover:bg-[var(--accent-700)]">
+        <button type="submit" className="w-full py-3 rounded-md bg-action text-action-foreground font-semibold hover:bg-action-hover">
           {focus ? 'Salva modifiche' : 'Metti sotto focus strategico'}
         </button>
 
@@ -471,19 +472,19 @@ const FocusFormModal: React.FC<FocusFormModalProps> = ({ contact, focus, onSave,
           <div>
             {confirmDelete ? (
               <div className="flex items-center gap-2 pt-2">
-                <p className="flex-1 text-xs font-bold text-red-500">Rimuovere il focus strategico? Il contatto resta nel CRM.</p>
-                <button type="button" onClick={onDelete} className="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-700">Conferma</button>
-                <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-black">Annulla</button>
+                <p className="flex-1 text-xs font-bold text-danger">Rimuovere il focus strategico? Il contatto resta nel CRM.</p>
+                <button type="button" onClick={onDelete} className="px-3 py-2 rounded-md bg-danger text-status-foreground text-xs font-semibold hover:bg-danger">Conferma</button>
+                <button type="button" onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-md bg-raised dark:bg-surface text-secondary text-xs font-semibold">Annulla</button>
               </div>
             ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-black text-red-500 hover:text-red-600">
+              <button type="button" onClick={() => setConfirmDelete(true)} className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-danger hover:text-danger">
                 <Trash2 size={13} />Rimuovi focus strategico
               </button>
             )}
           </div>
         )}
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -509,23 +510,23 @@ const AddChooserModal: React.FC<AddChooserModalProps> = ({ onPickGroup, onPickCo
   );
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-surface dark:bg-canvas w-full sm:max-w-md sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Nuovo focus strategico</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Nuovo focus strategico</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface"><X size={18} /></button>
         </div>
 
-        <button onClick={onPickGroup} className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 text-left transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0"><Radar size={18} className="text-[var(--accent-500)]" /></div>
+        <button onClick={onPickGroup} className="w-full flex items-center gap-3 p-4 rounded-panel bg-canvas dark:bg-surface hover:bg-accent-soft dark:hover:bg-accent-soft/20 text-left transition-colors">
+          <div className="w-10 h-10 rounded-md bg-surface dark:bg-raised flex items-center justify-center flex-shrink-0"><Radar size={18} className="text-accent" /></div>
           <div>
-            <p className="text-sm font-black text-gray-800 dark:text-white">Nuovo gruppo</p>
-            <p className="text-[11px] text-gray-400">Catena o gruppo d'acquisto con più contatti collegati</p>
+            <p className="text-sm font-semibold text-foreground dark:text-foreground">Nuovo gruppo</p>
+            <p className="text-xs text-muted">Catena o gruppo d'acquisto con più contatti collegati</p>
           </div>
         </button>
 
         <div className="space-y-2">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><User size={13} />Oppure metti sotto focus un cliente/prospect già in rubrica</p>
+          <p className="text-xs font-semibold text-muted uppercase tracking-normal flex items-center gap-1.5"><User size={13} />Oppure metti sotto focus un cliente/prospect già in rubrica</p>
           <SearchDropdown
             value={search}
             onChange={setSearch}
@@ -544,7 +545,7 @@ const AddChooserModal: React.FC<AddChooserModalProps> = ({ onPickGroup, onPickCo
           />
         </div>
       </div>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -561,17 +562,17 @@ interface LinkedContactRowProps {
 const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDeal, onUnlink, onOpenContact, onLog }) => {
   const profilato = !!contact.profiling;
   return (
-    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
-      <button onClick={onOpenContact} className="w-9 h-9 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
-        <Building2 size={15} className="text-gray-400" />
+    <div className="flex items-center gap-3 bg-canvas dark:bg-canvas/50 rounded-md p-3">
+      <button onClick={onOpenContact} className="w-9 h-9 rounded-md bg-surface dark:bg-surface border border-line dark:border-line flex items-center justify-center flex-shrink-0">
+        <Building2 size={15} className="text-muted" />
       </button>
       <button onClick={onOpenContact} className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-bold text-gray-800 dark:text-white truncate hover:text-[var(--accent-600)] dark:hover:text-[var(--accent-400)]">{contact.company}</p>
+        <p className="text-sm font-bold text-foreground dark:text-foreground truncate hover:text-accent dark:hover:text-accent">{contact.company}</p>
         {(contact.city || (contact.locations && contact.locations.length > 0)) && (
-          <p className="text-[10px] text-gray-400 truncate mt-0.5">
+          <p className="text-xs text-muted truncate mt-0.5">
             {contact.city || 'Sede principale'}
             {contact.locations && contact.locations.length > 0 && (
-              <span className="text-[var(--accent-500)] dark:text-[var(--accent-400)] font-bold">
+              <span className="text-accent dark:text-accent font-bold">
                 {' '}+ {contact.locations.length} sed{contact.locations.length === 1 ? 'e' : 'i'}{': '}
                 {contact.locations.map(l => l.label || l.city).filter(Boolean).join(', ')}
               </span>
@@ -579,30 +580,30 @@ const LinkedContactRow: React.FC<LinkedContactRowProps> = ({ contact, hasOpenDea
           </p>
         )}
         <div className="flex flex-wrap items-center gap-1 mt-1">
-          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+          <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-raised dark:bg-raised text-secondary dark:text-muted">
             {contact.customerType === 'end-user' ? 'End user' : 'Dealer'}
           </span>
           {contact.prospectingStato && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent">
               {PROSPECTING_STATO_LABEL[contact.prospectingStato]}
             </span>
           )}
           {profilato && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center gap-0.5">
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-success-soft dark:bg-success-soft text-success dark:text-success flex items-center gap-0.5">
               <CheckCircle2 size={9} />Profilato
             </span>
           )}
           {hasOpenDeal && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center gap-0.5">
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning flex items-center gap-0.5">
               <TrendingUp size={9} />Trattativa aperta
             </span>
           )}
         </div>
       </button>
-      <button onClick={onLog} className="p-1.5 rounded-lg text-gray-300 hover:text-[var(--accent-500)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 flex-shrink-0" title="Registra contatto (email/chiamata)">
+      <button onClick={onLog} className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20 flex-shrink-0" title="Registra contatto (email/chiamata)">
         <MessageSquarePlus size={14} />
       </button>
-      <button onClick={onUnlink} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0" title="Scollega dal gruppo">
+      <button onClick={onUnlink} className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft flex-shrink-0" title="Scollega dal gruppo">
         <X size={14} />
       </button>
     </div>
@@ -652,44 +653,44 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
   return (
     <div className="space-y-5 pb-6">
       <div className="flex items-center gap-2">
-        <button onClick={onBack} className="flex items-center gap-1 text-xs font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button onClick={onBack} className="flex items-center gap-1 text-xs font-semibold text-muted hover:text-secondary dark:hover:text-muted">
           <ChevronLeft size={16} />Strategia
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-3">
+      <div className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-black text-gray-900 dark:text-white">{group.nome}</h1>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${priorityConfig(group.priorita).cls}`}>{priorityConfig(group.priorita).label}</span>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(group.stato).cls}`}>{statoConfig(group.stato).label}</span>
+              <h1 className="text-lg  text-foreground dark:text-foreground">{group.nome}</h1>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priorityConfig(group.priorita).cls}`}>{priorityConfig(group.priorita).label}</span>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statoConfig(group.stato).cls}`}>{statoConfig(group.stato).label}</span>
             </div>
-            <p className="text-xs font-bold text-gray-400 mt-1">{TIPO_LABEL[group.tipo]}</p>
+            <p className="text-xs font-bold text-muted mt-1">{TIPO_LABEL[group.tipo]}</p>
           </div>
-          <button onClick={() => setShowEdit(true)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[var(--accent-600)] flex-shrink-0"><Pencil size={15} /></button>
+          <button onClick={() => setShowEdit(true)} className="p-2 rounded-md bg-canvas dark:bg-raised text-secondary hover:text-accent flex-shrink-0"><Pencil size={15} /></button>
         </div>
 
-        {group.obiettivo && <p className="text-sm text-gray-600 dark:text-gray-300"><span className="font-black text-gray-800 dark:text-white">Obiettivo:</span> {group.obiettivo}</p>}
+        {group.obiettivo && <p className="text-sm text-secondary dark:text-muted"><span className="font-semibold text-foreground dark:text-foreground">Obiettivo:</span> {group.obiettivo}</p>}
         {group.prossimaAzione && (
-          <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl p-3">
-            <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-0.5">Prossima azione</p>
-            <p className="text-sm font-bold text-gray-800 dark:text-white">{group.prossimaAzione}</p>
+          <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-md p-3">
+            <p className="text-xs font-semibold text-accent uppercase tracking-normal mb-0.5">Prossima azione</p>
+            <p className="text-sm font-bold text-foreground dark:text-foreground">{group.prossimaAzione}</p>
           </div>
         )}
         <FocusSummaryBadges entry={group} />
-        {group.note && <p className="text-xs text-gray-400 whitespace-pre-wrap">{group.note}</p>}
+        {group.note && <p className="text-xs text-muted whitespace-pre-wrap">{group.note}</p>}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><Building2 size={11} />{linkedContacts.length} contatti</span>
-          <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><CheckCircle2 size={11} />{stats.profilati} profilati</span>
-          <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><Radar size={11} />{stats.inProspecting} in prospecting</span>
-          <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><TrendingUp size={11} />{stats.trattativeAperte} trattative aperte</span>
+          <span className="text-xs font-bold text-muted flex items-center gap-1"><Building2 size={11} />{linkedContacts.length} contatti</span>
+          <span className="text-xs font-bold text-muted flex items-center gap-1"><CheckCircle2 size={11} />{stats.profilati} profilati</span>
+          <span className="text-xs font-bold text-muted flex items-center gap-1"><Radar size={11} />{stats.inProspecting} in prospecting</span>
+          <span className="text-xs font-bold text-muted flex items-center gap-1"><TrendingUp size={11} />{stats.trattativeAperte} trattative aperte</span>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-3">
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Search size={13} />Aggiungi contatto al gruppo</p>
+      <div className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm space-y-3">
+        <p className="text-xs font-semibold text-muted uppercase tracking-normal flex items-center gap-1.5"><Search size={13} />Aggiungi contatto al gruppo</p>
         <SearchDropdown
           value={contactSearch}
           onChange={setContactSearch}
@@ -709,16 +710,16 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ group, onBack, onNavigateToCo
           placeholder="Cerca un contatto già in rubrica..."
           emptyTitle="🔍 Nessun risultato"
           emptySubtitle="Prova con un termine diverso"
-          inputWrapperClassName={open => `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'}`}
+          inputWrapperClassName={open => `flex items-center gap-2 bg-canvas dark:bg-surface border-2 rounded-md px-2.5 py-2.5 transition-colors ${open ? 'border-accent' : 'border-line dark:border-line'}`}
         />
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Contatti collegati ({linkedContacts.length})</p>
+        <p className="text-xs font-semibold text-muted uppercase tracking-normal px-1">Contatti collegati ({linkedContacts.length})</p>
         {linkedContacts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center gap-2 bg-white dark:bg-gray-800 rounded-3xl">
-            <Building2 size={22} className="text-gray-300 dark:text-gray-600" />
-            <p className="text-sm font-bold text-gray-400">Nessun contatto ancora collegato</p>
+          <div className="flex flex-col items-center justify-center py-10 text-center gap-2 bg-surface dark:bg-surface rounded-panel">
+            <Building2 size={22} className="text-muted dark:text-secondary" />
+            <p className="text-sm font-bold text-muted">Nessun contatto ancora collegato</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -790,63 +791,63 @@ const FocusDetail: React.FC<FocusDetailProps> = ({ focus, onBack, onNavigateToCo
   if (!contact) {
     return (
       <div className="space-y-5 pb-6">
-        <button onClick={onBack} className="flex items-center gap-1 text-xs font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button onClick={onBack} className="flex items-center gap-1 text-xs font-semibold text-muted hover:text-secondary dark:hover:text-muted">
           <ChevronLeft size={16} />Strategia
         </button>
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 text-center text-sm font-bold text-gray-400">Contatto non trovato.</div>
+        <div className="bg-surface dark:bg-surface rounded-panel p-5 text-center text-sm font-bold text-muted">Contatto non trovato.</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-5 pb-6">
-      <button onClick={onBack} className="flex items-center gap-1 text-xs font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+      <button onClick={onBack} className="flex items-center gap-1 text-xs font-semibold text-muted hover:text-secondary dark:hover:text-muted">
         <ChevronLeft size={16} />Strategia
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-3">
+      <div className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => onNavigateToContact(contact.id)} className="text-lg font-black text-gray-900 dark:text-white hover:text-[var(--accent-600)] dark:hover:text-[var(--accent-400)] hover:underline text-left">{contact.company}</button>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${priorityConfig(focus.priorita).cls}`}>{priorityConfig(focus.priorita).label}</span>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(focus.stato).cls}`}>{statoConfig(focus.stato).label}</span>
+              <button onClick={() => onNavigateToContact(contact.id)} className="text-lg font-semibold text-foreground dark:text-foreground hover:text-accent dark:hover:text-accent hover:underline text-left">{contact.company}</button>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priorityConfig(focus.priorita).cls}`}>{priorityConfig(focus.priorita).label}</span>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statoConfig(focus.stato).cls}`}>{statoConfig(focus.stato).label}</span>
             </div>
-            <p className="text-xs font-bold text-gray-400 mt-1">{contact.contactName}{contact.city ? ` · ${contact.city}` : ''}</p>
+            <p className="text-xs font-bold text-muted mt-1">{contact.contactName}{contact.city ? ` · ${contact.city}` : ''}</p>
           </div>
-          <button onClick={() => setShowEdit(true)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[var(--accent-600)] flex-shrink-0"><Pencil size={15} /></button>
+          <button onClick={() => setShowEdit(true)} className="p-2 rounded-md bg-canvas dark:bg-raised text-secondary hover:text-accent flex-shrink-0"><Pencil size={15} /></button>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+          <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-raised dark:bg-raised text-secondary dark:text-muted">
             {contact.customerType === 'end-user' ? 'End user' : 'Dealer'}
           </span>
           {contact.prospectingStato && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent">
               {PROSPECTING_STATO_LABEL[contact.prospectingStato]}
             </span>
           )}
           {contact.profiling && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center gap-0.5">
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-success-soft dark:bg-success-soft text-success dark:text-success flex items-center gap-0.5">
               <CheckCircle2 size={9} />Profilato
             </span>
           )}
           {hasOpenDeal && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center gap-0.5">
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning flex items-center gap-0.5">
               <TrendingUp size={9} />Trattativa aperta
             </span>
           )}
         </div>
 
-        {focus.obiettivo && <p className="text-sm text-gray-600 dark:text-gray-300"><span className="font-black text-gray-800 dark:text-white">Obiettivo:</span> {focus.obiettivo}</p>}
+        {focus.obiettivo && <p className="text-sm text-secondary dark:text-muted"><span className="font-semibold text-foreground dark:text-foreground">Obiettivo:</span> {focus.obiettivo}</p>}
         {focus.prossimaAzione && (
-          <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-xl p-3">
-            <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest mb-0.5">Prossima azione</p>
-            <p className="text-sm font-bold text-gray-800 dark:text-white">{focus.prossimaAzione}</p>
+          <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-md p-3">
+            <p className="text-xs font-semibold text-accent uppercase tracking-normal mb-0.5">Prossima azione</p>
+            <p className="text-sm font-bold text-foreground dark:text-foreground">{focus.prossimaAzione}</p>
           </div>
         )}
         <FocusSummaryBadges entry={focus} />
-        {focus.note && <p className="text-xs text-gray-400 whitespace-pre-wrap">{focus.note}</p>}
+        {focus.note && <p className="text-xs text-muted whitespace-pre-wrap">{focus.note}</p>}
       </div>
 
       <DialogoCard contact={contact} onNavigateToContact={onNavigateToContact} />
@@ -877,19 +878,19 @@ interface StrategyCardProps {
 }
 
 const StrategyCard: React.FC<StrategyCardProps> = ({ icon, titolo, sottotitolo, priorita, stato, entry, onClick }) => (
-  <button onClick={onClick} className="w-full text-left bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow space-y-2">
+  <button onClick={onClick} className="w-full text-left bg-surface dark:bg-surface rounded-panel p-4 shadow-sm hover:shadow-panel transition-shadow space-y-2">
     <div className="flex items-start justify-between gap-2">
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">{icon}</div>
+        <div className="w-8 h-8 rounded-md bg-canvas dark:bg-raised flex items-center justify-center flex-shrink-0">{icon}</div>
         <div className="min-w-0">
-          <p className="text-sm font-black text-gray-900 dark:text-white truncate">{titolo}</p>
-          <p className="text-[11px] font-bold text-gray-400 truncate">{sottotitolo}</p>
+          <p className="text-sm font-semibold text-foreground dark:text-foreground truncate">{titolo}</p>
+          <p className="text-xs font-bold text-muted truncate">{sottotitolo}</p>
         </div>
       </div>
-      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0 ${priorityConfig(priorita).cls}`}>{priorityConfig(priorita).label}</span>
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${priorityConfig(priorita).cls}`}>{priorityConfig(priorita).label}</span>
     </div>
     <div className="flex items-center justify-between gap-2">
-      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${statoConfig(stato).cls}`}>{statoConfig(stato).label}</span>
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statoConfig(stato).cls}`}>{statoConfig(stato).label}</span>
       <FocusSummaryBadges entry={entry} />
     </div>
   </button>
@@ -978,27 +979,27 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
     <div className="space-y-5 pb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-            <Target className="text-[var(--accent-500)]" size={26} />Strategia
+          <h1 className="text-2xl  text-foreground dark:text-foreground flex items-center gap-2.5">
+            <Target className="text-accent" size={26} />Strategia
           </h1>
-          <p className="text-xs font-bold text-gray-400 mt-0.5">Gruppi e clienti su cui concentrare le energie</p>
+          <p className="text-xs font-bold text-muted mt-0.5">Gruppi e clienti su cui concentrare le energie</p>
         </div>
-        <button onClick={() => setShowChooser(true)} className="w-11 h-11 rounded-2xl bg-[var(--accent-600)] text-white flex items-center justify-center shadow-lg hover:bg-[var(--accent-700)] flex-shrink-0">
+        <button onClick={() => setShowChooser(true)} className="w-11 h-11 rounded-panel bg-action text-action-foreground flex items-center justify-center shadow-panel hover:bg-action-hover flex-shrink-0">
           <Plus size={22} />
         </button>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus-within:border-[var(--accent-400)] transition-colors">
-        <Search size={15} className="text-gray-400 flex-shrink-0" />
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel focus-within:border-accent transition-colors">
+        <Search size={15} className="text-muted flex-shrink-0" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Cerca per gruppo, cliente, obiettivo o nota…"
-          className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold min-w-0"
+          className="flex-1 bg-transparent outline-none text-sm dark:text-foreground placeholder-gray-400 font-bold min-w-0"
         />
         {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors">
+          <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-muted hover:text-secondary transition-colors">
             <X size={14} />
           </button>
         )}
@@ -1012,26 +1013,26 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
             <button
               key={s}
               onClick={() => setStatoFiltro(s)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
+              className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 active
-                  ? 'bg-[var(--accent-600)] text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? 'bg-action text-action-foreground'
+                  : 'bg-raised dark:bg-surface text-secondary dark:text-muted hover:bg-raised dark:hover:bg-raised'
               }`}
             >
-              {label} <span className={active ? 'text-[var(--accent-200)]' : 'text-gray-400 dark:text-gray-500'}>{countByStato[s]}</span>
+              {label} <span className={active ? 'text-accent' : 'text-muted dark:text-secondary'}>{countByStato[s]}</span>
             </button>
           );
         })}
       </div>
 
       {entries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 bg-white dark:bg-gray-800 rounded-3xl">
-          <Target size={32} className="text-gray-300 dark:text-gray-600" />
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 bg-surface dark:bg-surface rounded-panel">
+          <Target size={32} className="text-muted dark:text-secondary" />
           <div>
-            <p className="text-sm font-black text-gray-500 dark:text-gray-300">
+            <p className="text-sm font-semibold text-secondary dark:text-muted">
               {statoFiltro === 'tutti' ? 'Nessun focus strategico ancora' : `Nessun elemento in "${STATO_CONFIG[statoFiltro].label}"`}
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted mt-1">
               {statoFiltro === 'tutti' ? 'Crea un gruppo o metti un cliente sotto focus con "+"' : 'Cambia filtro per vedere gli altri elementi'}
             </p>
           </div>
@@ -1041,7 +1042,7 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
           {entries.map(entry => entry.kind === 'group' ? (
             <StrategyCard
               key={`g-${entry.id}`}
-              icon={<Radar size={15} className="text-[var(--accent-500)]" />}
+              icon={<Radar size={15} className="text-accent" />}
               titolo={entry.data.nome}
               sottotitolo={`${TIPO_LABEL[entry.data.tipo]} · ${contactCountByGroup[entry.id] || 0} contatti`}
               priorita={entry.data.priorita}
@@ -1052,7 +1053,7 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
           ) : (
             <StrategyCard
               key={`f-${entry.id}`}
-              icon={<User size={15} className="text-[var(--accent-500)]" />}
+              icon={<User size={15} className="text-accent" />}
               titolo={contacts[entry.data.contactId]?.company || '—'}
               sottotitolo={entry.data.obiettivo || 'Focus su cliente singolo'}
               priorita={entry.data.priorita}

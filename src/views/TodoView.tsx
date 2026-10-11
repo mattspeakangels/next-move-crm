@@ -1,3 +1,4 @@
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useMemo } from 'react';
 import {
   CheckSquare, Square, Plus, Trash2, Filter, ChevronDown, ChevronRight,
@@ -11,26 +12,27 @@ import { matchSearch, sortByRelevance } from '../utils/search';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TIPO_CONFIG: Record<TodoTipo, { label: string; color: string; bg: string }> = {
-  offerta:         { label: 'Offerta',        color: 'text-[var(--accent-700)] dark:text-[var(--accent-300)]', bg: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40' },
-  'scheda-tecnica':{ label: 'Scheda tecnica', color: 'text-blue-700 dark:text-blue-300',    bg: 'bg-blue-100 dark:bg-blue-900/40' },
-  'email-info':    { label: 'Email / Info',   color: 'text-sky-700 dark:text-sky-300',      bg: 'bg-sky-100 dark:bg-sky-900/40' },
-  'chiamata-follow':{ label: 'Chiamata',      color: 'text-green-700 dark:text-green-300',  bg: 'bg-green-100 dark:bg-green-900/40' },
-  campionatura:    { label: 'Campionatura',   color: 'text-amber-700 dark:text-amber-300',  bg: 'bg-amber-100 dark:bg-amber-900/40' },
-  demo:            { label: 'Demo',           color: 'text-purple-700 dark:text-purple-300',bg: 'bg-purple-100 dark:bg-purple-900/40' },
-  visita:          { label: 'Visita',         color: 'text-rose-700 dark:text-rose-300',    bg: 'bg-rose-100 dark:bg-rose-900/40' },
-  altro:           { label: 'Altro',          color: 'text-gray-700 dark:text-gray-300',    bg: 'bg-gray-100 dark:bg-gray-700' },
+  offerta:         { label: 'Offerta',        color: 'text-accent dark:text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/40' },
+  'scheda-tecnica':{ label: 'Scheda tecnica', color: 'text-accent dark:text-accent',    bg: 'bg-accent-soft dark:bg-accent-soft/40' },
+  'email-info':    { label: 'Email / Info',   color: 'text-accent dark:text-accent',      bg: 'bg-accent-soft dark:bg-accent-soft/40' },
+  'chiamata-follow':{ label: 'Chiamata',      color: 'text-success dark:text-success',  bg: 'bg-success-soft dark:bg-success-soft' },
+  campionatura:    { label: 'Campionatura',   color: 'text-warning dark:text-warning',  bg: 'bg-warning-soft dark:bg-warning-soft' },
+  demo:            { label: 'Demo',           color: 'text-accent dark:text-accent',bg: 'bg-accent-soft dark:bg-accent-soft/40' },
+  visita:          { label: 'Visita',         color: 'text-danger dark:text-danger',    bg: 'bg-danger-soft dark:bg-danger-soft' },
+  altro:           { label: 'Altro',          color: 'text-foreground dark:text-muted',    bg: 'bg-raised dark:bg-raised' },
 };
 
 const PRIORITA_CONFIG: Record<TodoPriorita, { label: string; dot: string }> = {
-  alta:  { label: 'Alta',  dot: 'bg-red-500' },
-  media: { label: 'Media', dot: 'bg-amber-400' },
-  bassa: { label: 'Bassa', dot: 'bg-gray-300 dark:bg-gray-600' },
+  alta:  { label: 'Alta',  dot: 'bg-danger' },
+  media: { label: 'Media', dot: 'bg-warning' },
+  bassa: { label: 'Bassa', dot: 'bg-raised dark:bg-raised' },
 };
 
 const SOURCE_LABEL: Record<TodoItem['source'], string> = {
-  manuale: 'Manuale',
-  visita:  'Da visita',
-  ai:      'Da AI',
+  manuale:     'Manuale',
+  visita:      'Da visita',
+  ai:          'Da AI',
+  'follow-up': 'Follow-up offerta',
 };
 
 function isOverdue(scadenza?: string): boolean {
@@ -102,23 +104,23 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
   };
 
   return (
-    <div
+    <DialogFrame
       className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl"
+        className="bg-surface dark:bg-canvas w-full sm:max-w-lg sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Nuovo To Do</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Nuovo To Do</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface">
             <X size={18} />
           </button>
         </div>
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Attività *</label>
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Attività *</label>
           <input
             type="text"
             value={titolo}
@@ -126,17 +128,17 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
             placeholder="Es. Inviare offerta a Rossi Srl"
             required
             autoFocus
-            className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+            className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-3 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Tipo</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Tipo</label>
             <select
               value={tipo}
               onChange={e => setTipo(e.target.value as TodoTipo)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+              className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
             >
               {Object.entries(TIPO_CONFIG).map(([k, v]) => (
                 <option key={k} value={k}>{v.label}</option>
@@ -144,11 +146,11 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Priorità</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Priorità</label>
             <select
               value={priorita}
               onChange={e => setPriority(e.target.value as TodoPriorita)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+              className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
             >
               <option value="alta">Alta</option>
               <option value="media">Media</option>
@@ -159,16 +161,16 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Scadenza</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Scadenza</label>
             <input
               type="date"
               value={scadenza}
               onChange={e => setScadenza(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+              className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">
               Cliente{selectedContacts.length > 0 ? ` · ${selectedContacts.length} selezionati` : ''}
             </label>
             <SearchDropdown
@@ -190,8 +192,8 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
               emptyTitle={Object.keys(contacts).length === 0 ? '📋 Rubrica vuota' : '🔍 Nessun risultato'}
               emptySubtitle={Object.keys(contacts).length === 0 ? 'Aggiungi contatti dalla sezione Clienti' : 'Prova con un termine diverso'}
               inputWrapperClassName={open =>
-                `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${
-                  open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'
+                `flex items-center gap-2 bg-canvas dark:bg-surface border-2 rounded-md px-2.5 py-2.5 transition-colors ${
+                  open ? 'border-accent' : 'border-line dark:border-line'
                 }`
               }
             />
@@ -200,13 +202,13 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
                 {selectedContacts.map(c => (
                   <span
                     key={c.id}
-                    className="flex items-center gap-1 text-[11px] font-bold pl-2.5 pr-1.5 py-1 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]"
+                    className="flex items-center gap-1 text-xs font-bold pl-2.5 pr-1.5 py-1 rounded-full bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent"
                   >
                     {c.company || '(senza nome)'}
                     <button
                       type="button"
                       onClick={() => setSelectedContacts(prev => prev.filter(x => x.id !== c.id))}
-                      className="p-0.5 rounded-full hover:bg-[var(--accent-200)] dark:hover:bg-[var(--accent-800)]"
+                      className="p-0.5 rounded-full hover:bg-accent-soft dark:hover:bg-accent-soft"
                     >
                       <X size={11} />
                     </button>
@@ -218,33 +220,33 @@ const AddTodoModal: React.FC<AddTodoModalProps> = ({ onClose, onAdd, contacts })
         </div>
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Note</label>
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Note</label>
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Dettagli aggiuntivi..."
             rows={2}
-            className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none resize-none focus:border-[var(--accent-400)]"
+            className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-3 text-sm dark:text-foreground outline-none resize-none focus:border-accent"
           />
         </div>
 
         <div className="flex gap-3 pt-1">
           <button
             type="submit"
-            className="flex-1 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors"
+            className="flex-1 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors"
           >
             Aggiungi
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors"
+            className="px-5 py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors"
           >
             Annulla
           </button>
         </div>
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -290,23 +292,23 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
   };
 
   return (
-    <div
+    <DialogFrame
       className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl p-6 space-y-4 shadow-2xl"
+        className="bg-surface dark:bg-canvas w-full sm:max-w-lg sm:rounded-panel rounded-t-3xl p-6 space-y-4 shadow-panel"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900 dark:text-white">Modifica To Do</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground">Modifica To Do</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close type="button" onClick={onClose} className="p-1.5 rounded-md text-muted hover:bg-raised dark:hover:bg-surface">
             <X size={18} />
           </button>
         </div>
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Attività *</label>
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Attività *</label>
           <input
             type="text"
             value={titolo}
@@ -314,17 +316,17 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
             placeholder="Es. Inviare offerta a Rossi Srl"
             required
             autoFocus
-            className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+            className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-3 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Tipo</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Tipo</label>
             <select
               value={tipo}
               onChange={e => setTipo(e.target.value as TodoTipo)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+              className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
             >
               {Object.entries(TIPO_CONFIG).map(([k, v]) => (
                 <option key={k} value={k}>{v.label}</option>
@@ -332,11 +334,11 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Priorità</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Priorità</label>
             <select
               value={priorita}
               onChange={e => setPriority(e.target.value as TodoPriorita)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+              className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
             >
               <option value="alta">Alta</option>
               <option value="media">Media</option>
@@ -347,23 +349,23 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Scadenza</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Scadenza</label>
             <input
               type="date"
               value={scadenza}
               onChange={e => setScadenza(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+              className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Cliente</label>
+            <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Cliente</label>
             {selectedContact ? (
-              <span className="flex items-center justify-between gap-1 text-[11px] font-bold pl-2.5 pr-1.5 py-2.5 rounded-xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 text-[var(--accent-700)] dark:text-[var(--accent-300)]">
+              <span className="flex items-center justify-between gap-1 text-xs font-bold pl-2.5 pr-1.5 py-2.5 rounded-md bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent">
                 <span className="truncate">{selectedContact.company || '(senza nome)'}</span>
                 <button
                   type="button"
                   onClick={() => setSelectedContact(null)}
-                  className="p-0.5 rounded-full hover:bg-[var(--accent-200)] dark:hover:bg-[var(--accent-800)] flex-shrink-0"
+                  className="p-0.5 rounded-full hover:bg-accent-soft dark:hover:bg-accent-soft flex-shrink-0"
                 >
                   <X size={12} />
                 </button>
@@ -385,8 +387,8 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
                 emptyTitle={Object.keys(contacts).length === 0 ? '📋 Rubrica vuota' : '🔍 Nessun risultato'}
                 emptySubtitle={Object.keys(contacts).length === 0 ? 'Aggiungi contatti dalla sezione Clienti' : 'Prova con un termine diverso'}
                 inputWrapperClassName={open =>
-                  `flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border-2 rounded-xl px-2.5 py-2.5 transition-colors ${
-                    open ? 'border-[var(--accent-400)]' : 'border-gray-100 dark:border-gray-700'
+                  `flex items-center gap-2 bg-canvas dark:bg-surface border-2 rounded-md px-2.5 py-2.5 transition-colors ${
+                    open ? 'border-accent' : 'border-line dark:border-line'
                   }`
                 }
               />
@@ -395,33 +397,33 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({ todo, onClose, onSave, co
         </div>
 
         <div>
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Note</label>
+          <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1.5">Note</label>
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Dettagli aggiuntivi..."
             rows={2}
-            className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none resize-none focus:border-[var(--accent-400)]"
+            className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md p-3 text-sm dark:text-foreground outline-none resize-none focus:border-accent"
           />
         </div>
 
         <div className="flex gap-3 pt-1">
           <button
             type="submit"
-            className="flex-1 py-3 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors"
+            className="flex-1 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors"
           >
             Salva modifiche
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-colors"
+            className="px-5 py-3 rounded-panel bg-raised dark:bg-surface text-secondary dark:text-muted font-semibold text-sm hover:bg-raised transition-colors"
           >
             Annulla
           </button>
         </div>
       </form>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -464,21 +466,21 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
   const nextStatus: TodoStatus = isDone ? 'da-fare' : 'fatto';
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 transition-all ${
+    <div className={`bg-surface dark:bg-surface rounded-panel p-4 border-2 transition-all ${
       isDone
-        ? 'border-gray-100 dark:border-gray-700 opacity-60'
+        ? 'border-line dark:border-line opacity-60'
         : overdue
-          ? 'border-red-200 dark:border-red-800'
-          : 'border-gray-100 dark:border-gray-700'
+          ? 'border-danger dark:border-danger'
+          : 'border-line dark:border-line'
     }`}>
       <div className="flex items-start gap-3">
         {/* Checkbox */}
         <button
           onClick={() => onToggle(nextStatus)}
-          className="mt-0.5 flex-shrink-0 text-gray-300 dark:text-gray-600 hover:text-[var(--accent-500)] transition-colors"
+          className="mt-0.5 flex-shrink-0 text-muted dark:text-secondary hover:text-accent transition-colors"
         >
           {isDone
-            ? <CheckCircle2 size={20} className="text-green-500" />
+            ? <CheckCircle2 size={20} className="text-success" />
             : <Square size={20} />
           }
         </button>
@@ -495,12 +497,12 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
                   if (e.key === 'Enter') commitTitle();
                   if (e.key === 'Escape') { setTitleDraft(todo.titolo); setEditingTitle(false); }
                 }}
-                className="flex-1 text-sm font-bold leading-snug bg-transparent border-b-2 border-[var(--accent-400)] outline-none text-gray-900 dark:text-white"
+                className="flex-1 text-sm font-bold leading-snug bg-transparent border-b-2 border-accent outline-none text-foreground dark:text-foreground"
               />
             ) : (
               <p
                 onClick={() => setEditingTitle(true)}
-                className={`text-sm font-bold leading-snug cursor-text rounded px-0.5 -mx-0.5 ${isDone ? 'line-through text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50' : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
+                className={`text-sm font-bold leading-snug cursor-text rounded px-0.5 -mx-0.5 ${isDone ? 'line-through text-muted hover:bg-canvas dark:hover:bg-raised/50' : 'text-foreground dark:text-foreground hover:bg-canvas dark:hover:bg-raised/50'}`}
               >
                 {todo.titolo}
               </p>
@@ -509,13 +511,13 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
               <button
                 onClick={onEdit}
                 title="Modifica attività"
-                className="p-1 text-gray-400 dark:text-gray-500 hover:text-[var(--accent-500)] dark:hover:text-[var(--accent-400)] transition-colors rounded-lg hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20"
+                className="p-1 text-muted dark:text-secondary hover:text-accent dark:hover:text-accent transition-colors rounded-lg hover:bg-accent-soft dark:hover:bg-accent-soft/20"
               >
                 <Pencil size={14} />
               </button>
               <button
                 onClick={onDelete}
-                className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="p-1 text-muted dark:text-secondary hover:text-danger dark:hover:text-danger transition-colors rounded-lg hover:bg-danger-soft dark:hover:bg-danger-soft"
               >
                 <Trash2 size={14} />
               </button>
@@ -524,7 +526,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
             {/* Tipo */}
-            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${tipo.bg} ${tipo.color}`}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${tipo.bg} ${tipo.color}`}>
               {tipo.label}
             </span>
 
@@ -534,7 +536,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
               <select
                 value={todo.priorita}
                 onChange={(e) => onUpdate({ priorita: e.target.value as TodoItem['priorita'] })}
-                className="text-[9px] font-black text-gray-400 bg-transparent border-none outline-none cursor-pointer appearance-none"
+                className="text-xs font-semibold text-muted bg-transparent border-none outline-none cursor-pointer appearance-none"
               >
                 {Object.entries(PRIORITA_CONFIG).map(([key, cfg]) => (
                   <option key={key} value={key}>{cfg.label}</option>
@@ -544,21 +546,21 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
             {/* Scadenza */}
             {todo.scadenza && (
-              <span className={`flex items-center gap-1 text-[9px] font-bold ${overdue ? 'text-red-500' : 'text-gray-400'}`}>
+              <span className={`flex items-center gap-1 text-xs font-bold ${overdue ? 'text-danger' : 'text-muted'}`}>
                 <Calendar size={9} />
                 {overdue ? 'Scaduto ' : ''}{formatDate(todo.scadenza)}
               </span>
             )}
 
             {/* Data apertura */}
-            <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400" title={`Aperto il ${formatDateTime(todo.createdAt)}`}>
+            <span className="flex items-center gap-1 text-xs font-bold text-muted" title={`Aperto il ${formatDateTime(todo.createdAt)}`}>
               <Clock size={9} />
               Aperto {formatDateTime(todo.createdAt)}
             </span>
 
             {/* Contatto */}
             {contactName && (
-              <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400">
+              <span className="flex items-center gap-1 text-xs font-bold text-muted">
                 <Building2 size={9} />
                 {contactName}
               </span>
@@ -566,14 +568,14 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
             {/* Source badge se da visita/AI */}
             {todo.source !== 'manuale' && (
-              <span className="text-[9px] font-bold text-[var(--accent-400)] italic">
+              <span className="text-xs font-bold text-accent italic">
                 {SOURCE_LABEL[todo.source]}
               </span>
             )}
           </div>
 
           {todo.note && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">{todo.note}</p>
+            <p className="text-xs text-secondary dark:text-muted mt-1.5 leading-relaxed">{todo.note}</p>
           )}
 
           {/* Traccia email inviata */}
@@ -586,45 +588,45 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
                   onChange={(e) => setEmailDraft(e.target.value)}
                   placeholder="Incolla qui il testo dell'email inviata..."
                   rows={5}
-                  className="w-full text-xs leading-relaxed bg-gray-50 dark:bg-gray-900/50 border-2 border-[var(--accent-300)] dark:border-[var(--accent-700)] rounded-xl p-2 outline-none text-gray-700 dark:text-gray-200"
+                  className="w-full text-xs leading-relaxed bg-canvas dark:bg-canvas/50 border-2 border-accent dark:border-accent rounded-md p-2 outline-none text-foreground dark:text-muted"
                 />
                 <div className="flex items-center gap-2">
                   <button
                     onClick={commitEmail}
-                    className="text-[10px] font-black text-white bg-[var(--accent-600)] hover:bg-[var(--accent-700)] px-2.5 py-1 rounded-lg"
+                    className="text-xs font-semibold text-action-foreground bg-action hover:bg-action-hover px-2.5 py-1 rounded-lg"
                   >
                     Salva
                   </button>
                   <button
                     onClick={() => { setEmailDraft(todo.emailContent || ''); setEditingEmail(false); }}
-                    className="text-[10px] font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1"
+                    className="text-xs font-semibold text-muted hover:text-secondary dark:hover:text-muted px-2 py-1"
                   >
                     Annulla
                   </button>
                 </div>
               </div>
             ) : todo.emailContent ? (
-              <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2">
+              <div className="bg-canvas dark:bg-canvas/50 border border-line dark:border-line rounded-md p-2">
                 <div className="flex items-center gap-1.5 w-full">
                   <button
                     onClick={() => setEmailExpanded(v => !v)}
                     className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
                   >
-                    <Mail size={11} className="text-[var(--accent-400)] flex-shrink-0" />
-                    <span className="text-[9px] font-black text-gray-400 flex-1 truncate">
+                    <Mail size={11} className="text-accent flex-shrink-0" />
+                    <span className="text-xs font-semibold text-muted flex-1 truncate">
                       Email inviata {todo.emailSavedAt ? formatDateTime(todo.emailSavedAt) : ''}
                     </span>
-                    {emailExpanded ? <ChevronDown size={12} className="text-gray-400 flex-shrink-0" /> : <ChevronRight size={12} className="text-gray-400 flex-shrink-0" />}
+                    {emailExpanded ? <ChevronDown size={12} className="text-muted flex-shrink-0" /> : <ChevronRight size={12} className="text-muted flex-shrink-0" />}
                   </button>
                   <button
                     onClick={() => { setEmailDraft(todo.emailContent || ''); setEditingEmail(true); }}
-                    className="p-0.5 text-gray-400 hover:text-[var(--accent-500)] flex-shrink-0"
+                    className="p-0.5 text-muted hover:text-accent flex-shrink-0"
                   >
                     <Pencil size={11} />
                   </button>
                 </div>
                 {emailExpanded && (
-                  <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-1.5 whitespace-pre-wrap">
+                  <p className="text-xs text-secondary dark:text-muted leading-relaxed mt-1.5 whitespace-pre-wrap">
                     {todo.emailContent}
                   </p>
                 )}
@@ -632,7 +634,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
             ) : (
               <button
                 onClick={() => setEditingEmail(true)}
-                className="flex items-center gap-1 text-[10px] font-bold text-gray-400 hover:text-[var(--accent-500)] transition-colors"
+                className="flex items-center gap-1 text-xs font-bold text-muted hover:text-accent transition-colors"
               >
                 <Mail size={11} />
                 Traccia email inviata
@@ -642,7 +644,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
 
           {/* Storico avanzamento: data di ogni cambio di step */}
           {todo.statusHistory && todo.statusHistory.length > 1 && (
-            <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1.5 text-[9px] text-gray-400">
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mt-1.5 text-xs text-muted">
               {todo.statusHistory.map((h, i) => (
                 <React.Fragment key={i}>
                   {i > 0 && <ChevronRight size={9} />}
@@ -752,46 +754,46 @@ export const TodoView: React.FC = () => {
   const scaduti = allTodos.filter(t => t.status !== 'fatto' && isOverdue(t.scadenza)).length;
 
   const sections: { status: TodoStatus | 'tutti'; label: string; count: number; color: string }[] = [
-    { status: 'tutti',    label: 'Da fare', count: daFare, color: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
-    { status: 'fatto',    label: 'Fatto',    count: fatto,  color: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
+    { status: 'tutti',    label: 'Da fare', count: daFare, color: 'bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger' },
+    { status: 'fatto',    label: 'Fatto',    count: fatto,  color: 'bg-success-soft dark:bg-success-soft text-success dark:text-success' },
   ];
 
   return (
     <div className="space-y-5 pb-6">
 
       {/* Header (fisso in cima durante lo scroll, resta la lista sottostante a muoversi) */}
-      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-gray-50 dark:bg-gray-900">
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-canvas dark:bg-canvas">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-              <CheckSquare size={24} className="text-[var(--accent-600)]" />
+            <h1 className="text-2xl  text-foreground dark:text-foreground flex items-center gap-2.5">
+              <CheckSquare size={24} className="text-accent" />
               To Do
             </h1>
             {scaduti > 0 && (
-              <p className="text-xs text-red-500 font-bold mt-0.5 flex items-center gap-1">
+              <p className="text-xs text-danger font-bold mt-0.5 flex items-center gap-1">
                 <AlertCircle size={11} /> {scaduti} {scaduti === 1 ? 'attività scaduta' : 'attività scadute'}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2">
             {/* Toggle vista */}
-            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
+            <div className="flex bg-raised dark:bg-surface rounded-md p-0.5">
               <button
                 onClick={() => setViewMode('cliente')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'cliente' ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'cliente' ? 'bg-surface dark:bg-raised text-accent shadow-sm' : 'text-muted'}`}
               >
                 <Users size={12} /> Clienti
               </button>
               <button
                 onClick={() => setViewMode('lista')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${viewMode === 'lista' ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'lista' ? 'bg-surface dark:bg-raised text-accent shadow-sm' : 'text-muted'}`}
               >
                 <List size={12} /> Lista
               </button>
             </div>
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] transition-colors shadow-lg shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors shadow-panel  "
             >
               <Plus size={15} />
             </button>
@@ -800,17 +802,17 @@ export const TodoView: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus-within:border-[var(--accent-400)] transition-colors">
-        <Search size={15} className="text-gray-400 flex-shrink-0" />
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel focus-within:border-accent transition-colors">
+        <Search size={15} className="text-muted flex-shrink-0" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Cerca per titolo, nota o cliente…"
-          className="flex-1 bg-transparent outline-none text-sm dark:text-white placeholder-gray-400 font-bold min-w-0"
+          className="flex-1 bg-transparent outline-none text-sm dark:text-foreground placeholder-gray-400 font-bold min-w-0"
         />
         {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors">
+          <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-muted hover:text-secondary transition-colors">
             <X size={14} />
           </button>
         )}
@@ -822,15 +824,15 @@ export const TodoView: React.FC = () => {
           <button
             key={s.status}
             onClick={() => setFilterStatus(s.status)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border-2 ${
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-2 ${
               filterStatus === s.status
-                ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
+                ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
                 : 'border-transparent ' + s.color
             }`}
           >
             {s.label}
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
-              filterStatus === s.status ? 'bg-[var(--accent-200)] dark:bg-[var(--accent-800)] text-[var(--accent-700)] dark:text-[var(--accent-200)]' : 'bg-white/60 dark:bg-gray-900/40'
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+              filterStatus === s.status ? 'bg-accent-soft dark:bg-accent-soft text-accent dark:text-accent' : 'bg-surface/60 dark:bg-canvas/40'
             }`}>
               {s.count}
             </span>
@@ -840,10 +842,10 @@ export const TodoView: React.FC = () => {
         {/* Filter tipo */}
         <button
           onClick={() => setShowFilters(s => !s)}
-          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border-2 ${
+          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-2 ${
             filterTipo !== 'tutti'
-              ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)]'
-              : 'border-transparent bg-gray-100 dark:bg-gray-700 text-gray-500'
+              ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent'
+              : 'border-transparent bg-raised dark:bg-raised text-secondary'
           }`}
         >
           <Filter size={12} />
@@ -854,10 +856,10 @@ export const TodoView: React.FC = () => {
 
       {/* Tipo filter dropdown */}
       {showFilters && (
-        <div className="flex flex-wrap gap-1.5 bg-gray-50 dark:bg-gray-800 rounded-2xl p-3">
+        <div className="flex flex-wrap gap-1.5 bg-canvas dark:bg-surface rounded-panel p-3">
           <button
             onClick={() => { setFilterTipo('tutti'); setShowFilters(false); }}
-            className={`text-[10px] font-black px-2.5 py-1 rounded-full transition-colors ${filterTipo === 'tutti' ? 'bg-[var(--accent-600)] text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${filterTipo === 'tutti' ? 'bg-action text-action-foreground' : 'bg-surface dark:bg-raised text-secondary dark:text-muted'}`}
           >
             Tutti
           </button>
@@ -865,7 +867,7 @@ export const TodoView: React.FC = () => {
             <button
               key={k}
               onClick={() => { setFilterTipo(k as TodoTipo); setShowFilters(false); }}
-              className={`text-[10px] font-black px-2.5 py-1 rounded-full transition-colors ${filterTipo === k ? 'bg-[var(--accent-600)] text-white' : `${v.bg} ${v.color}`}`}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${filterTipo === k ? 'bg-action text-action-foreground' : `${v.bg} ${v.color}`}`}
             >
               {v.label}
             </button>
@@ -877,10 +879,10 @@ export const TodoView: React.FC = () => {
       {viewMode === 'cliente' && (
         byClient.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <CheckSquare size={24} className="text-gray-300 dark:text-gray-600" />
+            <div className="w-14 h-14 rounded-panel bg-raised dark:bg-surface flex items-center justify-center">
+              <CheckSquare size={24} className="text-muted dark:text-secondary" />
             </div>
-            <p className="text-sm font-bold text-gray-400">Nessuna attività. Aggiungine una o completa una visita!</p>
+            <p className="text-sm font-bold text-muted">Nessuna attività. Aggiungine una o completa una visita!</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -889,28 +891,28 @@ export const TodoView: React.FC = () => {
               const scadutiClient = clientTodos.filter(t => t.status !== 'fatto' && isOverdue(t.scadenza)).length;
               const daFareClient = clientTodos.filter(t => t.status === 'da-fare').length;
               return (
-                <div key={key} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+                <div key={key} className="bg-surface dark:bg-surface rounded-panel border border-line dark:border-line overflow-hidden shadow-sm">
                   {/* Client header */}
                   <button
                     onClick={() => toggleClient(key)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-canvas dark:hover:bg-raised/50 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center flex-shrink-0">
-                      <Building2 size={14} className="text-[var(--accent-600)] dark:text-[var(--accent-400)]" />
+                    <div className="w-8 h-8 rounded-md bg-accent-soft dark:bg-accent-soft/40 flex items-center justify-center flex-shrink-0">
+                      <Building2 size={14} className="text-accent dark:text-accent" />
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="text-sm font-black text-gray-800 dark:text-white truncate">{name}</p>
+                      <p className="text-sm font-semibold text-foreground dark:text-foreground truncate">{name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-bold text-gray-400">{clientTodos.length} {clientTodos.length === 1 ? 'attività' : 'attività'}</span>
-                        {daFareClient > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">{daFareClient} da fare</span>}
-                        {scadutiClient > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 flex items-center gap-0.5"><AlertCircle size={8} />{scadutiClient} scad.</span>}
+                        <span className="text-xs font-bold text-muted">{clientTodos.length} {clientTodos.length === 1 ? 'attività' : 'attività'}</span>
+                        {daFareClient > 0 && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-warning-soft text-warning dark:bg-warning-soft dark:text-warning">{daFareClient} da fare</span>}
+                        {scadutiClient > 0 && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-danger-soft text-danger flex items-center gap-0.5"><AlertCircle size={8} />{scadutiClient} scad.</span>}
                       </div>
                     </div>
-                    {open ? <ChevronDown size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />}
+                    {open ? <ChevronDown size={16} className="text-muted flex-shrink-0" /> : <ChevronRight size={16} className="text-muted flex-shrink-0" />}
                   </button>
                   {/* Todos */}
                   {open && (
-                    <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700/50 px-3 pb-3 pt-1 space-y-1.5">
+                    <div className="border-t border-line dark:border-line divide-y divide-line dark:divide-line/50 px-3 pb-3 pt-1 space-y-1.5">
                       {clientTodos.map(todo => (
                         <div key={todo.id} className="pt-1.5">
                           <TodoCard
@@ -935,10 +937,10 @@ export const TodoView: React.FC = () => {
       {viewMode === 'lista' && (
         filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <CheckSquare size={24} className="text-gray-300 dark:text-gray-600" />
+            <div className="w-14 h-14 rounded-panel bg-raised dark:bg-surface flex items-center justify-center">
+              <CheckSquare size={24} className="text-muted dark:text-secondary" />
             </div>
-            <p className="text-sm font-bold text-gray-400">
+            <p className="text-sm font-bold text-muted">
               {filterStatus === 'tutti' && filterTipo === 'tutti' ? 'Nessuna attività.' : 'Nessuna attività con questi filtri'}
             </p>
           </div>

@@ -278,8 +278,8 @@ export const selectActivityMix = (state: any): Array<{ type: ActivityType; label
     demo: 'Demo', 'call-remota': 'Call Remota', sopralluogo: 'Sopralluogo', formazione: 'Formazione',
   };
   const colors: Record<string, string> = {
-    visita: '#4f46e5', chiamata: '#10b981', email: '#3b82f6', nota: '#f59e0b',
-    demo: '#8b5cf6', 'call-remota': '#06b6d4', sopralluogo: '#f97316', formazione: '#ec4899',
+    visita: 'var(--syrio-chart-1)', chiamata: 'var(--syrio-chart-2)', email: 'var(--syrio-chart-3)', nota: 'var(--syrio-chart-4)',
+    demo: 'var(--syrio-chart-5)', 'call-remota': 'var(--syrio-chart-6)', sopralluogo: 'var(--syrio-chart-7)', formazione: 'var(--syrio-chart-8)',
   };
   return Array.from(map.entries())
     .sort((a, b) => b[1] - a[1])
@@ -288,7 +288,7 @@ export const selectActivityMix = (state: any): Array<{ type: ActivityType; label
       label: labels[type] || type,
       count,
       percentage: ((count / total) * 100).toFixed(1),
-      color: colors[type] || '#94a3b8',
+      color: colors[type] || 'var(--syrio-chart-1)',
     }));
 };
 

@@ -1,3 +1,4 @@
+import { confirmAction } from '../components/ui/Feedback';
 import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
@@ -35,21 +36,21 @@ interface TimelineEvent {
 // ── Configurazioni ───────────────────────────────────────────────────────
 
 const ACTIVITY_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
-  visita:       { icon: <MapPin size={14} />,       color: 'text-[var(--accent-600)]', bg: 'bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40',  label: 'Visita'        },
-  chiamata:     { icon: <Phone size={14} />,         color: 'text-green-600',  bg: 'bg-green-100 dark:bg-green-900/40',    label: 'Chiamata'      },
-  email:        { icon: <Mail size={14} />,          color: 'text-blue-600',   bg: 'bg-blue-100 dark:bg-blue-900/40',      label: 'Email'         },
-  nota:         { icon: <StickyNote size={14} />,    color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/40',  label: 'Nota'          },
-  demo:         { icon: <MonitorPlay size={14} />,   color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/40',  label: 'Demo'          },
+  visita:       { icon: <MapPin size={14} />,       color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/40',  label: 'Visita'        },
+  chiamata:     { icon: <Phone size={14} />,         color: 'text-success',  bg: 'bg-success-soft dark:bg-success-soft',    label: 'Chiamata'      },
+  email:        { icon: <Mail size={14} />,          color: 'text-accent',   bg: 'bg-accent-soft dark:bg-accent-soft/40',      label: 'Email'         },
+  nota:         { icon: <StickyNote size={14} />,    color: 'text-warning', bg: 'bg-warning-soft dark:bg-warning-soft',  label: 'Nota'          },
+  demo:         { icon: <MonitorPlay size={14} />,   color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/40',  label: 'Demo'          },
   'call-remota':{ icon: <Video size={14} />,         color: 'text-teal-600',   bg: 'bg-teal-100 dark:bg-teal-900/40',      label: 'Call Remota'   },
-  sopralluogo:  { icon: <Wrench size={14} />,        color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/40',  label: 'Sopralluogo'   },
-  formazione:   { icon: <GraduationCap size={14} />, color: 'text-pink-600',   bg: 'bg-pink-100 dark:bg-pink-900/40',      label: 'Formazione'    },
+  sopralluogo:  { icon: <Wrench size={14} />,        color: 'text-warning', bg: 'bg-warning-soft dark:bg-warning-soft',  label: 'Sopralluogo'   },
+  formazione:   { icon: <GraduationCap size={14} />, color: 'text-accent',   bg: 'bg-accent-soft dark:bg-accent-soft/40',      label: 'Formazione'    },
 };
 
 const OFFER_STATUS_CONFIG: Record<string, { icon: React.ReactNode; badge: string; badgeColor: string }> = {
-  bozza:     { icon: <FileText size={14} />,    badge: 'Bozza',     badgeColor: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300' },
-  inviata:   { icon: <Send size={14} />,         badge: 'Inviata',   badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-  accettata: { icon: <CheckCircle size={14} />,  badge: 'Accettata', badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-  rifiutata: { icon: <XCircle size={14} />,      badge: 'Rifiutata', badgeColor: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+  bozza:     { icon: <FileText size={14} />,    badge: 'Bozza',     badgeColor: 'bg-raised text-secondary dark:bg-raised dark:text-muted' },
+  inviata:   { icon: <Send size={14} />,         badge: 'Inviata',   badgeColor: 'bg-accent-soft text-accent dark:bg-accent-soft/40 dark:text-accent' },
+  accettata: { icon: <CheckCircle size={14} />,  badge: 'Accettata', badgeColor: 'bg-success-soft text-success dark:bg-success-soft dark:text-success' },
+  rifiutata: { icon: <XCircle size={14} />,      badge: 'Rifiutata', badgeColor: 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger' },
 };
 
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
@@ -149,11 +150,11 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
               ? `${ordine.quantity} pz · ${ordine.year}`
               : String(ordine.year),
             amount: ordine.amount,
-            color: 'text-emerald-600',
-            bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
+            color: 'text-success',
+            bgColor: 'bg-success-soft dark:bg-success-soft',
             icon: <Package size={14} />,
             badge: 'Storico',
-            badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+            badgeColor: 'bg-success-soft text-success dark:bg-success-soft dark:text-success',
           });
         });
       });
@@ -190,8 +191,8 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
           title: `Offerta N° ${o.offerNumber}`,
           subtitle: o.items.length > 0 ? `${o.items.length} articol${o.items.length === 1 ? 'o' : 'i'}` : undefined,
           amount: o.totalAmount,
-          color: 'text-[var(--accent-600)]',
-          bgColor: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30',
+          color: 'text-accent',
+          bgColor: 'bg-accent-soft dark:bg-accent-soft/30',
           icon: cfg.icon,
           badge: cfg.badge,
           badgeColor: cfg.badgeColor,
@@ -210,11 +211,11 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
           title: t.productName,
           subtitle: `${t.quantity} pz × €${t.unitPrice.toFixed(2)}`,
           amount: t.totalAmount,
-          color: 'text-emerald-600',
-          bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
+          color: 'text-success',
+          bgColor: 'bg-success-soft dark:bg-success-soft',
           icon: <ShoppingCart size={14} />,
           badge: 'Ordine',
-          badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+          badgeColor: 'bg-success-soft text-success dark:bg-success-soft dark:text-success',
           raw: t,
         });
       });
@@ -233,13 +234,13 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
           title: isWon ? 'Trattativa vinta' : 'Trattativa persa',
           subtitle: d.notes || undefined,
           amount: isWon ? d.value : undefined,
-          color: isWon ? 'text-green-600' : 'text-red-500',
-          bgColor: isWon ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20',
+          color: isWon ? 'text-success' : 'text-danger',
+          bgColor: isWon ? 'bg-success-soft dark:bg-success-soft' : 'bg-danger-soft dark:bg-danger-soft',
           icon: <TrendingUp size={14} />,
           badge: isWon ? 'Vinta' : 'Persa',
           badgeColor: isWon
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-            : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+            ? 'bg-success-soft text-success dark:bg-success-soft dark:text-success'
+            : 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger',
         });
       });
 
@@ -277,8 +278,8 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
     showToast('Email registrata', 'success');
   };
 
-  const handleDeleteEmail = (id: string) => {
-    if (!window.confirm('Eliminare questa email dallo storico?')) return;
+  const handleDeleteEmail = async (id: string) => {
+    if (!await confirmAction('Eliminare questa email dallo storico?')) return;
     deleteActivity(id);
     showToast('Email eliminata', 'success');
   };
@@ -308,20 +309,20 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
       return (
         <div className="space-y-2">
           {a.notes ? (
-            <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{a.notes}</p>
+            <p className="text-xs text-secondary dark:text-muted whitespace-pre-wrap">{a.notes}</p>
           ) : (
-            <p className="text-xs text-gray-300 italic">Nessuna nota</p>
+            <p className="text-xs text-muted italic">Nessuna nota</p>
           )}
           {a.results && (
-            <p className="text-xs text-gray-500 dark:text-gray-400"><span className="font-black uppercase text-[9px] text-gray-400">Esito: </span>{a.results}</p>
+            <p className="text-xs text-secondary dark:text-muted"><span className="font-semibold uppercase text-xs text-muted">Esito: </span>{a.results}</p>
           )}
           {a.endDate && (
-            <p className="text-[10px] text-gray-400">Fine: {fmt(a.endDate)}</p>
+            <p className="text-xs text-muted">Fine: {fmt(a.endDate)}</p>
           )}
           {a.transcript && (
             <details className="text-xs">
-              <summary className="cursor-pointer font-black text-[9px] uppercase text-gray-400">Trascrizione</summary>
-              <p className="mt-1 whitespace-pre-wrap text-gray-500 dark:text-gray-400">{a.transcript}</p>
+              <summary className="cursor-pointer font-semibold text-xs uppercase text-muted">Trascrizione</summary>
+              <p className="mt-1 whitespace-pre-wrap text-secondary dark:text-muted">{a.transcript}</p>
             </details>
           )}
         </div>
@@ -337,7 +338,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-[9px] font-black uppercase text-gray-400 text-left">
+                  <tr className="text-xs font-semibold uppercase text-muted text-left">
                     <th className="pb-1 pr-2">Articolo</th>
                     <th className="pb-1 pr-2">Taglie</th>
                     <th className="pb-1 pr-2 text-right">Qtà</th>
@@ -347,21 +348,21 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
                 </thead>
                 <tbody>
                   {o.items.map(it => (
-                    <tr key={it.id} className="border-t border-gray-100 dark:border-gray-700">
-                      <td className="py-1 pr-2 text-gray-700 dark:text-gray-300">{it.description}</td>
-                      <td className="py-1 pr-2 text-gray-400">{it.sizes || '—'}</td>
-                      <td className="py-1 pr-2 text-right text-gray-500">{it.quantity}</td>
-                      <td className="py-1 pr-2 text-right text-gray-500">€{it.price.toFixed(2)}</td>
-                      <td className="py-1 pr-2 text-right text-gray-500">{it.discount ? `${it.discount}%` : '—'}</td>
+                    <tr key={it.id} className="border-t border-line dark:border-line">
+                      <td className="py-1 pr-2 text-foreground dark:text-muted">{it.description}</td>
+                      <td className="py-1 pr-2 text-muted">{it.sizes || '—'}</td>
+                      <td className="py-1 pr-2 text-right text-secondary">{it.quantity}</td>
+                      <td className="py-1 pr-2 text-right text-secondary">€{it.price.toFixed(2)}</td>
+                      <td className="py-1 pr-2 text-right text-secondary">{it.discount ? `${it.discount}%` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-gray-300 italic">Nessun articolo</p>
+            <p className="text-xs text-muted italic">Nessun articolo</p>
           )}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-gray-400 pt-1">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted pt-1">
             {o.deliveryTime && <span>Consegna: {o.deliveryTime}</span>}
             {o.shippingCost !== undefined && o.shippingCost > 0 && <span>Spedizione: €{o.shippingCost.toFixed(2)}</span>}
             {o.followUpDate > 0 && <span>Follow-up: {fmt(o.followUpDate)}</span>}
@@ -372,7 +373,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
               target="_blank"
               rel="noreferrer"
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs font-black text-[var(--accent-500)] hover:text-[var(--accent-700)] hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent hover:underline"
             >
               <FileText size={12} /> {o.pdfName || 'Apri PDF'}
             </a>
@@ -384,9 +385,9 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
     if (ev.kind === 'ordine' && ev.raw && 'unitPrice' in (ev.raw as any)) {
       const t = ev.raw as SalesTransaction;
       return t.notes ? (
-        <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{t.notes}</p>
+        <p className="text-xs text-secondary dark:text-muted whitespace-pre-wrap">{t.notes}</p>
       ) : (
-        <p className="text-xs text-gray-300 italic">Nessuna nota</p>
+        <p className="text-xs text-muted italic">Nessuna nota</p>
       );
     }
 
@@ -403,22 +404,22 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors"
+          className="p-2 rounded-panel bg-raised dark:bg-surface text-secondary hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/30 transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-black dark:text-white truncate">{contact.company}</h1>
+          <h1 className="text-2xl  dark:text-foreground truncate">{contact.company}</h1>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-xs text-gray-400 font-bold">{contact.contactName && `${contact.contactName} · `}Storico completo</p>
+            <p className="text-xs text-muted font-bold">{contact.contactName && `${contact.contactName} · `}Storico completo</p>
             {clienteStorico && (
-              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success">
                 Fatturato collegato
               </span>
             )}
           </div>
         </div>
-        <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full ${contact.status === 'cliente' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
+        <span className={`text-xs font-semibold uppercase px-3 py-1.5 rounded-full ${contact.status === 'cliente' ? 'bg-success-soft text-success dark:bg-success-soft dark:text-success' : 'bg-accent-soft text-accent dark:bg-accent-soft/40 dark:text-accent'}`}>
           {contact.status === 'cliente' ? 'Cliente' : 'Prospect'}
         </span>
       </div>
@@ -426,14 +427,14 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Attività', value: stats.acts, color: 'text-[var(--accent-600)]' },
-          { label: 'Offerte',  value: stats.offs, color: 'text-blue-600'   },
-          { label: 'Ordini',   value: stats.ords, color: 'text-emerald-600'},
-          { label: 'Fatturato', value: `€${stats.fatturato.toLocaleString('it-IT')}`, color: 'text-green-600', big: true },
+          { label: 'Attività', value: stats.acts, color: 'text-accent' },
+          { label: 'Offerte',  value: stats.offs, color: 'text-accent'   },
+          { label: 'Ordini',   value: stats.ords, color: 'text-success'},
+          { label: 'Fatturato', value: `€${stats.fatturato.toLocaleString('it-IT')}`, color: 'text-success', big: true },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+          <div key={s.label} className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line shadow-sm text-center">
             <p className={`font-black ${s.big ? 'text-lg' : 'text-3xl'} ${s.color}`}>{s.value}</p>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">{s.label}</p>
+            <p className="text-xs font-semibold text-muted uppercase tracking-normal mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -459,7 +460,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-all ${filter === f.id ? 'bg-[var(--accent-600)] text-white shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-[var(--accent-300)]'}`}
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide transition-all ${filter === f.id ? 'bg-action text-action-foreground shadow-sm' : 'bg-surface dark:bg-surface text-secondary dark:text-muted border border-line dark:border-line hover:border-accent'}`}
             >
               {f.label}
             </button>
@@ -469,14 +470,14 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
           {onNewOfferForContact && (
             <button
               onClick={() => onNewOfferForContact(contact.id)}
-              className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+              className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full bg-success-soft dark:bg-success-soft text-success dark:text-success hover:bg-success-soft dark:hover:bg-success-soft transition-colors"
             >
               <Plus size={12} /> Nuova offerta
             </button>
           )}
           <button
             onClick={() => setShowEmailModal(true)}
-            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/50 transition-colors"
           >
             <Plus size={12} /> Aggiungi email
           </button>
@@ -485,9 +486,9 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
 
       {/* Timeline */}
       {grouped.length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-3xl">
-          <p className="text-gray-300 dark:text-gray-600 font-black uppercase tracking-widest text-xs">Nessun evento registrato</p>
-          <p className="text-gray-300 dark:text-gray-600 text-xs mt-1">Aggiungi attività, offerte o ordini per questo cliente</p>
+        <div className="text-center py-16 border-2 border-dashed border-line dark:border-line rounded-panel">
+          <p className="text-muted dark:text-secondary font-semibold uppercase tracking-normal text-xs">Nessun evento registrato</p>
+          <p className="text-muted dark:text-secondary text-xs mt-1">Aggiungi attività, offerte o ordini per questo cliente</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -495,9 +496,9 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
             <div key={month}>
               {/* Month header */}
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{month}</span>
-                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
-                <span className="text-[9px] font-black text-gray-300">{events.length}</span>
+                <span className="text-xs font-semibold text-muted uppercase tracking-normal whitespace-nowrap">{month}</span>
+                <div className="flex-1 h-px bg-raised dark:bg-raised" />
+                <span className="text-xs font-semibold text-muted">{events.length}</span>
               </div>
 
               {/* Events */}
@@ -509,7 +510,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
                   return (
                     <div
                       key={ev.id}
-                      className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden ${isClickable ? 'cursor-pointer' : ''}`}
+                      className={`bg-surface dark:bg-surface rounded-panel border border-line dark:border-line shadow-sm overflow-hidden ${isClickable ? 'cursor-pointer' : ''}`}
                       onClick={() => isClickable && setExpandedId(isExpanded ? null : ev.id)}
                     >
                       <div className="p-4 flex items-start gap-3">
@@ -521,37 +522,37 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-black text-sm dark:text-white">{ev.title}</p>
+                            <p className="font-semibold text-sm dark:text-foreground">{ev.title}</p>
                             {ev.badge && (
-                              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${ev.badgeColor ?? 'bg-gray-100 text-gray-500'}`}>
+                              <span className={`text-xs font-semibold uppercase px-2 py-0.5 rounded-full ${ev.badgeColor ?? 'bg-raised text-secondary'}`}>
                                 {ev.badge}
                               </span>
                             )}
                           </div>
                           {(ev.subtitle || ev.itemId) && (
-                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs text-muted mt-0.5 flex items-center gap-1.5 flex-wrap">
                               {ev.itemId && (
                                 <a
                                   href={blakladerUrl(ev.itemId)}
                                   target="_blank"
                                   rel="noreferrer"
                                   onClick={e => e.stopPropagation()}
-                                  className="font-mono font-black text-[var(--accent-500)] hover:text-[var(--accent-700)] hover:underline"
+                                  className="font-mono font-semibold text-accent hover:text-accent hover:underline"
                                 >
                                   {ev.itemId} ↗
                                 </a>
                               )}
-                              {ev.itemId && ev.subtitle && <span className="text-gray-300">·</span>}
+                              {ev.itemId && ev.subtitle && <span className="text-muted">·</span>}
                               {ev.subtitle && <span>{ev.subtitle}</span>}
                             </p>
                           )}
-                          <p className="text-[10px] text-gray-300 dark:text-gray-500 font-bold mt-1">{fmt(ev.date)}</p>
+                          <p className="text-xs text-muted dark:text-secondary font-bold mt-1">{fmt(ev.date)}</p>
                         </div>
 
                         {/* Amount */}
                         {ev.amount !== undefined && ev.amount > 0 && (
                           <div className="flex-shrink-0 text-right">
-                            <p className="font-black text-sm text-green-600">€{ev.amount.toLocaleString('it-IT')}</p>
+                            <p className="font-semibold text-sm text-success">€{ev.amount.toLocaleString('it-IT')}</p>
                           </div>
                         )}
 
@@ -559,7 +560,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
                         {isClickable && (
                           <ChevronDown
                             size={14}
-                            className={`flex-shrink-0 text-gray-300 mt-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            className={`flex-shrink-0 text-muted mt-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                           />
                         )}
 
@@ -567,7 +568,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
                         {ev.kind === 'email' && (
                           <button
                             onClick={e => { e.stopPropagation(); handleDeleteEmail(ev.id); }}
-                            className="p-1 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0"
+                            className="p-1 rounded-lg text-muted hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors flex-shrink-0"
                             title="Elimina email"
                           >
                             <Trash2 size={13} />
@@ -578,7 +579,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
                       {/* Dettaglio espanso */}
                       {isExpanded && detail && (
                         <div
-                          className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-700"
+                          className="px-4 pb-4 pt-1 border-t border-line dark:border-line"
                           onClick={e => e.stopPropagation()}
                         >
                           {detail}

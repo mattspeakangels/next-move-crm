@@ -1,3 +1,4 @@
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Plus, FileText, Trash2, X, Edit2, Mail, Printer, Sparkles, ChevronDown, ChevronUp, CheckCircle, XCircle, Upload, Download, ShoppingBag } from 'lucide-react';
@@ -450,17 +451,17 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
         <head>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; }
-            .header { display: flex; justify-content: space-between; border-bottom: 3px solid #4f46e5; padding-bottom: 20px; margin-bottom: 30px; }
-            .logo h1 { margin: 0; color: #4f46e5; font-size: 32px; }
+            .header { display: flex; justify-content: space-between; border-bottom: 3px solid #83542b; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo h1 { margin: 0; color: #83542b; font-size: 32px; font-family: Georgia, serif; }
             .doc-info { text-align: right; }
             .addresses { display: flex; justify-content: space-between; margin-bottom: 40px; }
             .address-box { width: 45%; }
             .address-box h4 { margin: 0 0 5px 0; font-size: 12px; color: #999; text-transform: uppercase; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-            th { background: #f8fafc; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+            th { background: #f5f2ed; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
             .totals { float: right; width: 250px; }
             .total-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-            .grand-total { font-size: 20px; font-weight: bold; color: #4f46e5; border: none; }
+            .grand-total { font-size: 20px; font-weight: bold; color: #83542b; border: none; }
             .footer { margin-top: 100px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 20px; }
             @media print { body { padding: 0; } }
           </style>
@@ -483,7 +484,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
             <div class="total-row grand-total"><span>TOTALE</span><span>€ ${offer.totalAmount.toFixed(2)}</span></div>
             ${offer.deliveryTime ? `<p style="font-size: 11px; margin-top: 10px;">Consegna: ${offer.deliveryTime}</p>` : ''}
           </div>
-          <div class="footer">Documento valido 30 giorni. Generato con NextMove CRM.</div>
+          <div class="footer">Documento valido 30 giorni. Generato con SYRIO.</div>
         </body>
       </html>
     `;
@@ -526,24 +527,24 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
 
       {/* Modal: Carica PDF offerta */}
       {showPdfModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black uppercase dark:text-white">Carica PDF Offerta</h2>
+              <h2 className="text-xl font-semibold  dark:text-foreground">Carica PDF Offerta</h2>
               <button onClick={() => { setShowPdfModal(false); setPdfModalFile(null); setPdfModalContactId(''); setPdfModalContactSearch(''); setPdfModalAmount(0); setPdfModalEmailBody(''); }}>
-                <X size={22} className="text-gray-400" />
+                <X size={22} className="text-muted" />
               </button>
             </div>
             <div className="space-y-5">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Cliente</label>
                 <SearchDropdown
                   value={pdfModalContactSearch}
                   onChange={v => { setPdfModalContactSearch(v); if (pdfModalContactId) setPdfModalContactId(''); }}
                   placeholder="Cerca per nome, azienda, città..."
                   showWhenEmpty
                   totalCount={Object.keys(contacts).length}
-                  inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-orange-400 transition-all text-sm dark:text-white'}
+                  inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-warning transition-all text-sm dark:text-foreground'}
                   results={sortByRelevance(pdfModalContactSearch, (pdfModalContactSearch.trim()
                     ? Object.values(contacts).filter(c => matchSearch(pdfModalContactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
                     : Object.values(contacts)
@@ -557,76 +558,76 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Importo offerta €</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Importo offerta €</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-black text-lg outline-none"
+                  className="w-full border-2 border-line dark:border-line rounded-panel p-4 bg-transparent dark:text-foreground font-semibold text-lg outline-none"
                   value={pdfModalAmount || ''}
                   onChange={e => setPdfModalAmount(parseFloat(e.target.value) || 0)}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">File PDF</label>
-                <label className={`flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed rounded-2xl py-8 cursor-pointer transition-colors ${pdfModalFile ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'}`}>
-                  <FileText size={32} className={pdfModalFile ? 'text-orange-500' : 'text-gray-300'} />
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">File PDF</label>
+                <label className={`flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed rounded-panel py-8 cursor-pointer transition-colors ${pdfModalFile ? 'border-warning bg-warning-soft dark:bg-warning-soft' : 'border-line dark:border-line hover:border-warning'}`}>
+                  <FileText size={32} className={pdfModalFile ? 'text-warning' : 'text-muted'} />
                   {pdfModalFile ? (
-                    <span className="text-sm font-black text-orange-600 dark:text-orange-400 px-4 text-center break-all">{pdfModalFile.name}</span>
+                    <span className="text-sm font-semibold text-warning dark:text-warning px-4 text-center break-all">{pdfModalFile.name}</span>
                   ) : (
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Clicca per selezionare il PDF</span>
+                    <span className="text-xs font-bold text-muted uppercase tracking-normal">Clicca per selezionare il PDF</span>
                   )}
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setPdfModalFile(e.target.files?.[0] || null)} />
                 </label>
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Testo email di accompagnamento (opzionale)</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Testo email di accompagnamento (opzionale)</label>
                 <textarea
                   value={pdfModalEmailBody}
                   onChange={e => setPdfModalEmailBody(e.target.value)}
                   placeholder="Es: In allegato trova il preventivo richiesto. Resto a disposizione per qualsiasi chiarimento."
                   rows={4}
-                  className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-orange-400 dark:text-white resize-none"
+                  className="w-full bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-panel px-4 py-3 text-sm outline-none focus:border-warning dark:text-foreground resize-none"
                 />
-                <p className="text-[10px] text-gray-400 mt-1">Se compilato, verrà usato come corpo del messaggio quando invii l'offerta via email.</p>
+                <p className="text-xs text-muted mt-1">Se compilato, verrà usato come corpo del messaggio quando invii l'offerta via email.</p>
               </div>
               <button
                 onClick={handlePdfModalConfirm}
                 disabled={!pdfModalContactId || !pdfModalFile || !pdfModalAmount || pdfModalUploading}
-                className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-wide hover:bg-orange-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-4 bg-warning text-status-foreground rounded-panel font-semibold uppercase tracking-wide hover:bg-warning transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {pdfModalUploading ? (
-                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Caricamento...</>
+                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-line border-t-transparent rounded-full" /> Caricamento...</>
                 ) : (
                   <><Upload size={16} /> Crea Offerta con PDF</>
                 )}
               </button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* Modal: Nuovo Ordine diretto (senza passare da un'offerta vinta) */}
       {showOrderModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black uppercase dark:text-white">Nuovo Ordine</h2>
+              <h2 className="text-xl font-semibold  dark:text-foreground">Nuovo Ordine</h2>
               <button onClick={() => { setShowOrderModal(false); resetOrderModal(); }}>
-                <X size={22} className="text-gray-400" />
+                <X size={22} className="text-muted" />
               </button>
             </div>
             <div className="space-y-5">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Cliente</label>
                 <SearchDropdown
                   value={orderContactSearch}
                   onChange={v => { setOrderContactSearch(v); if (orderContactId) setOrderContactId(''); }}
                   placeholder="Cerca per nome, azienda, città..."
                   showWhenEmpty
                   totalCount={Object.keys(contacts).length}
-                  inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-green-400 transition-all text-sm dark:text-white'}
+                  inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-success transition-all text-sm dark:text-foreground'}
                   results={(orderContactSearch.trim()
                     ? sortByRelevance(orderContactSearch, Object.values(contacts).filter(c => matchSearch(orderContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName])
                     : Object.values(contacts)
@@ -640,25 +641,25 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Importo ordine €</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Importo ordine €</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-black text-lg outline-none"
+                  className="w-full border-2 border-line dark:border-line rounded-panel p-4 bg-transparent dark:text-foreground font-semibold text-lg outline-none"
                   value={orderAmount || ''}
                   onChange={e => setOrderAmount(parseFloat(e.target.value) || 0)}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">File PDF ordine (opzionale)</label>
-                <label className={`flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed rounded-2xl py-8 cursor-pointer transition-colors ${orderFile ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-green-300'}`}>
-                  <FileText size={32} className={orderFile ? 'text-green-500' : 'text-gray-300'} />
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">File PDF ordine (opzionale)</label>
+                <label className={`flex flex-col items-center justify-center gap-3 w-full border-2 border-dashed rounded-panel py-8 cursor-pointer transition-colors ${orderFile ? 'border-success bg-success-soft dark:bg-success-soft' : 'border-line dark:border-line hover:border-success'}`}>
+                  <FileText size={32} className={orderFile ? 'text-success' : 'text-muted'} />
                   {orderFile ? (
-                    <span className="text-sm font-black text-green-600 dark:text-green-400 px-4 text-center break-all">{orderFile.name}</span>
+                    <span className="text-sm font-semibold text-success dark:text-success px-4 text-center break-all">{orderFile.name}</span>
                   ) : (
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Clicca per selezionare il PDF</span>
+                    <span className="text-xs font-bold text-muted uppercase tracking-normal">Clicca per selezionare il PDF</span>
                   )}
                   <input type="file" accept="application/pdf" className="hidden" onChange={e => setOrderFile(e.target.files?.[0] || null)} />
                 </label>
@@ -666,17 +667,17 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               <button
                 onClick={handleCreateOrder}
                 disabled={!orderContactId || !orderAmount || orderCreating}
-                className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase tracking-wide hover:bg-green-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-4 bg-success text-status-foreground rounded-panel font-semibold uppercase tracking-wide hover:bg-success transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {orderCreating ? (
-                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Creazione...</>
+                  <><span className="animate-spin inline-block w-4 h-4 border-2 border-line border-t-transparent rounded-full" /> Creazione...</>
                 ) : (
                   <><Plus size={16} /> Crea Ordine</>
                 )}
               </button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* Hidden PDF file input per upload PDF ordine */}
@@ -690,22 +691,22 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Offerte & Ordini</h1>
-          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Preventivi e trattative vinte</p>
+          <h1 className="text-2xl  dark:text-foreground  ">Offerte & Ordini</h1>
+          <p className="text-muted text-sm font-bold uppercase tracking-normal">Preventivi e trattative vinte</p>
         </div>
         {activeTab === 'offerte' && (
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setShowPdfModal(true)} className="bg-orange-500 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-orange-600 transition-all">
+            <button onClick={() => setShowPdfModal(true)} className="bg-warning text-status-foreground px-5 py-3 rounded-panel font-bold flex items-center gap-2 shadow-panel hover:bg-warning transition-all">
               <Upload size={18} /> Carica PDF
             </button>
-            <button onClick={() => openModal()} className="bg-[var(--accent-600)] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--accent-700)] transition-all">
+            <button onClick={() => openModal()} className="bg-action text-action-foreground px-6 py-3 rounded-panel font-bold flex items-center gap-2 shadow-panel hover:bg-action-hover transition-all">
               <Plus size={20} /> Nuova
             </button>
           </div>
         )}
         {activeTab === 'ordini' && (
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => { resetOrderModal(); setShowOrderModal(true); }} className="bg-green-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition-all">
+            <button onClick={() => { resetOrderModal(); setShowOrderModal(true); }} className="bg-success text-status-foreground px-6 py-3 rounded-panel font-bold flex items-center gap-2 shadow-panel hover:bg-success transition-all">
               <Plus size={20} /> Nuovo Ordine
             </button>
           </div>
@@ -713,7 +714,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
+      <div className="flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel w-fit">
         {([
           { id: 'offerte' as const, label: 'Offerte', icon: FileText },
           { id: 'ordini' as const, label: 'Ordini', icon: ShoppingBag },
@@ -721,10 +722,10 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wide transition-all
               ${activeTab === id
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'}`}
+                ? 'bg-surface dark:bg-raised text-foreground dark:text-foreground shadow-sm'
+                : 'text-muted dark:text-secondary hover:text-secondary dark:hover:text-muted'}`}
           >
             <Icon size={13} /> {label}
           </button>
@@ -739,9 +740,9 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
 
         if (wonDeals.length === 0) {
           return (
-            <div className="text-center py-20 text-gray-400 dark:text-gray-600">
-              <ShoppingBag size={40} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="font-bold tracking-tight text-sm text-gray-600 dark:text-gray-400">Nessun ordine ancora</p>
+            <div className="text-center py-20 text-muted dark:text-secondary">
+              <ShoppingBag size={40} className="mx-auto mb-3 text-muted dark:text-secondary" />
+              <p className="font-bold tracking-tight text-sm text-secondary dark:text-muted">Nessun ordine ancora</p>
               <p className="text-xs mt-1">Le trattative chiuse come "Vinta" in Pipeline compaiono qui</p>
             </div>
           );
@@ -749,11 +750,11 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
 
         return (
           <div className="space-y-4">
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 flex items-center justify-between">
-              <span className="text-xs font-black text-green-700 dark:text-green-300 uppercase tracking-widest">
+            <div className="bg-success-soft dark:bg-success-soft rounded-panel p-4 flex items-center justify-between">
+              <span className="text-xs font-semibold text-success dark:text-success uppercase tracking-normal">
                 {wonDeals.length} ordini
               </span>
-              <span className="text-xl font-black text-green-700 dark:text-green-300">
+              <span className="text-xl font-semibold text-success dark:text-success">
                 € {totalValue.toLocaleString('it-IT')}
               </span>
             </div>
@@ -761,15 +762,15 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               {wonDeals.map(deal => {
                 const contact = contacts[deal.contactId];
                 return (
-                  <div key={deal.id} className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-sm border-2 border-green-100 dark:border-green-900/40">
+                  <div key={deal.id} className="bg-surface dark:bg-surface p-5 rounded-panel shadow-sm border-2 border-success dark:border-success">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-black text-sm dark:text-white">{contact?.company ?? deal.nomeStorico ?? '—'}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                        <p className="font-semibold text-sm dark:text-foreground">{contact?.company ?? deal.nomeStorico ?? '—'}</p>
+                        <p className="text-xs text-muted font-bold uppercase tracking-normal mt-0.5">
                           {deal.closedAt ? new Date(deal.closedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                         </p>
                       </div>
-                      <span className="font-black text-green-600 dark:text-green-400 text-lg">
+                      <span className="font-semibold text-success dark:text-success text-lg">
                         € {(deal.value || 0).toLocaleString('it-IT')}
                       </span>
                     </div>
@@ -778,7 +779,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                         <PdfButton
                           pdfUrl={deal.orderPdfUrl}
                           pdfName={deal.orderPdfName}
-                          className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-orange-100 transition-colors"
+                          className="flex items-center gap-1.5 bg-warning-soft dark:bg-warning-soft text-warning px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft transition-colors"
                         >
                           <FileText size={12} /> {deal.orderPdfName || 'PDF ordine'}
                         </PdfButton>
@@ -786,7 +787,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                         <button
                           onClick={() => triggerOrderPdfUpload(deal.id)}
                           disabled={uploadingOrderId === deal.id}
-                          className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-gray-100 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 bg-canvas dark:bg-raised text-secondary dark:text-muted px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-raised transition-colors disabled:opacity-50"
                         >
                           <Upload size={12} /> {uploadingOrderId === deal.id ? 'Caricamento...' : 'Carica PDF ordine'}
                         </button>
@@ -794,7 +795,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                       <button
                         onClick={() => handleRevertOrder(deal.id)}
                         title="Annulla ordine e riporta la trattativa in Pipeline"
-                        className="flex items-center gap-1.5 bg-red-50 dark:bg-red-900/20 text-red-500 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-red-100 transition-colors"
+                        className="flex items-center gap-1.5 bg-danger-soft dark:bg-danger-soft text-danger px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-danger-soft transition-colors"
                       >
                         ↩ Annulla ordine
                       </button>
@@ -813,50 +814,50 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
         const archived = allOffers.filter(o => o.status === 'accettata' || o.status === 'rifiutata');
 
         const STATUS_CONFIG: Record<OfferStatus, { label: string; bg: string; text: string; activeBg: string; activeText: string }> = {
-          bozza:     { label: 'Bozza',     bg: 'bg-gray-100 dark:bg-gray-700',     text: 'text-gray-500 dark:text-gray-300', activeBg: 'bg-gray-500',   activeText: 'text-white' },
-          inviata:   { label: 'Inviata',   bg: 'bg-blue-50 dark:bg-blue-900/20',   text: 'text-blue-500',                    activeBg: 'bg-blue-500',   activeText: 'text-white' },
-          accettata: { label: 'Accettata', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600',                   activeBg: 'bg-green-500',  activeText: 'text-white' },
-          rifiutata: { label: 'Rifiutata', bg: 'bg-red-50 dark:bg-red-900/20',     text: 'text-red-500',                     activeBg: 'bg-red-500',    activeText: 'text-white' },
+          bozza:     { label: 'Bozza',     bg: 'bg-raised dark:bg-raised',     text: 'text-secondary dark:text-muted', activeBg: 'bg-raised',   activeText: 'text-foreground' },
+          inviata:   { label: 'Inviata',   bg: 'bg-accent-soft dark:bg-accent-soft/20',   text: 'text-accent',                    activeBg: 'bg-action',   activeText: 'text-action-foreground' },
+          accettata: { label: 'Accettata', bg: 'bg-success-soft dark:bg-success-soft', text: 'text-success',                   activeBg: 'bg-success',  activeText: 'text-status-foreground' },
+          rifiutata: { label: 'Rifiutata', bg: 'bg-danger-soft dark:bg-danger-soft',     text: 'text-danger',                     activeBg: 'bg-danger',    activeText: 'text-status-foreground' },
         };
 
         const OfferCard = ({ offer }: { offer: typeof allOffers[0] }) => {
           const contact = contacts[offer.contactId];
           const endUserContact = offer.contactMode === 'dealer+end-user' ? contacts[offer.endUserContactId || ''] : undefined;
           return (
-            <div className={`bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border-2 transition-colors ${
-              offer.status === 'inviata' ? 'border-blue-200 dark:border-blue-800' : 'border-gray-100 dark:border-gray-700'
+            <div className={`bg-surface dark:bg-surface p-6 rounded-panel shadow-sm border-2 transition-colors ${
+              offer.status === 'inviata' ? 'border-accent dark:border-accent' : 'border-line dark:border-line'
             }`}>
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full">
+                  <span className="text-xs font-semibold text-accent uppercase tracking-normal bg-accent-soft dark:bg-accent-soft/30 px-3 py-1 rounded-full">
                     {offer.offerNumber}
                   </span>
                   {endUserContact ? (
-                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">
-                      {contact?.company || 'Dealer'} <span className="text-gray-300 dark:text-gray-600">→</span> {endUserContact.company}
+                    <h3 className="text-xl font-semibold mt-3 dark:text-foreground ">
+                      {contact?.company || 'Dealer'} <span className="text-muted dark:text-secondary">→</span> {endUserContact.company}
                     </h3>
                   ) : (
-                    <h3 className="text-xl font-black mt-3 dark:text-white uppercase">{contact?.company || 'Azienda'}</h3>
+                    <h3 className="text-xl font-semibold mt-3 dark:text-foreground ">{contact?.company || 'Azienda'}</h3>
                   )}
-                  <p className="text-xs text-gray-400 font-bold mt-0.5">
+                  <p className="text-xs text-muted font-bold mt-0.5">
                     {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black dark:text-white tracking-tighter">
+                  <p className="text-2xl font-semibold dark:text-foreground tracking-normal">
                     € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
               <div className="mb-4">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stato offerta</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Stato offerta</p>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.keys(STATUS_CONFIG) as OfferStatus[]).map(s => {
                     const cfg = STATUS_CONFIG[s];
                     const isActive = offer.status === s;
                     return (
                       <button key={s} onClick={() => updateOffer(offer.id, { status: s })}
-                        className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-wide transition-all ${
+                        className={`px-4 py-2 rounded-md font-semibold text-xs uppercase tracking-wide transition-all ${
                           isActive ? `${cfg.activeBg} ${cfg.activeText} shadow-sm` : `${cfg.bg} ${cfg.text} hover:opacity-80`
                         }`}>
                         {cfg.label}
@@ -867,11 +868,11 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               </div>
               {/* PDF row */}
               {offer.pdfUrl && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800">
-                  <FileText size={14} className="text-orange-500 flex-shrink-0" />
-                  <span className="text-xs font-bold text-orange-700 dark:text-orange-300 truncate flex-1">{offer.pdfName}</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-warning-soft dark:bg-warning-soft rounded-panel border border-warning dark:border-warning">
+                  <FileText size={14} className="text-warning flex-shrink-0" />
+                  <span className="text-xs font-bold text-warning dark:text-warning truncate flex-1">{offer.pdfName}</span>
                   <PdfButton pdfUrl={offer.pdfUrl} pdfName={offer.pdfName}
-                    className="px-3 py-1.5 rounded-xl bg-orange-500 text-white font-black text-[10px] uppercase hover:bg-orange-600 transition-colors flex-shrink-0 flex items-center gap-1.5">
+                    className="px-3 py-1.5 rounded-md bg-warning text-status-foreground font-semibold text-xs uppercase hover:bg-warning transition-colors flex-shrink-0 flex items-center gap-1.5">
                     <Download size={12} /> Visualizza
                   </PdfButton>
                 </div>
@@ -879,7 +880,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               {offer.pdfUrl && editingEmailBodyId !== offer.id && (
                 <button
                   onClick={() => { setEditingEmailBodyId(offer.id); setEditingEmailBodyDraft(offer.emailBody || ''); }}
-                  className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 hover:text-[var(--accent-600)] uppercase tracking-wide"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-accent uppercase tracking-wide"
                 >
                   <Edit2 size={11} /> {offer.emailBody ? 'Modifica testo email' : 'Aggiungi testo email'}
                 </button>
@@ -892,44 +893,44 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                     placeholder="Testo email di accompagnamento (opzionale)"
                     rows={3}
                     autoFocus
-                    className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm outline-none focus:border-[var(--accent-400)] dark:text-white resize-none"
+                    className="w-full bg-canvas dark:bg-raised border-2 border-line dark:border-line rounded-panel px-4 py-3 text-sm outline-none focus:border-accent dark:text-foreground resize-none"
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => { updateOffer(offer.id, { emailBody: editingEmailBodyDraft.trim() || undefined }); setEditingEmailBodyId(null); showToast('Testo email salvato', 'success'); }}
-                      className="px-3 py-1.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-[10px] uppercase"
+                      className="px-3 py-1.5 rounded-md bg-action text-action-foreground font-semibold text-xs uppercase"
                     >
                       Salva
                     </button>
-                    <button onClick={() => setEditingEmailBodyId(null)} className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 font-black text-[10px] uppercase">
+                    <button onClick={() => setEditingEmailBodyId(null)} className="px-3 py-1.5 rounded-md bg-raised dark:bg-raised text-secondary font-semibold text-xs uppercase">
                       Annulla
                     </button>
                   </div>
                 </div>
               )}
-              <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex justify-between items-center pt-4 border-t border-line dark:border-line">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-xl font-black text-[10px] uppercase bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] hover:bg-[var(--accent-600)] hover:text-white transition-all flex items-center gap-2">
+                  <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-md font-semibold text-xs uppercase bg-accent-soft dark:bg-accent-soft/30 text-accent hover:bg-action-hover hover:text-action-foreground transition-all flex items-center gap-2">
                     <Mail size={12} /> Email
                   </button>
-                  <button onClick={() => handleWriteEmail(offer)} className="px-3 py-2 rounded-xl font-black text-[10px] uppercase bg-purple-50 dark:bg-purple-900/30 text-purple-600 hover:bg-purple-600 hover:text-white transition-all flex items-center gap-1.5" title="Scrivi email con Claude AI">
+                  <button onClick={() => handleWriteEmail(offer)} className="px-3 py-2 rounded-md font-semibold text-xs uppercase bg-accent-soft dark:bg-accent-soft/30 text-accent hover:bg-action-hover hover:text-action-foreground transition-all flex items-center gap-1.5" title="Scrivi email con Claude AI">
                     <Sparkles size={12} /> AI
                   </button>
                   <button
                     onClick={() => triggerPdfUpload(offer.id)}
                     disabled={uploadingId === offer.id}
-                    className="px-3 py-2 rounded-xl font-black text-[10px] uppercase bg-orange-50 dark:bg-orange-900/30 text-orange-600 hover:bg-orange-600 hover:text-white transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3 py-2 rounded-md font-semibold text-xs uppercase bg-warning-soft dark:bg-warning-soft text-warning hover:bg-warning hover:text-status-foreground transition-all flex items-center gap-1.5 disabled:opacity-50"
                   >
                     {uploadingId === offer.id ? (
-                      <span className="animate-spin inline-block w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full" />
+                      <span className="animate-spin inline-block w-3 h-3 border-2 border-warning border-t-transparent rounded-full" />
                     ) : <Upload size={12} />}
                     {offer.pdfUrl ? 'Sostituisci PDF' : 'Allega PDF'}
                   </button>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handlePrint(offer)} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-gray-100 transition-colors"><Printer size={18} /></button>
-                  <button onClick={() => openModal(offer)} className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 transition-colors"><Edit2 size={18} /></button>
-                  <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 transition-colors"><Trash2 size={18} /></button>
+                  <button onClick={() => handlePrint(offer)} className="p-2 rounded-md bg-canvas dark:bg-raised text-muted hover:bg-raised transition-colors"><Printer size={18} /></button>
+                  <button onClick={() => openModal(offer)} className="p-2 rounded-md bg-accent-soft dark:bg-accent-soft/20 text-accent hover:bg-accent-soft transition-colors"><Edit2 size={18} /></button>
+                  <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-md bg-danger-soft dark:bg-danger-soft text-danger hover:bg-danger-soft transition-colors"><Trash2 size={18} /></button>
                 </div>
               </div>
             </div>
@@ -943,9 +944,9 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               {active.length > 0 ? (
                 active.map(o => <OfferCard key={o.id} offer={o} />)
               ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] py-20 text-center border-2 border-dashed border-gray-100 dark:border-gray-700">
-                  <FileText size={48} className="mx-auto mb-4 text-gray-200 dark:text-gray-600" />
-                  <p className="text-gray-400 font-bold uppercase tracking-widest">Nessuna offerta attiva</p>
+                <div className="bg-surface dark:bg-surface rounded-panel py-20 text-center border-2 border-dashed border-line dark:border-line">
+                  <FileText size={48} className="mx-auto mb-4 text-muted dark:text-secondary" />
+                  <p className="text-muted font-bold uppercase tracking-normal">Nessuna offerta attiva</p>
                 </div>
               )}
             </div>
@@ -956,52 +957,52 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 {/* Header collapsible */}
                 <button
                   onClick={() => setArchiveOpen(o => !o)}
-                  className="w-full flex items-center justify-between px-5 py-3 bg-gray-100 dark:bg-gray-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group"
+                  className="w-full flex items-center justify-between px-5 py-3 bg-raised dark:bg-surface rounded-panel hover:bg-raised dark:hover:bg-raised transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">Archivio</span>
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold uppercase tracking-normal text-secondary">Archivio</span>
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-success bg-success-soft dark:bg-success-soft px-2 py-0.5 rounded-full">
                       <CheckCircle size={11} /> {archived.filter(o => o.status === 'accettata').length} accettate
                     </span>
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-danger bg-danger-soft dark:bg-danger-soft px-2 py-0.5 rounded-full">
                       <XCircle size={11} /> {archived.filter(o => o.status === 'rifiutata').length} rifiutate
                     </span>
-                    <span className="text-xs font-black text-gray-400">
+                    <span className="text-xs font-semibold text-muted">
                       · € {archived.filter(o => o.status === 'accettata').reduce((s, o) => s + o.totalAmount, 0).toLocaleString('it-IT', { maximumFractionDigits: 0 })} vinti
                     </span>
                   </div>
-                  {archiveOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                  {archiveOpen ? <ChevronUp size={16} className="text-muted" /> : <ChevronDown size={16} className="text-muted" />}
                 </button>
 
                 {/* Lista compatta archivio */}
                 {archiveOpen && (
-                  <div className="mt-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                  <div className="mt-2 bg-surface dark:bg-surface rounded-panel border border-line dark:border-line overflow-hidden">
                     {archived.map((offer, idx) => {
                       const contact = contacts[offer.contactId];
                       const won = offer.status === 'accettata';
                       return (
-                        <div key={offer.id} className={`flex items-center justify-between px-5 py-3.5 gap-4 ${idx < archived.length - 1 ? 'border-b border-gray-50 dark:border-gray-700/60' : ''} hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors`}>
+                        <div key={offer.id} className={`flex items-center justify-between px-5 py-3.5 gap-4 ${idx < archived.length - 1 ? 'border-b border-line dark:border-line/60' : ''} hover:bg-canvas dark:hover:bg-raised/40 transition-colors`}>
                           {/* Icona stato */}
                           <div className="flex-shrink-0">
                             {won
-                              ? <CheckCircle size={18} className="text-green-500" />
-                              : <XCircle size={18} className="text-red-400" />
+                              ? <CheckCircle size={18} className="text-success" />
+                              : <XCircle size={18} className="text-danger" />
                             }
                           </div>
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[10px] font-black text-[var(--accent-500)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-2 py-0.5 rounded-full">{offer.offerNumber}</span>
-                              <span className="text-sm font-black text-gray-800 dark:text-white truncate">{contact?.company || 'Azienda'}</span>
+                              <span className="text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/30 px-2 py-0.5 rounded-full">{offer.offerNumber}</span>
+                              <span className="text-sm font-semibold text-foreground dark:text-foreground truncate">{contact?.company || 'Azienda'}</span>
                             </div>
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className="text-xs text-muted mt-0.5">
                               {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
                             </p>
                           </div>
 
                           {/* Importo */}
-                          <div className={`text-base font-black flex-shrink-0 ${won ? 'text-green-600' : 'text-red-400'}`}>
+                          <div className={`text-base font-semibold flex-shrink-0 ${won ? 'text-success' : 'text-danger'}`}>
                             € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </div>
 
@@ -1009,26 +1010,26 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                           <div className="flex gap-1.5 flex-shrink-0">
                             {offer.pdfUrl && (
                               <PdfButton pdfUrl={offer.pdfUrl} pdfName={offer.pdfName}
-                                className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
+                                className="p-1.5 rounded-lg text-warning hover:bg-warning-soft dark:hover:bg-warning-soft transition-colors">
                                 <FileText size={14} />
                               </PdfButton>
                             )}
                             <button
                               onClick={() => triggerPdfUpload(offer.id)}
                               disabled={uploadingId === offer.id}
-                              className="p-1.5 rounded-lg text-gray-400 hover:bg-orange-50 hover:text-orange-500 dark:hover:bg-orange-900/20 transition-colors disabled:opacity-50"
+                              className="p-1.5 rounded-lg text-muted hover:bg-warning-soft hover:text-warning dark:hover:bg-warning-soft transition-colors disabled:opacity-50"
                               title="Allega PDF"
                             >
                               {uploadingId === offer.id
-                                ? <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full" />
+                                ? <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-warning border-t-transparent rounded-full" />
                                 : <Upload size={14} />}
                             </button>
                             <button onClick={() => updateOffer(offer.id, { status: 'inviata' })} title="Riporta in lavorazione"
-                              className="p-1.5 rounded-lg text-xs text-gray-400 hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)] dark:hover:bg-[var(--accent-900)]/30 transition-colors font-bold">
+                              className="p-1.5 rounded-lg text-xs text-muted hover:bg-accent-soft hover:text-accent dark:hover:bg-accent-soft/30 transition-colors font-bold">
                               ↩
                             </button>
-                            <button onClick={() => handlePrint(offer)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><Printer size={14} /></button>
-                            <button onClick={() => removeOffer(offer.id)} className="p-1.5 rounded-lg text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                            <button onClick={() => handlePrint(offer)} className="p-1.5 rounded-lg text-muted hover:bg-raised dark:hover:bg-raised transition-colors"><Printer size={14} /></button>
+                            <button onClick={() => removeOffer(offer.id)} className="p-1.5 rounded-lg text-danger hover:bg-danger-soft dark:hover:bg-danger-soft hover:text-danger transition-colors"><Trash2 size={14} /></button>
                           </div>
                         </div>
                       );
@@ -1042,18 +1043,18 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       })()}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-4xl rounded-t-[2rem] md:rounded-[2.5rem] p-5 md:p-8 max-h-[92vh] overflow-y-auto shadow-2xl">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
+          <div className="bg-surface dark:bg-surface w-full max-w-4xl rounded-t-panel md:rounded-panel p-5 md:p-8 max-h-[92vh] overflow-y-auto shadow-panel">
             <div className="flex justify-between items-center mb-6 md:mb-8">
-              <h2 className="text-lg md:text-2xl font-black uppercase dark:text-white">{editingId ? 'Modifica Preventivo' : 'Nuovo Preventivo'}</h2>
-              <button onClick={() => setShowModal(false)}><X size={24} className="text-gray-400"/></button>
+              <h2 className="text-lg md:text-2xl font-semibold  dark:text-foreground">{editingId ? 'Modifica Preventivo' : 'Nuovo Preventivo'}</h2>
+              <button aria-label="Chiudi dialogo" data-dialog-close onClick={() => setShowModal(false)}><X size={24} className="text-muted"/></button>
             </div>
             
             <div className="space-y-6">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Tipo cliente</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Tipo cliente</label>
                 <select
-                  className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white font-bold outline-none"
+                  className="w-full border-2 border-line dark:border-line rounded-panel p-4 bg-transparent dark:text-foreground font-bold outline-none"
                   value={contactMode}
                   onChange={(e) => setContactMode(e.target.value as OfferContactMode)}
                 >
@@ -1066,12 +1067,12 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               {contactMode === 'dealer+end-user' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Dealer (rivenditore)</label>
+                    <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Dealer (rivenditore)</label>
                     <SearchDropdown
                       value={contactSearch}
                       onChange={v => { setContactSearch(v); if (selectedContact) setSelectedContact(''); }}
                       placeholder="Cerca dealer per nome, azienda, città..."
-                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
+                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-accent transition-all text-sm dark:text-foreground'}
                       results={(contactSearch.trim()
                         ? sortByRelevance(contactSearch, Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                         : Object.values(contacts).slice(0, 8)
@@ -1085,12 +1086,12 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Cliente finale (End User)</label>
+                    <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">Cliente finale (End User)</label>
                     <SearchDropdown
                       value={endUserContactSearch}
                       onChange={v => { setEndUserContactSearch(v); if (selectedEndUserContact) setSelectedEndUserContact(''); }}
                       placeholder="Cerca cliente finale per nome, azienda, città..."
-                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
+                      inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-accent transition-all text-sm dark:text-foreground'}
                       results={(endUserContactSearch.trim()
                         ? sortByRelevance(endUserContactSearch, Object.values(contacts).filter(c => matchSearch(endUserContactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                         : Object.values(contacts).slice(0, 8)
@@ -1106,14 +1107,14 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 </div>
               ) : (
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">
                     {contactMode === 'dealer' ? 'Dealer' : 'Cliente'}
                   </label>
                   <SearchDropdown
                     value={contactSearch}
                     onChange={v => { setContactSearch(v); if (selectedContact) setSelectedContact(''); }}
                     placeholder="Cerca per nome, azienda, città, email, telefono..."
-                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold outline-none focus-within:border-[var(--accent-400)] transition-all text-sm dark:text-white'}
+                    inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-4 bg-transparent border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-accent transition-all text-sm dark:text-foreground'}
                     results={(contactSearch.trim()
                       ? sortByRelevance(contactSearch, Object.values(contacts).filter(c => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone])), c => [c.company, c.contactName]).slice(0, 8)
                       : Object.values(contacts).slice(0, 8)
@@ -1128,60 +1129,60 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 </div>
               )}
 
-              <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-900 rounded-2xl">
+              <div className="flex gap-2 p-1 bg-raised dark:bg-canvas rounded-panel">
                 <button
                   onClick={() => setEntryMode('articoli')}
-                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'articoli' ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-md font-semibold text-xs uppercase tracking-wide transition-colors ${entryMode === 'articoli' ? 'bg-surface dark:bg-raised text-accent shadow-sm' : 'text-muted'}`}
                 >
                   Articoli e prezzi
                 </button>
                 <button
                   onClick={() => setEntryMode('totale')}
-                  className={`flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide transition-colors ${entryMode === 'totale' ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-md font-semibold text-xs uppercase tracking-wide transition-colors ${entryMode === 'totale' ? 'bg-surface dark:bg-raised text-accent shadow-sm' : 'text-muted'}`}
                 >
                   Solo totale ordine
                 </button>
               </div>
 
               {entryMode === 'totale' && (
-                <div className="bg-[var(--accent-50)]/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-[var(--accent-50)] dark:border-gray-700">
-                  <label className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2 block">Valore totale ordine €</label>
+                <div className="bg-accent-soft/50 dark:bg-canvas/50 p-6 rounded-panel border border-accent dark:border-line">
+                  <label className="text-xs font-semibold text-accent uppercase tracking-normal mb-2 block">Valore totale ordine €</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-black text-lg outline-none"
+                    className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-surface dark:bg-surface dark:text-foreground font-semibold text-lg outline-none"
                     value={manualTotalValue || ''}
                     onChange={e => setManualTotalValue(parseFloat(e.target.value) || 0)}
                   />
-                  <p className="text-[11px] text-gray-400 font-bold mt-2">Niente elenco articoli: inserisci direttamente il valore complessivo dell'ordine, senza dettagliare prodotti e prezzi.</p>
+                  <p className="text-xs text-muted font-bold mt-2">Niente elenco articoli: inserisci direttamente il valore complessivo dell'ordine, senza dettagliare prodotti e prezzi.</p>
                 </div>
               )}
 
               {entryMode === 'articoli' && (
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Articoli</label>
-                  <button onClick={addLineItem} className="text-[var(--accent-600)] font-black text-xs uppercase bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-4 py-2 rounded-full hover:bg-[var(--accent-100)] transition-colors">+ Aggiungi Riga</button>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-normal">Articoli</label>
+                  <button onClick={addLineItem} className="text-accent font-semibold text-xs uppercase bg-accent-soft dark:bg-accent-soft/30 px-4 py-2 rounded-full hover:bg-accent-soft transition-colors">+ Aggiungi Riga</button>
                 </div>
 
                 {items.length === 0 && (
-                  <div className="text-center py-8 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-2xl">
-                    <p className="text-gray-400 text-xs font-bold">Premi "+ Aggiungi Riga" per inserire un articolo</p>
+                  <div className="text-center py-8 border-2 border-dashed border-line dark:border-line rounded-panel">
+                    <p className="text-muted text-xs font-bold">Premi "+ Aggiungi Riga" per inserire un articolo</p>
                   </div>
                 )}
 
                 {items.map((item, idx) => {
                   const lineTotal = item.price * item.quantity * (1 - item.discount / 100);
                   return (
-                    <div key={item.id} className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4 space-y-3">
+                    <div key={item.id} className="bg-canvas dark:bg-canvas rounded-panel p-4 space-y-3">
                       {/* Row header */}
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Articolo {idx + 1}</span>
+                        <span className="text-xs font-semibold text-muted uppercase tracking-normal">Articolo {idx + 1}</span>
                         <button
                           onClick={() => setItems(items.filter(i => i.id !== item.id))}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          className="p-1.5 rounded-lg text-danger hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -1189,9 +1190,9 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
 
                       {/* Catalog selector */}
                       <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Da catalogo</label>
+                        <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Da catalogo</label>
                         <select
-                          className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] transition-colors"
+                          className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-surface dark:text-foreground font-bold text-sm outline-none focus:border-accent transition-colors"
                           onChange={e => handleProductSelect(item.id, e.target.value)}
                           defaultValue=""
                         >
@@ -1205,21 +1206,21 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                       {/* Description + Sizes */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Descrizione *</label>
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Descrizione *</label>
                           <input
                             type="text"
                             placeholder="Es. Giubbotto invernale"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] transition-colors"
+                            className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-surface dark:text-foreground font-bold text-sm outline-none focus:border-accent transition-colors"
                             value={item.description}
                             onChange={e => updateItem(item.id, { description: e.target.value })}
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Taglie / Mis.</label>
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Taglie / Mis.</label>
                           <input
                             type="text"
                             placeholder="Es. S/M/L/XL"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-bold text-sm outline-none focus:border-[var(--accent-400)] transition-colors"
+                            className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-surface dark:text-foreground font-bold text-sm outline-none focus:border-accent transition-colors"
                             value={item.sizes || ''}
                             onChange={e => updateItem(item.id, { sizes: e.target.value })}
                           />
@@ -1229,42 +1230,42 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                       {/* Qty + Price + Discount + Total */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Q.tà</label>
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Q.tà</label>
                           <input
                             type="number"
                             min="1"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-[var(--accent-400)] transition-colors"
+                            className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-surface dark:text-foreground font-semibold text-sm text-center outline-none focus:border-accent transition-colors"
                             value={item.quantity}
                             onChange={e => updateItem(item.id, { quantity: parseInt(e.target.value) || 1 })}
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Prezzo €</label>
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Prezzo €</label>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-[var(--accent-400)] transition-colors"
+                            className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-surface dark:text-foreground font-semibold text-sm text-center outline-none focus:border-accent transition-colors"
                             value={item.price || ''}
                             onChange={e => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-wide block mb-1">Sconto %</label>
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Sconto %</label>
                           <input
                             type="number"
                             min="0"
                             max="100"
                             placeholder="0"
-                            className="w-full border-2 border-white dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 dark:text-white font-black text-sm text-center outline-none focus:border-[var(--accent-400)] transition-colors"
+                            className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-surface dark:text-foreground font-semibold text-sm text-center outline-none focus:border-accent transition-colors"
                             value={item.discount || ''}
                             onChange={e => updateItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
                           />
                         </div>
-                        <div className="bg-[var(--accent-600)] rounded-xl px-3 py-2.5 text-center">
-                          <p className="text-[9px] font-black text-[var(--accent-300)] uppercase tracking-wide">Totale riga</p>
-                          <p className="font-black text-white text-sm">€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
+                        <div className="bg-action rounded-md px-3 py-2.5 text-center">
+                          <p className="text-xs font-semibold text-action-foreground uppercase tracking-wide">Totale riga</p>
+                          <p className="font-semibold text-action-foreground text-sm">€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</p>
                         </div>
                       </div>
                     </div>
@@ -1273,26 +1274,26 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
               </div>
               )}
 
-              <div className={`grid grid-cols-1 ${entryMode === 'articoli' ? 'md:grid-cols-2' : ''} gap-4 bg-[var(--accent-50)]/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-[var(--accent-50)] dark:border-gray-700`}>
+              <div className={`grid grid-cols-1 ${entryMode === 'articoli' ? 'md:grid-cols-2' : ''} gap-4 bg-accent-soft/50 dark:bg-canvas/50 p-6 rounded-panel border border-accent dark:border-line`}>
                 <div>
-                  <label className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2 block">Tempi Consegna</label>
-                  <input type="text" className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} />
+                  <label className="text-xs font-semibold text-accent uppercase tracking-normal mb-2 block">Tempi Consegna</label>
+                  <input type="text" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-surface dark:bg-surface dark:text-foreground font-bold outline-none" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} />
                 </div>
                 {entryMode === 'articoli' && (
                 <div>
-                  <label className="text-[10px] font-black text-[var(--accent-600)] uppercase tracking-widest mb-2 block">Spese Trasporto (€)</label>
-                  <input type="number" className="w-full border-2 border-white dark:border-gray-800 rounded-xl p-3 bg-white dark:bg-gray-800 dark:text-white font-bold outline-none" value={shippingCost} onChange={e => setShippingCost(Number(e.target.value))} />
+                  <label className="text-xs font-semibold text-accent uppercase tracking-normal mb-2 block">Spese Trasporto (€)</label>
+                  <input type="number" className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-surface dark:bg-surface dark:text-foreground font-bold outline-none" value={shippingCost} onChange={e => setShippingCost(Number(e.target.value))} />
                 </div>
                 )}
               </div>
 
-              <div className="pt-6 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                <div className="text-2xl md:text-3xl font-black dark:text-white text-[var(--accent-600)]">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
-                <button onClick={saveOffer} className="w-full sm:w-auto bg-[var(--accent-600)] text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Salva</button>
+              <div className="pt-6 border-t dark:border-line flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <div className="text-2xl md:text-3xl font-semibold dark:text-foreground text-accent">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                <button onClick={saveOffer} className="w-full sm:w-auto bg-action text-action-foreground px-10 py-4 rounded-panel font-semibold uppercase text-xs tracking-normal shadow-panel">Salva</button>
               </div>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {showAiPanel && (

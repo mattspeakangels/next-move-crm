@@ -1,3 +1,4 @@
+import { DialogFrame } from './components/ui/DialogFrame';
 import { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { useAuth } from './lib/authContext';
 import { useFirestoreSync } from './lib/useFirestoreSync';
@@ -13,6 +14,8 @@ import { QuickLogFAB } from './components/ai/QuickLogFAB';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
+import { Wordmark } from './components/ui/Syrio';
+import { FeedbackProvider } from './components/ui/Feedback';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -32,7 +35,7 @@ const StrategyView   = lazy(() => import('./views/StrategyView').then(m => ({ de
 
 const ViewLoader = () => (
   <div className="flex items-center justify-center h-64">
-    <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+    <div className="w-7 h-7 border-4 border-accent border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
@@ -44,7 +47,7 @@ function AppContent() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const historyRef = useRef<NavView[]>([]);
-  const { theme, textSize, fontFamily, sectionColors, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty, repairCustomerTypes } = useStore();
+  const { theme, sectionColors, globalAccent, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty, repairCustomerTypes } = useStore();
 
   useInitializeProducts();
   useProspectingReminders();
@@ -103,21 +106,9 @@ function AppContent() {
     goTo('offers');
   };
 
-  useEffect(() => {
-    if (theme === 'dark') document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [theme]);
-
-  useEffect(() => {
-    document.documentElement.style.fontSize = textSize === 'small' ? '14px' : textSize === 'large' ? '19px' : '16px';
-  }, [textSize]);
-
-  useEffect(() => {
-    document.documentElement.style.fontFamily = FONT_STACKS[fontFamily as FontFamilyKey] || FONT_STACKS.sans;
-  }, [fontFamily]);
-
   const accentSectionId = ACCENT_SECTION_ALIAS[currentView] || currentView;
-  const accentStyle = cssVarsForPalette(sectionColors[accentSectionId]) as React.CSSProperties;
+  // Colore della singola sezione se impostato, altrimenti il colore globale.
+  const accentStyle = cssVarsForPalette(sectionColors[accentSectionId] || globalAccent, theme === 'dark') as React.CSSProperties;
 
   if (!profile) return (
     <Suspense fallback={<ViewLoader />}>
@@ -178,22 +169,21 @@ function AppContent() {
   const mobileMain = navItems.filter(n => activeTabs.includes(n.id));
 
   return (
-    <div className={`min-h-screen text-gray-900 dark:text-gray-100 ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen text-foreground ${theme === 'dark' ? 'dark bg-canvas' : 'bg-canvas'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 hidden md:flex flex-col z-20">
-        <div className="p-8 flex items-center gap-3 text-indigo-600">
-          <Target size={32} strokeWidth={2.5} />
-          <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Next<br/>Move</h1>
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-surface dark:bg-surface border-r border-line dark:border-line hidden md:flex flex-col z-20">
+        <div className="px-7 py-7">
+          <Wordmark className="text-3xl" />
         </div>
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
           {historyRef.current.length > 0 && (
-            <button onClick={goBack} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:hover:text-white mb-2 border border-gray-100 dark:border-gray-700">
+            <button onClick={goBack} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-normal rounded-panel transition-all text-muted hover:bg-canvas dark:hover:bg-raised dark:hover:text-foreground mb-2 border border-line dark:border-line">
               <ChevronLeft size={20} /> Indietro
             </button>
           )}
           {navItems.map(({ id, icon: Icon, label }) => (
-            <button key={id} onClick={() => goTo(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all ${currentView === id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:hover:text-white'}`}>
+            <button key={id} onClick={() => goTo(id)} aria-current={currentView === id ? 'page' : undefined} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${currentView === id ? 'bg-accent-soft text-accent border border-accent/25' : 'border border-transparent text-muted hover:bg-raised hover:text-foreground'}`}>
               <Icon size={20} />{label}
             </button>
           ))}
@@ -201,10 +191,10 @@ function AppContent() {
       </aside>
 
       {/* ── MOBILE TOP BAR ── */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center h-14 px-3 gap-2">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-30 bg-surface dark:bg-surface border-b border-line dark:border-line flex items-center h-14 px-3 gap-2">
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+          className="p-2 rounded-md text-secondary dark:text-muted hover:bg-raised dark:hover:bg-raised transition-colors flex-shrink-0"
           aria-label="Apri menu"
         >
           <Menu size={22} />
@@ -213,54 +203,52 @@ function AppContent() {
           {historyRef.current.length > 0 ? (
             <button
               onClick={goBack}
-              className="flex items-center gap-1 text-sm font-black text-indigo-600 dark:text-indigo-400"
+              className="flex items-center gap-1 text-sm font-semibold text-accent dark:text-accent"
             >
               <ChevronLeft size={16} /> Indietro
             </button>
           ) : (
-            <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Next Move</span>
+            <span className="syrio-wordmark text-xl">SYRIO</span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-indigo-600 flex-shrink-0">
+        <div className="flex items-center gap-2 text-accent flex-shrink-0">
           <Target size={20} strokeWidth={2.5} />
         </div>
       </header>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-gray-50 dark:bg-gray-900">
+      <main className="md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-canvas dark:bg-canvas">
         <div style={accentStyle} className={currentView === 'map' ? 'p-2 md:p-3' : 'p-4 md:p-8 max-w-7xl mx-auto'}>
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>
 
       {/* ── MOBILE BOTTOM NAV (5 tab personalizzabili) ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-around px-1 h-16 safe-area-inset-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface dark:bg-surface border-t border-line dark:border-line flex items-center justify-around px-1 h-16 safe-area-inset-bottom">
         {mobileMain.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => goTo(id)}
-            className={`flex flex-col items-center gap-0.5 flex-1 py-2 transition-all ${currentView === id ? 'text-indigo-600' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 py-2 transition-all ${currentView === id ? 'text-accent' : 'text-muted'}`}
           >
             <Icon size={22} strokeWidth={currentView === id ? 2.5 : 1.8} />
-            <span className="text-[10px] font-bold uppercase tracking-wide leading-none">{label}</span>
+            <span className="text-xs font-medium leading-none max-w-full truncate">{label}</span>
           </button>
         ))}
       </nav>
 
       {/* ── MOBILE DRAWER LATERALE (burger) ── */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <DialogFrame className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="relative bg-white dark:bg-gray-900 w-72 h-full flex flex-col shadow-2xl">
+          <aside className="relative bg-surface dark:bg-canvas w-72 h-full flex flex-col shadow-panel">
             {/* Drawer header */}
-            <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-3 text-indigo-600">
-                <Target size={22} strokeWidth={2.5} />
-                <span className="text-lg font-black tracking-tighter uppercase leading-none">Next Move</span>
-              </div>
+            <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-line dark:border-line">
+              <Wordmark className="text-2xl" />
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Chiudi menu"
+                className="p-2 rounded-md text-muted hover:bg-raised dark:hover:bg-surface transition-colors"
               >
                 <X size={18} />
               </button>
@@ -271,14 +259,15 @@ function AppContent() {
                 <button
                   key={id}
                   onClick={() => goTo(id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-widest rounded-2xl transition-all ${currentView === id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+                  aria-current={currentView === id ? 'page' : undefined}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${currentView === id ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-raised hover:text-foreground'}`}
                 >
                   <Icon size={18} />{label}
                 </button>
               ))}
             </nav>
           </aside>
-        </div>
+        </DialogFrame>
       )}
 
       <QuickLogFAB />
@@ -292,8 +281,8 @@ function AuthGate() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -303,11 +292,19 @@ function AuthGate() {
 }
 
 export default function App() {
+  const { theme, textSize, fontFamily } = useStore();
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.style.fontSize = textSize === 'small' ? '14px' : textSize === 'large' ? '19px' : '16px';
+    document.documentElement.style.fontFamily = FONT_STACKS[fontFamily as FontFamilyKey] || FONT_STACKS.sans;
+  }, [theme, textSize, fontFamily]);
   return (
     <ToastProvider>
+      <FeedbackProvider>
       <AuthGate />
       <UpdateBanner />
       <SelectionAI />
+      </FeedbackProvider>
     </ToastProvider>
   );
 }

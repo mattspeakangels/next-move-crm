@@ -1,3 +1,4 @@
+import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState } from 'react';
 import { X, Link, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { scrapeContactFromUrl, ScrapedContact } from '../../utils/scrapeContact';
@@ -14,13 +15,13 @@ const Field: React.FC<{
   placeholder?: string;
 }> = ({ label, value, onChange, placeholder }) => (
   <div>
-    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</label>
+    <label className="block text-xs font-semibold text-muted uppercase tracking-normal mb-1">{label}</label>
     <input
       type="text"
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+      className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md px-3 py-2 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
     />
   </div>
 );
@@ -52,17 +53,17 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
     setData(prev => prev ? { ...prev, [field]: v } : prev);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div
-        className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[2rem] shadow-2xl max-h-[90vh] flex flex-col"
+        className="bg-surface dark:bg-canvas w-full max-w-lg rounded-panel shadow-panel max-h-[90vh] flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-line dark:border-line">
           <div className="flex items-center gap-2">
-            <Link size={18} className="text-[var(--accent-600)]" />
-            <h2 className="text-base font-black dark:text-white">Importa da URL</h2>
+            <Link size={18} className="text-accent" />
+            <h2 className="text-base font-semibold dark:text-foreground">Importa da URL</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="text-muted hover:text-secondary dark:hover:text-muted transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -70,7 +71,7 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
           {/* URL input */}
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            <label className="block text-xs font-semibold text-muted uppercase tracking-normal mb-2">
               Sito web / URL azienda
             </label>
             <div className="flex gap-2">
@@ -81,35 +82,35 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
                 onKeyDown={e => e.key === 'Enter' && handleFetch()}
                 placeholder="es. https://www.azienda.it"
                 autoFocus
-                className="flex-1 bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)]"
+                className="flex-1 bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md px-3 py-2.5 text-sm font-bold dark:text-foreground outline-none focus:border-accent"
               />
               <button
                 onClick={handleFetch}
                 disabled={loading || !url.trim()}
-                className="px-4 py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-sm disabled:opacity-50 hover:bg-[var(--accent-700)] transition-colors flex items-center gap-2 flex-shrink-0"
+                className="px-4 py-2.5 rounded-md bg-action text-action-foreground font-semibold text-sm disabled:opacity-50 hover:bg-action-hover transition-colors flex items-center gap-2 flex-shrink-0"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : 'Analizza'}
               </button>
             </div>
-            <p className="text-[10px] text-gray-400 mt-1.5 font-bold">
+            <p className="text-xs text-muted mt-1.5 font-bold">
               Funziona con siti aziendali standard. Non compatibile con LinkedIn o Google Maps.
             </p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl p-3">
-              <AlertCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-red-600 dark:text-red-400 font-bold">{error}</p>
+            <div className="flex items-start gap-2 bg-danger-soft dark:bg-danger-soft border border-danger dark:border-danger rounded-md p-3">
+              <AlertCircle size={14} className="text-danger mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-danger dark:text-danger font-bold">{error}</p>
             </div>
           )}
 
           {/* Results */}
           {data && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <div className="flex items-center gap-2 text-success dark:text-success">
                 <CheckCircle size={14} />
-                <span className="text-xs font-black uppercase tracking-wide">Dati estratti — verifica e correggi</span>
+                <span className="text-xs font-semibold uppercase tracking-wide">Dati estratti — verifica e correggi</span>
               </div>
 
               <Field label="Ragione Sociale *" value={data.company} onChange={update('company')} placeholder="Nome azienda" />
@@ -130,12 +131,12 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
               </div>
               {data.notes && (
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Note (descrizione)</label>
+                  <label className="block text-xs font-semibold text-muted uppercase tracking-normal mb-1">Note (descrizione)</label>
                   <textarea
                     value={data.notes}
                     onChange={e => update('notes')(e.target.value)}
                     rows={3}
-                    className="w-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2 text-sm font-bold dark:text-white outline-none focus:border-[var(--accent-400)] resize-none"
+                    className="w-full bg-canvas dark:bg-surface border-2 border-line dark:border-line rounded-md px-3 py-2 text-sm font-bold dark:text-foreground outline-none focus:border-accent resize-none"
                   />
                 </div>
               )}
@@ -145,23 +146,23 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
 
         {/* Footer */}
         {data && (
-          <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+          <div className="px-6 py-4 border-t border-line dark:border-line flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border-2 border-gray-100 dark:border-gray-700 text-gray-500 font-black text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="flex-1 py-2.5 rounded-md border-2 border-line dark:border-line text-secondary font-semibold text-sm hover:bg-canvas dark:hover:bg-surface transition-colors"
             >
               Annulla
             </button>
             <button
               onClick={() => { onImport(data); onClose(); }}
               disabled={!data.company.trim()}
-              className="flex-2 flex-grow py-2.5 px-6 rounded-xl bg-[var(--accent-600)] text-white font-black text-sm hover:bg-[var(--accent-700)] disabled:opacity-50 transition-colors"
+              className="flex-2 flex-grow py-2.5 px-6 rounded-md bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover disabled:opacity-50 transition-colors"
             >
               Crea contatto
             </button>
           </div>
         )}
       </div>
-    </div>
+    </DialogFrame>
   );
 };

@@ -1,3 +1,5 @@
+import { confirmAction } from '../components/ui/Feedback';
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { blakladerUrl, enrichProduct } from '../lib/blaklader';
 import * as XLSX from 'xlsx';
@@ -28,12 +30,12 @@ const CATEGORIES = [
 ];
 
 const CAT_STYLE: Record<string, { bg: string; text: string }> = {
-  giacche:   { bg: 'bg-blue-50 dark:bg-blue-900/20',    text: 'text-blue-600 dark:text-blue-400'   },
-  felpe:     { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400'},
-  pantaloni: { bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-400' },
-  hivis:     { bg: 'bg-yellow-50 dark:bg-yellow-900/20', text: 'text-yellow-700 dark:text-yellow-400'},
-  tshirt:    { bg: 'bg-green-50 dark:bg-green-900/20',   text: 'text-green-600 dark:text-green-400' },
-  accessori: { bg: 'bg-gray-100 dark:bg-gray-700',       text: 'text-gray-500 dark:text-gray-300'   },
+  giacche:   { bg: 'bg-accent-soft dark:bg-accent-soft/20',    text: 'text-accent dark:text-accent'   },
+  felpe:     { bg: 'bg-accent-soft dark:bg-accent-soft/20', text: 'text-accent dark:text-accent'},
+  pantaloni: { bg: 'bg-warning-soft dark:bg-warning-soft',   text: 'text-warning dark:text-warning' },
+  hivis:     { bg: 'bg-warning-soft dark:bg-warning-soft', text: 'text-warning dark:text-warning'},
+  tshirt:    { bg: 'bg-success-soft dark:bg-success-soft',   text: 'text-success dark:text-success' },
+  accessori: { bg: 'bg-raised dark:bg-raised',       text: 'text-secondary dark:text-muted'   },
 };
 
 const COLOR_HEX: Record<string, string> = {
@@ -126,8 +128,8 @@ const StockBadge: React.FC<{ p: Product; tiny?: boolean }> = ({ p, tiny }) => {
   const st = stockSt(p);
   if (!st || st === 'ok') return null;
   if (st === 'esaurito')
-    return <span className={`${tiny ? 'text-[9px] px-1.5 py-0' : 'text-[10px] px-2 py-0.5'} rounded-full bg-red-100 text-red-600 font-black uppercase`}>Esaurito</span>;
-  return <span className={`${tiny ? 'text-[9px] px-1.5 py-0' : 'text-[10px] px-2 py-0.5'} rounded-full bg-yellow-100 text-yellow-700 font-black uppercase`}>Solo {p.stock}</span>;
+    return <span className={`${tiny ? 'text-xs px-1.5 py-0' : 'text-xs px-2 py-0.5'} rounded-full bg-danger-soft text-danger font-semibold uppercase`}>Esaurito</span>;
+  return <span className={`${tiny ? 'text-xs px-1.5 py-0' : 'text-xs px-2 py-0.5'} rounded-full bg-warning-soft text-warning font-semibold uppercase`}>Solo {p.stock}</span>;
 };
 
 // ─── DotMenu (⋯ dropdown) ─────────────────────────────────────────────────────
@@ -145,21 +147,21 @@ const DotMenu: React.FC<{ onDelete: () => void; onDuplicate: () => void; onEdit:
     <div ref={ref} className="relative">
       <button
         onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+        className="p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-raised dark:hover:bg-raised transition-all"
         aria-label="Azioni"
       >
         <MoreHorizontal size={15} />
       </button>
       {open && (
-        <div className="absolute right-0 top-7 z-30 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl py-1 w-36">
-          <button onClick={() => { onDuplicate(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <div className="absolute right-0 top-7 z-30 bg-surface dark:bg-surface border border-line dark:border-line rounded-md shadow-panel py-1 w-36">
+          <button onClick={() => { onDuplicate(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-secondary dark:text-muted hover:bg-canvas dark:hover:bg-raised">
             <Copy size={13} /> Duplica
           </button>
-          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-secondary dark:text-muted hover:bg-canvas dark:hover:bg-raised">
             <Pencil size={13} /> Modifica
           </button>
-          <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
-          <button onClick={() => { onDelete(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+          <div className="border-t border-line dark:border-line my-1" />
+          <button onClick={() => { onDelete(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-danger hover:bg-danger-soft dark:hover:bg-danger-soft">
             <Trash2 size={13} /> Elimina
           </button>
         </div>
@@ -187,7 +189,7 @@ const CompactList: React.FC<{
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+    <div className="bg-surface dark:bg-surface rounded-panel overflow-hidden border border-line dark:border-line">
       {products.map((p, i) => {
         const sel = selected.has(p.id);
         const st = stockSt(p);
@@ -198,16 +200,16 @@ const CompactList: React.FC<{
             onClick={() => onOpen(p)}
             style={{ minHeight: 54, opacity: st === 'esaurito' ? 0.6 : 1 }}
             className={`flex items-center px-4 cursor-pointer transition-colors ${
-              i > 0 ? 'border-t border-gray-50 dark:border-gray-700/50' : ''
-            } ${sel ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'}`}
+              i > 0 ? 'border-t border-line dark:border-line/50' : ''
+            } ${sel ? 'bg-accent-soft dark:bg-accent-soft/20' : 'hover:bg-canvas dark:hover:bg-raised/30'}`}
           >
             {/* Left: thumbnail o color dots */}
             <div className="mr-3 flex-shrink-0">
               {p.imageUrl
-                ? <img src={p.imageUrl} alt={pName(p)} className="w-9 h-9 rounded-xl object-cover border border-gray-100 dark:border-gray-700" />
+                ? <img src={p.imageUrl} alt={pName(p)} className="w-9 h-9 rounded-xl object-cover border border-line dark:border-line" />
                 : p.colors?.length
                   ? <ColorDots colors={p.colors} size={14} />
-                  : <div className="w-9 h-9 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center"><Package size={14} className="text-gray-400" /></div>
+                  : <div className="w-9 h-9 bg-raised dark:bg-raised rounded-md flex items-center justify-center"><Package size={14} className="text-muted" /></div>
               }
             </div>
 
@@ -215,7 +217,7 @@ const CompactList: React.FC<{
             <div className="flex-1 min-w-0 py-3">
               <div className="flex items-baseline gap-2 min-w-0">
                 <span
-                  className="dark:text-white truncate"
+                  className="dark:text-foreground truncate"
                   style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.3 }}
                 >
                   {pName(p)}
@@ -225,7 +227,7 @@ const CompactList: React.FC<{
                   target="_blank"
                   rel="noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-[var(--accent-500)] hover:text-[var(--accent-700)] flex-shrink-0 font-mono hover:underline flex items-center gap-0.5"
+                  className="text-accent hover:text-accent flex-shrink-0 font-mono hover:underline flex items-center gap-0.5"
                   style={{ fontSize: 10.5 }}
                 >
                   {p.code}
@@ -235,44 +237,44 @@ const CompactList: React.FC<{
                   <button
                     onClick={e => { e.stopPropagation(); onEnrich(p); }}
                     title="Recupera dati da blaklader.it"
-                    className="text-gray-300 hover:text-emerald-500 transition-colors"
+                    className="text-muted hover:text-success transition-colors"
                   >
                     {enrichingIds.has(p.id)
-                      ? <Loader2 size={11} className="animate-spin text-emerald-500" />
+                      ? <Loader2 size={11} className="animate-spin text-success" />
                       : <Sparkles size={11} />}
                   </button>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className={`text-[9.5px] font-black uppercase tracking-wide ${cs.text}`}>
+                <span className={`text-[9.5px] font-semibold uppercase tracking-wide ${cs.text}`}>
                   {catLabel(p)}
                 </span>
-                {p.sizes && <><span className="text-gray-300 dark:text-gray-600 text-[9px]">·</span><span className="text-[9.5px] text-gray-400 font-medium">{p.sizes}</span></>}
-                {st === 'low' && <><span className="text-gray-300 dark:text-gray-600 text-[9px]">·</span><span className="text-[9px] font-black text-yellow-600">SOLO {p.stock}</span></>}
-                {st === 'esaurito' && <><span className="text-gray-300 dark:text-gray-600 text-[9px]">·</span><span className="text-[9px] font-black text-red-500">ESAURITO</span></>}
+                {p.sizes && <><span className="text-muted dark:text-secondary text-xs">·</span><span className="text-[9.5px] text-muted font-medium">{p.sizes}</span></>}
+                {st === 'low' && <><span className="text-muted dark:text-secondary text-xs">·</span><span className="text-xs font-semibold text-warning">SOLO {p.stock}</span></>}
+                {st === 'esaurito' && <><span className="text-muted dark:text-secondary text-xs">·</span><span className="text-xs font-semibold text-danger">ESAURITO</span></>}
               </div>
             </div>
 
             {/* Right: price + line + menu + checkbox */}
             <div className="flex items-center gap-2 ml-3 flex-shrink-0">
               <div className="text-right mr-1">
-                <div className="dark:text-white font-bold" style={{ fontSize: 14 }}>{fPrice(p)}</div>
-                {p.line && <div className="text-gray-400 font-mono" style={{ fontSize: 9 }}>{p.line}</div>}
+                <div className="dark:text-foreground font-bold" style={{ fontSize: 14 }}>{fPrice(p)}</div>
+                {p.line && <div className="text-muted font-mono" style={{ fontSize: 9 }}>{p.line}</div>}
               </div>
               <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
               <div
                 onClick={e => { e.stopPropagation(); onToggle(p.id); }}
                 className={`w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${
                   sel
-                    ? 'bg-[var(--accent-600)] border-[var(--accent-600)]'
-                    : 'border-gray-300 dark:border-gray-600'
+                    ? 'bg-action border-accent'
+                    : 'border-line dark:border-line'
                 }`}
                 role="checkbox"
                 aria-checked={sel}
                 tabIndex={0}
                 onKeyDown={e => e.key === ' ' && onToggle(p.id)}
               >
-                {sel && <Check size={11} className="text-white" strokeWidth={3} />}
+                {sel && <Check size={11} className="text-action-foreground" strokeWidth={3} />}
               </div>
             </div>
           </div>
@@ -301,7 +303,7 @@ const VisualList: React.FC<{
   };
 
   const thumbGrad = (p: Product) => {
-    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#4F46E5';
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#946239';
     const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : c1 + '99';
     return `linear-gradient(135deg, ${c1}, ${c2})`;
   };
@@ -317,8 +319,8 @@ const VisualList: React.FC<{
             key={p.id}
             onClick={() => onOpen(p)}
             style={{ opacity: st === 'esaurito' ? 0.65 : 1, borderRadius: 12, padding: 11 }}
-            className={`bg-white dark:bg-gray-800 border flex gap-3 cursor-pointer transition-all ${
-              sel ? 'border-[var(--accent-400)] dark:border-[var(--accent-500)]' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
+            className={`bg-surface dark:bg-surface border flex gap-3 cursor-pointer transition-all ${
+              sel ? 'border-accent dark:border-accent' : 'border-line dark:border-line hover:border-line'
             }`}
           >
             {/* Thumbnail */}
@@ -349,7 +351,7 @@ const VisualList: React.FC<{
             <div className="flex-1 min-w-0">
               {/* Top row: category + code */}
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className={`text-[9.5px] font-black uppercase nowrap ${cs.text} flex-shrink-0`} style={{ whiteSpace: 'nowrap', minWidth: 0 }}>
+                <span className={`text-[9.5px] font-semibold uppercase nowrap ${cs.text} flex-shrink-0`} style={{ whiteSpace: 'nowrap', minWidth: 0 }}>
                   {catLabel(p)}
                 </span>
                 <a
@@ -357,7 +359,7 @@ const VisualList: React.FC<{
                   target="_blank"
                   rel="noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-[var(--accent-500)] hover:text-[var(--accent-700)] font-mono flex-shrink-0 hover:underline"
+                  className="text-accent hover:text-accent font-mono flex-shrink-0 hover:underline"
                   style={{ fontSize: 10 }}
                 >
                   {p.code}
@@ -365,7 +367,7 @@ const VisualList: React.FC<{
               </div>
               {/* Name */}
               <div
-                className="dark:text-white mt-0.5"
+                className="dark:text-foreground mt-0.5"
                 style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.25 }}
               >
                 {pName(p)}
@@ -373,7 +375,7 @@ const VisualList: React.FC<{
               {/* Footer */}
               <div className="flex items-center gap-2 mt-1.5">
                 <ColorDots colors={p.colors} size={12} />
-                {p.sizes && <span className="text-[9px] text-gray-400">{p.sizes}</span>}
+                {p.sizes && <span className="text-xs text-muted">{p.sizes}</span>}
                 <StockBadge p={p} tiny />
               </div>
             </div>
@@ -381,21 +383,21 @@ const VisualList: React.FC<{
             {/* Right column: price + checkbox */}
             <div className="flex flex-col items-end justify-between flex-shrink-0 ml-1">
               <div className="text-right">
-                <div className="dark:text-white font-bold" style={{ fontSize: 16 }}>{fPrice(p)}</div>
+                <div className="dark:text-foreground font-bold" style={{ fontSize: 16 }}>{fPrice(p)}</div>
               </div>
               <div className="flex items-center gap-1">
                 <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
                 <div
                   onClick={e => { e.stopPropagation(); onToggle(p.id); }}
                   className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
-                    sel ? 'bg-[var(--accent-600)] border-[var(--accent-600)]' : 'border-gray-300 dark:border-gray-600'
+                    sel ? 'bg-action border-accent' : 'border-line dark:border-line'
                   }`}
                   role="checkbox"
                   aria-checked={sel}
                   tabIndex={0}
                   onKeyDown={e => e.key === ' ' && onToggle(p.id)}
                 >
-                  {sel && <Check size={13} className="text-white" strokeWidth={3} />}
+                  {sel && <Check size={13} className="text-action-foreground" strokeWidth={3} />}
                 </div>
               </div>
             </div>
@@ -425,8 +427,8 @@ const GridList: React.FC<{
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
 
   const heroGrad = (p: Product) => {
-    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#4F46E5';
-    const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : '#7C3AED';
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#946239';
+    const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : '#c08d62';
     return `linear-gradient(180deg, ${c1} 0%, ${c2} 100%)`;
   };
 
@@ -441,8 +443,8 @@ const GridList: React.FC<{
             key={p.id}
             onClick={() => onOpen(p)}
             style={{ opacity: st === 'esaurito' ? 0.65 : 1, borderRadius: 14, overflow: 'hidden' }}
-            className={`bg-white dark:bg-gray-800 border cursor-pointer transition-all ${
-              sel ? 'border-[var(--accent-400)] shadow-md shadow-[var(--accent-100)] dark:shadow-[var(--accent-900)]/20' : 'border-gray-100 dark:border-gray-700 hover:border-gray-200'
+            className={`bg-surface dark:bg-surface border cursor-pointer transition-all ${
+              sel ? 'border-accent shadow-panel  ' : 'border-line dark:border-line hover:border-line'
             }`}
           >
             {/* Hero */}
@@ -460,9 +462,9 @@ const GridList: React.FC<{
                 onClick={e => { e.stopPropagation(); onToggle(p.id); }}
               >
                 <div className={`w-[22px] h-[22px] rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
-                  sel ? 'bg-[var(--accent-600)] border-[var(--accent-600)]' : 'bg-white/20 border-white/50'
+                  sel ? 'bg-action border-accent' : 'bg-surface/20 border-line/50'
                 }`}>
-                  {sel && <Check size={13} className="text-white" strokeWidth={3} />}
+                  {sel && <Check size={13} className="text-action-foreground" strokeWidth={3} />}
                 </div>
               </div>
               {/* Line badge bottom */}
@@ -483,15 +485,15 @@ const GridList: React.FC<{
             <div className="p-3">
               {/* Cat + code */}
               <div className="flex items-center gap-1.5 mb-1">
-                <span className={`text-[9px] font-black uppercase ${cs.text}`}>{catLabel(p)}</span>
+                <span className={`text-xs font-semibold uppercase ${cs.text}`}>{catLabel(p)}</span>
                 <a href={blakladerUrl(p.code, p.productUrl)} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                  className="text-[var(--accent-500)] hover:text-[var(--accent-700)] font-mono text-[9px] ml-auto flex-shrink-0 hover:underline flex items-center gap-0.5">
+                  className="text-accent hover:text-accent font-mono text-xs ml-auto flex-shrink-0 hover:underline flex items-center gap-0.5">
                   {p.code}{p.productUrl && <ExternalLink size={8} />}
                 </a>
               </div>
               {/* Name */}
               <div
-                className="dark:text-white mb-2"
+                className="dark:text-foreground mb-2"
                 style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.3,
                   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
               >
@@ -502,7 +504,7 @@ const GridList: React.FC<{
                 <ColorDots colors={p.colors} size={12} />
                 <div className="flex items-center gap-1">
                   <DotMenu onDelete={() => onDelete(p.id)} onDuplicate={() => onDuplicate(p)} onEdit={() => onEdit(p)} />
-                  <span className="dark:text-white font-bold text-xs">{fPrice(p)}</span>
+                  <span className="dark:text-foreground font-bold text-xs">{fPrice(p)}</span>
                 </div>
               </div>
             </div>
@@ -555,15 +557,15 @@ const AddProductModal: React.FC<{
   };
 
   const LINES = ['X1900','X1500','X1600','X1800','X1700','X1100','HiVis','Softshell','Knitwear'];
-  const inputCls = 'w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-3.5 bg-transparent dark:text-white font-bold outline-none focus:border-[var(--accent-500)] text-sm transition-colors';
-  const labelCls = 'text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block';
+  const inputCls = 'w-full border-2 border-line dark:border-line rounded-panel p-3.5 bg-transparent dark:text-foreground font-bold outline-none focus:border-accent text-sm transition-colors';
+  const labelCls = 'text-xs font-semibold text-muted uppercase tracking-normal mb-1 block';
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-t-[2rem] md:rounded-[2rem] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
+      <div className="bg-surface dark:bg-surface w-full max-w-lg rounded-t-panel md:rounded-panel p-6 shadow-panel max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black uppercase tracking-tighter dark:text-white">{editProduct ? 'Modifica Articolo' : 'Nuovo Articolo'}</h2>
-          <button onClick={onClose}><X size={22} className="text-gray-400" /></button>
+          <h2 className="text-xl font-semibold   dark:text-foreground">{editProduct ? 'Modifica Articolo' : 'Nuovo Articolo'}</h2>
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose}><X size={22} className="text-muted" /></button>
         </div>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -612,15 +614,15 @@ const AddProductModal: React.FC<{
             <div className="flex gap-2">
               <input className={inputCls} value={colorInput} onChange={e => setColorInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addColor()} placeholder="Es. nero, blu, grigio..." />
-              <button onClick={addColor} className="px-4 py-3 bg-[var(--accent-600)] text-white rounded-2xl font-bold text-sm flex-shrink-0">+</button>
+              <button onClick={addColor} className="px-4 py-3 bg-action text-action-foreground rounded-panel font-bold text-sm flex-shrink-0">+</button>
             </div>
             {(form.colors?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {form.colors!.map((c, i) => (
-                  <span key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 text-xs font-bold dark:text-white">
+                  <span key={i} className="flex items-center gap-1.5 bg-raised dark:bg-raised rounded-full px-3 py-1 text-xs font-bold dark:text-foreground">
                     <span style={{ width: 10, height: 10, borderRadius: '50%', background: getColorHex(c), display: 'inline-block' }} />
                     {c}
-                    <button onClick={() => set('colors', form.colors!.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500"><X size={10} /></button>
+                    <button onClick={() => set('colors', form.colors!.filter((_, j) => j !== i))} className="text-muted hover:text-danger"><X size={10} /></button>
                   </span>
                 ))}
               </div>
@@ -632,16 +634,16 @@ const AddProductModal: React.FC<{
             <input ref={imgInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             {form.imageUrl ? (
               <div className="flex items-center gap-3">
-                <img src={form.imageUrl} alt="preview" className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100 dark:border-gray-700" />
+                <img src={form.imageUrl} alt="preview" className="w-20 h-20 rounded-panel object-cover border-2 border-line dark:border-line" />
                 <div className="flex flex-col gap-2">
-                  <button onClick={() => imgInputRef.current?.click()} className="text-xs font-bold text-[var(--accent-600)] hover:underline">Cambia foto</button>
-                  <button onClick={() => set('imageUrl', undefined)} className="text-xs font-bold text-red-400 hover:underline">Rimuovi</button>
+                  <button onClick={() => imgInputRef.current?.click()} className="text-xs font-bold text-accent hover:underline">Cambia foto</button>
+                  <button onClick={() => set('imageUrl', undefined)} className="text-xs font-bold text-danger hover:underline">Rimuovi</button>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => imgInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-[var(--accent-400)] hover:text-[var(--accent-500)] transition-colors"
+                className="w-full border-2 border-dashed border-line dark:border-line rounded-panel py-5 flex flex-col items-center gap-2 text-muted hover:border-accent hover:text-accent transition-colors"
               >
                 <Upload size={20} />
                 <span className="text-xs font-bold">Carica foto (jpg, png, webp)</span>
@@ -649,12 +651,12 @@ const AddProductModal: React.FC<{
             )}
           </div>
 
-          <button onClick={handleSave} className="w-full bg-[var(--accent-600)] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[var(--accent-700)] transition-all mt-2">
+          <button onClick={handleSave} className="w-full bg-action text-action-foreground py-4 rounded-panel font-semibold uppercase text-xs tracking-normal shadow-panel hover:bg-action-hover transition-all mt-2">
             {editProduct ? 'Salva Modifiche' : 'Salva nel Catalogo'}
           </button>
         </div>
       </div>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -696,21 +698,21 @@ const AddToOfferModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+    <DialogFrame className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-800 w-full md:max-w-md rounded-t-3xl md:rounded-2xl shadow-2xl p-6 pb-10 md:pb-6">
+      <div className="relative bg-surface dark:bg-surface w-full md:max-w-md rounded-t-3xl md:rounded-panel shadow-panel p-6 pb-10 md:pb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-black text-gray-900 dark:text-white text-base">Aggiungi a offerta</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{selectedProducts.length} articoli selezionati</p>
+            <h2 className="font-semibold text-foreground dark:text-foreground text-base">Aggiungi a offerta</h2>
+            <p className="text-xs text-secondary mt-0.5">{selectedProducts.length} articoli selezionati</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600">
+          <button aria-label="Chiudi dialogo" data-dialog-close onClick={onClose} className="p-1.5 rounded-full text-muted hover:text-secondary">
             <X size={18} />
           </button>
         </div>
 
         {offerList.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-muted">
             <ShoppingBag size={32} className="mx-auto mb-2 opacity-40" />
             <p className="text-sm">Nessuna offerta in bozza o inviata</p>
             <p className="text-xs mt-1">Crea prima un'offerta dalla sezione Offerte</p>
@@ -723,25 +725,25 @@ const AddToOfferModal: React.FC<{
                 <button
                   key={o.id}
                   onClick={() => handlePick(o.id)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 hover:border-[var(--accent-200)] dark:hover:border-[var(--accent-700)] transition-all text-left group"
+                  className="w-full flex items-center justify-between p-3 rounded-md border border-line dark:border-line hover:bg-accent-soft dark:hover:bg-accent-soft/20 hover:border-accent dark:hover:border-accent transition-all text-left group"
                 >
                   <div className="min-w-0">
-                    <div className="font-bold text-sm text-gray-900 dark:text-white">
+                    <div className="font-bold text-sm text-foreground dark:text-foreground">
                       {o.offerNumber}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-secondary truncate">
                       {contact?.company || 'Azienda sconosciuta'}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase ${
                       o.status === 'bozza'
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-500'
-                        : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600'
+                        ? 'bg-raised dark:bg-raised text-secondary'
+                        : 'bg-accent-soft dark:bg-accent-soft/30 text-accent'
                     }`}>
                       {o.status}
                     </span>
-                    <span className="text-xs text-[var(--accent-600)] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs text-accent font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                       Aggiungi →
                     </span>
                   </div>
@@ -751,7 +753,7 @@ const AddToOfferModal: React.FC<{
           </div>
         )}
       </div>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -771,7 +773,7 @@ const ProductDetailModal: React.FC<{
   const st = stockSt(p);
 
   const heroGrad = () => {
-    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#4F46E5';
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#946239';
     const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : c1 + '99';
     return `linear-gradient(160deg, ${c1} 0%, ${c2} 100%)`;
   };
@@ -779,16 +781,16 @@ const ProductDetailModal: React.FC<{
   const netPrice = p.price > 0 && p.discount ? p.price * (1 - p.discount / 100) : p.price;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-t-[2rem] md:rounded-[2rem] shadow-2xl max-h-[92vh] overflow-y-auto">
+    <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md">
+      <div className="bg-surface dark:bg-surface w-full max-w-lg rounded-t-panel md:rounded-panel shadow-panel max-h-[92vh] overflow-y-auto">
         {/* Hero image / color gradient */}
         <div style={{ position: 'relative', height: 200, background: p.imageUrl ? 'transparent' : heroGrad(), borderRadius: '2rem 2rem 0 0', overflow: 'hidden' }}>
           {p.imageUrl && (
             <img src={p.imageUrl} alt={pName(p)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           )}
-          <button
+          <button aria-label="Chiudi dialogo" data-dialog-close
             onClick={onClose}
-            className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white rounded-full p-2 hover:bg-black/50 transition-all"
+            className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-foreground rounded-full p-2 hover:bg-black/50 transition-all"
           >
             <X size={18} />
           </button>
@@ -813,23 +815,23 @@ const ProductDetailModal: React.FC<{
           {/* Name + code */}
           <div>
             <div className="flex items-start justify-between gap-2">
-              <h2 className="text-xl font-black dark:text-white leading-tight">{pName(p)}</h2>
-              <span className={`flex-shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${catStyle.bg} ${catStyle.text}`}>{catLabel}</span>
+              <h2 className="text-xl font-semibold dark:text-foreground leading-tight">{pName(p)}</h2>
+              <span className={`flex-shrink-0 text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${catStyle.bg} ${catStyle.text}`}>{catLabel}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <a
                 href={blakladerUrl(p.code, p.productUrl)}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono text-[var(--accent-500)] hover:text-[var(--accent-700)] text-sm hover:underline flex items-center gap-1"
+                className="font-mono text-accent hover:text-accent text-sm hover:underline flex items-center gap-1"
               >
                 {p.code} <ExternalLink size={12} />
               </a>
-              {p.line && <><span className="text-gray-200 dark:text-gray-600">·</span><span className="font-mono text-gray-400 text-sm">{p.line}</span></>}
+              {p.line && <><span className="text-muted dark:text-secondary">·</span><span className="font-mono text-muted text-sm">{p.line}</span></>}
               {!p.productUrl && (
                 <button
                   onClick={() => onEnrich(p)}
-                  className="flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full hover:bg-emerald-100 transition-colors"
+                  className="flex items-center gap-1 text-xs font-semibold text-success bg-success-soft dark:bg-success-soft px-2 py-1 rounded-full hover:bg-success-soft transition-colors"
                 >
                   {enrichingIds.has(p.id)
                     ? <><Loader2 size={10} className="animate-spin" /> Caricamento...</>
@@ -837,7 +839,7 @@ const ProductDetailModal: React.FC<{
                 </button>
               )}
               {p.productUrl && (
-                <span className="text-[10px] text-emerald-600 font-black flex items-center gap-1">
+                <span className="text-xs text-success font-semibold flex items-center gap-1">
                   <Check size={10} /> Dati sincronizzati
                 </span>
               )}
@@ -845,32 +847,32 @@ const ProductDetailModal: React.FC<{
           </div>
 
           {/* Price */}
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 flex items-center justify-between">
+          <div className="bg-canvas dark:bg-raised/50 rounded-panel p-4 flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Prezzo</div>
+              <div className="text-xs font-semibold uppercase tracking-normal text-muted mb-1">Prezzo</div>
               {p.price > 0 ? (
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black dark:text-white">{fPrice(p)}</span>
+                  <span className="text-2xl font-semibold dark:text-foreground">{fPrice(p)}</span>
                   {p.discount ? (
                     <>
-                      <span className="text-sm text-gray-400 line-through">€{p.price.toFixed(2)}</span>
-                      <span className="text-xs font-black text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">-{p.discount}%</span>
+                      <span className="text-sm text-muted line-through">€{p.price.toFixed(2)}</span>
+                      <span className="text-xs font-semibold text-success bg-success-soft dark:bg-success-soft px-2 py-0.5 rounded-full">-{p.discount}%</span>
                     </>
                   ) : null}
                 </div>
               ) : null}
               {p.discount && p.price > 0 ? (
-                <div className="text-xs text-gray-400 mt-0.5">Netto: <span className="font-bold text-gray-600 dark:text-gray-300">€{netPrice.toFixed(2)}</span></div>
+                <div className="text-xs text-muted mt-0.5">Netto: <span className="font-bold text-secondary dark:text-muted">€{netPrice.toFixed(2)}</span></div>
               ) : null}
               {p.listPrice && p.listPrice > 0 ? (
-                <div className="text-xs text-gray-400 mt-0.5">Listino lordo: <span className="font-bold text-blue-600 dark:text-blue-400">€{p.listPrice.toFixed(2)}</span></div>
+                <div className="text-xs text-muted mt-0.5">Listino lordo: <span className="font-bold text-accent dark:text-accent">€{p.listPrice.toFixed(2)}</span></div>
               ) : null}
             </div>
             {p.stock !== undefined && p.stock !== null && (
               <div className="text-right">
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Stock</div>
-                <div className={`text-xl font-black ${st === 'esaurito' ? 'text-red-500' : st === 'low' ? 'text-yellow-600' : 'dark:text-white'}`}>{p.stock}</div>
-                <div className="text-[10px] text-gray-400">pz</div>
+                <div className="text-xs font-semibold uppercase tracking-normal text-muted mb-1">Stock</div>
+                <div className={`text-xl font-semibold ${st === 'esaurito' ? 'text-danger' : st === 'low' ? 'text-warning' : 'dark:text-foreground'}`}>{p.stock}</div>
+                <div className="text-xs text-muted">pz</div>
               </div>
             )}
           </div>
@@ -879,25 +881,25 @@ const ProductDetailModal: React.FC<{
           <div className="space-y-3">
             {p.sizes && (
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Ruler size={14} className="text-gray-500" />
+                <div className="w-8 h-8 bg-raised dark:bg-raised rounded-md flex items-center justify-center flex-shrink-0">
+                  <Ruler size={14} className="text-secondary" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Taglie</div>
-                  <div className="text-sm font-bold dark:text-white">{p.sizes}</div>
+                  <div className="text-xs font-semibold uppercase text-muted tracking-normal">Taglie</div>
+                  <div className="text-sm font-bold dark:text-foreground">{p.sizes}</div>
                 </div>
               </div>
             )}
             {p.colors?.length ? (
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Layers size={14} className="text-gray-500" />
+                <div className="w-8 h-8 bg-raised dark:bg-raised rounded-md flex items-center justify-center flex-shrink-0">
+                  <Layers size={14} className="text-secondary" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Colori</div>
+                  <div className="text-xs font-semibold uppercase text-muted tracking-normal mb-1">Colori</div>
                   <div className="flex flex-wrap gap-2">
                     {p.colors.map((c, i) => (
-                      <span key={i} className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 rounded-full px-2.5 py-1 text-xs font-bold dark:text-white">
+                      <span key={i} className="flex items-center gap-1.5 bg-raised dark:bg-raised rounded-full px-2.5 py-1 text-xs font-bold dark:text-foreground">
                         <span style={{ width: 10, height: 10, borderRadius: '50%', background: getColorHex(c), display: 'inline-block', border: '1px solid rgba(0,0,0,0.1)' }} />
                         {c}
                       </span>
@@ -908,12 +910,12 @@ const ProductDetailModal: React.FC<{
             ) : null}
             {p.category && (
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Tag size={14} className="text-gray-500" />
+                <div className="w-8 h-8 bg-raised dark:bg-raised rounded-md flex items-center justify-center flex-shrink-0">
+                  <Tag size={14} className="text-secondary" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Categoria</div>
-                  <div className="text-sm font-bold dark:text-white">{catLabel}</div>
+                  <div className="text-xs font-semibold uppercase text-muted tracking-normal">Categoria</div>
+                  <div className="text-sm font-bold dark:text-foreground">{catLabel}</div>
                 </div>
               </div>
             )}
@@ -923,32 +925,32 @@ const ProductDetailModal: React.FC<{
           <div className="grid grid-cols-2 gap-2 pt-2">
             <button
               onClick={() => { onAddToOffer(p); onClose(); }}
-              className="flex items-center justify-center gap-2 bg-[var(--accent-600)] text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[var(--accent-700)] transition-all col-span-2"
+              className="flex items-center justify-center gap-2 bg-action text-action-foreground py-3 rounded-panel font-semibold text-xs uppercase tracking-normal hover:bg-action-hover transition-all col-span-2"
             >
               <ShoppingBag size={14} /> Aggiungi a offerta
             </button>
             <button
               onClick={() => { onEdit(p); onClose(); }}
-              className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              className="flex items-center justify-center gap-2 bg-raised dark:bg-raised text-foreground dark:text-foreground py-3 rounded-panel font-semibold text-xs uppercase tracking-normal hover:bg-raised dark:hover:bg-raised transition-all"
             >
               <Pencil size={13} /> Modifica
             </button>
             <button
               onClick={() => { onDuplicate(p); onClose(); }}
-              className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              className="flex items-center justify-center gap-2 bg-raised dark:bg-raised text-foreground dark:text-foreground py-3 rounded-panel font-semibold text-xs uppercase tracking-normal hover:bg-raised dark:hover:bg-raised transition-all"
             >
               <Copy size={13} /> Duplica
             </button>
             <button
               onClick={() => { onDelete(p.id); onClose(); }}
-              className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-500 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all col-span-2"
+              className="flex items-center justify-center gap-2 bg-danger-soft dark:bg-danger-soft text-danger py-3 rounded-panel font-semibold text-xs uppercase tracking-normal hover:bg-danger-soft transition-all col-span-2"
             >
               <Trash2 size={13} /> Elimina articolo
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </DialogFrame>
   );
 };
 
@@ -993,7 +995,7 @@ export const ProductsView: React.FC = () => {
     showToast(`${p.code} arricchito ✓`);
   }, [enrichingIds, updateProduct, showToast]);
 
-  const removeDuplicates = useCallback(() => {
+  const removeDuplicates = useCallback(async () => {
     const all = Object.values(products) as Product[];
     // Raggruppa per codice articolo normalizzato (prime 4 cifre numeriche)
     const byCode: Record<string, Product[]> = {};
@@ -1016,7 +1018,7 @@ export const ProductsView: React.FC = () => {
       for (let i = 1; i < group.length; i++) toDelete.push(group[i].id);
     }
     if (toDelete.length === 0) { showToast('Nessun doppione trovato'); return; }
-    if (!window.confirm(`Trovati ${toDelete.length} doppioni. Eliminarli tenendo il prodotto più completo per ogni codice?`)) return;
+    if (!await confirmAction(`Trovati ${toDelete.length} doppioni. Eliminarli tenendo il prodotto più completo per ogni codice?`)) return;
     toDelete.forEach(id => removeProduct(id));
     showToast(`${toDelete.length} doppioni eliminati`, 'success');
   }, [products, removeProduct, showToast]);
@@ -1066,8 +1068,8 @@ export const ProductsView: React.FC = () => {
 
   const clearSelect = () => setSelected(new Set());
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Eliminare questo articolo?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmAction('Eliminare questo articolo?')) {
       removeProduct(id);
       setSelected(s => { const n = new Set(s); n.delete(id); return n; });
       showToast('Articolo eliminato', 'success');
@@ -1109,9 +1111,9 @@ export const ProductsView: React.FC = () => {
     setShowOfferModal(true);
   };
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selected.size === 0) return;
-    if (!window.confirm(`Eliminare ${selected.size} articoli selezionati?`)) return;
+    if (!await confirmAction(`Eliminare ${selected.size} articoli selezionati?`)) return;
     selected.forEach(id => removeProduct(id));
     showToast(`${selected.size} articoli eliminati`, 'success');
     clearSelect();
@@ -1141,7 +1143,7 @@ export const ProductsView: React.FC = () => {
   };
 
   const handleImportBlaklader = async () => {
-    if (!window.confirm('Importare tutti i prodotti Blåkläder dal catalogo ufficiale (1061 articoli con URL, immagine e prezzo lordo)?')) return;
+    if (!await confirmAction('Importare tutti i prodotti Blåkläder dal catalogo ufficiale (1061 articoli con URL, immagine e prezzo lordo)?')) return;
     setImportingBlk(true);
     try {
       const res = await fetch('/blak-catalog.json');
@@ -1248,19 +1250,19 @@ export const ProductsView: React.FC = () => {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
-          <h1 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Prodotti</h1>
-          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">{productList.length} articoli</p>
+          <h1 className="text-2xl  dark:text-foreground  ">Prodotti</h1>
+          <p className="text-muted text-sm font-bold uppercase tracking-normal">{productList.length} articoli</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSV} className="hidden" />
           <button onClick={() => fileInputRef.current?.click()}
-            className="hidden md:flex items-center gap-2 bg-white dark:bg-gray-800 text-[var(--accent-600)] border-2 border-[var(--accent-100)] dark:border-[var(--accent-900)]/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-[var(--accent-50)] transition-all">
+            className="hidden md:flex items-center gap-2 bg-surface dark:bg-surface text-accent border-2 border-accent dark:border-accent/30 px-4 py-2.5 rounded-panel font-bold text-sm hover:bg-accent-soft transition-all">
             <Upload size={16} /> CSV / Excel
           </button>
           <button
             onClick={handleImportBlaklader}
             disabled={importingBlk}
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-amber-600 border-2 border-amber-100 dark:border-amber-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-amber-50 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 bg-surface dark:bg-surface text-warning border-2 border-warning dark:border-warning px-4 py-2.5 rounded-panel font-bold text-sm hover:bg-warning-soft transition-all disabled:opacity-50"
           >
             <RefreshCw size={16} className={importingBlk ? 'animate-spin' : ''} />
             <span className="hidden sm:inline">Blåkläder</span>
@@ -1268,7 +1270,7 @@ export const ProductsView: React.FC = () => {
           <button
             onClick={syncPricesFromCatalog}
             title="Aggiorna prezzi di listino lordo da catalogo blaklader.it"
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-blue-600 border-2 border-blue-100 dark:border-blue-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-blue-50 transition-all"
+            className="flex items-center gap-2 bg-surface dark:bg-surface text-accent border-2 border-accent dark:border-accent/30 px-4 py-2.5 rounded-panel font-bold text-sm hover:bg-accent-soft transition-all"
           >
             <Tag size={16} />
             <span className="hidden sm:inline">Prezzi</span>
@@ -1276,7 +1278,7 @@ export const ProductsView: React.FC = () => {
           <button
             onClick={removeDuplicates}
             title="Rimuovi prodotti duplicati per codice articolo"
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-rose-500 border-2 border-rose-100 dark:border-rose-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-rose-50 transition-all"
+            className="flex items-center gap-2 bg-surface dark:bg-surface text-danger border-2 border-danger dark:border-danger px-4 py-2.5 rounded-panel font-bold text-sm hover:bg-danger-soft transition-all"
           >
             <Trash2 size={16} />
             <span className="hidden sm:inline">Doppioni</span>
@@ -1285,7 +1287,7 @@ export const ProductsView: React.FC = () => {
             onClick={enrichAll}
             disabled={enrichBulkRunning}
             title="Recupera immagini e descrizioni da blaklader.it per tutti i prodotti non ancora arricchiti"
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-emerald-600 border-2 border-emerald-100 dark:border-emerald-900/30 px-4 py-2.5 rounded-2xl font-bold text-sm hover:bg-emerald-50 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 bg-surface dark:bg-surface text-success border-2 border-success dark:border-success px-4 py-2.5 rounded-panel font-bold text-sm hover:bg-success-soft transition-all disabled:opacity-50"
           >
             {enrichBulkRunning
               ? <Loader2 size={16} className="animate-spin" />
@@ -1293,22 +1295,22 @@ export const ProductsView: React.FC = () => {
             <span className="hidden sm:inline">Arricchisci</span>
           </button>
           <button onClick={() => setShowModal(true)}
-            className="bg-[var(--accent-600)] text-white px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--accent-700)] transition-all text-sm">
+            className="bg-action text-action-foreground px-4 py-2.5 rounded-panel font-bold flex items-center gap-2 shadow-panel hover:bg-action-hover transition-all text-sm">
             <Plus size={16} /> Aggiungi
           </button>
         </div>
       </div>
 
       {/* ── Layout switcher ── */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl w-fit">
+      <div className="flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel w-fit">
         {LAYOUT_TABS.map(t => (
           <button
             key={t.id}
             onClick={() => changeLayout(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
               layout === t.id
-                ? 'bg-white dark:bg-gray-700 text-[var(--accent-600)] shadow-sm'
-                : 'text-gray-400 hover:text-gray-600'
+                ? 'bg-surface dark:bg-raised text-accent shadow-sm'
+                : 'text-muted hover:text-secondary'
             }`}
           >
             {t.icon} {t.label}
@@ -1322,7 +1324,7 @@ export const ProductsView: React.FC = () => {
         onChange={setSearch}
         onSelect={p => setSearch(pName(p))}
         placeholder="Cerca per nome, codice, linea, categoria, colore..."
-        inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm font-medium dark:text-white outline-none focus-within:border-[var(--accent-400)] transition-colors'}
+        inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3 bg-surface dark:bg-surface border border-line dark:border-line rounded-panel text-sm font-medium dark:text-foreground outline-none focus-within:border-accent transition-colors'}
         results={(search.trim()
           ? productList.filter(p => matchSearch(search, [
               pName(p), p.code, p.line, p.description, p.category, ...(p.colors ?? []),
@@ -1344,8 +1346,8 @@ export const ProductsView: React.FC = () => {
             onClick={() => setCatFilter(c.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
               catFilter === c.id
-                ? 'bg-[var(--accent-600)] text-white shadow-sm'
-                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 hover:border-gray-300'
+                ? 'bg-action text-action-foreground shadow-sm'
+                : 'bg-surface dark:bg-surface text-secondary dark:text-muted border border-line dark:border-line hover:border-line'
             }`}
           >
             {c.label}
@@ -1355,16 +1357,16 @@ export const ProductsView: React.FC = () => {
 
       {/* ── Selection action bar ── */}
       {selected.size > 0 && (
-        <div className="sticky top-2 z-20 bg-[var(--accent-600)] text-white rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-xl shadow-[var(--accent-200)] dark:shadow-[var(--accent-900)]/40">
+        <div className="sticky top-2 z-20 bg-action text-action-foreground rounded-panel px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-panel  ">
           <span className="font-bold text-sm flex-shrink-0">{selected.size} selezionati</span>
           <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handleAddToOffer} className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all">
+            <button onClick={handleAddToOffer} className="flex items-center gap-1.5 bg-surface/20 hover:bg-surface/30 px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all">
               <ShoppingBag size={13} /> Aggiungi a offerta
             </button>
-            <button onClick={handleDeleteSelected} className="flex items-center gap-1.5 bg-red-500/80 hover:bg-red-500 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all">
+            <button onClick={handleDeleteSelected} className="flex items-center gap-1.5 bg-danger-soft hover:bg-danger px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all">
               <Trash2 size={13} /> Elimina
             </button>
-            <button onClick={clearSelect} className="p-1.5 hover:bg-white/20 rounded-lg transition-all">
+            <button onClick={clearSelect} className="p-1.5 hover:bg-surface/20 rounded-lg transition-all">
               <X size={16} />
             </button>
           </div>
@@ -1379,13 +1381,13 @@ export const ProductsView: React.FC = () => {
           {layout === 'grid'    && <GridList    {...listProps} />}
         </>
       ) : (
-        <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-[2.5rem] border-2 border-dashed border-gray-100 dark:border-gray-700">
-          <Package size={48} className="mx-auto mb-4 text-gray-200 dark:text-gray-600" />
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+        <div className="text-center py-20 bg-surface dark:bg-surface rounded-panel border-2 border-dashed border-line dark:border-line">
+          <Package size={48} className="mx-auto mb-4 text-muted dark:text-secondary" />
+          <p className="text-muted font-bold uppercase tracking-normal text-sm">
             {search || catFilter !== 'all' ? 'Nessun risultato' : 'Catalogo vuoto'}
           </p>
           {(search || catFilter !== 'all') && (
-            <button onClick={() => { setSearch(''); setCatFilter('all'); }} className="mt-3 text-[var(--accent-500)] text-sm font-bold">
+            <button onClick={() => { setSearch(''); setCatFilter('all'); }} className="mt-3 text-accent text-sm font-bold">
               Rimuovi filtri
             </button>
           )}

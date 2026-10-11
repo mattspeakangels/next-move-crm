@@ -1,6 +1,5 @@
-// Palette colore accento personalizzabili per sezione. I valori numerici
-// ricalcano le shade standard di Tailwind, cosi' il colore di default
-// ("indigo") resta visivamente identico a quello storico dell'app.
+// Legacy palette keys remain compatible with saved preferences.
+// The default indigo key now renders the SYRIO champagne identity.
 export type AccentPaletteKey = 'indigo' | 'emerald' | 'sky' | 'rose' | 'amber' | 'violet' | 'cyan' | 'orange';
 
 export const ACCENT_PALETTES: Record<AccentPaletteKey, Record<number, string>> = {
@@ -15,7 +14,7 @@ export const ACCENT_PALETTES: Record<AccentPaletteKey, Record<number, string>> =
 };
 
 export const ACCENT_PALETTE_LABELS: Record<AccentPaletteKey, string> = {
-  indigo: 'Indaco',
+  indigo: 'SYRIO · Champagne',
   emerald: 'Smeraldo',
   sky: 'Azzurro',
   rose: 'Rosa',
@@ -97,7 +96,9 @@ export function shadesFromHex(hex: string): Record<number, string> {
   return shades;
 }
 
-export function cssVarsForPalette(value: string | undefined): Record<string, string> {
+export function cssVarsForPalette(value: string | undefined, dark = false): Record<string, string> {
+  // Empty/default legacy accent adopts SYRIO without rewriting saved preferences.
+  if (!value || value === 'indigo') return {};
   let palette: Record<number, string>;
   if (!value) {
     palette = ACCENT_PALETTES.indigo;
@@ -108,13 +109,18 @@ export function cssVarsForPalette(value: string | undefined): Record<string, str
   }
   const vars: Record<string, string> = {};
   for (const shade of Object.keys(palette)) vars[`--accent-${shade}`] = palette[Number(shade)];
+  const rgb = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(' ');
+  vars['--syrio-accent'] = rgb(palette[dark ? 300 : 700]);
+  vars['--syrio-accent-soft'] = rgb(palette[dark ? 900 : 100]);
+  vars['--syrio-action'] = rgb(palette[300]);
+  vars['--syrio-action-hover'] = rgb(palette[200]);
   return vars;
 }
 
 // Colore "rappresentativo" (shade 600) da mostrare come anteprima/valore
 // corrente nell'input color, sia per i vecchi preset sia per un hex libero.
 export function representativeColor(value: string | undefined): string {
-  if (!value) return ACCENT_PALETTES.indigo[600];
+  if (!value || value === 'indigo') return '#e0ba90';
   if (value.startsWith('#')) return value;
   return (ACCENT_PALETTES[value as AccentPaletteKey] || ACCENT_PALETTES.indigo)[600];
 }

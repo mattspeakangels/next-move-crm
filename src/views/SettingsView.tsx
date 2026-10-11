@@ -1,3 +1,4 @@
+import { confirmAction } from '../components/ui/Feedback';
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
@@ -63,11 +64,11 @@ const AppUpdateSection: React.FC = () => {
   const busy = status === 'checking' || status === 'updating';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
-      <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+    <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line space-y-4">
+      <h2 className="text-xs font-semibold text-secondary dark:text-muted   flex items-center gap-2">
         <RefreshCw size={14} /> Aggiornamento App
       </h2>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-muted">
         Versione installata: build del{' '}
         <strong>
           {buildDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}{' '}
@@ -77,7 +78,7 @@ const AppUpdateSection: React.FC = () => {
       <button
         onClick={checkForUpdate}
         disabled={busy}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 transition-all disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-all disabled:opacity-60"
       >
         <RefreshCw size={15} className={busy ? 'animate-spin' : ''} />
         {status === 'checking' && 'Controllo aggiornamenti...'}
@@ -85,12 +86,12 @@ const AppUpdateSection: React.FC = () => {
         {(status === 'idle' || status === 'latest' || status === 'unavailable') && 'Cerca aggiornamenti'}
       </button>
       {status === 'latest' && (
-        <p className="text-xs font-bold text-green-600 dark:text-green-400 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-success dark:text-success flex items-center gap-1.5">
           <CheckCircle2 size={13} /> Hai già l'ultima versione.
         </p>
       )}
       {status === 'unavailable' && (
-        <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+        <p className="text-xs font-bold text-warning dark:text-warning">
           Controllo non disponibile su questo browser. Se l'app sembra vecchia, disinstalla e reinstalla la PWA.
         </p>
       )}
@@ -162,36 +163,36 @@ const ClaudeApiKeySection: React.FC = () => {
   const hasKey = !!storedKey;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+    <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line space-y-4">
       <div className="flex items-center gap-2">
-        <Sparkles size={16} className="text-indigo-500" />
-        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Gemini AI — API Key</h2>
+        <Sparkles size={16} className="text-accent" />
+        <h2 className="text-xs font-semibold text-secondary dark:text-muted  ">Gemini AI — API Key</h2>
         {hasKey && testStatus === 'idle' && (
-          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
+          <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success flex items-center gap-1">
             <CheckCircle2 size={10} /> Salvata
           </span>
         )}
         {testStatus === 'ok' && (
-          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
+          <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success flex items-center gap-1">
             <CheckCircle2 size={10} /> Valida ✓
           </span>
         )}
         {testStatus === 'fail' && (
-          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+          <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger">
             ✗ Non valida
           </span>
         )}
       </div>
 
       {storedPreview && (
-        <p className="text-[11px] text-gray-400 font-mono bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-1.5">
-          Salvata: <span className="text-gray-600 dark:text-gray-300">{storedPreview}</span>
+        <p className="text-xs text-muted font-mono bg-canvas dark:bg-raised/50 rounded-lg px-3 py-1.5">
+          Salvata: <span className="text-secondary dark:text-muted">{storedPreview}</span>
         </p>
       )}
 
-      <p className="text-xs text-gray-400 dark:text-gray-500">
+      <p className="text-xs text-muted dark:text-secondary">
         Necessaria per registrazione conversazioni, analisi resoconto e funzionalità AI.
-        Ottienila gratis su <span className="font-mono text-indigo-500">aistudio.google.com</span>.
+        Ottienila gratis su <span className="font-mono text-accent">aistudio.google.com</span>.
       </p>
 
       <div className="flex gap-2">
@@ -201,12 +202,12 @@ const ClaudeApiKeySection: React.FC = () => {
             value={key}
             onChange={e => { setKey(e.target.value); setSaved(false); setTestStatus('idle'); }}
             placeholder="sk-ant-api03-..."
-            className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2.5 pr-10 bg-gray-50 dark:bg-gray-700 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full text-sm border border-line dark:border-line rounded-md px-3 py-2.5 pr-10 bg-canvas dark:bg-raised dark:text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <button
             type="button"
             onClick={() => setShow(v => !v)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-secondary dark:hover:text-muted"
           >
             {show ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
@@ -217,21 +218,21 @@ const ClaudeApiKeySection: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={!key.trim()}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-black transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md bg-action hover:bg-action-hover disabled:opacity-40 disabled:cursor-not-allowed text-action-foreground text-sm font-semibold transition-colors"
         >
           {saved ? <><CheckCircle2 size={15} /> Salvata!</> : 'Salva'}
         </button>
         <button
           onClick={handleTest}
           disabled={!hasKey || testStatus === 'testing'}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-black transition-colors"
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md border border-accent dark:border-accent text-accent dark:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold transition-colors"
         >
           {testStatus === 'testing' ? '...' : 'Testa'}
         </button>
         {hasKey && (
           <button
             onClick={handleClear}
-            className="px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-black transition-colors"
+            className="px-4 py-2.5 rounded-md border border-danger dark:border-danger text-danger hover:bg-danger-soft dark:hover:bg-danger-soft text-sm font-semibold transition-colors"
           >
             <X size={15} />
           </button>
@@ -239,7 +240,7 @@ const ClaudeApiKeySection: React.FC = () => {
       </div>
 
       {testStatus === 'fail' && testError && (
-        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{testError}</p>
+        <p className="text-xs text-danger dark:text-danger bg-danger-soft dark:bg-danger-soft rounded-lg px-3 py-2">{testError}</p>
       )}
 
     </div>
@@ -286,34 +287,34 @@ const MicrophonePermissionSection: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+    <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line space-y-4">
       <div className="flex items-center gap-2">
-        <Mic size={16} className="text-indigo-500" />
-        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Microfono</h2>
+        <Mic size={16} className="text-accent" />
+        <h2 className="text-xs font-semibold text-secondary dark:text-muted  ">Microfono</h2>
         {status === 'granted' && (
-          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1">
+          <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success flex items-center gap-1">
             <CheckCircle2 size={10} /> Abilitato
           </span>
         )}
         {status === 'denied' && (
-          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 flex items-center gap-1">
+          <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger flex items-center gap-1">
             <MicOff size={10} /> Bloccato
           </span>
         )}
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-xs text-secondary dark:text-muted">
         Serve per registrare e trascrivere le conversazioni con l'AI (Agenda, resoconto visita). Il permesso è legato al browser/dispositivo: va abilitato su ogni device.
       </p>
 
       {status === 'unsupported' && (
-        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 flex items-center gap-2">
+        <p className="text-xs text-warning dark:text-warning bg-warning-soft dark:bg-warning-soft rounded-lg px-3 py-2 flex items-center gap-2">
           <AlertTriangle size={13} /> Questo browser non supporta la registrazione audio.
         </p>
       )}
 
       {status === 'denied' && (
-        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+        <p className="text-xs text-danger dark:text-danger bg-danger-soft dark:bg-danger-soft rounded-lg px-3 py-2">
           Il microfono è bloccato per questo sito. Abilitalo dalle impostazioni del browser (icona lucchetto/informazioni nella barra indirizzi, oppure Impostazioni → Siti web → Microfono) e poi premi di nuovo il pulsante.
         </p>
       )}
@@ -322,7 +323,7 @@ const MicrophonePermissionSection: React.FC = () => {
         <button
           onClick={handleEnable}
           disabled={checking}
-          className="w-full px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white text-sm font-black transition-colors flex items-center justify-center gap-2"
+          className="w-full px-4 py-2.5 rounded-md bg-action hover:bg-action-hover disabled:opacity-50 text-action-foreground text-sm font-semibold transition-colors flex items-center justify-center gap-2"
         >
           <Mic size={15} />
           {checking ? 'Verifica in corso…' : status === 'granted' ? 'Testa di nuovo' : 'Abilita microfono'}
@@ -379,30 +380,30 @@ const SidebarOrderSection: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 space-y-3">
+    <div className="bg-surface dark:bg-surface rounded-panel p-6 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-black text-gray-900 dark:text-white flex items-center gap-2"><GripVertical size={16} />Ordine menu laterale</h3>
+        <h3 className="font-semibold text-foreground dark:text-foreground flex items-center gap-2"><GripVertical size={16} />Ordine menu laterale</h3>
         {sidebarOrder && sidebarOrder.length > 0 && (
-          <button onClick={() => setSidebarOrder([])} className="text-[10px] font-black text-gray-400 hover:text-indigo-500 uppercase">Ripristina</button>
+          <button onClick={() => setSidebarOrder([])} className="text-xs font-semibold text-muted hover:text-accent uppercase">Ripristina</button>
         )}
       </div>
-      <p className="text-xs text-gray-400">Riordina le voci come preferisci con le frecce.</p>
+      <p className="text-xs text-muted">Riordina le voci come preferisci con le frecce.</p>
       <div className="space-y-1.5">
         {ordered.map(({ id, label, icon: Icon }, index) => (
-          <div key={id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-            <Icon size={15} className="text-gray-400 flex-shrink-0" />
-            <span className="flex-1 text-sm font-bold text-gray-700 dark:text-gray-200">{label}</span>
+          <div key={id} className="flex items-center gap-3 px-3 py-2 rounded-md bg-canvas dark:bg-raised/50">
+            <Icon size={15} className="text-muted flex-shrink-0" />
+            <span className="flex-1 text-sm font-bold text-foreground dark:text-muted">{label}</span>
             <button
               onClick={() => move(index, -1)}
               disabled={index === 0}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-800 disabled:opacity-25 disabled:pointer-events-none"
+              className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-surface dark:hover:bg-surface disabled:opacity-25 disabled:pointer-events-none"
             >
               <ChevronUp size={15} />
             </button>
             <button
               onClick={() => move(index, 1)}
               disabled={index === ordered.length - 1}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-800 disabled:opacity-25 disabled:pointer-events-none"
+              className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-surface dark:hover:bg-surface disabled:opacity-25 disabled:pointer-events-none"
             >
               <ChevronDown size={15} />
             </button>
@@ -414,7 +415,7 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, customSectors, addCustomSector, removeCustomSector, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, globalAccent, setGlobalAccent, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, customSectors, addCustomSector, removeCustomSector, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
   const [newSector, setNewSector] = useState('');
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
@@ -462,7 +463,7 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    if (!window.confirm('Vuoi uscire dal tuo account?')) return;
+    if (!await confirmAction('Vuoi uscire dal tuo account?')) return;
     setLoggingOut(true);
     await logout();
   };
@@ -483,7 +484,7 @@ export const SettingsView: React.FC = () => {
   };
 
   const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
-    <p className={`text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1 ${first ? '' : 'pt-2'}`}>{children}</p>
+    <p className={`text-xs font-semibold text-muted dark:text-secondary uppercase tracking-[0.2em] px-1 ${first ? '' : 'pt-2'}`}>{children}</p>
   );
 
   return (
@@ -493,43 +494,43 @@ export const SettingsView: React.FC = () => {
 
       {/* Account */}
       {user && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
-          <h3 className="font-bold flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Account</h3>
+        <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm space-y-4">
+          <h3 className="font-bold flex items-center gap-2"><ShieldCheck size={18} className="text-accent"/> Account</h3>
 
           {/* Avatar + nome */}
           <div className="flex items-center gap-4">
             {user.photoURL
-              ? <img src={user.photoURL} alt="avatar" className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-100" />
-              : <div className="w-14 h-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                  <User size={24} className="text-indigo-500" />
+              ? <img src={user.photoURL} alt="avatar" className="w-14 h-14 rounded-full object-cover ring-2 ring-accent" />
+              : <div className="w-14 h-14 rounded-full bg-accent-soft dark:bg-accent-soft/40 flex items-center justify-center">
+                  <User size={24} className="text-accent" />
                 </div>
             }
             <div>
-              <p className="font-black text-gray-900 dark:text-white text-sm">{user.displayName || 'Utente'}</p>
-              <p className="text-xs text-gray-400 mt-0.5">Accesso tramite {isGoogleUser ? 'Google' : 'Email'}</p>
+              <p className="font-semibold text-foreground dark:text-foreground text-sm">{user.displayName || 'Utente'}</p>
+              <p className="text-xs text-muted mt-0.5">Accesso tramite {isGoogleUser ? 'Google' : 'Email'}</p>
             </div>
           </div>
 
           {/* Email */}
           <div className="space-y-2">
-            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl px-4 py-3">
-              <Mail size={15} className="text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-3 bg-canvas dark:bg-canvas/50 rounded-md px-4 py-3">
+              <Mail size={15} className="text-muted flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{user.email}</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal">Email</p>
+                <p className="text-sm font-bold text-foreground dark:text-foreground truncate">{user.email}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl px-4 py-3">
-              <KeyRound size={15} className="text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-3 bg-canvas dark:bg-canvas/50 rounded-md px-4 py-3">
+              <KeyRound size={15} className="text-muted flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Password</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal">Password</p>
                 {isGoogleUser
-                  ? <p className="text-sm text-gray-500">Gestita da Google — modifica su myaccount.google.com</p>
+                  ? <p className="text-sm text-secondary">Gestita da Google — modifica su myaccount.google.com</p>
                   : <div className="flex items-center gap-3 mt-0.5">
-                      <p className="text-sm font-bold text-gray-800 dark:text-white tracking-widest">••••••••</p>
+                      <p className="text-sm font-bold text-foreground dark:text-foreground tracking-normal">••••••••</p>
                       <button
                         onClick={handleResetPassword}
-                        className="text-xs font-bold text-indigo-600 hover:underline"
+                        className="text-xs font-bold text-accent hover:underline"
                       >
                         {resetSent ? 'Email inviata ✓' : 'Cambia password'}
                       </button>
@@ -543,7 +544,7 @@ export const SettingsView: React.FC = () => {
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 font-black text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-danger dark:border-danger text-danger dark:text-danger font-semibold text-sm hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors disabled:opacity-50"
           >
             <LogOut size={16} />
             {loggingOut ? 'Uscita in corso…' : 'Esci dal profilo'}
@@ -552,81 +553,82 @@ export const SettingsView: React.FC = () => {
       )}
 
       {/* Profilo */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><User size={18} className="text-indigo-600"/> Profilo Personale</h3>
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><User size={18} className="text-accent"/> Profilo Personale</h3>
         <div className="space-y-4">
           <input
             type="text"
             value={profile.name}
             onChange={e => updateProfile({ name: e.target.value })}
             placeholder="Tuo Nome"
-            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent"
+            className="w-full border border-line dark:border-line rounded-md px-4 py-2 bg-transparent"
           />
           <input
             type="text"
             value={profile.company}
             onChange={e => updateProfile({ company: e.target.value })}
             placeholder="Azienda"
-            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent"
+            className="w-full border border-line dark:border-line rounded-md px-4 py-2 bg-transparent"
           />
         </div>
       </div>
 
       {/* Target */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><Target size={18} className="text-indigo-600"/> Obiettivo Mensile</h3>
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><Target size={18} className="text-accent"/> Obiettivo Mensile</h3>
         <input
           type="number"
           value={profile.defaultMonthlyTarget}
           onChange={e => updateProfile({ defaultMonthlyTarget: parseInt(e.target.value) })}
-          className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent font-bold text-indigo-600"
+          className="w-full border border-line dark:border-line rounded-md px-4 py-2 bg-transparent font-bold text-accent"
         />
       </div>
 
       <GroupLabel>Aspetto & Personalizzazione</GroupLabel>
 
       {/* Preferenze */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold">
             {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />} Tema Scuro
           </div>
           <button
             onClick={toggleTheme}
-            className={`w-12 h-6 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-300'}`}
+            role="switch" aria-checked={theme === 'dark'} aria-label="Tema scuro"
+            className={`w-12 h-6 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-action' : 'bg-raised'}`}
           >
-            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${theme === 'dark' ? 'translate-x-7' : 'translate-x-1'}`} />
+            <div className={`absolute top-1 w-4 h-4 bg-surface rounded-full transition-transform ${theme === 'dark' ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
         </div>
-        <div className="flex justify-between items-center mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex justify-between items-center mt-5 pt-5 border-t border-line dark:border-line">
           <div className="flex items-center gap-2 font-bold">
             <Type size={18} /> Dimensione testo
           </div>
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-xl p-1">
+          <div className="flex gap-1 bg-raised dark:bg-canvas rounded-md p-1">
             {([{ key: 'small', label: 'A' }, { key: 'medium', label: 'A' }, { key: 'large', label: 'A' }] as const).map(({ key, label }, i) => (
               <button
                 key={key}
                 onClick={() => setTextSize(key)}
                 title={key === 'small' ? 'Piccolo' : key === 'medium' ? 'Medio' : 'Grande'}
                 style={{ fontSize: 12 + i * 3 }}
-                className={`w-9 h-9 rounded-lg font-black transition-colors flex items-center justify-center ${textSize === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`w-9 h-9 rounded-lg font-semibold transition-colors flex items-center justify-center ${textSize === key ? 'bg-action text-action-foreground' : 'text-secondary dark:text-muted'}`}
               >
                 {label}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex justify-between items-center mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex justify-between items-center mt-5 pt-5 border-t border-line dark:border-line">
           <div className="flex items-center gap-2 font-bold">
             <CaseSensitive size={18} /> Stile carattere
           </div>
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-xl p-1 flex-wrap justify-end">
+          <div className="flex gap-1 bg-raised dark:bg-canvas rounded-md p-1 flex-wrap justify-end">
             {(Object.keys(FONT_LABELS) as FontFamilyKey[]).map(key => (
               <button
                 key={key}
                 onClick={() => setFontFamily(key)}
                 style={{ fontFamily: FONT_STACKS[key] }}
-                className={`px-3 h-9 rounded-lg font-black text-xs transition-colors flex items-center justify-center ${fontFamily === key ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`px-3 h-9 rounded-lg font-semibold text-xs transition-colors flex items-center justify-center ${fontFamily === key ? 'bg-action text-action-foreground' : 'text-secondary dark:text-muted'}`}
               >
                 {FONT_LABELS[key]}
               </button>
@@ -636,29 +638,55 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Colori per sezione */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
         <div className="flex items-center gap-2 font-bold mb-1">
           <Palette size={18} /> Colore delle sezioni
         </div>
-        <p className="text-xs text-gray-400 mb-4">Scegli qualsiasi colore d'accento per ciascuna sezione dell'app (bottoni, evidenziazioni, badge) da una tavolozza completa.</p>
+        <p className="text-xs text-muted mb-4">Scegli un colore d'accento per tutta l'app (bottoni, evidenziazioni, badge) oppure personalizza ciascuna sezione; il colore della sezione ha la precedenza su quello globale.</p>
+        <div className="flex justify-between items-center gap-3 pb-4 mb-4 border-b border-line dark:border-line">
+          <span className="text-sm font-semibold text-foreground dark:text-muted">Colore globale</span>
+          <div className="flex items-center gap-2">
+            {globalAccent && (
+              <button
+                onClick={() => setGlobalAccent('')}
+                title="Ripristina colore predefinito"
+                className="text-xs font-bold uppercase text-muted hover:text-secondary dark:hover:text-muted"
+              >
+                Reset
+              </button>
+            )}
+            <label
+              className="relative w-8 h-8 rounded-full ring-1 ring-black/10 dark:ring-line/20 overflow-hidden cursor-pointer shadow-sm"
+              style={{ background: representativeColor(globalAccent) }}
+              title="Scegli il colore globale"
+            >
+              <input
+                type="color"
+                value={representativeColor(globalAccent)}
+                onChange={e => setGlobalAccent(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </label>
+          </div>
+        </div>
         <div className="space-y-3">
           {ACCENT_SECTIONS.map(section => {
             const current = representativeColor(sectionColors[section.id]);
             return (
               <div key={section.id} className="flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-gray-600 dark:text-gray-300">{section.label}</span>
+                <span className="text-sm font-bold text-secondary dark:text-muted">{section.label}</span>
                 <div className="flex items-center gap-2">
                   {sectionColors[section.id] && (
                     <button
                       onClick={() => setSectionColor(section.id, '')}
                       title="Ripristina colore predefinito"
-                      className="text-[10px] font-bold uppercase text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="text-xs font-bold uppercase text-muted hover:text-secondary dark:hover:text-muted"
                     >
                       Reset
                     </button>
                   )}
                   <label
-                    className="relative w-8 h-8 rounded-full ring-1 ring-black/10 dark:ring-white/20 overflow-hidden cursor-pointer shadow-sm"
+                    className="relative w-8 h-8 rounded-full ring-1 ring-black/10 dark:ring-line/20 overflow-hidden cursor-pointer shadow-sm"
                     style={{ background: current }}
                     title="Scegli un colore"
                   >
@@ -677,20 +705,20 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Icone e colori dei marker sulla mappa */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
         <div className="flex items-center gap-2 font-bold mb-1">
           <Map size={18} /> Icone clienti sulla mappa
         </div>
-        <p className="text-xs text-gray-400 mb-4">Scegli forma e colore del marker per ogni categoria di cliente/prospect nella sezione Mappa (i prioritari restano sempre una stellina oro/fucsia).</p>
+        <p className="text-xs text-muted mb-4">Scegli forma e colore del marker per ogni categoria di cliente/prospect nella sezione Mappa (i prioritari restano sempre una stellina oro/fucsia).</p>
 
-        <div className="flex justify-between items-center mb-5 pb-5 border-b border-gray-100 dark:border-gray-700">
-          <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Dimensione icone</span>
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-xl p-1">
+        <div className="flex justify-between items-center mb-5 pb-5 border-b border-line dark:border-line">
+          <span className="text-sm font-bold text-secondary dark:text-muted">Dimensione icone</span>
+          <div className="flex gap-1 bg-raised dark:bg-canvas rounded-md p-1">
             {(Object.keys(MARKER_SIZE_LABELS) as MarkerSize[]).map(size => (
               <button
                 key={size}
                 onClick={() => setMapMarkerSize(size)}
-                className={`px-3 h-9 rounded-lg font-black text-xs transition-colors ${mapMarkerSize === size ? 'bg-indigo-600 text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`px-3 h-9 rounded-lg font-semibold text-xs transition-colors ${mapMarkerSize === size ? 'bg-action text-action-foreground' : 'text-secondary dark:text-muted'}`}
               >
                 {MARKER_SIZE_LABELS[size]}
               </button>
@@ -705,11 +733,11 @@ export const SettingsView: React.FC = () => {
             const currentShape = (current.shape as MarkerShape) || base.shape;
             const currentColor = current.color || base.color;
             return (
-              <div key={category} className="flex flex-col gap-2 pb-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0 last:pb-0">
+              <div key={category} className="flex flex-col gap-2 pb-3 border-b border-line dark:border-line/50 last:border-0 last:pb-0">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-gray-600 dark:text-gray-300">{MARKER_CATEGORY_LABELS[category]}</span>
+                  <span className="text-sm font-bold text-secondary dark:text-muted">{MARKER_CATEGORY_LABELS[category]}</span>
                   <label
-                    className="relative w-7 h-7 rounded-full ring-1 ring-black/10 dark:ring-white/20 overflow-hidden cursor-pointer shadow-sm flex-shrink-0"
+                    className="relative w-7 h-7 rounded-full ring-1 ring-black/10 dark:ring-line/20 overflow-hidden cursor-pointer shadow-sm flex-shrink-0"
                     style={{ background: currentColor }}
                     title="Scegli un colore"
                   >
@@ -730,7 +758,7 @@ export const SettingsView: React.FC = () => {
                         key={shape}
                         onClick={() => setMapMarkerStyle(category, { shape })}
                         title={MARKER_SHAPE_LABELS[shape]}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${active ? 'text-white shadow-md' : 'bg-gray-100 dark:bg-gray-900 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${active ? 'text-foreground shadow-panel' : 'bg-raised dark:bg-canvas text-muted hover:text-secondary dark:hover:text-muted'}`}
                         style={active ? { background: currentColor } : undefined}
                       >
                         <ShapeIcon size={16} fill={active ? 'currentColor' : 'none'} />
@@ -745,11 +773,11 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* ── Footer personalizzabile ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
-        <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+      <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line space-y-4">
+        <h2 className="text-xs font-semibold text-secondary dark:text-muted   flex items-center gap-2">
           <span>📱</span> Barra navigazione mobile
         </h2>
-        <p className="text-xs text-gray-400">Seleziona fino a 5 sezioni da mostrare nella barra in basso.</p>
+        <p className="text-xs text-muted">Seleziona fino a 5 sezioni da mostrare nella barra in basso.</p>
         {(() => {
           const ALL_TABS: { id: import('../types').NavView; label: string }[] = [
             { id: 'dashboard',  label: 'Dashboard'    },
@@ -783,17 +811,17 @@ export const SettingsView: React.FC = () => {
                     key={id}
                     onClick={() => toggle(id)}
                     disabled={!active && current.length >= 5}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-bold border-2 transition-all ${
                       active
-                        ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                        ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
                         : current.length >= 5
-                          ? 'border-gray-100 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                          : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-indigo-200'
+                          ? 'border-line dark:border-line text-muted dark:text-secondary cursor-not-allowed'
+                          : 'border-line dark:border-line text-secondary dark:text-muted hover:border-accent'
                     }`}
                   >
                     <span>{label}</span>
                     {active && (
-                      <span className="w-4 h-4 rounded-full bg-indigo-500 text-white text-[9px] font-black flex items-center justify-center ml-1 flex-shrink-0">
+                      <span className="w-4 h-4 rounded-full bg-action text-action-foreground text-xs font-semibold flex items-center justify-center ml-1 flex-shrink-0">
                         {idx + 1}
                       </span>
                     )}
@@ -803,7 +831,7 @@ export const SettingsView: React.FC = () => {
             </div>
           );
         })()}
-        <p className="text-[10px] text-gray-400 text-center">
+        <p className="text-xs text-muted text-center">
           {(footerTabs ?? []).length}/5 sezioni selezionate
         </p>
       </div>
@@ -814,62 +842,62 @@ export const SettingsView: React.FC = () => {
       <GroupLabel>Dati di Vendita</GroupLabel>
 
       {/* Prodotti Custom */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><Package size={18} className="text-indigo-600"/> Gestione Prodotti</h3>
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><Package size={18} className="text-accent"/> Gestione Prodotti</h3>
         <div className="flex gap-2 mb-4">
           <input
             type="text"
             value={newProduct}
             onChange={e => setNewProduct(e.target.value)}
             placeholder="Aggiungi nuovo prodotto..."
-            className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent text-sm"
+            className="flex-1 border border-line dark:border-line rounded-md px-4 py-2 bg-transparent text-sm"
           />
-          <button onClick={handleAddProduct} className="p-2 bg-indigo-600 text-white rounded-xl"><Plus size={20}/></button>
+          <button onClick={handleAddProduct} className="p-2 bg-action text-action-foreground rounded-md"><Plus size={20}/></button>
         </div>
         <div className="flex flex-wrap gap-2">
           {profile.customProducts.map(p => (
-            <span key={p} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full text-xs font-bold">
-              {p} <X size={14} className="cursor-pointer text-red-500" onClick={() => removeProduct(p)}/>
+            <span key={p} className="flex items-center gap-1 bg-raised dark:bg-raised px-3 py-1.5 rounded-full text-xs font-bold">
+              {p} <X size={14} className="cursor-pointer text-danger" onClick={() => removeProduct(p)}/>
             </span>
           ))}
         </div>
       </div>
 
       {/* Settori personalizzati */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
         <div className="flex items-center gap-2 font-bold mb-1">
           <Factory size={18} /> Settori di riferimento
         </div>
-        <p className="text-xs text-gray-400 mb-4">Aggiungi qui i settori mancanti dall'elenco predefinito: saranno disponibili nella scheda cliente e come filtro nella sezione Mappa.</p>
+        <p className="text-xs text-muted mb-4">Aggiungi qui i settori mancanti dall'elenco predefinito: saranno disponibili nella scheda cliente e come filtro nella sezione Mappa.</p>
 
         <div className="flex flex-wrap gap-2 mb-4">
           {DEFAULT_SECTORS.map(s => (
-            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+            <span key={s} className="px-3 py-1.5 rounded-md text-xs font-bold bg-raised dark:bg-canvas text-secondary dark:text-muted">
               {sectorLabel(s)}
             </span>
           ))}
           {customSectors.map(s => (
-            <span key={s} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+            <span key={s} className="px-3 py-1.5 rounded-md text-xs font-bold bg-accent-soft dark:bg-accent-soft/40 text-accent dark:text-accent flex items-center gap-1.5">
               {s}
-              <button onClick={() => removeCustomSector(s)} className="hover:text-red-500">
+              <button onClick={() => removeCustomSector(s)} className="hover:text-danger">
                 <X size={12} />
               </button>
             </span>
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2">
           <input
             type="text"
             value={newSector}
             onChange={e => setNewSector(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
             placeholder="Nuovo settore (es. Nautica)"
-            className="flex-1 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-2.5 bg-gray-50 dark:bg-gray-900 dark:text-white text-sm font-bold outline-none"
+            className="min-w-0 flex-1 border-2 border-line dark:border-line rounded-md p-2.5 bg-canvas dark:bg-canvas dark:text-foreground text-sm font-bold outline-none"
           />
           <button
             onClick={() => { if (newSector.trim()) { addCustomSector(newSector); setNewSector(''); } }}
-            className="px-4 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-1.5"
+            className="px-4 rounded-md bg-action text-action-foreground font-semibold text-sm flex items-center gap-1.5"
           >
             <Plus size={16} /> Aggiungi
           </button>
@@ -877,9 +905,9 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Approvazione Sconti */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Soglia Approvazione Sconti</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
+        <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-accent"/> Soglia Approvazione Sconti</h3>
+        <p className="text-xs text-secondary dark:text-muted mb-3">
           Le offerte con sconto medio superiore a questa soglia vengono marcate come "Richiede approvazione".
         </p>
         <div className="flex items-center gap-4">
@@ -892,9 +920,9 @@ export const SettingsView: React.FC = () => {
             onChange={e => setDiscountApprovalThreshold(parseInt(e.target.value))}
             className="flex-1 accent-indigo-600"
           />
-          <span className="text-xl font-black text-indigo-600 min-w-[50px] text-right">{discountApprovalThreshold}%</span>
+          <span className="text-xl font-semibold text-accent min-w-[50px] text-right">{discountApprovalThreshold}%</span>
         </div>
-        <div className="flex justify-between text-[9px] text-gray-400 font-bold mt-1">
+        <div className="flex justify-between text-xs text-muted font-bold mt-1">
           <span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span><span>60%</span>
         </div>
       </div>
@@ -910,20 +938,20 @@ export const SettingsView: React.FC = () => {
       <GroupLabel>Backup Dati</GroupLabel>
 
       {/* Backup dati */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 className="font-bold mb-1 flex items-center gap-2"><ShieldCheck size={18} className="text-indigo-600"/> Backup dati</h3>
-        <p className="text-xs text-gray-400 mb-4">Scarica un file con tutti i dati dell'app (clienti, deal, offerte, prodotti, storico...) o ripristinali da un backup precedente.</p>
+      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><ShieldCheck size={18} className="text-accent"/> Backup dati</h3>
+        <p className="text-xs text-muted mb-4">Scarica un file con tutti i dati dell'app (clienti, deal, offerte, prodotti, storico...) o ripristinali da un backup precedente.</p>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={downloadBackup}
-            className="flex items-center gap-2 text-indigo-600 text-sm font-bold border border-indigo-200 dark:border-indigo-800 px-4 py-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+            className="flex items-center gap-2 text-accent text-sm font-bold border border-accent dark:border-accent px-4 py-2 rounded-md hover:bg-accent-soft dark:hover:bg-accent-soft/20 transition-colors"
           >
             <Download size={15} /> Scarica backup
           </button>
           <button
             onClick={() => backupFileInputRef.current?.click()}
             disabled={restoringBackup}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-sm font-bold border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 text-secondary dark:text-muted text-sm font-bold border border-line dark:border-line px-4 py-2 rounded-md hover:bg-canvas dark:hover:bg-raised transition-colors disabled:opacity-50"
           >
             <Upload size={15} /> {restoringBackup ? 'Ripristino in corso...' : 'Carica backup'}
           </button>
@@ -939,15 +967,15 @@ export const SettingsView: React.FC = () => {
 
       <GroupLabel>Zona Pericolosa</GroupLabel>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-red-200 dark:border-red-900/40 shadow-sm divide-y divide-red-100 dark:divide-red-900/30 overflow-hidden">
+      <div className="bg-surface dark:bg-surface rounded-panel border border-danger dark:border-danger shadow-sm divide-y divide-red-100 dark:divide-red-900/30 overflow-hidden">
 
         {/* Gestione Rubrica */}
         <div className="p-6">
-          <h3 className="font-bold mb-1 flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle size={18}/> Svuota Rubrica</h3>
-          <p className="text-xs text-gray-400 mb-4">
-            Attualmente hai <span className="font-black text-indigo-600">{Object.keys(contacts).length}</span> contatti in rubrica
-            {' '}(<span className="text-green-600 font-bold">{Object.values(contacts).filter(c => c.status === 'cliente').length} clienti</span>
-            {' '}· <span className="text-blue-600 font-bold">{Object.values(contacts).filter(c => c.status === 'potenziale').length} prospect</span>)
+          <h3 className="font-bold mb-1 flex items-center gap-2 text-danger dark:text-danger"><AlertTriangle size={18}/> Svuota Rubrica</h3>
+          <p className="text-xs text-muted mb-4">
+            Attualmente hai <span className="font-semibold text-accent">{Object.keys(contacts).length}</span> contatti in rubrica
+            {' '}(<span className="text-success font-bold">{Object.values(contacts).filter(c => c.status === 'cliente').length} clienti</span>
+            {' '}· <span className="text-accent font-bold">{Object.values(contacts).filter(c => c.status === 'potenziale').length} prospect</span>)
           </p>
           <button
             onClick={() => requireAuth(
@@ -955,7 +983,7 @@ export const SettingsView: React.FC = () => {
               `Stai per eliminare ${Object.keys(contacts).length} contatti. Questa azione non è reversibile e cancellerà anche deal, offerte e attività associate.`,
               () => { deleteAllContacts(); showToast('Rubrica svuotata', 'success'); }
             )}
-            className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex items-center gap-2 text-danger text-sm font-bold border border-danger dark:border-danger px-4 py-2 rounded-md hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors"
           >
             <Trash2 size={15} /> Svuota tutti i contatti
           </button>
@@ -963,9 +991,9 @@ export const SettingsView: React.FC = () => {
 
         {/* Svuota Catalogo Prodotti */}
         <div className="p-6">
-          <h3 className="font-bold mb-1 flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle size={18}/> Svuota Catalogo Prodotti</h3>
-          <p className="text-xs text-gray-400 mb-4">
-            Attualmente hai <span className="font-black text-indigo-600">{Object.keys(products).length}</span> articoli nel catalogo
+          <h3 className="font-bold mb-1 flex items-center gap-2 text-danger dark:text-danger"><AlertTriangle size={18}/> Svuota Catalogo Prodotti</h3>
+          <p className="text-xs text-muted mb-4">
+            Attualmente hai <span className="font-semibold text-accent">{Object.keys(products).length}</span> articoli nel catalogo
           </p>
           <button
             onClick={() => requireAuth(
@@ -973,7 +1001,7 @@ export const SettingsView: React.FC = () => {
               `Stai per eliminare ${Object.keys(products).length} articoli dal catalogo. Questa azione non è reversibile.`,
               () => { clearProducts(); showToast('Catalogo prodotti svuotato', 'success'); }
             )}
-            className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex items-center gap-2 text-danger text-sm font-bold border border-danger dark:border-danger px-4 py-2 rounded-md hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors"
           >
             <Trash2 size={15} /> Svuota catalogo prodotti
           </button>
@@ -981,7 +1009,7 @@ export const SettingsView: React.FC = () => {
 
         {/* Reset Storico Vendite */}
         <div className="p-6">
-          <h3 className="font-bold mb-1 flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle size={18}/> Svuota Storico Vendite</h3>
+          <h3 className="font-bold mb-1 flex items-center gap-2 text-danger dark:text-danger"><AlertTriangle size={18}/> Svuota Storico Vendite</h3>
           <button
             onClick={() => {
               const nTransazioni = Object.keys(salesTransactions).length;
@@ -992,16 +1020,16 @@ export const SettingsView: React.FC = () => {
                 () => { clearSalesTransactions(); resetStorico(); showToast('Storico vendite svuotato', 'success'); }
               );
             }}
-            className="flex items-center gap-2 text-red-500 text-sm font-bold border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex items-center gap-2 text-danger text-sm font-bold border border-danger dark:border-danger px-4 py-2 rounded-md hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors"
           >
             <Trash2 size={15} /> Svuota storico vendite
           </button>
         </div>
 
         {/* Reset Totale */}
-        <div className="p-6 bg-red-50/50 dark:bg-red-900/10">
-          <h3 className="font-black mb-1 flex items-center gap-2 text-red-700 dark:text-red-400"><AlertTriangle size={18}/> Resetta tutti i dati dell'App</h3>
-          <p className="text-xs text-red-400 dark:text-red-400/70 mb-4">
+        <div className="p-6 bg-danger-soft dark:bg-danger-soft">
+          <h3 className="font-semibold mb-1 flex items-center gap-2 text-danger dark:text-danger"><AlertTriangle size={18}/> Resetta tutti i dati dell'App</h3>
+          <p className="text-xs text-danger dark:text-danger mb-4">
             Verranno eliminati TUTTI i dati: clienti, deal, offerte, attività, prodotti, storico. Il tuo account rimarrà attivo ma il database sarà completamente azzerato.
           </p>
           <button
@@ -1010,7 +1038,7 @@ export const SettingsView: React.FC = () => {
               'Verranno eliminati TUTTI i dati: clienti, deal, offerte, attività, prodotti, storico. Il tuo account rimarrà attivo ma il database sarà completamente azzerato.',
               () => { localStorage.removeItem('next-move-storage'); window.location.reload(); }
             )}
-            className="flex items-center gap-2 text-white text-sm font-black bg-red-600 px-4 py-2 rounded-xl hover:bg-red-700 transition-colors"
+            className="flex items-center gap-2 text-status-foreground text-sm font-semibold bg-danger px-4 py-2 rounded-md hover:bg-danger transition-colors"
           >
             <Trash2 size={16} /> Resetta tutti i dati dell'App
           </button>

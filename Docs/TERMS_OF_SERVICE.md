@@ -1,16 +1,16 @@
-# Terms of Service — Next Move CRM
+# Terms of Service — SYRIO (già Next Move CRM)
 
 **Ultimo aggiornamento**: 5 maggio 2026
 
 ## 1. Accettazione dei Termini
 
-Usando Next Move CRM ("Servizio"), accetti questi termini. Se non accetti, non usare l'app.
+Usando SYRIO (già Next Move CRM) ("Servizio"), accetti questi termini. Se non accetti, non usare l'app.
 
 ---
 
 ## 2. Descrizione del Servizio
 
-Next Move CRM è una **web app beta gratuita** per:
+SYRIO (già Next Move CRM) è una **web app beta gratuita** per:
 - Gestire contatti e clienti
 - Tracciare trattative commerciali
 - Generare email di offerta con AI
@@ -92,7 +92,7 @@ Noi NON siamo responsabili di:
 - I tuoi contatti, dati CRM, messaggi
 
 **Io proprietario di**:
-- Il codice, design, algoritmi di Next Move CRM
+- Il codice, design, algoritmi di SYRIO (già Next Move CRM)
 - Il brand "Next Move"
 
 ---

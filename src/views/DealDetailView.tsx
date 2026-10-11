@@ -1,3 +1,4 @@
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
@@ -33,38 +34,38 @@ export const DealDetailView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500"><ArrowLeft size={20}/> Torna indietro</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-secondary"><ArrowLeft size={20}/> Torna indietro</button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-8 shadow-sm border dark:border-gray-700">
+      <div className="bg-surface dark:bg-surface rounded-panel p-5 sm:p-8 shadow-sm border dark:border-line">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
           <div className="min-w-0">
-            <span className="text-xs font-black uppercase tracking-widest text-[var(--accent-600)] bg-[var(--accent-50)] px-3 py-1 rounded-full mb-3 inline-block">
+            <span className="text-xs font-semibold uppercase tracking-normal text-accent bg-accent-soft px-3 py-1 rounded-full mb-3 inline-block">
               {deal.stage.replace('-', ' ')}
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black dark:text-white break-words">{contact.company}</h1>
-            <p className="text-gray-500">Referente: {contact.contactName}</p>
+            <h1 className="text-2xl sm:text-3xl  dark:text-foreground break-words">{contact.company}</h1>
+            <p className="text-secondary">Referente: {contact.contactName}</p>
           </div>
           <div className="sm:text-right flex-shrink-0">
-            <div className="text-2xl sm:text-3xl font-black text-[var(--accent-600)]">€ {deal.value.toLocaleString()}</div>
-            <div className="flex items-center gap-2 sm:justify-end text-sm text-gray-400">
+            <div className="text-2xl sm:text-3xl font-semibold text-accent">€ {deal.value.toLocaleString()}</div>
+            <div className="flex items-center gap-2 sm:justify-end text-sm text-muted">
               <Target size={14}/> Probabilità: {deal.probability}%
             </div>
           </div>
         </div>
 
         {/* Sezione Offerta */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl mb-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <div className="p-4 bg-canvas dark:bg-canvas/50 rounded-panel mb-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm"><Package size={20} className="text-[var(--accent-600)]"/></div>
+                <div className="p-2 bg-surface dark:bg-surface rounded-lg shadow-sm"><Package size={20} className="text-accent"/></div>
                 <div>
-                    <p className="text-[10px] uppercase font-bold text-gray-400">Riferimento Offerta</p>
+                    <p className="text-xs uppercase font-bold text-muted">Riferimento Offerta</p>
                     <input 
                         type="text" 
                         value={offerRef} 
                         onChange={(e) => setOfferRef(e.target.value)}
                         onBlur={() => updateDeal(deal.id, { offerRef })}
                         placeholder="Inserisci numero offerta..."
-                        className="bg-transparent border-none p-0 font-bold dark:text-white focus:ring-0 w-full"
+                        className="bg-transparent border-none p-0 font-bold dark:text-foreground focus:ring-0 w-full"
                     />
                 </div>
             </div>
@@ -74,22 +75,22 @@ export const DealDetailView: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <button 
                 onClick={() => setShowCloseModal('vinto')}
-                className="flex items-center justify-center gap-2 bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-200 dark:shadow-none hover:bg-green-700 transition-all"
+                className="flex items-center justify-center gap-2 bg-success text-status-foreground py-4 rounded-panel font-bold shadow-panel shadow-green-200 dark:shadow-none hover:bg-success transition-all"
             >
                 <Trophy size={20}/> VINTO
             </button>
             <button 
                 onClick={() => setShowCloseModal('perso')}
-                className="flex items-center justify-center gap-2 bg-red-50 text-red-600 py-4 rounded-2xl font-bold hover:bg-red-100 transition-all"
+                className="flex items-center justify-center gap-2 bg-danger-soft text-danger py-4 rounded-panel font-bold hover:bg-danger-soft transition-all"
             >
                 <XCircle size={20}/> PERSO
             </button>
           </div>
         ) : (
-          <div className={`p-6 rounded-2xl border-2 flex items-center gap-4 ${deal.stage === 'chiuso-vinto' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+          <div className={`p-6 rounded-panel border-2 flex items-center gap-4 ${deal.stage === 'chiuso-vinto' ? 'bg-success-soft border-success text-success' : 'bg-canvas border-line text-secondary'}`}>
             {deal.stage === 'chiuso-vinto' ? <Trophy size={32}/> : <Ghost size={32}/>}
             <div>
-                <p className="font-black text-xl">TRATTATIVA {deal.stage === 'chiuso-vinto' ? 'VINTA!' : 'PERSA'}</p>
+                <p className="font-semibold text-xl">TRATTATIVA {deal.stage === 'chiuso-vinto' ? 'VINTA!' : 'PERSA'}</p>
                 {deal.lostReason && <p className="text-sm">Motivo: <span className="font-bold uppercase">{deal.lostReason}</span> {deal.competitor && `• Competitor: ${deal.competitor}`}</p>}
             </div>
           </div>
@@ -98,18 +99,18 @@ export const DealDetailView: React.FC = () => {
 
       {/* Modal Chiusura */}
       {showCloseModal && (
-        <div className="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 className="text-2xl font-black mb-4 dark:text-white capitalize">Chiudi come {showCloseModal}</h3>
+        <DialogFrame className="fixed inset-0 bg-canvas/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel">
+            <h3 className="text-2xl font-semibold mb-4 dark:text-foreground capitalize">Chiudi come {showCloseModal}</h3>
             
             {showCloseModal === 'perso' && (
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Perché è andata male?</label>
+                  <label className="block text-xs font-bold text-muted uppercase mb-2">Perché è andata male?</label>
                   <select 
                     value={lostReason} 
                     onChange={(e) => setLostReason(e.target.value as LostReason)}
-                    className="w-full border-2 rounded-xl p-3 bg-transparent dark:text-white border-gray-100 dark:border-gray-700"
+                    className="w-full border-2 rounded-md p-3 bg-transparent dark:text-foreground border-line dark:border-line"
                   >
                     <option value="prezzo">Prezzo troppo alto</option>
                     <option value="competitor">Preso da Competitor</option>
@@ -124,23 +125,23 @@ export const DealDetailView: React.FC = () => {
                     placeholder="Quale competitor?" 
                     value={competitor}
                     onChange={(e) => setCompetitor(e.target.value)}
-                    className="w-full border-2 rounded-xl p-3 bg-transparent dark:text-white border-gray-100 dark:border-gray-700"
+                    className="w-full border-2 rounded-md p-3 bg-transparent dark:text-foreground border-line dark:border-line"
                   />
                 )}
               </div>
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => setShowCloseModal(null)} className="flex-1 py-4 font-bold text-gray-400">Annulla</button>
+              <button onClick={() => setShowCloseModal(null)} className="flex-1 py-4 font-bold text-muted">Annulla</button>
               <button 
                 onClick={() => handleCloseDeal(showCloseModal === 'vinto')}
-                className={`flex-1 py-4 rounded-2xl font-bold text-white ${showCloseModal === 'vinto' ? 'bg-green-600' : 'bg-red-600'}`}
+                className={`flex-1 py-4 rounded-panel font-bold text-status-foreground ${showCloseModal === 'vinto' ? 'bg-success' : 'bg-danger'}`}
               >
                 Conferma Chiusura
               </button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
     </div>
   );

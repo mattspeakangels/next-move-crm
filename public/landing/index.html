@@ -1,37 +1,37 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#4f46e5" />
-<title>Next Move — Il CRM mobile per chi vende sul campo</title>
-<meta name="description" content="Next Move è il CRM mobile-first per agenti e rappresentanti: pipeline, clienti, offerte e agenda in un'unica app, con un coach AI che ti dice cosa fare oggi." />
+<meta name="theme-color" content="#e0ba90" />
+<title>SYRIO — Il CRM mobile per chi vende sul campo</title>
+<meta name="description" content="SYRIO è il CRM mobile-first per agenti e rappresentanti: pipeline, clienti, offerte e agenda in un'unica app, con un coach AI che ti dice cosa fare oggi." />
 <style>
   :root{
-    --brand-50:#eef2ff; --brand-100:#e0e7ff; --brand-200:#c7d2fe; --brand-300:#a5b4fc;
-    --brand-400:#818cf8; --brand-500:#6366f1; --brand-600:#4f46e5; --brand-700:#4338ca; --brand-800:#3730a3; --brand-900:#312e81;
+    --brand-50:#f5ede2; --brand-100:#ebdcc7; --brand-200:#dfc5a3; --brand-300:#d8b48b;
+    --brand-400:#ce9c70; --brand-500:#e0ba90; --brand-600:#e0ba90; --brand-700:#c99765; --brand-800:#946239; --brand-900:#382b20;
     --green-500:#10b981; --green-600:#059669; --green-100:#d1fae5;
     --red-500:#f43f5e; --red-100:#ffe4e6;
     --amber-500:#f59e0b; --amber-100:#fef3c7;
-    --ink-900:#0f1222; --ink-700:#374151; --ink-500:#6b7280; --ink-300:#d1d5db; --ink-100:#f3f4f6; --ink-50:#f9fafb;
+    --ink-900:#221e1a; --ink-700:#374151; --ink-500:#6b7280; --ink-300:#d1d5db; --ink-100:#f3f4f6; --ink-50:#f9fafb;
     --bg:#ffffff; --surface:#ffffff; --surface-2:#f9fafb; --border:#e5e7eb;
     --shadow-sm: 0 1px 2px rgba(15,18,34,.06);
     --shadow-md: 0 8px 24px rgba(15,18,34,.08);
     --shadow-lg: 0 24px 60px rgba(15,18,34,.14);
-    --radius: 16px;
+    --radius: 10px;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --ink-900:#f5f6fb; --ink-700:#d7dae6; --ink-500:#9aa0b4; --ink-300:#454a5e; --ink-100:#1b1e2e; --ink-50:#14162238;
-      --bg:#0b0c14; --surface:#12141f; --surface-2:#171a28; --border:#262a3d;
+      --ink-900:#f2ede5; --ink-700:#d5cfc6; --ink-500:#aba69e; --ink-300:#363939; --ink-100:#1d2021; --ink-50:#13161738;
+      --bg:#0a0c0d; --surface:#131617; --surface-2:#1d2021; --border:#363939;
       --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
       --shadow-md: 0 8px 24px rgba(0,0,0,.45);
       --shadow-lg: 0 24px 60px rgba(0,0,0,.55);
     }
   }
   :root[data-theme="dark"]{
-    --ink-900:#f5f6fb; --ink-700:#d7dae6; --ink-500:#9aa0b4; --ink-300:#454a5e; --ink-100:#1b1e2e; --ink-50:#14162238;
-    --bg:#0b0c14; --surface:#12141f; --surface-2:#171a28; --border:#262a3d;
+    --ink-900:#f2ede5; --ink-700:#d5cfc6; --ink-500:#aba69e; --ink-300:#363939; --ink-100:#1d2021; --ink-50:#13161738;
+    --bg:#0a0c0d; --surface:#131617; --surface-2:#1d2021; --border:#363939;
     --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
     --shadow-md: 0 8px 24px rgba(0,0,0,.45);
     --shadow-lg: 0 24px 60px rgba(0,0,0,.55);
@@ -48,11 +48,11 @@
   .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:13px 24px;border-radius:12px;font-weight:600;font-size:15px;
+    padding:13px 24px;border-radius:6px;font-weight:600;font-size:15px;
     text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
     white-space:nowrap;
   }
-  .btn-primary{background:linear-gradient(135deg,var(--brand-600),var(--brand-500));color:#fff;box-shadow:var(--shadow-md);}
+  .btn-primary{background:var(--brand-600);color:#1f1811;box-shadow:var(--shadow-md);}
   .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg);}
   .btn-ghost{background:transparent;border-color:var(--border);color:var(--ink-900);}
   .btn-ghost:hover{background:var(--surface-2);}
@@ -81,8 +81,8 @@
     display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
     color:var(--brand-600);background:var(--brand-50);border:1px solid var(--brand-100);padding:6px 12px;border-radius:99px;margin-bottom:18px;
   }
-  :root[data-theme="dark"] .eyebrow{ background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.28); }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .eyebrow{ background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.28); } }
+  :root[data-theme="dark"] .eyebrow{ background:rgba(224,186,144,.12); border-color:rgba(224,186,144,.28); }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .eyebrow{ background:rgba(224,186,144,.12); border-color:rgba(224,186,144,.28); } }
   h1{font-size:clamp(34px,5.2vw,58px);line-height:1.06;letter-spacing:-.03em;margin:0 0 20px;font-weight:800;}
   h2{font-size:clamp(26px,3.4vw,38px);line-height:1.15;letter-spacing:-.02em;margin:0 0 14px;font-weight:800;}
   h3{font-size:19px;margin:0 0 8px;font-weight:700;}
@@ -108,7 +108,7 @@
   .shot-frame img{width:100%;display:block;}
   .shot-caption{font-size:13px;color:var(--ink-500);text-align:center;margin-top:14px;}
   .shot-card{margin-top:18px;}
-  .shot-card .shot-frame{border-radius:12px;}
+  .shot-card .shot-frame{border-radius:6px;}
 
   /* Screenshot: cliccabile per aprire in grande */
   .shot-frame{position:relative;cursor:zoom-in;}
@@ -127,7 +127,7 @@
     cursor:zoom-out;
   }
   .lightbox.open{display:flex;}
-  .lightbox img{max-width:min(1200px,92vw);max-height:88vh;width:auto;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.5);display:block;}
+  .lightbox img{max-width:min(1200px,92vw);max-height:88vh;width:auto;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5);display:block;}
   .lightbox-close{
     position:fixed;top:20px;right:24px;width:44px;height:44px;border-radius:50%;
     background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);
@@ -141,8 +141,8 @@
   .bridge-col{padding:28px;border-radius:var(--radius);border:1px solid var(--border);}
   .bridge-before{background:var(--surface-2);}
   .bridge-after{background:var(--brand-50);border-color:var(--brand-100);}
-  :root[data-theme="dark"] .bridge-after{ background:rgba(99,102,241,.09); border-color:rgba(99,102,241,.22); }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .bridge-after{ background:rgba(99,102,241,.09); border-color:rgba(99,102,241,.22);} }
+  :root[data-theme="dark"] .bridge-after{ background:rgba(224,186,144,.09); border-color:rgba(224,186,144,.22); }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .bridge-after{ background:rgba(224,186,144,.09); border-color:rgba(224,186,144,.22);} }
   .bridge-col ul{margin:14px 0 0;padding:0;list-style:none;}
   .bridge-col li{display:flex;gap:10px;font-size:15px;color:var(--ink-700);padding:7px 0;line-height:1.4;}
   .tag{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-500);}
@@ -154,8 +154,8 @@
   @media (max-width:560px){ .steps{grid-template-columns:1fr;} }
   .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 18px;box-shadow:var(--shadow-sm);}
   .step-num{width:30px;height:30px;border-radius:9px;background:var(--brand-50);color:var(--brand-600);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
-  :root[data-theme="dark"] .step-num{ background:rgba(99,102,241,.15); }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .step-num{background:rgba(99,102,241,.15);} }
+  :root[data-theme="dark"] .step-num{ background:rgba(224,186,144,.15); }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .step-num{background:rgba(224,186,144,.15);} }
   .step p{font-size:14px;color:var(--ink-500);line-height:1.5;margin:0;}
 
   /* Value cards */
@@ -164,9 +164,9 @@
   @media (max-width:600px){ .cards{grid-template-columns:1fr;} }
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow-sm);transition:box-shadow .2s ease, transform .2s ease;}
   .card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
-  .card-icon{width:44px;height:44px;border-radius:12px;background:var(--brand-50);display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--brand-600);}
-  :root[data-theme="dark"] .card-icon{ background:rgba(99,102,241,.14); }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .card-icon{background:rgba(99,102,241,.14);} }
+  .card-icon{width:44px;height:44px;border-radius:6px;background:var(--brand-50);display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--brand-600);}
+  :root[data-theme="dark"] .card-icon{ background:rgba(224,186,144,.14); }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .card-icon{background:rgba(224,186,144,.14);} }
   .card p{font-size:14.5px;color:var(--ink-500);line-height:1.55;margin:0;}
 
   /* Demo section */
@@ -223,12 +223,12 @@
   /* Offer builder demo */
   .offer-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;}
   @media (max-width:760px){ .offer-grid{grid-template-columns:1fr;} }
-  .catalog-item{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--surface-2);}
+  .catalog-item{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px;background:var(--surface-2);}
   .catalog-item .pname{font-weight:700;font-size:13.5px;}
   .catalog-item .pprice{font-size:12.5px;color:var(--ink-500);}
   .add-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--brand-200);background:var(--brand-50);color:var(--brand-700);font-weight:800;font-size:16px;cursor:pointer;}
-  :root[data-theme="dark"] .add-btn{ background:rgba(99,102,241,.15); }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .add-btn{ background:rgba(99,102,241,.15); } }
+  :root[data-theme="dark"] .add-btn{ background:rgba(224,186,144,.15); }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .add-btn{ background:rgba(224,186,144,.15); } }
   .offer-lines{border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--surface-2);}
   .oline{display:grid;grid-template-columns:1.5fr 44px 50px 60px;gap:8px;align-items:center;font-size:12.5px;margin-bottom:10px;}
   .oline input{width:100%;padding:6px 7px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink-900);font-size:12.5px;}
@@ -271,7 +271,7 @@
 
 <header>
   <div class="wrap nav">
-    <a href="#" class="brand"><span class="brand-mark">NM</span> Next Move</a>
+    <a href="#" class="brand"><span class="brand-mark">S</span> SYRIO</a>
     <nav class="nav-links nav-mobile-hide">
       <a href="#come-funziona">Come funziona</a>
       <a href="#funzionalita">Funzionalità</a>
@@ -290,7 +290,7 @@
     <div>
       <span class="eyebrow">CRM mobile-first per il commerciale on the road</span>
       <h1>Il CRM che sta nel taschino, non nell'agenda di carta.</h1>
-      <p class="lead">Next Move riunisce clienti, trattative, offerte e agenda in un'unica app pensata per chi vende fuori ufficio — con un coach AI che ogni giorno ti dice su quale cliente concentrarti.</p>
+      <p class="lead">SYRIO riunisce clienti, trattative, offerte e agenda in un'unica app pensata per chi vende fuori ufficio — con un coach AI che ogni giorno ti dice su quale cliente concentrarti.</p>
       <div class="hero-cta-row">
         <a href="#richiedi-demo" class="btn btn-primary">Richiedi una demo</a>
         <a href="#demo" class="btn btn-ghost">Guarda come funziona ↓</a>
@@ -302,7 +302,7 @@
         <div class="shot-bar">
           <span class="shot-dot"></span><span class="shot-dot"></span><span class="shot-dot"></span>
         </div>
-        <img src="/landing/images/app-dashboard.png" alt="Dashboard reale di Next Move con Coach del giorno, KPI di pipeline e attività urgenti da fare oggi" loading="eager">
+        <p style="font-size:12px;color:var(--ink-500)">Immagini della precedente interfaccia Next Move; funzionalità conservate in SYRIO.</p><img src="/landing/images/app-dashboard.png" alt="Dashboard della precedente interfaccia Next Move con Coach del giorno, KPI di pipeline e attività urgenti da fare oggi" loading="eager">
       </div>
       <p class="shot-caption">Screenshot reale della Dashboard dell'app — nessun mockup.</p>
     </div>
@@ -314,7 +314,7 @@
   <div class="wrap">
     <div class="bridge reveal">
       <div class="bridge-col bridge-before">
-        <span class="tag">Oggi, senza Next Move</span>
+        <span class="tag">Oggi, senza SYRIO</span>
         <h3 style="margin-top:10px;">La tua giornata è sparsa tra 5 strumenti diversi</h3>
         <ul>
           <li>📋 Un foglio Excel con i clienti, aggiornato ogni tanto</li>
@@ -325,7 +325,7 @@
         </ul>
       </div>
       <div class="bridge-col bridge-after">
-        <span class="tag">Con Next Move</span>
+        <span class="tag">Con SYRIO</span>
         <h3 style="margin-top:10px;">Un'unica app che ti segue sul campo</h3>
         <ul>
           <li>✅ Clienti, contatti e mappa del territorio in un posto solo</li>
@@ -370,7 +370,7 @@
     <div class="section-head reveal">
       <span class="eyebrow">Funzionalità</span>
       <h2>Tutto quello che serve, niente di quello che rallenta</h2>
-      <p class="lead">Ogni funzione di Next Move è pensata per essere usata in piedi, tra un cliente e l'altro.</p>
+      <p class="lead">Ogni funzione di SYRIO è pensata per essere usata in piedi, tra un cliente e l'altro.</p>
     </div>
     <div class="cards reveal">
       <div class="card">
@@ -408,7 +408,7 @@
       <div class="card">
         <div class="card-icon">🎙️</div>
         <h3>Agenda con la voce</h3>
-        <p>Dopo la visita registri un promemoria vocale: Next Move lo trascrive e lo trasforma in nota cliente e prossima azione.</p>
+        <p>Dopo la visita registri un promemoria vocale: SYRIO lo trascrive e lo trasforma in nota cliente e prossima azione.</p>
         <div class="shot-card">
           <div class="shot-frame"><img src="/landing/images/app-agenda.png" alt="Agenda mensile con appuntamenti reali per tipo (chiamata, visita) e note" loading="lazy"></div>
         </div>
@@ -430,7 +430,7 @@
   <div class="wrap">
     <div class="section-head reveal">
       <span class="eyebrow">Provalo subito</span>
-      <h2>Non è uno screenshot: è Next Move che puoi già usare</h2>
+      <h2>SYRIO, il gestionale per la tua giornata commerciale</h2>
       <p class="lead">Aggiungi un cliente, trascina una trattativa, guarda la mappa e lo storico, chiedi qualcosa al coach AI o componi un'offerta — è una simulazione completa dell'interfaccia dell'app.</p>
     </div>
 
@@ -533,11 +533,11 @@
     <div class="faq reveal">
       <details class="faq-item">
         <summary>Devo reinserire a mano tutti i clienti che ho già su Excel?</summary>
-        <p>No. Next Move importa contatti e storico ordini direttamente da file CSV/Excel già in fase di attivazione: il tuo archivio esistente non si perde.</p>
+        <p>No. SYRIO importa contatti e storico ordini direttamente da file CSV/Excel già in fase di attivazione: il tuo archivio esistente non si perde.</p>
       </details>
       <details class="faq-item">
         <summary>Serve installare qualcosa sul telefono?</summary>
-        <p>No installazione da store: Next Move è una web app che aggiungi alla schermata home in un tap, e si aggiorna da sola quando esce una nuova versione.</p>
+        <p>No installazione da store: SYRIO è una web app che aggiungi alla schermata home in un tap, e si aggiorna da sola quando esce una nuova versione.</p>
       </details>
       <details class="faq-item">
         <summary>È complicato da usare per chi non è pratico di CRM?</summary>
@@ -545,7 +545,7 @@
       </details>
       <details class="faq-item">
         <summary>In cosa è diverso da un CRM desktop tradizionale come Salesforce?</summary>
-        <p>Next Move nasce mobile-first per chi lavora sul campo, non in ufficio: pipeline, offerte e agenda pensate per il telefono, con un coach AI integrato che suggerisce le priorità della giornata.</p>
+        <p>SYRIO nasce mobile-first per chi lavora sul campo, non in ufficio: pipeline, offerte e agenda pensate per il telefono, con un coach AI integrato che suggerisce le priorità della giornata.</p>
       </details>
       <details class="faq-item">
         <summary>Quanto costa?</summary>
@@ -560,10 +560,10 @@
   <div class="wrap">
     <div class="cta-band reveal">
       <h2>Pronto a smettere di gestire le vendite a memoria?</h2>
-      <p>Prenota una demo di 20 minuti: ti mostriamo Next Move con dati simili ai tuoi e rispondiamo a tutte le domande sul tuo caso d'uso.</p>
+      <p>Prenota una demo di 20 minuti: ti mostriamo SYRIO con dati simili ai tuoi e rispondiamo a tutte le domande sul tuo caso d'uso.</p>
       <div class="hero-cta-row" style="justify-content:center;">
         <!-- Sostituire con l'indirizzo email reale a cui far arrivare le richieste demo -->
-        <a href="mailto:demo@nextmovecrm.it?subject=Richiesta%20demo%20Next%20Move" class="btn btn-primary">Richiedi una demo</a>
+        <a href="mailto:demo@nextmovecrm.it?subject=Richiesta%20demo%20SYRIO" class="btn btn-primary">Richiedi una demo</a>
         <a href="#demo" class="btn btn-ghost">Rivedi la demo interattiva</a>
       </div>
     </div>
@@ -572,7 +572,7 @@
 
 <footer>
   <div class="wrap foot-row">
-    <span>© <span id="year"></span> Next Move CRM</span>
+    <span>© <span id="year"></span> SYRIO CRM</span>
     <div class="foot-links">
       <a href="#funzionalita">Funzionalità</a>
       <a href="#demo">Demo</a>

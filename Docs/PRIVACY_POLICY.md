@@ -1,10 +1,10 @@
-# Privacy Policy — Next Move CRM
+# Privacy Policy — SYRIO (già Next Move CRM)
 
 **Ultimo aggiornamento**: 5 maggio 2026
 
 ## 1. Chi raccoglie i dati?
 
-Next Move CRM è sviluppato da **Mattia Parlangeli** (persona fisica).
+SYRIO (già Next Move CRM) è sviluppato da **Mattia Parlangeli** (persona fisica).
 - **Email**: parlangeli.mattia@gmail.com
 - **Utilizzo**: Sviluppo e testing dell'app
 

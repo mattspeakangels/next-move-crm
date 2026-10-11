@@ -1,3 +1,4 @@
+import { DialogFrame } from './DialogFrame';
 import React, { useState } from 'react';
 import { ShieldAlert, Fingerprint, X, AlertTriangle } from 'lucide-react';
 import { deviceAuth } from '../../hooks/useDeviceAuth';
@@ -32,33 +33,33 @@ export const DeviceAuthModal: React.FC<DeviceAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 relative">
+    <DialogFrame className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-surface dark:bg-surface rounded-panel shadow-panel w-full max-w-sm p-6 relative">
 
         {/* Close */}
         <button onClick={onCancel}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
+          className="absolute top-4 right-4 p-2 text-muted hover:text-secondary hover:bg-raised dark:hover:bg-raised rounded-md transition-colors">
           <X size={16} />
         </button>
 
         {/* Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
-          <ShieldAlert size={28} className="text-red-500" />
+        <div className="w-14 h-14 rounded-panel bg-danger-soft dark:bg-danger-soft flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert size={28} className="text-danger" />
         </div>
 
         {/* Title */}
-        <h2 className="text-base font-black text-gray-900 dark:text-white text-center mb-1">
+        <h2 className="text-base font-semibold text-foreground dark:text-foreground text-center mb-1">
           Azione Irreversibile
         </h2>
-        <p className="text-xs font-bold text-red-500 uppercase tracking-widest text-center mb-4">
+        <p className="text-xs font-bold text-danger uppercase tracking-normal text-center mb-4">
           {title}
         </p>
 
         {/* Description */}
-        <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-2xl p-3 mb-5">
+        <div className="bg-danger-soft dark:bg-danger-soft border border-danger dark:border-danger rounded-panel p-3 mb-5">
           <div className="flex items-start gap-2">
-            <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs font-bold text-red-600 dark:text-red-400 leading-relaxed">
+            <AlertTriangle size={14} className="text-danger flex-shrink-0 mt-0.5" />
+            <p className="text-xs font-bold text-danger dark:text-danger leading-relaxed">
               {description}
             </p>
           </div>
@@ -66,27 +67,27 @@ export const DeviceAuthModal: React.FC<DeviceAuthModalProps> = ({
 
         {/* Error */}
         {state === 'error' && (
-          <p className="text-[11px] font-bold text-red-500 text-center mb-3">{errorMsg}</p>
+          <p className="text-xs font-bold text-danger text-center mb-3">{errorMsg}</p>
         )}
 
         {/* Auth button */}
         <button
           onClick={handleVerify}
           disabled={state === 'verifying'}
-          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm transition-all mb-3
+          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-panel font-semibold text-sm transition-all mb-3
             ${state === 'verifying'
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
-              : 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-200 dark:shadow-red-900'}`}>
+              ? 'bg-raised dark:bg-raised text-muted cursor-wait'
+              : 'bg-danger text-status-foreground hover:bg-danger shadow-panel shadow-red-200 dark:shadow-red-900'}`}>
           <Fingerprint size={18} className={state === 'verifying' ? 'animate-pulse' : ''} />
           {state === 'verifying' ? 'Verifica in corso…' : 'Sblocca con biometria / PIN'}
         </button>
 
         <button onClick={onCancel}
-          className="w-full py-2.5 rounded-2xl text-xs font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors uppercase tracking-wide">
+          className="w-full py-2.5 rounded-panel text-xs font-semibold text-muted hover:text-secondary dark:hover:text-muted hover:bg-raised dark:hover:bg-raised transition-colors uppercase tracking-wide">
           Annulla
         </button>
 
       </div>
-    </div>
+    </DialogFrame>
   );
 };

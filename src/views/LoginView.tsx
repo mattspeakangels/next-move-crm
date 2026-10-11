@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Target, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, X } from 'lucide-react';
 import { useAuth } from '../lib/authContext';
+import { Button, Field, Wordmark } from '../components/ui/Syrio';
+import { DialogFrame } from '../components/ui/DialogFrame';
+import { LegalView } from './LegalView';
 
 type Mode = 'login' | 'register' | 'reset';
 
@@ -12,6 +15,7 @@ export function LoginView() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
 
   const switchMode = (m: Mode) => { setMode(m); clearLoginError(); setResetSent(false); };
 
@@ -39,17 +43,22 @@ export function LoginView() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center p-6">
+    <div className="syrio-login bg-canvas text-foreground">
+      <section className="syrio-login-landscape">
+        <Wordmark />
+        <div><p className="font-serif text-3xl md:text-4xl leading-snug">Più direzione.<br />Più opportunità.<br />Più risultati.</p><p className="text-sm mt-5 text-white/80">La tua guida commerciale.</p></div>
+      </section>
+      <div className="syrio-login-form">
       <div className="w-full max-w-sm">
 
         {/* Logo */}
-        <div className="flex items-center gap-3 text-indigo-600 mb-10 justify-center">
-          <Target size={36} strokeWidth={2.5} />
-          <h1 className="text-3xl font-black tracking-tighter uppercase leading-none">Next<br/>Move</h1>
+        <div className="mb-6">
+          <p className="syrio-tagline">YOUR SALES GUIDE</p>
+          <h1 className="text-3xl mt-3">{mode === 'login' ? 'Benvenuto in SYRIO' : mode === 'register' ? 'Inizia il tuo percorso' : 'Recupera l’accesso'}</h1>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8 space-y-5">
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 font-medium">
+        <div className="space-y-5">
+          <p className="text-center text-sm text-secondary dark:text-muted font-medium">
             {mode === 'login' && 'Accedi per continuare'}
             {mode === 'register' && 'Crea un nuovo account'}
             {mode === 'reset' && 'Recupera la password'}
@@ -59,33 +68,39 @@ export function LoginView() {
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Email */}
             <div className="relative">
-              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <Field
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Email"
+                aria-label="Email"
+                autoComplete="email"
                 required
-                className="w-full pl-9 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-gray-50 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="pl-9 pr-4 text-sm"
               />
             </div>
 
             {/* Password (nascosta in modalità reset) */}
             {mode !== 'reset' && (
               <div className="relative">
-                <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
+                <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                <Field
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder={mode === 'register' ? 'Password (min. 6 caratteri)' : 'Password'}
                   required
-                  className="w-full pl-9 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-gray-50 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Password"
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  minLength={mode === 'register' ? 6 : undefined}
+                  className="pl-9 pr-12 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPw ? 'Nascondi password' : 'Mostra password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-secondary"
                 >
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -93,77 +108,81 @@ export function LoginView() {
             )}
 
             {/* Feedback reset */}
-            {resetSent && (
-              <p className="text-xs text-green-600 font-bold text-center">
+            {resetSent && !loginError && (
+              <p role="status" className="text-sm text-success text-center">
                 Email inviata! Controlla la tua casella.
               </p>
             )}
 
             {/* Errore */}
             {loginError && (
-              <p className="text-xs text-red-500 font-bold text-center">{loginError}</p>
+              <p role="alert" className="text-sm text-danger text-center">{loginError}</p>
             )}
 
             {/* Submit */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm transition disabled:opacity-50"
+              className="w-full"
             >
               {loading
                 ? 'Attendere…'
                 : mode === 'login' ? 'Accedi'
                 : mode === 'register' ? 'Crea account'
                 : 'Invia email di recupero'}
-            </button>
+            </Button>
           </form>
 
           {/* Divider (solo login/register) */}
           {mode !== 'reset' && (
             <>
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
-                <span className="text-xs text-gray-400 font-bold">oppure</span>
-                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
+                <div className="flex-1 h-px bg-raised dark:bg-raised" />
+                <span className="text-xs text-muted font-bold">oppure</span>
+                <div className="flex-1 h-px bg-raised dark:bg-raised" />
               </div>
 
               {/* Google */}
-              <button
+              <Button
                 onClick={handleGoogle}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm py-3 rounded-2xl transition disabled:opacity-50"
+                variant="secondary"
+                className="w-full"
               >
                 <GoogleIcon />
                 Accedi con Google
-              </button>
+              </Button>
             </>
           )}
 
           {/* Link secondari */}
-          <div className="flex flex-col items-center gap-2 text-xs text-gray-400">
+          <div className="flex flex-col items-center gap-2 text-xs text-muted">
             {mode === 'login' && (
               <>
-                <button onClick={() => switchMode('register')} className="hover:text-indigo-600 font-bold transition">
+                <button onClick={() => switchMode('register')} className="hover:text-accent font-bold transition">
                   Non hai un account? Registrati
                 </button>
-                <button onClick={() => switchMode('reset')} className="hover:text-indigo-600 transition">
+                <button onClick={() => switchMode('reset')} className="hover:text-accent transition">
                   Password dimenticata?
                 </button>
               </>
             )}
             {mode === 'register' && (
-              <button onClick={() => switchMode('login')} className="hover:text-indigo-600 font-bold transition">
+              <button onClick={() => switchMode('login')} className="hover:text-accent font-bold transition">
                 Hai già un account? Accedi
               </button>
             )}
             {mode === 'reset' && (
-              <button onClick={() => switchMode('login')} className="hover:text-indigo-600 font-bold transition">
+              <button onClick={() => switchMode('login')} className="hover:text-accent font-bold transition">
                 Torna al login
               </button>
             )}
           </div>
         </div>
+        <button onClick={() => setLegalOpen(true)} className="text-sm text-muted hover:text-accent mt-6">Privacy, termini e contatti</button>
       </div>
+      </div>
+      {legalOpen && <DialogFrame className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div className="syrio-panel max-w-3xl w-full max-h-[90dvh] overflow-y-auto p-5"><button data-dialog-close onClick={() => setLegalOpen(false)} aria-label="Chiudi documenti legali" className="ml-auto flex p-2"><X size={20} /></button><LegalView /></div></DialogFrame>}
     </div>
   );
 }

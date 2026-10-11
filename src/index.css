@@ -1,3 +1,4 @@
+@import './theme/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,11 +16,78 @@
     letter-spacing: -0.011em;
     overflow-x: hidden;
     max-width: 100vw;
+    background: rgb(var(--syrio-canvas));
+    color: rgb(var(--syrio-foreground));
   }
   #root {
     overflow-x: hidden;
     max-width: 100vw;
   }
+  button, input, select, textarea { font: inherit; }
+  button { touch-action: manipulation; }
+  button:disabled { cursor: not-allowed; }
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--syrio-accent));
+    outline-offset: 3px;
+  }
+  input, select, textarea { accent-color: rgb(var(--syrio-accent)); }
+  input::placeholder, textarea::placeholder { color: rgb(var(--syrio-muted)); opacity: 1; }
+  select option { background: rgb(var(--syrio-surface)); color: rgb(var(--syrio-foreground)); }
+  h1 { font-family: var(--syrio-editorial-font); font-weight: 400; text-transform: none; letter-spacing: -.025em; }
+  table { border-collapse: collapse; }
+  th { font-weight: 500; }
+}
+
+@layer components {
+  .syrio-wordmark { font-family: var(--syrio-editorial-font); font-weight: 400; letter-spacing: .2em; line-height: 1.2; color: rgb(var(--syrio-accent)); }
+  .syrio-tagline { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .625rem; letter-spacing: .24em; color: rgb(var(--syrio-muted)); }
+  .syrio-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.75rem; padding: .625rem 1rem; border-radius: var(--syrio-radius-control); border: 1px solid rgb(var(--syrio-line)); font-size: .875rem; font-weight: 600; transition: background-color .15s, border-color .15s; }
+  .syrio-button-primary { background: rgb(var(--syrio-action)); color: rgb(var(--syrio-action-foreground)); border-color: rgb(var(--syrio-action)); }
+  .syrio-button-primary:hover { background: rgb(var(--syrio-action-hover)); }
+  .syrio-button-secondary { background: rgb(var(--syrio-surface)); color: rgb(var(--syrio-foreground)); }
+  .syrio-button-secondary:hover { background: rgb(var(--syrio-raised)); }
+  .syrio-button:disabled { opacity: .5; }
+  .syrio-field { width: 100%; min-height: 2.75rem; border: 1px solid rgb(var(--syrio-line)); border-radius: var(--syrio-radius-control); background: rgb(var(--syrio-canvas)); color: rgb(var(--syrio-foreground)); padding: .75rem; }
+  .syrio-panel { background: rgb(var(--syrio-surface)); border: 1px solid rgb(var(--syrio-line)); border-radius: var(--syrio-radius); box-shadow: var(--syrio-shadow); }
+  .syrio-tab { min-height: 2.75rem; padding: .5rem .875rem; border-bottom: 2px solid transparent; color: rgb(var(--syrio-muted)); white-space: nowrap; }
+  .syrio-tab[aria-selected=true] { border-color: rgb(var(--syrio-accent)); color: rgb(var(--syrio-accent)); }
+  .syrio-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .syrio-hero { min-height: 13rem; padding: 2rem; border: 1px solid rgb(var(--syrio-line)); border-radius: var(--syrio-radius); background: linear-gradient(90deg, rgb(4 6 7 / .94), rgb(4 6 7 / .42) 55%, rgb(4 6 7 / .08)), url('/assets/syrio-landscape.webp') center 47% / cover; color: #f2ede5; }
+  .syrio-hero h1 { font-size: 2.5rem; line-height: 1.15; max-width: 29rem; }
+  .syrio-login { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(24rem, .9fr); }
+  .syrio-login-landscape { display: flex; flex-direction: column; justify-content: space-between; gap: 3rem; padding: 3rem; background: linear-gradient(180deg, rgb(4 6 7 / .55), rgb(4 6 7 / .05) 45%, rgb(4 6 7 / .72)), url('/assets/syrio-landscape.webp') 30% center / cover; color: #f2ede5; }
+  .syrio-login-landscape .syrio-tagline { color: #ddd2c3; }
+  .syrio-login-landscape .syrio-wordmark { color: #e2bc93; font-size: 3.5rem; }
+  .syrio-login-form { display: flex; justify-content: center; align-items: center; padding: 2.5rem; }
+  .syrio-dashboard { display: flex; flex-direction: column; gap: 1.5rem; }
+  .syrio-dashboard-actions { order: 1; }
+  .syrio-dashboard-kpis { order: 2; }
+  .syrio-dashboard-secondary { order: 3; }
+  .syrio-chart-tooltip { background: rgb(var(--syrio-surface)); border: 1px solid rgb(var(--syrio-line)); border-radius: var(--syrio-radius-control); color: rgb(var(--syrio-foreground)); }
+}
+
+/* Components with generated DOM (Leaflet / Recharts) share the same tokens. */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip, .leaflet-control-layers { background: rgb(var(--syrio-surface)); color: rgb(var(--syrio-foreground)); }
+.leaflet-bar a { background: rgb(var(--syrio-surface)); color: rgb(var(--syrio-foreground)); border-color: rgb(var(--syrio-line)); }
+.leaflet-bar a:hover { background: rgb(var(--syrio-raised)); }
+.leaflet-container { font-family: inherit; }
+.recharts-cartesian-axis-tick-value, .recharts-legend-item-text, .recharts-pie-label-text { fill: rgb(var(--syrio-muted)); color: rgb(var(--syrio-secondary)); }
+.recharts-default-tooltip { background: rgb(var(--syrio-surface)) !important; border-color: rgb(var(--syrio-line)) !important; color: rgb(var(--syrio-foreground)) !important; border-radius: var(--syrio-radius-control); }
+.recharts-tooltip-label { color: rgb(var(--syrio-foreground)); }
+.recharts-cartesian-grid line { stroke: rgb(var(--syrio-line)); }
+
+@media (min-width: 768px) {
+  .syrio-dashboard-actions, .syrio-dashboard-kpis, .syrio-dashboard-secondary { order: initial; }
+}
+@media (max-width: 767px) {
+  .syrio-login { grid-template-columns: minmax(0, 1fr); }
+  .syrio-login-landscape { min-height: 13rem; padding: 1.5rem; background-position: 35% 50%; gap: 1.5rem; }
+  .syrio-login-landscape .syrio-wordmark { font-size: 2.5rem; }
+  .syrio-login-form { padding: 1.5rem; align-items: flex-start; }
+  button:not([role="switch"]):not(.syrio-tab) { min-height: 2.75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
 /* Numeri tabulari allineati per KPI, pipeline, importi */

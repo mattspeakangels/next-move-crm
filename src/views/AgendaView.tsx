@@ -1,3 +1,5 @@
+import { confirmAction } from '../components/ui/Feedback';
+import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw, Route } from 'lucide-react';
@@ -85,59 +87,59 @@ const MULTI_DAY_TYPES: ActivityType[] = ['fiera'];
 const VISIT_TYPES: ActivityType[] = ['visita', 'visita-freddo', 'sopralluogo', 'demo'];
 
 const TYPE_COLORS: Record<ActivityType, string> = {
-  visita: 'bg-[var(--accent-500)]',
-  'visita-freddo': 'bg-sky-500',
-  chiamata: 'bg-green-500',
-  email: 'bg-blue-500',
-  nota: 'bg-yellow-400',
-  demo: 'bg-purple-500',
-  'call-remota': 'bg-teal-500',
-  sopralluogo: 'bg-orange-500',
-  formazione: 'bg-pink-500',
-  'smart-working': 'bg-cyan-500',
-  ufficio: 'bg-slate-500',
-  fiera: 'bg-fuchsia-500',
-  'giornata-banco': 'bg-amber-500',
-  'mini-fiera': 'bg-violet-500',
-  'manutenzione-auto': 'bg-zinc-500',
+  visita: 'bg-action text-action-foreground',
+  'visita-freddo': 'bg-action text-action-foreground',
+  chiamata: 'bg-success text-status-foreground',
+  email: 'bg-action text-action-foreground',
+  nota: 'bg-warning text-status-foreground',
+  demo: 'bg-action text-action-foreground',
+  'call-remota': 'bg-success text-status-foreground',
+  sopralluogo: 'bg-warning text-status-foreground',
+  formazione: 'bg-action text-action-foreground',
+  'smart-working': 'bg-action text-action-foreground',
+  ufficio: 'bg-raised',
+  fiera: 'bg-action text-action-foreground',
+  'giornata-banco': 'bg-warning text-status-foreground',
+  'mini-fiera': 'bg-action text-action-foreground',
+  'manutenzione-auto': 'bg-raised',
 };
 
 const TYPE_BG: Record<ActivityType, string> = {
-  visita: 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]',
-  'visita-freddo': 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300',
-  chiamata: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-  email: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-  nota: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-  demo: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-  'call-remota': 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300',
-  sopralluogo: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
-  formazione: 'bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
-  'smart-working': 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300',
-  ufficio: 'bg-slate-100 dark:bg-slate-700/40 text-slate-700 dark:text-slate-300',
-  fiera: 'bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300',
-  'giornata-banco': 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-  'mini-fiera': 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300',
-  'manutenzione-auto': 'bg-zinc-100 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300',
+  visita: 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  'visita-freddo': 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  chiamata: 'bg-success-soft dark:bg-success-soft text-success dark:text-success',
+  email: 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  nota: 'bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning',
+  demo: 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  'call-remota': 'bg-accent-soft text-accent',
+  sopralluogo: 'bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning',
+  formazione: 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  'smart-working': 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  ufficio: 'bg-raised dark:bg-raised/40 text-foreground dark:text-muted',
+  fiera: 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  'giornata-banco': 'bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning',
+  'mini-fiera': 'bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent',
+  'manutenzione-auto': 'bg-raised dark:bg-raised/40 text-foreground dark:text-muted',
 };
 
 const DAYS_IT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 const MONTHS_IT = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
 const OUTCOME_OPTIONS: { value: ActivityOutcome; label: string; emoji: string; color: string }[] = [
-  { value: 'riuscita',          label: 'Positivo',    emoji: '✅', color: 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
-  { value: 'parziale',          label: 'Parziale',    emoji: '🟡', color: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
-  { value: 'promessa-callback', label: 'Richiamata',  emoji: '📞', color: 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
-  { value: 'rifiuto',           label: 'Non riuscita',emoji: '❌', color: 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
-  { value: 'richiesta-offerta', label: 'Richiesta offerta', emoji: '📄', color: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
+  { value: 'riuscita',          label: 'Positivo',    emoji: '✅', color: 'border-success bg-success-soft dark:bg-success-soft text-success dark:text-success' },
+  { value: 'parziale',          label: 'Parziale',    emoji: '🟡', color: 'border-warning bg-warning-soft dark:bg-warning-soft text-warning dark:text-warning' },
+  { value: 'promessa-callback', label: 'Richiamata',  emoji: '📞', color: 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent' },
+  { value: 'rifiuto',           label: 'Non riuscita',emoji: '❌', color: 'border-danger bg-danger-soft dark:bg-danger-soft text-danger dark:text-danger' },
+  { value: 'richiesta-offerta', label: 'Richiesta offerta', emoji: '📄', color: 'border-success bg-success-soft dark:bg-success-soft text-success dark:text-success' },
 ];
 
 // Esiti specifici per "Visita a freddo" (Manuale Prospezione Blaklader §4)
 const VISITA_FREDDO_OUTCOME_OPTIONS: { value: ActivityOutcome; label: string; emoji: string; color: string }[] = [
-  { value: 'nessuno-trovato',      label: 'Nessuno trovato',       emoji: '🚪', color: 'border-gray-400 bg-gray-50 dark:bg-gray-700/30 text-gray-700 dark:text-gray-300' },
-  { value: 'parlato-influente',    label: 'Parlato con influente', emoji: '🗣️', color: 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
-  { value: 'parlato-decisore',     label: 'Parlato col decisore',  emoji: '🎯', color: 'border-purple-400 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
-  { value: 'appuntamento-fissato', label: 'Appuntamento fissato',  emoji: '📅', color: 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]' },
-  { value: 'richiesta-offerta',    label: 'Richiesta offerta',     emoji: '📄', color: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
+  { value: 'nessuno-trovato',      label: 'Nessuno trovato',       emoji: '🚪', color: 'border-line bg-canvas dark:bg-raised/30 text-foreground dark:text-muted' },
+  { value: 'parlato-influente',    label: 'Parlato con influente', emoji: '🗣️', color: 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent' },
+  { value: 'parlato-decisore',     label: 'Parlato col decisore',  emoji: '🎯', color: 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent' },
+  { value: 'appuntamento-fissato', label: 'Appuntamento fissato',  emoji: '📅', color: 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent' },
+  { value: 'richiesta-offerta',    label: 'Richiesta offerta',     emoji: '📄', color: 'border-success bg-success-soft dark:bg-success-soft text-success dark:text-success' },
 ];
 
 const SETTORE_OPTIONS: { value: ProspectingSettore; label: string }[] = [
@@ -235,7 +237,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ activity, company, onEdit
       style={style}
       {...listeners}
       {...attributes}
-      className={`rounded-xl px-2 py-1.5 text-white text-[10px] font-black truncate cursor-grab active:cursor-grabbing select-none transition-opacity ${TYPE_COLORS[activity.type]} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+      className={`rounded-md px-2 py-1.5 text-xs font-semibold truncate cursor-grab active:cursor-grabbing select-none transition-opacity ${TYPE_COLORS[activity.type]} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
       onClick={e => { e.stopPropagation(); onEdit(); }}
     >
       {company}
@@ -256,9 +258,9 @@ const DroppableSlot: React.FC<DroppableSlotProps> = ({ id, children, isHour }) =
       ref={setNodeRef}
       className={`relative border-b transition-colors ${
         isHour
-          ? 'border-gray-200 dark:border-gray-700'
-          : 'border-gray-100 dark:border-gray-800'
-      } ${isOver ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : ''}`}
+          ? 'border-line dark:border-line'
+          : 'border-line dark:border-line'
+      } ${isOver ? 'bg-accent-soft dark:bg-accent-soft/20' : ''}`}
       style={{ height: 28 }}
     >
       {children}
@@ -282,35 +284,35 @@ interface ActivityCardProps {
 const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEdit, onDelete, onExport, onClose, onView, onNavigateToContact }) => {
   const isDone = activity.outcome !== 'da-fare';
   return (
-    <div className={`bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border flex items-center justify-between gap-4 ${isDone ? 'border-green-100 dark:border-green-900/40 opacity-75' : 'border-gray-50 dark:border-gray-700'}`}>
+    <div className={`bg-surface dark:bg-surface p-4 rounded-panel shadow-sm border flex items-center justify-between gap-4 ${isDone ? 'border-success dark:border-success opacity-75' : 'border-line dark:border-line'}`}>
       <div className="flex gap-3 items-center flex-1 min-w-0 cursor-pointer" onClick={onView} title="Apri per vedere i dettagli">
         <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${TYPE_BG[activity.type]}`}>
-          {activity.type === 'visita' ? <MapPin size={16} /> : activity.type === 'chiamata' ? <Phone size={16} /> : <span className="text-xs font-black">{TYPE_LABELS[activity.type][0]}</span>}
+          {activity.type === 'visita' ? <MapPin size={16} /> : activity.type === 'chiamata' ? <Phone size={16} /> : <span className="text-xs font-semibold">{TYPE_LABELS[activity.type][0]}</span>}
         </div>
         <div className="min-w-0">
           {onNavigateToContact && activity.contactId ? (
             <button
               type="button"
               onClick={e => { e.stopPropagation(); onNavigateToContact(activity.contactId); }}
-              className="font-black text-sm text-[var(--accent-600)] dark:text-[var(--accent-400)] truncate hover:underline text-left"
+              className="font-semibold text-sm text-accent dark:text-accent truncate hover:underline text-left"
             >{companyName}</button>
           ) : (
-            <p className="font-black text-sm dark:text-white truncate">{companyName}</p>
+            <p className="font-semibold text-sm dark:text-foreground truncate">{companyName}</p>
           )}
-          <p className="text-xs text-gray-400 font-bold">
+          <p className="text-xs text-muted font-bold">
             {new Date(activity.date).toLocaleString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
             {activity.endDate && ` – ${new Date(activity.endDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`}
           </p>
-          {activity.notes && <p className="text-[11px] text-gray-400 truncate mt-0.5">{activity.notes}</p>}
+          {activity.notes && <p className="text-xs text-muted truncate mt-0.5">{activity.notes}</p>}
           {activity.results && (
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 truncate mt-0.5 italic">✓ {activity.results}</p>
+            <p className="text-xs text-success dark:text-success truncate mt-0.5 italic">✓ {activity.results}</p>
           )}
           <div className="flex items-center gap-1.5 mt-1">
-            <span className={`text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full ${TYPE_BG[activity.type]}`}>
+            <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${TYPE_BG[activity.type]}`}>
               {TYPE_LABELS[activity.type]}
             </span>
             {isDone && activity.outcomeType && (
-              <span className="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+              <span className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success">
                 {OUTCOME_OPTIONS.find(o => o.value === activity.outcomeType)?.label ?? activity.outcomeType}
               </span>
             )}
@@ -320,15 +322,15 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, companyName, onEd
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={onClose}
-          className={`p-2 rounded-xl transition-colors ${isDone ? 'text-gray-300 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20' : 'text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+          className={`p-2 rounded-xl transition-colors ${isDone ? 'text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20' : 'text-muted hover:text-success hover:bg-success-soft dark:hover:bg-success-soft'}`}
           title={isDone ? 'Modifica esito' : 'Chiudi appuntamento'}
         >
           {isDone ? <RotateCcw size={16} /> : <CheckCircle size={16} />}
         </button>
-        <button onClick={onView} className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors" title="Apri / vedi dettagli"><Eye size={14} /></button>
-        <button onClick={onExport} className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
-        <button onClick={onEdit} className="p-2 rounded-xl text-gray-400 hover:text-[var(--accent-600)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
-        <button onClick={onDelete} className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Elimina"><Trash2 size={14} /></button>
+        <button onClick={onView} className="p-2 rounded-md text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/30 transition-colors" title="Apri / vedi dettagli"><Eye size={14} /></button>
+        <button onClick={onExport} className="p-2 rounded-md text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/30 transition-colors" title="Aggiungi a Outlook"><ExternalLink size={14} /></button>
+        <button onClick={onEdit} className="p-2 rounded-md text-muted hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/30 transition-colors" title="Modifica"><Pencil size={14} /></button>
+        <button onClick={onDelete} className="p-2 rounded-md text-muted hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors" title="Elimina"><Trash2 size={14} /></button>
       </div>
     </div>
   );
@@ -1158,7 +1160,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
     const ics = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//NextMove CRM//IT',
+      'PRODID:-//SYRIO//IT',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       events,
@@ -1217,7 +1219,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
         {/* Day headers */}
         <div className="grid grid-cols-7 mb-1">
           {DAYS_IT.map(d => (
-            <div key={d} className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest py-2">{d}</div>
+            <div key={d} className="text-center text-xs font-semibold text-muted uppercase tracking-normal py-2">{d}</div>
           ))}
         </div>
         {/* Day cells — 6 rows × 7 cols */}
@@ -1232,25 +1234,25 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               <button
                 key={i}
                 onClick={() => { setSelectedDay(selectedDay && isSameDay(day, selectedDay) ? null : day); }}
-                className={`relative flex flex-col items-center py-2 rounded-xl transition-all text-sm font-bold min-h-[52px] ${
+                className={`relative flex flex-col items-center py-2 rounded-md transition-all text-sm font-bold min-h-[52px] ${
                   isSelected
-                    ? 'bg-[var(--accent-600)] text-white ring-2 ring-[var(--accent-400)] ring-offset-1'
+                    ? 'bg-action text-action-foreground ring-2 ring-accent ring-offset-1'
                     : isToday
-                    ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] ring-2 ring-[var(--accent-300)] ring-offset-1'
+                    ? 'bg-accent-soft dark:bg-accent-soft/30 text-accent ring-2 ring-accent ring-offset-1'
                     : isCurrentMonth
-                    ? 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
-                    : 'text-gray-300 dark:text-gray-600'
+                    ? 'hover:bg-canvas dark:hover:bg-raised text-foreground dark:text-muted'
+                    : 'text-muted dark:text-secondary'
                 }`}
               >
-                <span className={`text-xs font-black ${isToday && !isSelected ? 'text-[var(--accent-600)]' : ''}`}>{day.getDate()}</span>
+                <span className={`text-xs font-semibold ${isToday && !isSelected ? 'text-accent' : ''}`}>{day.getDate()}</span>
                 {/* Activity dots */}
                 {dayActivities.length > 0 && (
                   <div className="flex gap-0.5 mt-1 flex-wrap justify-center max-w-[40px]">
                     {dayActivities.slice(0, 3).map((a, j) => (
-                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white/80' : TYPE_COLORS[a.type]}`} />
+                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-surface/80' : TYPE_COLORS[a.type]}`} />
                     ))}
                     {dayActivities.length > 3 && (
-                      <span className={`text-[8px] font-black ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>+{dayActivities.length - 3}</span>
+                      <span className={`text-xs font-semibold ${isSelected ? 'text-foreground/80' : 'text-muted'}`}>+{dayActivities.length - 3}</span>
                     )}
                   </div>
                 )}
@@ -1276,20 +1278,20 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             <button
               key={i}
               onClick={() => setSelectedDay(isSelected ? null : day)}
-              className={`flex flex-col items-center py-3 rounded-2xl transition-all ${
+              className={`flex flex-col items-center py-3 rounded-panel transition-all ${
                 isSelected
-                  ? 'bg-[var(--accent-600)] text-white ring-2 ring-[var(--accent-400)] ring-offset-1'
+                  ? 'bg-action text-action-foreground ring-2 ring-accent ring-offset-1'
                   : isToday
-                  ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] ring-2 ring-[var(--accent-300)] ring-offset-1'
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+                  ? 'bg-accent-soft dark:bg-accent-soft/30 text-accent ring-2 ring-accent ring-offset-1'
+                  : 'hover:bg-canvas dark:hover:bg-raised text-foreground dark:text-muted'
               }`}
             >
-              <span className="text-[10px] font-black uppercase tracking-wide mb-1 opacity-70">{DAYS_IT[i]}</span>
-              <span className="text-lg font-black">{day.getDate()}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide mb-1 opacity-70">{DAYS_IT[i]}</span>
+              <span className="text-lg font-semibold">{day.getDate()}</span>
               {dayActivities.length > 0 && (
                 <div className="flex gap-0.5 mt-1.5 flex-wrap justify-center">
                   {dayActivities.slice(0, 3).map((a, j) => (
-                    <span key={j} className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white/80' : TYPE_COLORS[a.type]}`} />
+                    <span key={j} className={`w-2 h-2 rounded-full ${isSelected ? 'bg-surface/80' : TYPE_COLORS[a.type]}`} />
                   ))}
                 </div>
               )}
@@ -1354,16 +1356,16 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
     return (
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+        <div className="bg-surface dark:bg-surface rounded-panel overflow-hidden border border-line dark:border-line">
           {/* Intestazione giorni */}
-          <div className="grid border-b border-gray-200 dark:border-gray-700" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
-            <div className="border-r border-gray-100 dark:border-gray-700" />
+          <div className="grid border-b border-line dark:border-line" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
+            <div className="border-r border-line dark:border-line" />
             {days.map((day, i) => {
               const isToday = isSameDay(day, today);
               return (
-                <div key={i} className={`py-2 text-center border-r border-gray-100 dark:border-gray-700 last:border-r-0 ${isToday ? 'bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20' : ''}`}>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{DAYS_IT[i]}</p>
-                  <p className={`text-sm font-black ${isToday ? 'text-[var(--accent-600)]' : 'dark:text-white'}`}>{day.getDate()}</p>
+                <div key={i} className={`py-2 text-center border-r border-line dark:border-line last:border-r-0 ${isToday ? 'bg-accent-soft dark:bg-accent-soft/20' : ''}`}>
+                  <p className="text-xs font-semibold text-muted uppercase tracking-normal">{DAYS_IT[i]}</p>
+                  <p className={`text-sm font-semibold ${isToday ? 'text-accent' : 'dark:text-foreground'}`}>{day.getDate()}</p>
                 </div>
               );
             })}
@@ -1378,8 +1380,8 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                   const { h, m } = slotToTime(si);
                   const showLabel = m === 0;
                   return (
-                    <div key={si} className="border-b border-gray-100 dark:border-gray-800 border-r border-r-gray-200 dark:border-r-gray-700 flex items-start justify-end pr-1.5" style={{ height: 28 }}>
-                      {showLabel && <span className="text-[9px] font-black text-gray-400 -mt-2">{String(h).padStart(2,'0')}:00</span>}
+                    <div key={si} className="border-b border-line dark:border-line border-r border-r-gray-200 dark:border-r-gray-700 flex items-start justify-end pr-1.5" style={{ height: 28 }}>
+                      {showLabel && <span className="text-xs font-semibold text-muted -mt-2">{String(h).padStart(2,'0')}:00</span>}
                     </div>
                   );
                 })}
@@ -1387,7 +1389,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
               {/* Colonne giorni */}
               {days.map((_, dayIdx) => (
-                <div key={dayIdx} className="border-r border-gray-100 dark:border-gray-700 last:border-r-0">
+                <div key={dayIdx} className="border-r border-line dark:border-line last:border-r-0">
                   {Array.from({ length: SLOTS_PER_DAY }, (_, slotIdx) => {
                     const key = slotId(dayIdx, slotIdx);
                     const slotActivities = slotMap.get(key) ?? [];
@@ -1407,7 +1409,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                         {/* Click su slot vuoto per nuovo appuntamento */}
                         {slotActivities.length === 0 && (
                           <div
-                            className="absolute inset-0 cursor-pointer hover:bg-[var(--accent-50)]/50 dark:hover:bg-[var(--accent-900)]/10 transition-colors"
+                            className="absolute inset-0 cursor-pointer hover:bg-accent-soft/50 dark:hover:bg-accent-soft/10 transition-colors"
                             onClick={() => {
                               const day = getWeekDays(anchor)[dayIdx];
                               const d = new Date(day);
@@ -1428,7 +1430,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
         {/* Overlay durante il drag */}
         <DragOverlay>
           {activeActivity && (
-            <div className={`rounded-xl px-2 py-1.5 text-white text-[10px] font-black shadow-xl ${TYPE_COLORS[activeActivity.type]}`}>
+            <div className={`rounded-md px-2 py-1.5 text-xs font-semibold shadow-panel ${TYPE_COLORS[activeActivity.type]}`}>
               {contacts[activeActivity.contactId]?.company ?? '—'}
             </div>
           )}
@@ -1444,7 +1446,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
       {/* Header */}
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <h1 className="text-2xl font-black dark:text-white">Agenda</h1>
+        <h1 className="text-2xl  dark:text-foreground">Agenda</h1>
         <div className="flex items-center flex-wrap gap-2">
           {/* Import da Outlook PST */}
           <input
@@ -1457,7 +1459,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
           <button
             onClick={() => pstInputRef.current?.click()}
             disabled={pstLoading}
-            className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors text-sm disabled:opacity-60"
+            className="bg-accent-soft dark:bg-accent-soft/20 border-2 border-accent dark:border-accent text-accent dark:text-accent px-3 sm:px-4 py-2.5 rounded-panel font-bold flex items-center gap-2 hover:bg-accent-soft transition-colors text-sm disabled:opacity-60"
             title="Importa appuntamenti da file Outlook .pst"
           >
             {pstLoading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
@@ -1465,7 +1467,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
           </button>
           <button
             onClick={handleExportICS}
-            className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-[var(--accent-400)] hover:text-[var(--accent-600)] transition-colors text-sm"
+            className="bg-surface dark:bg-surface border-2 border-line dark:border-line text-secondary dark:text-muted px-3 sm:px-4 py-2.5 rounded-panel font-bold flex items-center gap-2 hover:border-accent hover:text-accent transition-colors text-sm"
             title="Esporta tutti gli appuntamenti futuri come file .ics"
           >
             <Download size={15} /> <span className="hidden sm:inline">Esporta .ics</span>
@@ -1474,7 +1476,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             <button
               onClick={startVoiceSchedule}
               disabled={voiceState !== 'idle'}
-              className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 p-2.5 rounded-2xl font-bold flex items-center gap-2 hover:border-[var(--accent-400)] hover:text-[var(--accent-600)] transition-colors disabled:opacity-50"
+              className="bg-surface dark:bg-surface border-2 border-line dark:border-line text-secondary dark:text-muted p-2.5 rounded-panel font-bold flex items-center gap-2 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
               title="Pianifica con la voce"
             >
               <Mic size={16} />
@@ -1483,17 +1485,17 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
           {pendingBatchActivities.length > 0 && (
             <button
               onClick={openBatchModal}
-              className="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 px-3 sm:px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-purple-100 transition-colors text-sm"
+              className="bg-accent-soft dark:bg-accent-soft/20 border-2 border-accent dark:border-accent text-accent dark:text-accent px-3 sm:px-4 py-2.5 rounded-panel font-bold flex items-center gap-2 hover:bg-accent-soft transition-colors text-sm"
               title="Analizza con AI tutte le visite chiuse non ancora processate, in un'unica chiamata"
             >
               <Sparkles size={15} />
               <span className="hidden sm:inline">Analizza AI visite</span>
-              <span className="bg-purple-600 text-white rounded-full px-1.5 text-xs">{pendingBatchActivities.length}</span>
+              <span className="bg-action text-action-foreground rounded-full px-1.5 text-xs">{pendingBatchActivities.length}</span>
             </button>
           )}
           <button
             onClick={() => openNew(selectedDay ?? undefined)}
-            className="bg-[var(--accent-600)] text-white px-5 py-2.5 rounded-2xl font-bold flex items-center gap-2 hover:bg-[var(--accent-700)] transition-colors text-sm"
+            className="bg-action text-action-foreground px-5 py-2.5 rounded-panel font-bold flex items-center gap-2 hover:bg-action-hover transition-colors text-sm"
           >
             <Plus size={16} /> Nuova
           </button>
@@ -1502,13 +1504,13 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
       {/* Voice schedule panel */}
       {showVoicePanel && (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-[var(--accent-200)] dark:border-[var(--accent-700)] p-5 shadow-sm">
+        <div className="bg-surface dark:bg-surface rounded-panel border-2 border-accent dark:border-accent p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
-              <p className="font-black dark:text-white text-sm">Pianifica con la voce</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">Es: "Visita da Rossi SRL venerdì alle 10 per i giubbotti nuovi"</p>
+              <p className="font-semibold dark:text-foreground text-sm">Pianifica con la voce</p>
+              <p className="text-xs text-muted mt-0.5">Es: "Visita da Rossi SRL venerdì alle 10 per i giubbotti nuovi"</p>
             </div>
-            <button onClick={cancelVoiceSchedule} className="text-gray-300 hover:text-gray-500 flex-shrink-0"><X size={18} /></button>
+            <button onClick={cancelVoiceSchedule} className="text-muted hover:text-secondary flex-shrink-0"><X size={18} /></button>
           </div>
 
           {/* Mic visual */}
@@ -1517,53 +1519,53 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               <>
                 <button
                   onClick={() => { voiceSched.stop(); setVoiceState('parsing'); }}
-                  className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse"
+                  className="w-16 h-16 rounded-full bg-danger text-status-foreground flex items-center justify-center shadow-panel animate-pulse"
                 >
                   <MicOff size={28} />
                 </button>
-                <p className="text-xs text-gray-400 font-bold">Registrazione in corso... (tocca per fermare)</p>
+                <p className="text-xs text-muted font-bold">Registrazione in corso... (tocca per fermare)</p>
               </>
             ) : voiceState === 'parsing' ? (
               <>
-                <div className="w-16 h-16 rounded-full bg-[var(--accent-100)] dark:bg-[var(--accent-900)]/40 flex items-center justify-center">
-                  <Loader2 size={28} className="text-[var(--accent-600)] animate-spin" />
+                <div className="w-16 h-16 rounded-full bg-accent-soft dark:bg-accent-soft/40 flex items-center justify-center">
+                  <Loader2 size={28} className="text-accent animate-spin" />
                 </div>
-                <p className="text-xs text-gray-400 font-bold">Analisi in corso...</p>
+                <p className="text-xs text-muted font-bold">Analisi in corso...</p>
               </>
             ) : null}
 
             {voiceSched.transcript && (
-              <div className="w-full bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-3 text-sm text-gray-700 dark:text-gray-200 italic min-h-[48px]">
+              <div className="w-full bg-canvas dark:bg-raised rounded-panel px-4 py-3 text-sm text-foreground dark:text-muted italic min-h-[48px]">
                 "{voiceSched.transcript}"
               </div>
             )}
-            {voiceError && <p className="text-xs text-red-500 font-bold">{voiceError}</p>}
+            {voiceError && <p className="text-xs text-danger font-bold">{voiceError}</p>}
           </div>
         </div>
       )}
 
       {/* Calendar card */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-700 overflow-hidden">
+      <div className="bg-surface dark:bg-surface rounded-panel shadow-sm border border-line dark:border-line overflow-hidden">
 
         {/* Calendar toolbar */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-50 dark:border-gray-700">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-line dark:border-line">
           <div className="flex items-center gap-2">
-            <button onClick={prevPeriod} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"><ChevronLeft size={18} /></button>
-            <span className="font-black text-sm dark:text-white min-w-[160px] text-center">
+            <button onClick={prevPeriod} className="p-1.5 rounded-md hover:bg-raised dark:hover:bg-raised text-muted transition-colors"><ChevronLeft size={18} /></button>
+            <span className="font-semibold text-sm dark:text-foreground min-w-[160px] text-center">
               {calMode === 'month' ? renderMonthHeader() : calMode === 'week' ? renderWeekHeader() : 'Tutte le attività'}
             </span>
-            <button onClick={nextPeriod} className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"><ChevronRight size={18} /></button>
-            <button onClick={goToday} className="ml-1 text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-2.5 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">Oggi</button>
+            <button onClick={nextPeriod} className="p-1.5 rounded-md hover:bg-raised dark:hover:bg-raised text-muted transition-colors"><ChevronRight size={18} /></button>
+            <button onClick={goToday} className="ml-1 text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/30 px-2.5 py-1 rounded-full uppercase tracking-wide hover:bg-accent-soft transition-colors">Oggi</button>
           </div>
 
           {/* View switcher */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+          <div className="flex gap-1 bg-raised dark:bg-raised p-1 rounded-md">
             {(['month', 'week', 'list'] as CalendarMode[]).map(mode => (
               <button
                 key={mode}
                 onClick={() => setCalMode(mode)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all ${
-                  calMode === mode ? 'bg-white dark:bg-gray-800 text-[var(--accent-600)] shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
+                  calMode === mode ? 'bg-surface dark:bg-surface text-accent shadow-sm' : 'text-muted hover:text-secondary'
                 }`}
               >
                 {mode === 'month' ? 'Mese' : mode === 'week' ? 'Sett.' : 'Lista'}
@@ -1590,7 +1592,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             {(Object.keys(TYPE_LABELS) as ActivityType[]).map(t => (
               <div key={t} className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${TYPE_COLORS[t]}`} />
-                <span className="text-[10px] font-bold text-gray-400">{TYPE_LABELS[t]}</span>
+                <span className="text-xs font-bold text-muted">{TYPE_LABELS[t]}</span>
               </div>
             ))}
           </div>
@@ -1600,7 +1602,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
       {/* Activity list */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <h2 className="text-xs font-semibold text-muted  ">
             {selectedDay
               ? `${selectedDay.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}`
               : calMode === 'list' ? 'Tutti i prossimi appuntamenti' : 'Seleziona un giorno'
@@ -1610,11 +1612,11 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             <div className="flex items-center gap-2">
               {dayHasMappedVisits && onViewItinerary && (
                 <button onClick={() => onViewItinerary(toLocalDateStr(selectedDay))}
-                  className="flex items-center gap-1 text-[10px] font-black text-orange-500 bg-orange-50 dark:bg-orange-900/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-orange-100 transition-colors">
+                  className="flex items-center gap-1 text-xs font-semibold text-warning bg-warning-soft dark:bg-warning-soft px-3 py-1 rounded-full uppercase tracking-wide hover:bg-warning-soft transition-colors">
                   <Route size={11} /> Vedi itinerario
                 </button>
               )}
-              <button onClick={() => openNew(selectedDay)} className="text-[10px] font-black text-[var(--accent-600)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-[var(--accent-100)] transition-colors">
+              <button onClick={() => openNew(selectedDay)} className="text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/30 px-3 py-1 rounded-full uppercase tracking-wide hover:bg-accent-soft transition-colors">
                 + Aggiungi in questa data
               </button>
             </div>
@@ -1622,8 +1624,8 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
         </div>
 
         {listActivities.length === 0 && (
-          <div className="text-center py-10 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-2xl">
-            <p className="text-gray-300 dark:text-gray-600 font-black uppercase tracking-widest text-xs">
+          <div className="text-center py-10 border-2 border-dashed border-line dark:border-line rounded-panel">
+            <p className="text-muted dark:text-secondary font-semibold uppercase tracking-normal text-xs">
               {selectedDay ? 'Nessun appuntamento in questa data' : 'Nessun appuntamento futuro'}
             </p>
           </div>
@@ -1645,18 +1647,18 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             <div key={key} className="space-y-2">
               {/* Header giorno */}
               <div className="flex items-center justify-between pt-1">
-                <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <p className="text-xs font-semibold uppercase tracking-normal text-muted dark:text-secondary">
                   {date.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long' })}
-                  <span className="ml-2 text-gray-300 dark:text-gray-600">({items.length})</span>
+                  <span className="ml-2 text-muted dark:text-secondary">({items.length})</span>
                 </p>
                 {items.length > 0 && (
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Eliminare tutti i ${items.length} appuntamenti del ${date.toLocaleDateString('it-IT', { day: '2-digit', month: 'long' })}?`)) {
+                    onClick={async () => {
+                      if (await confirmAction(`Eliminare tutti i ${items.length} appuntamenti del ${date.toLocaleDateString('it-IT', { day: '2-digit', month: 'long' })}?`)) {
                         items.forEach(a => deleteActivity(a.id));
                       }
                     }}
-                    className="flex items-center gap-1 text-[10px] font-black text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors uppercase tracking-wide"
+                    className="flex items-center gap-1 text-xs font-semibold text-danger hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft px-2 py-1 rounded-lg transition-colors uppercase tracking-wide"
                     title="Elimina tutti gli appuntamenti di questo giorno"
                   >
                     <Trash2 size={10} /> Elimina tutti
@@ -1683,33 +1685,33 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
       {/* ── Detail / View Modal ── */}
       {viewActivity && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setViewActivity(null)}>
-          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setViewActivity(null)}>
+          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-6">
               <div className="min-w-0">
                 {onNavigateToContact && viewActivity.contactId ? (
                   <button
                     type="button"
                     onClick={() => { setViewActivity(null); onNavigateToContact(viewActivity.contactId); }}
-                    className="text-xl font-black text-[var(--accent-600)] dark:text-[var(--accent-400)] truncate hover:underline text-left"
+                    className="text-xl font-semibold text-accent dark:text-accent truncate hover:underline text-left"
                   >{contacts[viewActivity.contactId]?.company || 'Azienda'}</button>
                 ) : (
-                  <h2 className="text-xl font-black dark:text-white truncate">{contacts[viewActivity.contactId]?.company || (NO_CONTACT_TYPES.includes(viewActivity.type) ? TYPE_LABELS[viewActivity.type] : 'Azienda')}</h2>
+                  <h2 className="text-xl font-semibold dark:text-foreground truncate">{contacts[viewActivity.contactId]?.company || (NO_CONTACT_TYPES.includes(viewActivity.type) ? TYPE_LABELS[viewActivity.type] : 'Azienda')}</h2>
                 )}
-                <p className="text-xs text-gray-400 font-bold mt-1">
+                <p className="text-xs text-muted font-bold mt-1">
                   {new Date(viewActivity.date).toLocaleString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   {viewActivity.endDate && ` – ${new Date(viewActivity.endDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`}
                 </p>
               </div>
-              <button onClick={() => setViewActivity(null)}><X size={24} className="text-gray-400" /></button>
+              <button onClick={() => setViewActivity(null)}><X size={24} className="text-muted" /></button>
             </div>
 
             <div className="flex items-center gap-1.5 mb-6">
-              <span className={`text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full ${TYPE_BG[viewActivity.type]}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${TYPE_BG[viewActivity.type]}`}>
                 {TYPE_LABELS[viewActivity.type]}
               </span>
               {viewActivity.outcome !== 'da-fare' && viewActivity.outcomeType && (
-                <span className="text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                <span className="text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success">
                   {OUTCOME_OPTIONS.find(o => o.value === viewActivity.outcomeType)?.label ?? viewActivity.outcomeType}
                 </span>
               )}
@@ -1720,24 +1722,24 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               ['visita', 'chiamata', 'demo', 'call-remota', 'sopralluogo'].includes(viewActivity.type) && (
               <div className="mb-5">
                 {viewActivity.transcript ? (
-                  <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-3 border border-[var(--accent-100)] dark:border-[var(--accent-800)]">
+                  <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-panel p-3 border border-accent dark:border-accent">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest flex items-center gap-1">
+                      <span className="text-xs font-semibold text-accent uppercase tracking-normal flex items-center gap-1">
                         <MessageSquare size={10} /> Conversazione registrata
                       </span>
                       <button
                         onClick={() => setShowRecorder(true)}
-                        className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] uppercase tracking-wide"
+                        className="text-xs font-semibold text-accent hover:text-accent uppercase tracking-wide"
                       >
                         Analizza di nuovo
                       </button>
                     </div>
-                    <p className="text-xs text-[var(--accent-700)] dark:text-[var(--accent-300)] line-clamp-2">{viewActivity.transcript}</p>
+                    <p className="text-xs text-accent dark:text-accent line-clamp-2">{viewActivity.transcript}</p>
                   </div>
                 ) : (
                   <button
                     onClick={() => setShowRecorder(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-[var(--accent-300)] dark:border-[var(--accent-700)] text-[var(--accent-600)] dark:text-[var(--accent-400)] text-xs font-black hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-panel border-2 border-dashed border-accent dark:border-accent text-accent dark:text-accent text-xs font-semibold hover:bg-accent-soft dark:hover:bg-accent-soft/20 transition-colors"
                   >
                     <MessageSquare size={14} /> Registra Conversazione con Cliente
                   </button>
@@ -1747,61 +1749,61 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
             <div className="space-y-5">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Note</label>
+                <label className="text-xs font-semibold text-muted uppercase mb-1 block">Note</label>
                 {viewActivity.notes
-                  ? <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap break-words">{viewActivity.notes}</p>
-                  : <p className="text-sm text-gray-300 dark:text-gray-600 italic">Nessuna nota</p>}
+                  ? <p className="text-sm text-foreground dark:text-muted whitespace-pre-wrap break-words">{viewActivity.notes}</p>
+                  : <p className="text-sm text-muted dark:text-secondary italic">Nessuna nota</p>}
               </div>
               {viewActivity.outcome !== 'da-fare' && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase block">Resoconto</label>
+                    <label className="text-xs font-semibold text-muted uppercase block">Resoconto</label>
                     <button
                       onClick={() => { setViewActivity(null); openCloseModal(viewActivity); }}
-                      className="text-[10px] font-black text-[var(--accent-600)] hover:text-[var(--accent-800)] uppercase tracking-wide"
+                      className="text-xs font-semibold text-accent hover:text-accent uppercase tracking-wide"
                     >
                       Modifica
                     </button>
                   </div>
                   {viewActivity.results
-                    ? <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap break-words">{viewActivity.results}</p>
-                    : <p className="text-sm text-gray-300 dark:text-gray-600 italic">Nessun resoconto</p>}
+                    ? <p className="text-sm text-success dark:text-success whitespace-pre-wrap break-words">{viewActivity.results}</p>
+                    : <p className="text-sm text-muted dark:text-secondary italic">Nessun resoconto</p>}
                 </div>
               )}
             </div>
 
             <button
               onClick={() => { const a = viewActivity; setViewActivity(null); openEdit(a); }}
-              className="mt-8 w-full flex items-center justify-center gap-2 bg-[var(--accent-600)] hover:bg-[var(--accent-700)] text-white font-black py-3 rounded-2xl transition-colors"
+              className="mt-8 w-full flex items-center justify-center gap-2 bg-action hover:bg-action-hover text-action-foreground font-semibold py-3 rounded-panel transition-colors"
             >
               <Pencil size={16} /> Modifica
             </button>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* ── Add / Edit Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black dark:text-white">{editingId ? 'Modifica Appuntamento' : 'Nuovo Appuntamento'}</h2>
-              <button onClick={closeModal}><X size={24} className="text-gray-400" /></button>
+              <h2 className="text-xl font-semibold dark:text-foreground">{editingId ? 'Modifica Appuntamento' : 'Nuovo Appuntamento'}</h2>
+              <button onClick={closeModal}><X size={24} className="text-muted" /></button>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
               {/* Contact picker - nascosto per smart-working/ufficio */}
               {!NO_CONTACT_TYPES.includes(formData.type) && (
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">
+                <label className="text-xs font-semibold text-muted uppercase mb-1 block">
                   {MULTI_CONTACT_TYPES.includes(formData.type) ? 'Clienti' : 'Cliente / Azienda'}
                   {!MULTI_CONTACT_TYPES.includes(formData.type) && formData.contactIds.length > 0 && (
-                    <span className="ml-2 normal-case font-bold text-[var(--accent-600)]">✓ selezionato</span>
+                    <span className="ml-2 normal-case font-bold text-accent">✓ selezionato</span>
                   )}
                 </label>
                 {MULTI_CONTACT_TYPES.includes(formData.type) && formData.contactIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
                     {formData.contactIds.map(id => (
-                      <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300">
+                      <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent">
                         {contacts[id]?.company || '(senza nome)'}
                         <button type="button" aria-label="Rimuovi cliente" onClick={() => setFormData({ ...formData, contactIds: formData.contactIds.filter(x => x !== id) })}>
                           <X size={12} />
@@ -1833,8 +1835,8 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                     badge: {
                       text: c.status === 'cliente' ? 'Cliente' : 'Prospect',
                       className: c.status === 'cliente'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                        ? 'bg-success-soft text-success dark:bg-success-soft dark:text-success'
+                        : 'bg-accent-soft text-accent dark:bg-accent-soft/40 dark:text-accent',
                     },
                   }))}
                   totalCount={Object.keys(contacts).length}
@@ -1847,26 +1849,26 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               </div>
               )}
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tipo</label>
+                <label className="text-xs font-semibold text-muted uppercase mb-1 block">Tipo</label>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.keys(TYPE_LABELS) as ActivityType[]).map(t => (
-                    <button key={t} type="button" onClick={() => setFormData({ ...formData, type: t, contactIds: MULTI_CONTACT_TYPES.includes(t) ? formData.contactIds : formData.contactIds.slice(0, 1) })} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${formData.type === t ? 'bg-[var(--accent-600)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>{TYPE_LABELS[t]}</button>
+                    <button key={t} type="button" onClick={() => setFormData({ ...formData, type: t, contactIds: MULTI_CONTACT_TYPES.includes(t) ? formData.contactIds : formData.contactIds.slice(0, 1) })} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${formData.type === t ? 'bg-action text-action-foreground' : 'bg-raised dark:bg-raised text-secondary dark:text-muted'}`}>{TYPE_LABELS[t]}</button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">{MULTI_DAY_TYPES.includes(formData.type) ? 'Dal giorno' : 'Data'}</label>
-                <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                <label className="text-xs font-semibold text-muted uppercase mb-1 block">{MULTI_DAY_TYPES.includes(formData.type) ? 'Dal giorno' : 'Data'}</label>
+                <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border-2 border-line dark:border-line rounded-panel p-4 bg-transparent dark:text-foreground outline-none focus:border-accent" />
               </div>
               {MULTI_DAY_TYPES.includes(formData.type) && (
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Al giorno (opzionale, per eventi su più giorni)</label>
+                  <label className="text-xs font-semibold text-muted uppercase mb-1 block">Al giorno (opzionale, per eventi su più giorni)</label>
                   <input
                     type="date"
                     min={formData.date}
                     value={formData.endDateDay}
                     onChange={e => setFormData({ ...formData, endDateDay: e.target.value })}
-                    className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)]"
+                    className="w-full border-2 border-line dark:border-line rounded-panel p-4 bg-transparent dark:text-foreground outline-none focus:border-accent"
                   />
                 </div>
               )}
@@ -1875,15 +1877,15 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 onClick={() => setFormData(prev => prev.allDay
                   ? { ...prev, allDay: false, time: '08:00', endTime: '09:00' }
                   : { ...prev, allDay: true, time: WORK_DAY_START, endTime: WORK_DAY_END })}
-                className={`w-full flex items-center justify-between border-2 rounded-2xl p-4 font-bold text-sm transition-all ${formData.allDay ? 'border-[var(--accent-400)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-300'}`}
+                className={`w-full flex items-center justify-between border-2 rounded-panel p-4 font-bold text-sm transition-all ${formData.allDay ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent' : 'border-line dark:border-line text-secondary dark:text-muted'}`}
               >
                 Tutto il giorno
-                <span className="text-[10px] font-black uppercase tracking-widest">{formData.allDay ? `${WORK_DAY_START}–${WORK_DAY_END}` : 'No'}</span>
+                <span className="text-xs font-semibold uppercase tracking-normal">{formData.allDay ? `${WORK_DAY_START}–${WORK_DAY_END}` : 'No'}</span>
               </button>
               {!formData.allDay && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora inizio</label>
+                  <label className="text-xs font-semibold text-muted uppercase mb-1 block">Ora inizio</label>
                   <ClockTimeInput
                     min={VISIT_TYPES.includes(formData.type) ? '08:00' : undefined}
                     max={VISIT_TYPES.includes(formData.type) ? '18:00' : undefined}
@@ -1898,7 +1900,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Ora fine</label>
+                  <label className="text-xs font-semibold text-muted uppercase mb-1 block">Ora fine</label>
                   <ClockTimeInput
                     min={VISIT_TYPES.includes(formData.type) ? '08:00' : undefined}
                     max={VISIT_TYPES.includes(formData.type) ? '18:00' : undefined}
@@ -1910,7 +1912,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               )}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase block">Note</label>
+                  <label className="text-xs font-semibold text-muted uppercase block">Note</label>
                   {voiceNotes.isSupported && (
                     <button
                       type="button"
@@ -1924,10 +1926,10 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                           });
                         }
                       }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                         voiceNotes.isRecording
-                          ? 'bg-red-500 text-white animate-pulse'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)]'
+                          ? 'bg-danger text-status-foreground animate-pulse'
+                          : 'bg-raised dark:bg-raised text-secondary dark:text-muted hover:bg-accent-soft hover:text-accent'
                       }`}
                     >
                       {voiceNotes.isRecording ? <MicOff size={12} /> : <Mic size={12} />}
@@ -1935,54 +1937,54 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                     </button>
                   )}
                 </div>
-                <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Obiettivo della visita, dettagli..." rows={2} className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)] text-sm resize-none" />
+                <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Obiettivo della visita, dettagli..." rows={2} className="w-full border-2 border-line dark:border-line rounded-panel px-4 py-3 bg-transparent dark:text-foreground outline-none focus:border-accent text-sm resize-none" />
                 {voiceNotes.isRecording && voiceNotes.transcript && (
-                  <p className="text-xs text-[var(--accent-500)] italic mt-1.5 px-1">"{voiceNotes.transcript}"</p>
+                  <p className="text-xs text-accent italic mt-1.5 px-1">"{voiceNotes.transcript}"</p>
                 )}
-                {voiceNotes.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceNotes.error}</p>}
+                {voiceNotes.error && <p className="text-xs text-danger mt-1 px-1">{voiceNotes.error}</p>}
               </div>
-              <button type="submit" className="w-full bg-[var(--accent-600)] text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-[var(--accent-700)] transition-colors">
+              <button type="submit" className="w-full bg-action text-action-foreground font-semibold py-4 rounded-panel uppercase tracking-normal hover:bg-action-hover transition-colors">
                 {editingId ? 'Aggiorna' : 'Salva'}
               </button>
             </form>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* ── Confirm Delete ── */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center">
-            <p className="font-black text-lg dark:text-white mb-2">Elimina appuntamento?</p>
-            <p className="text-sm text-gray-400 mb-6">Questa azione non è reversibile.</p>
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-surface dark:bg-surface w-full max-w-sm rounded-panel p-8 shadow-panel text-center">
+            <p className="font-semibold text-lg dark:text-foreground mb-2">Elimina appuntamento?</p>
+            <p className="text-sm text-muted mb-6">Questa azione non è reversibile.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 rounded-2xl font-black bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Annulla</button>
-              <button onClick={() => handleDelete(confirmDeleteId)} className="flex-1 py-3 rounded-2xl font-black bg-red-500 text-white hover:bg-red-600 transition-colors">Elimina</button>
+              <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 rounded-panel font-semibold bg-raised dark:bg-raised text-secondary dark:text-muted">Annulla</button>
+              <button onClick={() => handleDelete(confirmDeleteId)} className="flex-1 py-3 rounded-panel font-semibold bg-danger text-status-foreground hover:bg-danger transition-colors">Elimina</button>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* ── Chiudi Appuntamento Modal ── */}
       {closingActivity && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 w-full sm:max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[92vh]">
+        <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-surface dark:bg-surface w-full sm:max-w-md rounded-t-panel sm:rounded-panel shadow-panel flex flex-col max-h-[92vh]">
 
             {/* Header — sticky */}
-            <div className="flex justify-between items-start px-6 pt-6 pb-4 sm:px-8 sm:pt-8 flex-shrink-0 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex justify-between items-start px-6 pt-6 pb-4 sm:px-8 sm:pt-8 flex-shrink-0 border-b border-line dark:border-line">
             <div className="flex justify-between items-start w-full mb-0">
               <div>
-                <h2 className="text-xl font-black dark:text-white">{closingActivity.outcome !== 'da-fare' ? 'Modifica Esito' : 'Chiudi Appuntamento'}</h2>
-                <p className="text-sm text-gray-400 font-bold mt-0.5">
+                <h2 className="text-xl font-semibold dark:text-foreground">{closingActivity.outcome !== 'da-fare' ? 'Modifica Esito' : 'Chiudi Appuntamento'}</h2>
+                <p className="text-sm text-muted font-bold mt-0.5">
                   {contacts[closingActivity.contactId]?.company ?? 'Azienda'} ·{' '}
                   {new Date(closingActivity.date).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
               <button
                 onClick={() => { setClosingActivity(null); voiceClose.stop(); voiceClose.reset(); }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                className="p-2 hover:bg-raised dark:hover:bg-raised rounded-full"
               >
-                <X size={22} className="text-gray-400" />
+                <X size={22} className="text-muted" />
               </button>
             </div>
             </div>
@@ -1992,15 +1994,15 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
             {/* Outcome */}
             <div className="mb-4">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Come è andata?</p>
+              <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Come è andata?</p>
               <div className="grid grid-cols-2 gap-2">
                 {(closingActivity?.type === 'visita-freddo' ? VISITA_FREDDO_OUTCOME_OPTIONS : OUTCOME_OPTIONS).map(opt => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setCloseOutcome(opt.value)}
-                    className={`py-3 px-3 rounded-2xl border-2 font-black text-sm transition-all flex items-center gap-2 ${
-                      closeOutcome === opt.value ? opt.color + ' border-current' : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
+                    className={`py-3 px-3 rounded-panel border-2 font-semibold text-sm transition-all flex items-center gap-2 ${
+                      closeOutcome === opt.value ? opt.color + ' border-current' : 'border-line dark:border-line text-muted bg-transparent'
                     }`}
                   >
                     <span>{opt.emoji}</span> {opt.label}
@@ -2014,17 +2016,17 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 una volta e non viene ri-attivata cambiando qui il settore. */}
             {closingActivity?.type === 'visita-freddo' && closingActivity.outcome === 'da-fare' && VISITA_FREDDO_AVVIA_SEQUENZA.includes(closeOutcome) && (
               <div className="mb-4">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Settore (per la sequenza di follow-up)</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Settore (per la sequenza di follow-up)</p>
                 <div className="grid grid-cols-2 gap-2">
                   {SETTORE_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
                       onClick={() => setCloseSettore(opt.value)}
-                      className={`py-2.5 px-3 rounded-2xl border-2 font-black text-xs transition-all ${
+                      className={`py-2.5 px-3 rounded-panel border-2 font-semibold text-xs transition-all ${
                         closeSettore === opt.value
-                          ? 'border-[var(--accent-500)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-700)] dark:text-[var(--accent-300)]'
-                          : 'border-gray-100 dark:border-gray-700 text-gray-400 bg-transparent'
+                          ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
+                          : 'border-line dark:border-line text-muted bg-transparent'
                       }`}
                     >
                       {opt.label}
@@ -2037,7 +2039,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             {/* Notes / Resoconto */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Resoconto</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-normal">Resoconto</p>
                 {voiceClose.isSupported && (
                   <button
                     type="button"
@@ -2051,10 +2053,10 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                         });
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       voiceClose.isRecording
-                        ? 'bg-red-500 text-white animate-pulse'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-[var(--accent-50)] hover:text-[var(--accent-600)]'
+                        ? 'bg-danger text-status-foreground animate-pulse'
+                        : 'bg-raised dark:bg-raised text-secondary dark:text-muted hover:bg-accent-soft hover:text-accent'
                     }`}
                   >
                     {voiceClose.isRecording ? <MicOff size={12} /> : <Mic size={12} />}
@@ -2067,12 +2069,12 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 value={closeNotes}
                 onChange={e => setCloseNotes(e.target.value)}
                 placeholder="Descrivi come è andata la visita, cosa è stato discusso, prossimi passi..."
-                className="w-full border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 bg-transparent dark:text-white outline-none focus:border-[var(--accent-400)] text-sm resize-none"
+                className="w-full border-2 border-line dark:border-line rounded-panel px-4 py-3 bg-transparent dark:text-foreground outline-none focus:border-accent text-sm resize-none"
               />
               {voiceClose.isRecording && voiceClose.transcript && (
-                <p className="text-xs text-[var(--accent-500)] italic mt-1.5 px-1">"{voiceClose.transcript}"</p>
+                <p className="text-xs text-accent italic mt-1.5 px-1">"{voiceClose.transcript}"</p>
               )}
-              {voiceClose.error && <p className="text-xs text-red-500 mt-1 px-1">{voiceClose.error}</p>}
+              {voiceClose.error && <p className="text-xs text-danger mt-1 px-1">{voiceClose.error}</p>}
             </div>
 
             {/* AI Analysis: esclusa dalla visita a freddo — il prospecting resta un processo
@@ -2082,7 +2084,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 <button
                   onClick={analyzeResoconto}
                   disabled={aiAnalyzing || !closeNotes.trim()}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-dashed border-[var(--accent-300)] dark:border-[var(--accent-700)] text-[var(--accent-600)] dark:text-[var(--accent-400)] text-xs font-black hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-panel border-2 border-dashed border-accent dark:border-accent text-accent dark:text-accent text-xs font-semibold hover:bg-accent-soft dark:hover:bg-accent-soft/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {aiAnalyzing
                     ? <><Loader2 size={13} className="animate-spin" /> Analisi in corso...</>
@@ -2092,68 +2094,68 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 </button>
 
                 {aiError && (
-                  <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
-                    <AlertCircle size={13} className="text-red-500 flex-shrink-0" />
-                    <p className="text-xs text-red-600 dark:text-red-400">{aiError}</p>
+                  <div className="flex items-center gap-2 bg-danger-soft dark:bg-danger-soft rounded-md p-3">
+                    <AlertCircle size={13} className="text-danger flex-shrink-0" />
+                    <p className="text-xs text-danger dark:text-danger">{aiError}</p>
                   </div>
                 )}
 
                 {aiTodos.length > 0 && (
-                  <div className="bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/20 rounded-2xl p-4 space-y-3 border border-[var(--accent-100)] dark:border-[var(--accent-800)]">
+                  <div className="bg-accent-soft dark:bg-accent-soft/20 rounded-panel p-4 space-y-3 border border-accent dark:border-accent">
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black text-[var(--accent-500)] uppercase tracking-widest">
+                      <p className="text-xs font-semibold text-accent uppercase tracking-normal">
                         <Sparkles size={10} className="inline mr-1" />
                         {aiTodos.filter(t => t.selected).length} attività estratte
                       </p>
                       <button
                         onClick={() => { const allSel = aiTodos.every(t => t.selected); setAiTodos(ts => ts.map(t => ({ ...t, selected: !allSel }))); }}
-                        className="text-[9px] font-black text-[var(--accent-400)] hover:text-[var(--accent-600)] uppercase tracking-wide"
+                        className="text-xs font-semibold text-accent hover:text-accent uppercase tracking-wide"
                       >
                         {aiTodos.every(t => t.selected) ? 'Deseleziona tutte' : 'Seleziona tutte'}
                       </button>
                     </div>
 
                     {aiTodos.map((todo, i) => (
-                      <div key={i} className={`bg-white dark:bg-gray-800 rounded-xl p-3 border-2 transition-all ${todo.selected ? 'border-[var(--accent-300)] dark:border-[var(--accent-600)]' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
+                      <div key={i} className={`bg-surface dark:bg-surface rounded-md p-3 border-2 transition-all ${todo.selected ? 'border-accent dark:border-accent' : 'border-line dark:border-line opacity-50'}`}>
                         <div className="flex items-start gap-2">
                           <input type="checkbox" checked={todo.selected}
                             onChange={() => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, selected: !t.selected } : t))}
-                            className="mt-0.5 flex-shrink-0 accent-[var(--accent-600)]" />
+                            className="mt-0.5 flex-shrink-0 accent-accent" />
                           <div className="flex-1 min-w-0 space-y-2">
                             <div className="flex items-start justify-between gap-1">
-                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
+                              <p className="text-xs font-bold text-foreground dark:text-muted leading-snug">{todo.titolo}</p>
                               <button
                                 onClick={() => setAiTodos(ts => ts.filter((_, j) => j !== i))}
-                                className="p-0.5 flex-shrink-0 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                className="p-0.5 flex-shrink-0 text-muted hover:text-danger hover:bg-danger-soft dark:hover:bg-danger-soft rounded transition-colors"
                                 title="Rimuovi"
                               >
                                 <X size={13} />
                               </button>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
-                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-red-100 text-red-600' : todo.priorita === 'media' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
+                              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-danger-soft text-danger' : todo.priorita === 'media' ? 'bg-warning-soft text-warning' : 'bg-raised text-secondary'}`}>
                                 {todo.priorita}
                               </span>
                             </div>
                             <div className="grid grid-cols-2 gap-1.5">
                               <div>
-                                <label className="text-[9px] text-gray-400 font-bold uppercase block mb-0.5">Esecuzione</label>
+                                <label className="text-xs text-muted font-bold uppercase block mb-0.5">Esecuzione</label>
                                 <input type="date" value={todo.dataEsecuzione}
                                   onChange={e => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, dataEsecuzione: e.target.value } : t))}
-                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                                  className="w-full text-xs bg-canvas dark:bg-raised border border-line dark:border-line rounded-lg px-2 py-1 font-bold dark:text-foreground outline-none focus:border-accent" />
                               </div>
                               <div>
-                                <label className="text-[9px] text-gray-400 font-bold uppercase block mb-0.5">Scadenza</label>
+                                <label className="text-xs text-muted font-bold uppercase block mb-0.5">Scadenza</label>
                                 <input type="date" value={todo.scadenza}
                                   onChange={e => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, scadenza: e.target.value } : t))}
-                                  className="w-full text-[10px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 font-bold dark:text-white outline-none focus:border-[var(--accent-400)]" />
+                                  className="w-full text-xs bg-canvas dark:bg-raised border border-line dark:border-line rounded-lg px-2 py-1 font-bold dark:text-foreground outline-none focus:border-accent" />
                               </div>
                             </div>
                             {TODO_TO_ACTIVITY_TYPE[todo.tipo] && (
-                              <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                              <label className="flex items-center gap-1.5 text-xs font-bold text-secondary dark:text-muted">
                                 <input type="checkbox" checked={todo.creaAppuntamento}
                                   onChange={() => setAiTodos(ts => ts.map((t, j) => j === i ? { ...t, creaAppuntamento: !t.creaAppuntamento } : t))}
-                                  className="accent-[var(--accent-600)]" />
+                                  className="accent-accent" />
                                 📅 Crea anche appuntamento in Agenda
                               </label>
                             )}
@@ -2165,7 +2167,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                     <button
                       onClick={confirmAiTodos}
                       disabled={!aiTodos.some(t => t.selected)}
-                      className="w-full py-2.5 rounded-xl bg-[var(--accent-600)] text-white font-black text-xs hover:bg-[var(--accent-700)] transition-colors disabled:opacity-40"
+                      className="w-full py-2.5 rounded-md bg-action text-action-foreground font-semibold text-xs hover:bg-action-hover transition-colors disabled:opacity-40"
                     >
                       Aggiungi {aiTodos.filter(t => t.selected).length} attività al To Do
                     </button>
@@ -2178,13 +2180,13 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             <div className="flex gap-3">
               <button
                 onClick={() => { setClosingActivity(null); voiceClose.stop(); voiceClose.reset(); setAiTodos([]); setAiError(null); }}
-                className="flex-1 py-3.5 rounded-2xl font-black bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                className="flex-1 py-3.5 rounded-panel font-semibold bg-raised dark:bg-raised text-secondary dark:text-muted"
               >
                 Annulla
               </button>
               <button
                 onClick={handleCloseActivity}
-                className="flex-1 py-3.5 rounded-2xl font-black bg-green-500 text-white hover:bg-green-600 transition-colors"
+                className="flex-1 py-3.5 rounded-panel font-semibold bg-success text-status-foreground hover:bg-success transition-colors"
               >
                 {closingActivity.outcome !== 'da-fare' ? 'Salva Esito' : 'Chiudi Appuntamento'}
               </button>
@@ -2192,20 +2194,20 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
             </div>{/* end scrollable body */}
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* ── Modal Analisi AI Batch (tutte le visite in una chiamata) ── */}
       {showBatchModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col">
+        <DialogFrame className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface dark:bg-surface rounded-panel max-w-lg w-full max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between p-6 pb-4 flex-shrink-0">
-              <h2 className="text-xl font-black dark:text-white flex items-center gap-2">
-                <Sparkles size={18} className="text-purple-500" /> Analisi AI batch
+              <h2 className="text-xl font-semibold dark:text-foreground flex items-center gap-2">
+                <Sparkles size={18} className="text-accent" /> Analisi AI batch
               </h2>
               <button
                 onClick={() => { setShowBatchModal(false); setBatchGroups([]); setBatchAnalyzedIds([]); setBatchError(null); }}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                className="p-1.5 hover:bg-raised dark:hover:bg-raised rounded-full"
               >
                 <X size={18} />
               </button>
@@ -2214,8 +2216,8 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             <div className="px-6 pb-6 overflow-y-auto space-y-4">
               {batchGroups.length === 0 && (
                 <>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Ci sono <strong className="text-gray-800 dark:text-gray-200">{pendingBatchActivities.length}</strong> visite chiuse non ancora analizzate.
+                  <p className="text-sm text-secondary dark:text-muted">
+                    Ci sono <strong className="text-foreground dark:text-muted">{pendingBatchActivities.length}</strong> visite chiuse non ancora analizzate.
                     {pendingBatchActivities.length > MAX_BATCH_SIZE && (
                       <> Questa analisi processerà le prime {MAX_BATCH_SIZE} (le più vecchie) in un'unica chiamata AI; ripeti l'operazione per le successive.</>
                     )}
@@ -2227,7 +2229,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                   <button
                     onClick={analyzeAllResoconti}
                     disabled={batchAnalyzing || pendingBatchActivities.length === 0}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-purple-600 text-white text-sm font-black hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-panel bg-action text-action-foreground text-sm font-semibold hover:bg-action-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {batchAnalyzing
                       ? <><Loader2 size={15} className="animate-spin" /> Analisi in corso...</>
@@ -2235,9 +2237,9 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                   </button>
 
                   {batchError && (
-                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
-                      <AlertCircle size={13} className="text-red-500 flex-shrink-0" />
-                      <p className="text-xs text-red-600 dark:text-red-400">{batchError}</p>
+                    <div className="flex items-center gap-2 bg-danger-soft dark:bg-danger-soft rounded-md p-3">
+                      <AlertCircle size={13} className="text-danger flex-shrink-0" />
+                      <p className="text-xs text-danger dark:text-danger">{batchError}</p>
                     </div>
                   )}
                 </>
@@ -2246,39 +2248,39 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               {batchGroups.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest">
+                    <p className="text-xs font-semibold text-accent uppercase tracking-normal">
                       {batchGroups.reduce((n, g) => n + g.todos.filter(t => t.selected).length, 0)} attività estratte da {batchGroups.length} visite
                     </p>
                   </div>
 
                   {batchGroups.map((group, gi) => (
-                    <div key={group.activityId} className="bg-purple-50 dark:bg-purple-900/10 rounded-2xl p-3 border border-purple-100 dark:border-purple-800 space-y-2">
-                      <p className="text-xs font-black text-gray-700 dark:text-gray-300">
+                    <div key={group.activityId} className="bg-accent-soft dark:bg-accent-soft/10 rounded-panel p-3 border border-accent dark:border-accent space-y-2">
+                      <p className="text-xs font-semibold text-foreground dark:text-muted">
                         {group.contactName || 'Cliente'} · {new Date(group.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                       </p>
                       {group.todos.length === 0 && (
-                        <p className="text-[11px] text-gray-400 italic">Nessuna azione rilevata</p>
+                        <p className="text-xs text-muted italic">Nessuna azione rilevata</p>
                       )}
                       {group.todos.map((todo, ti) => (
-                        <div key={ti} className={`bg-white dark:bg-gray-800 rounded-xl p-3 border-2 transition-all ${todo.selected ? 'border-purple-300 dark:border-purple-600' : 'border-gray-100 dark:border-gray-700 opacity-50'}`}>
+                        <div key={ti} className={`bg-surface dark:bg-surface rounded-md p-3 border-2 transition-all ${todo.selected ? 'border-accent dark:border-accent' : 'border-line dark:border-line opacity-50'}`}>
                           <div className="flex items-start gap-2">
                             <input type="checkbox" checked={todo.selected}
                               onChange={() => setBatchGroups(gs => gs.map((g, j) => j === gi ? { ...g, todos: g.todos.map((t, k) => k === ti ? { ...t, selected: !t.selected } : t) } : g))}
                               className="mt-0.5 flex-shrink-0 accent-purple-600" />
                             <div className="flex-1 min-w-0 space-y-1.5">
-                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">{todo.titolo}</p>
+                              <p className="text-xs font-bold text-foreground dark:text-muted leading-snug">{todo.titolo}</p>
                               <div className="flex flex-wrap gap-1.5">
-                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-red-100 text-red-600' : todo.priorita === 'media' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>
+                                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${todo.priorita === 'alta' ? 'bg-danger-soft text-danger' : todo.priorita === 'media' ? 'bg-warning-soft text-warning' : 'bg-raised text-secondary'}`}>
                                   {todo.priorita}
                                 </span>
                                 {todo.scadenza && (
-                                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                  <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-raised text-secondary">
                                     entro {new Date(todo.scadenza).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                                   </span>
                                 )}
                               </div>
                               {TODO_TO_ACTIVITY_TYPE[todo.tipo] && todo.dataEsecuzione && (
-                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                <label className="flex items-center gap-1.5 text-xs font-bold text-secondary dark:text-muted">
                                   <input type="checkbox" checked={todo.creaAppuntamento}
                                     onChange={() => setBatchGroups(gs => gs.map((g, j) => j === gi ? { ...g, todos: g.todos.map((t, k) => k === ti ? { ...t, creaAppuntamento: !t.creaAppuntamento } : t) } : g))}
                                     className="accent-purple-600" />
@@ -2294,7 +2296,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
                   <button
                     onClick={confirmBatchTodos}
-                    className="w-full py-3 rounded-2xl bg-purple-600 text-white font-black text-sm hover:bg-purple-700 transition-colors"
+                    className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm hover:bg-action-hover transition-colors"
                   >
                     {(() => {
                       const n = batchGroups.reduce((sum, g) => sum + g.todos.filter(t => t.selected).length, 0);
@@ -2305,24 +2307,24 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               )}
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* ── Modal Import PST ── */}
       {pstModalOpen && (
-        <div className="fixed inset-0 z-[900] bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-3">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
+        <DialogFrame className="fixed inset-0 z-[900] bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-3">
+          <div className="bg-surface dark:bg-canvas rounded-panel shadow-panel w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-line dark:border-line flex-shrink-0">
               <div>
-                <h2 className="text-lg font-black dark:text-white flex items-center gap-2">
-                  <Calendar size={20} className="text-blue-500" /> Importa da Outlook
+                <h2 className="text-lg font-semibold dark:text-foreground flex items-center gap-2">
+                  <Calendar size={20} className="text-accent" /> Importa da Outlook
                 </h2>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   {pstSelected.size} / {pstEvents.filter((e: any) => e.start).length} eventi selezionati
                 </p>
               </div>
-              <button onClick={() => setPstModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button aria-label="Chiudi dialogo" data-dialog-close onClick={() => setPstModalOpen(false)} className="text-muted hover:text-secondary">
                 <X size={20} />
               </button>
             </div>
@@ -2348,39 +2350,39 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                         return n;
                       });
                     }}
-                    className={`flex items-start gap-3 p-3 rounded-2xl border-2 transition-all ${
-                      !hasDate ? 'opacity-40 cursor-not-allowed border-gray-100 dark:border-gray-800' :
-                      ev._duplicate ? 'border-amber-200 bg-amber-50 dark:bg-amber-900/10 cursor-pointer' :
-                      sel ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 cursor-pointer' :
-                      'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:border-gray-300'
+                    className={`flex items-start gap-3 p-3 rounded-panel border-2 transition-all ${
+                      !hasDate ? 'opacity-40 cursor-not-allowed border-line dark:border-line' :
+                      ev._duplicate ? 'border-warning bg-warning-soft dark:bg-warning-soft cursor-pointer' :
+                      sel ? 'border-accent bg-accent-soft dark:bg-accent-soft/20 cursor-pointer' :
+                      'border-line dark:border-line bg-canvas dark:bg-surface/50 cursor-pointer hover:border-line'
                     }`}
                   >
                     {/* Checkbox */}
                     <div className={`w-5 h-5 rounded-md flex-shrink-0 mt-0.5 border-2 flex items-center justify-center ${
-                      sel && hasDate ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                      sel && hasDate ? 'bg-action border-accent' : 'border-line'
                     }`}>
-                      {sel && hasDate && <CheckCircle size={12} className="text-white" />}
+                      {sel && hasDate && <CheckCircle size={12} className="text-action-foreground" />}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black dark:text-white truncate">{ev.subject || '(senza titolo)'}</p>
+                      <p className="text-sm font-semibold dark:text-foreground truncate">{ev.subject || '(senza titolo)'}</p>
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                         {startDate ? (
-                          <span className="text-xs font-bold text-gray-500">
+                          <span className="text-xs font-bold text-secondary">
                             {startDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
                             {' '}
                             {startDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         ) : (
-                          <span className="text-xs font-bold text-red-400">Nessuna data</span>
+                          <span className="text-xs font-bold text-danger">Nessuna data</span>
                         )}
-                        {ev.location && <span className="text-xs text-gray-400">📍 {ev.location}</span>}
+                        {ev.location && <span className="text-xs text-muted">📍 {ev.location}</span>}
                       </div>
                       <div className="flex gap-2 mt-1 flex-wrap">
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          ev._type === 'call-remota' ? 'bg-purple-100 text-purple-600' :
-                          ev._type === 'formazione' ? 'bg-green-100 text-green-600' :
-                          'bg-[var(--accent-100)] text-[var(--accent-600)]'
+                        <span className={`text-xs font-semibold uppercase px-2 py-0.5 rounded-full ${
+                          ev._type === 'call-remota' ? 'bg-accent-soft text-accent' :
+                          ev._type === 'formazione' ? 'bg-success-soft text-success' :
+                          'bg-accent-soft text-accent'
                         }`}>{ev._type}</span>
                         {/* Dropdown selezione cliente */}
                         <select
@@ -2390,10 +2392,10 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                             e.stopPropagation();
                             setPstContactOverrides(prev => ({ ...prev, [ev._idx]: e.target.value }));
                           }}
-                          className={`text-[11px] font-bold rounded-full px-2 py-0.5 border outline-none cursor-pointer max-w-[180px] ${
+                          className={`text-xs font-bold rounded-full px-2 py-0.5 border outline-none cursor-pointer max-w-[180px] ${
                             overrideId
-                              ? 'border-[var(--accent-300)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]/30 text-[var(--accent-600)] dark:text-[var(--accent-400)]'
-                              : 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 text-gray-400'
+                              ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
+                              : 'border-line dark:border-line bg-raised dark:bg-raised text-muted'
                           }`}
                         >
                           <option value="">— Nessun cliente —</option>
@@ -2402,7 +2404,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                           ))}
                         </select>
                         {ev._duplicate && (
-                          <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-bold text-warning bg-warning-soft px-2 py-0.5 rounded-full">
                             ⚠ già presente
                           </span>
                         )}
@@ -2414,32 +2416,32 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             </div>
 
             {/* Footer */}
-            <div className="flex flex-wrap items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex-shrink-0 gap-3">
+            <div className="flex flex-wrap items-center justify-between px-6 py-4 border-t border-line dark:border-line flex-shrink-0 gap-3">
               <button
                 onClick={() => {
                   const allSelectable = pstEvents.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx);
                   setPstSelected(new Set(allSelectable));
                 }}
-                className="text-xs font-bold text-gray-500 hover:text-[var(--accent-600)] transition-colors"
+                className="text-xs font-bold text-secondary hover:text-accent transition-colors"
               >
                 Seleziona tutti
               </button>
               <div className="flex gap-2 flex-wrap">
                 <button onClick={() => setPstModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
+                  className="px-5 py-2.5 rounded-panel text-sm font-bold text-secondary hover:text-foreground transition-colors">
                   Annulla
                 </button>
                 <button
                   onClick={handlePSTImport}
                   disabled={pstSelected.size === 0}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-2xl text-sm font-black transition-colors flex items-center gap-2"
+                  className="bg-action hover:bg-action-hover disabled:opacity-50 text-action-foreground px-6 py-2.5 rounded-panel text-sm font-semibold transition-colors flex items-center gap-2"
                 >
                   <CheckCircle size={15} /> Importa {pstSelected.size} eventi
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </DialogFrame>
       )}
 
       {/* Conversation Recorder Modal */}
