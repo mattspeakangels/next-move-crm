@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Clock } from 'lucide-react';
 
 // Selettore orario a quadrante: prima l'ora (anello esterno 00-11, interno 12-23), poi i minuti a passi di 5
@@ -80,10 +81,11 @@ export const ClockTimeInput: React.FC<Props> = ({ value, onChange, min, max }) =
         <Clock size={16} className="text-muted" />
       </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 bg-surface dark:bg-surface rounded-panel shadow-panel p-4 w-[272px]">
+      {open && createPortal(
+        // Portale su body, centrato nello schermo: dentro il modale (overflow + colonna
+        // a metà larghezza) il quadrante veniva tagliato o usciva dallo schermo
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
+          <div className="bg-surface dark:bg-surface rounded-panel shadow-panel p-4 w-[272px] max-w-full max-h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-center gap-1 mb-3 text-3xl font-semibold tabular-nums dark:text-foreground">
               <button
                 type="button"
@@ -145,7 +147,8 @@ export const ClockTimeInput: React.FC<Props> = ({ value, onChange, min, max }) =
               })}
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1506,45 +1506,10 @@ export const MapView: React.FC<MapViewProps> = ({
           })}
         </MapContainer>
 
-        {/* Barra di ricerca fullscreen */}
-        <div className="absolute top-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-96 z-[1000]">
-          <SearchDropdown
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Cerca cliente o prospect…"
-            inputWrapperClassName={() => 'flex items-center gap-2 bg-surface/90 backdrop-blur-sm border-0 rounded-panel px-3 py-2.5 shadow-panel focus-within:ring-2 focus-within:ring-accent transition-all'}
-            dropdownClassName="z-[1100]"
-            onSelect={c => {
-              setSearchQuery(c.company);
-              selectSearchContact(c, setFlyToTarget);
-            }}
-            results={searchResults.map(c => {
-              const isCliente = c.status === 'cliente';
-              const hasPinned = !!(c.lat && c.lng);
-              return {
-                key: c.id,
-                item: c,
-                label: c.company,
-                sublabel: c.city || '—',
-                badge: {
-                  text: hasPinned ? (isCliente ? 'Cliente' : 'Prospect') : 'no pin',
-                  className: hasPinned
-                    ? (isCliente ? 'bg-accent-soft text-accent' : 'bg-warning-soft text-warning')
-                    : 'bg-raised text-muted',
-                },
-              };
-            })}
-          />
-          {locatingContactId && (
-            <p className="mt-1.5 ml-1 text-xs text-foreground font-bold drop-shadow">Localizzo in mappa…</p>
-          )}
-          {searchGeocodeError && (
-            <p className="mt-1.5 ml-1 text-xs bg-danger text-status-foreground font-bold rounded-md px-3 py-1.5 shadow-panel inline-block">{searchGeocodeError}</p>
-          )}
-        </div>
-
+        {/* Filtri in alto, ricerca sotto: il dropdown dei risultati si apre libero, senza coprire/essere coperto dai filtri */}
+        <div className="absolute top-4 left-4 right-28 md:left-1/2 md:right-auto md:-translate-x-1/2 md:max-w-[calc(100%-14rem)] z-[1000] flex flex-col items-center gap-2">
         {/* Overlay filtri fullscreen */}
-        <div className="absolute top-[4.5rem] left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center">
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           {/* Toggle clienti/tutti/prospect */}
           <div className="bg-surface/90 backdrop-blur-sm rounded-panel p-1 flex gap-1 shadow-panel">
             {(['tutti', 'clienti', 'prospect'] as const).map(f => (
@@ -1589,6 +1554,45 @@ export const MapView: React.FC<MapViewProps> = ({
               ))}
             </select>
           )}
+        </div>
+
+        {/* Barra di ricerca fullscreen */}
+        <div className="w-full max-w-sm">
+          <SearchDropdown
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Cerca cliente o prospect…"
+            inputWrapperClassName={() => 'flex items-center gap-2 bg-surface/90 backdrop-blur-sm border-0 rounded-panel px-3 py-2.5 shadow-panel focus-within:ring-2 focus-within:ring-accent transition-all'}
+            dropdownClassName="z-[1100]"
+            onSelect={c => {
+              setSearchQuery(c.company);
+              selectSearchContact(c, setFlyToTarget);
+            }}
+            results={searchResults.map(c => {
+              const isCliente = c.status === 'cliente';
+              const hasPinned = !!(c.lat && c.lng);
+              return {
+                key: c.id,
+                item: c,
+                label: c.company,
+                sublabel: c.city || '—',
+                badge: {
+                  text: hasPinned ? (isCliente ? 'Cliente' : 'Prospect') : 'no pin',
+                  className: hasPinned
+                    ? (isCliente ? 'bg-accent-soft text-accent' : 'bg-warning-soft text-warning')
+                    : 'bg-raised text-muted',
+                },
+              };
+            })}
+          />
+          {locatingContactId && (
+            <p className="mt-1.5 ml-1 text-xs text-foreground font-bold drop-shadow">Localizzo in mappa…</p>
+          )}
+          {searchGeocodeError && (
+            <p className="mt-1.5 ml-1 text-xs bg-danger text-status-foreground font-bold rounded-md px-3 py-1.5 shadow-panel inline-block">{searchGeocodeError}</p>
+          )}
+        </div>
+
         </div>
 
         {/* Bottone chiudi */}
