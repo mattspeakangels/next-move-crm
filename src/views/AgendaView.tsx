@@ -1785,15 +1785,15 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
       {/* ── Add / Edit Modal ── */}
       {showModal && (
         <DialogFrame className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel max-h-[85vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6 flex-shrink-0">
               <h2 className="text-xl font-semibold dark:text-foreground">{editingId ? 'Modifica Appuntamento' : 'Nuovo Appuntamento'}</h2>
               <button onClick={closeModal}><X size={24} className="text-muted" /></button>
             </div>
-            <form onSubmit={handleSave} className="space-y-4">
-              {/* Contact picker - nascosto per smart-working/ufficio */}
+            <form onSubmit={handleSave} className="flex flex-col min-h-0 flex-1">
+              {/* Contact picker - fisso nell'header, nascosto per smart-working/ufficio */}
               {!NO_CONTACT_TYPES.includes(formData.type) && (
-              <div>
+              <div className="relative z-10 flex-shrink-0 pb-4">
                 <label className="text-xs font-semibold text-muted uppercase mb-1 block">
                   {MULTI_CONTACT_TYPES.includes(formData.type) ? 'Clienti' : 'Cliente / Azienda'}
                   {!MULTI_CONTACT_TYPES.includes(formData.type) && formData.contactIds.length > 0 && (
@@ -1848,6 +1848,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
                 />
               </div>
               )}
+              <div className="overflow-y-auto min-h-0 flex-1 space-y-4 -mx-1 px-1">
               <div>
                 <label className="text-xs font-semibold text-muted uppercase mb-1 block">Tipo</label>
                 <div className="flex gap-2 flex-wrap">
@@ -1946,6 +1947,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
               <button type="submit" className="w-full bg-action text-action-foreground font-semibold py-4 rounded-panel uppercase tracking-normal hover:bg-action-hover transition-colors">
                 {editingId ? 'Aggiorna' : 'Salva'}
               </button>
+              </div>
             </form>
           </div>
         </DialogFrame>
