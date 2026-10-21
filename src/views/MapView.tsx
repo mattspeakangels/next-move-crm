@@ -1,12 +1,13 @@
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
 import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed, Star, Eye, EyeOff } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAICatalog, CatalogSuggestion } from '../hooks/useAICatalog';
+import { MapBaseLayer, MapStyleButton } from '../components/ui/MapStyleControl';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
 import { MarkerShape, getMarkerCategory, DEFAULT_MARKER_STYLE, shapeDivIcon, priorityStarDivIcon, MARKER_ICON_PX, MARKER_CIRCLE_RADIUS } from '../lib/markerShapes';
@@ -59,8 +60,6 @@ const contactMarkerStyle = (status: string, segment: string | undefined, styles:
 // CARTO ora richiede una API key sulle tile basemaps.cartocdn.com (tile
 // placeholder "API KEY REQUIRED" senza autenticazione) → torniamo alle tile
 // OSM standard, gratuite e senza registrazione.
-const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_ATTRIBUTION = '© OpenStreetMap contributors';
 // Posizione utente: stella verde con contorno giallo, lampeggiante — ben
 // distinguibile dai marker circolari di clienti e prospect
 const userIcon = L.divIcon({
@@ -778,7 +777,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
 
         {/* Mappa */}
         <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false} preferCanvas>
-          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
+          <MapBaseLayer />
           <SizeInvalidator isVisible={isVisible} />
           <FlyToContact position={itinFlyTo} />
           <Marker position={[HOME.lat, HOME.lng]} icon={homeIcon}>
@@ -830,6 +829,8 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             <Polyline positions={roadRouteCoords} pathOptions={{ color: '#946239', weight: 5, opacity: 0.85 }} />
           )}
         </MapContainer>
+
+        <MapStyleButton className="bottom-20 left-4 lg:bottom-4" />
 
         {/* Geolocalizzazione */}
         <div className="absolute bottom-20 right-4 z-[700] flex flex-col items-end gap-2">
@@ -1440,7 +1441,7 @@ export const MapView: React.FC<MapViewProps> = ({
           doubleClickZoom={false}
           preferCanvas
         >
-          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
+          <MapBaseLayer />
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#c08d62', fillOpacity: 0.06, dashArray: '6 4' }} />}
@@ -1505,6 +1506,8 @@ export const MapView: React.FC<MapViewProps> = ({
             );
           })}
         </MapContainer>
+
+        <MapStyleButton className="bottom-20 left-4" />
 
         {/* Filtri in alto, ricerca sotto: il dropdown dei risultati si apre libero, senza coprire/essere coperto dai filtri */}
         <div className="absolute top-4 left-4 right-28 md:left-1/2 md:right-auto md:-translate-x-1/2 md:max-w-[calc(100%-14rem)] z-[1000] flex flex-col items-center gap-2">
@@ -1887,7 +1890,7 @@ export const MapView: React.FC<MapViewProps> = ({
           doubleClickZoom={false}
           preferCanvas
         >
-          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
+          <MapBaseLayer />
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
           {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#c08d62', fillOpacity: 0.06, dashArray: '6 4' }} />}
@@ -1956,6 +1959,8 @@ export const MapView: React.FC<MapViewProps> = ({
           })}
 
         </MapContainer>
+
+        <MapStyleButton className="bottom-3 left-3" />
 
         {/* Overlay hint doppio click */}
         {onGoFullscreen && (
