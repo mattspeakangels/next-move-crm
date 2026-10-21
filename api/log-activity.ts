@@ -203,7 +203,7 @@ export default async function handler(
     parsedInput = RequestSchema.parse(req.body);
   } catch (err) {
     logError('Invalid request body', { endpoint: '/api/log-activity', error: String(err) });
-    res.status(400).json({ error: 'Payload non valido', details: err instanceof z.ZodError ? err.errors : undefined });
+    res.status(400).json({ error: 'Payload non valido', details: err instanceof z.ZodError ? err.issues : undefined });
     return;
   }
 
