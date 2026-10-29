@@ -224,6 +224,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
   const [shippingCost, setShippingCost] = useState(0);
   const [entryMode, setEntryMode] = useState<'articoli' | 'totale'>('articoli');
   const [manualTotalValue, setManualTotalValue] = useState(0);
+  const [offerPdfFile, setOfferPdfFile] = useState<File | null>(null);
+  const [savingOffer, setSavingOffer] = useState(false);
 
   const openModal = (offer?: Offer) => {
     if (offer) {
@@ -238,6 +240,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       setShippingCost(offer.shippingCost || 0);
       setEntryMode(offer.manualTotal ? 'totale' : 'articoli');
       setManualTotalValue(offer.manualTotal ? offer.totalAmount : 0);
+      setOfferPdfFile(null);
     } else {
       setEditingId(null);
       setSelectedContact('');
@@ -250,6 +253,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       setShippingCost(0);
       setEntryMode('articoli');
       setManualTotalValue(0);
+      setOfferPdfFile(null);
     }
     setShowModal(true);
   };
@@ -302,7 +306,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
     return itemsTotal + Number(shippingCost);
   };
 
-  const saveOffer = () => {
+  const saveOffer = async () => {
+    if (savingOffer) return;
     if (!selectedContact) {
       showToast('Seleziona un cliente', 'error');
       return;
@@ -348,8 +353,23 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       }
     }
 
+    const offerId = editingId || `off_${Date.now()}`;
+    let pdfFields: { pdfUrl?: string; pdfName?: string } = {};
+    if (offerPdfFile) {
+      setSavingOffer(true);
+      try {
+        const { url, name } = await uploadOfferPdf(offerId, offerPdfFile);
+        pdfFields = { pdfUrl: url, pdfName: name };
+      } catch (err: any) {
+        showToast(err?.message ?? 'Errore caricamento PDF', 'error');
+        setSavingOffer(false);
+        return;
+      }
+      setSavingOffer(false);
+    }
+
     const offerData: Offer = {
-      id: editingId || `off_${Date.now()}`,
+      id: offerId,
       contactId: selectedContact,
       contactMode,
       endUserContactId: contactMode === 'dealer+end-user' ? selectedEndUserContact : undefined,
@@ -361,7 +381,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       totalAmount: calculateTotal(),
       followUpDate: editingId ? offers[editingId].followUpDate : Date.now() + (7 * 24 * 60 * 60 * 1000),
       deliveryTime,
-      shippingCost: entryMode === 'totale' ? 0 : Number(shippingCost)
+      shippingCost: entryMode === 'totale' ? 0 : Number(shippingCost),
+      ...pdfFields,
     };
 
     if (editingId) {
@@ -1287,9 +1308,20 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 )}
               </div>
 
+              <div>
+                <label className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 block">PDF offerta (opzionale)</label>
+                <label className={`flex items-center gap-3 w-full border-2 border-dashed rounded-panel px-4 py-4 cursor-pointer transition-colors ${offerPdfFile ? 'border-warning bg-warning-soft' : 'border-line hover:border-warning'}`}>
+                  <FileText size={20} className={offerPdfFile ? 'text-warning' : 'text-muted'} />
+                  <span className="text-xs font-bold text-muted break-all">
+                    {offerPdfFile ? offerPdfFile.name : (editingId && offers[editingId]?.pdfName ? `Attuale: ${offers[editingId].pdfName} (clicca per sostituire)` : 'Clicca per allegare il PDF')}
+                  </span>
+                  <input type="file" accept="application/pdf" className="hidden" onChange={e => setOfferPdfFile(e.target.files?.[0] || null)} />
+                </label>
+              </div>
+
               <div className="pt-6 border-t dark:border-line flex flex-col sm:flex-row gap-4 justify-between items-center">
                 <div className="text-2xl md:text-3xl font-semibold dark:text-foreground text-accent">€ {calculateTotal().toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
-                <button onClick={saveOffer} className="w-full sm:w-auto bg-action text-action-foreground px-10 py-4 rounded-panel font-semibold uppercase text-xs tracking-normal shadow-panel">Salva</button>
+                <button onClick={saveOffer} disabled={savingOffer} className="w-full sm:w-auto bg-action text-action-foreground px-10 py-4 rounded-panel font-semibold uppercase text-xs tracking-normal shadow-panel disabled:opacity-60">{savingOffer ? 'Caricamento PDF...' : 'Salva'}</button>
               </div>
             </div>
           </div>
