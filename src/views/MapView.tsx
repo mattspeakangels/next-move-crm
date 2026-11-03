@@ -1,6 +1,6 @@
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { MapContainer, Marker, CircleMarker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, CircleMarker, Popup, Circle, Polyline, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import { useStore } from '../store/useStore';
 import { ContactSegment } from '../types';
 import { MapPin, Navigation, Phone, AlertTriangle, ExternalLink, Maximize2, X, SlidersHorizontal, List, Map as MapIcon, Building2, Sparkles, CheckCircle2, XCircle, RotateCcw, Clock, Route, Home, CalendarCheck, GripVertical, LocateFixed, Star, Eye, EyeOff } from 'lucide-react';
@@ -664,7 +664,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
               <X size={14} /> Chiudi
             </button>
 
-            <div className="flex-1 flex items-center gap-2 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel px-4 py-2 shadow-panel">
+            <div className="min-w-0 flex-1 flex items-center gap-2 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel px-4 py-2 shadow-panel">
               <Route size={14} className="text-warning flex-shrink-0" />
               <input type="date" value={date} onChange={e => {
               const newDate = e.target.value;
@@ -674,7 +674,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
               setCustomTimes({});
               loadedItinDateRef.current = null;
             }}
-                className="flex-1 bg-transparent text-sm font-semibold text-foreground dark:text-foreground outline-none" />
+                className="min-w-0 w-full flex-1 bg-transparent text-sm font-semibold text-foreground dark:text-foreground outline-none" />
             </div>
 
             <button onClick={() => setShowFiltersBar(v => !v)}
@@ -697,7 +697,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
           </div>
 
           {showFiltersBar && (
-            <div className="w-full flex flex-wrap items-center gap-1.5 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel p-2 shadow-panel mt-1">
+            <div className="w-full max-h-[30dvh] overflow-y-auto overscroll-contain flex flex-wrap items-center gap-1.5 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel p-2 shadow-panel mt-1">
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
                 className="flex-1 min-w-[100px] bg-canvas dark:bg-canvas rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase text-secondary dark:text-foreground outline-none">
                 <option value="tutti">Tutti</option>
@@ -1433,14 +1433,16 @@ export const MapView: React.FC<MapViewProps> = ({
   // ── FULLSCREEN MODE ─────────────────────────────────────────────────────────
   if (isFullscreen) {
     return (
-      <DialogFrame className="fixed inset-0 z-50 bg-black">
+      <DialogFrame className="fixed inset-0 z-50 bg-black overflow-hidden">
         <MapContainer
           center={defaultCenter}
           zoom={userPos ? 8 : 6}
           style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
           doubleClickZoom={false}
           preferCanvas
         >
+          <ZoomControl position="bottomright" />
           <MapBaseLayer />
           {userPos && <ChangeView center={userPos} />}
           {userPos && <Marker position={userPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
@@ -1510,9 +1512,9 @@ export const MapView: React.FC<MapViewProps> = ({
         <MapStyleButton className="bottom-20 left-4" />
 
         {/* Filtri in alto, ricerca sotto: il dropdown dei risultati si apre libero, senza coprire/essere coperto dai filtri */}
-        <div className="absolute top-4 left-4 right-28 md:left-1/2 md:right-auto md:-translate-x-1/2 md:max-w-[calc(100%-14rem)] z-[1000] flex flex-col items-center gap-2">
-        {/* Overlay filtri fullscreen */}
-        <div className="flex items-center gap-2 flex-wrap justify-center">
+        <div className="absolute top-[calc(env(safe-area-inset-top)+4.25rem)] left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[min(40rem,calc(100%-2rem))] z-[1000] flex flex-col items-stretch gap-2">
+        {/* Filtri separati dalla ricerca e limitati in altezza sui telefoni. */}
+        {showFilters && <div id="fullscreen-map-filters" className="flex items-center gap-2 flex-wrap max-h-[30dvh] overflow-y-auto overscroll-contain bg-surface/95 rounded-panel p-2 shadow-panel">
           {/* Toggle clienti/tutti/prospect */}
           <div className="bg-surface/90 backdrop-blur-sm rounded-panel p-1 flex gap-1 shadow-panel">
             {(['tutti', 'clienti', 'prospect'] as const).map(f => (
@@ -1535,7 +1537,7 @@ export const MapView: React.FC<MapViewProps> = ({
             <select
               value={mapProvinceFilter}
               onChange={e => setMapProvinceFilter(e.target.value)}
-              className="bg-surface/90 backdrop-blur-sm rounded-panel px-3 py-2 text-xs font-semibold text-foreground shadow-panel border-0 outline-none cursor-pointer"
+              className="min-w-0 max-w-full flex-1 bg-surface/90 backdrop-blur-sm rounded-panel px-3 py-2 text-xs font-semibold text-foreground shadow-panel border-0 outline-none cursor-pointer"
             >
               <option value="">Tutte le province</option>
               {availableProvinces.map(p => (
@@ -1549,7 +1551,7 @@ export const MapView: React.FC<MapViewProps> = ({
             <select
               value={mapSectorFilter}
               onChange={e => setMapSectorFilter(e.target.value)}
-              className="bg-surface/90 backdrop-blur-sm rounded-panel px-3 py-2 text-xs font-semibold text-foreground shadow-panel border-0 outline-none cursor-pointer"
+              className="min-w-0 max-w-full flex-1 bg-surface/90 backdrop-blur-sm rounded-panel px-3 py-2 text-xs font-semibold text-foreground shadow-panel border-0 outline-none cursor-pointer"
             >
               <option value="">Tutti i settori</option>
               {availableSectors.map(s => (
@@ -1557,16 +1559,16 @@ export const MapView: React.FC<MapViewProps> = ({
               ))}
             </select>
           )}
-        </div>
+        </div>}
 
         {/* Barra di ricerca fullscreen */}
-        <div className="w-full max-w-sm">
+        <div className="w-full min-w-0">
           <SearchDropdown
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Cerca cliente o prospect…"
             inputWrapperClassName={() => 'flex items-center gap-2 bg-surface/90 backdrop-blur-sm border-0 rounded-panel px-3 py-2.5 shadow-panel focus-within:ring-2 focus-within:ring-accent transition-all'}
-            dropdownClassName="z-[1100]"
+            dropdownClassName="z-[1100] [&>div:last-child]:max-h-[25dvh]"
             onSelect={c => {
               setSearchQuery(c.company);
               selectSearchContact(c, setFlyToTarget);
@@ -1598,16 +1600,26 @@ export const MapView: React.FC<MapViewProps> = ({
 
         </div>
 
+        <button
+          type="button"
+          aria-expanded={showFilters}
+          aria-controls="fullscreen-map-filters"
+          onClick={() => setShowFilters(v => !v)}
+          className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-3 z-[1000] min-h-11 bg-surface/95 text-foreground rounded-panel px-3 shadow-panel flex items-center gap-2 text-xs font-semibold"
+        >
+          <SlidersHorizontal size={16} /> Filtri
+        </button>
+
         {/* Bottone chiudi */}
         <button
           onClick={onExitFullscreen}
-          className="absolute top-4 right-4 z-[1000] bg-surface/90 backdrop-blur-sm text-foreground rounded-panel px-4 py-2.5 font-semibold uppercase text-xs flex items-center gap-2 shadow-panel"
+          className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-3 z-[1000] bg-surface/90 backdrop-blur-sm text-foreground rounded-panel px-4 py-2.5 font-semibold uppercase text-xs flex items-center gap-2 shadow-panel"
         >
           <X size={16} /> Chiudi
         </button>
 
         {/* Geolocalizzazione */}
-        <div className="absolute bottom-4 right-4 z-[1000] flex flex-col items-end gap-2">
+        <div className="absolute bottom-28 right-3 z-[1000] flex flex-col items-end gap-2">
           {geoMsg && (
             <div className="bg-danger text-status-foreground text-xs font-bold rounded-md px-3 py-2 max-w-[230px] shadow-panel">{geoMsg}</div>
           )}
@@ -1615,7 +1627,7 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
 
         {/* Info overlay */}
-        <div className="absolute bottom-4 left-4 z-[1000] bg-surface/90 backdrop-blur-sm rounded-panel px-4 py-2.5 shadow-panel">
+        <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-3 right-14 md:right-auto z-[1000] bg-surface/90 backdrop-blur-sm rounded-panel px-4 py-2.5 shadow-panel">
           <p className="text-xs font-semibold text-foreground">
             <span className="text-accent">{nClienti}</span> clienti ·{' '}
             <span className="text-warning">{nProspect}</span> prospect
@@ -1633,7 +1645,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   // ── NORMAL MODE ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-[calc(100dvh-140px)] md:h-[calc(100vh-70px)]">
+    <div className="flex min-w-0 flex-col min-h-[calc(100dvh-140px)] md:h-[calc(100dvh-70px)] md:min-h-[38rem]">
 
       {/* ── Header compatto ── */}
       <div className="bg-surface dark:bg-surface rounded-[1.5rem] px-4 py-3 shadow-sm border border-line dark:border-line mb-3 flex-shrink-0">
@@ -1667,6 +1679,9 @@ export const MapView: React.FC<MapViewProps> = ({
             {/* Toggle filtri */}
             <button
               onClick={() => setShowFilters(v => !v)}
+              aria-label="Filtri mappa"
+              aria-expanded={showFilters}
+              aria-controls="map-filters"
               className={`p-2.5 rounded-xl border-2 transition-all ${showFilters ? 'bg-action border-accent text-action-foreground' : 'border-line dark:border-line text-secondary'}`}
             >
               <SlidersHorizontal size={16} />
@@ -1723,7 +1738,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
         {/* Filtri collassabili */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-line dark:border-line space-y-3">
+          <div id="map-filters" className="mt-3 pt-3 max-h-[40dvh] overflow-y-auto overscroll-contain border-t border-line dark:border-line space-y-3">
             {/* Banner marker cap */}
             {markersCapped && (
               <div className="bg-accent-soft dark:bg-accent-soft/20 border border-accent dark:border-accent rounded-md px-3 py-2 flex items-center gap-2">
@@ -1820,7 +1835,7 @@ export const MapView: React.FC<MapViewProps> = ({
                 <select
                   value={mapProvinceFilter}
                   onChange={e => setMapProvinceFilter(e.target.value)}
-                  className="flex-1 px-3 py-1.5 bg-raised dark:bg-raised rounded-md text-xs font-bold text-foreground dark:text-muted border-0 outline-none cursor-pointer"
+                  className="min-w-0 flex-1 px-3 py-1.5 bg-raised dark:bg-raised rounded-md text-xs font-bold text-foreground dark:text-muted border-0 outline-none cursor-pointer"
                 >
                   <option value="">Tutte</option>
                   {availableProvinces.map(p => (
@@ -1843,7 +1858,7 @@ export const MapView: React.FC<MapViewProps> = ({
                 <select
                   value={mapSectorFilter}
                   onChange={e => setMapSectorFilter(e.target.value)}
-                  className="flex-1 px-3 py-1.5 bg-raised dark:bg-raised rounded-md text-xs font-bold text-foreground dark:text-muted border-0 outline-none cursor-pointer"
+                  className="min-w-0 flex-1 px-3 py-1.5 bg-raised dark:bg-raised rounded-md text-xs font-bold text-foreground dark:text-muted border-0 outline-none cursor-pointer"
                 >
                   <option value="">Tutti</option>
                   {availableSectors.map(s => (
@@ -1880,8 +1895,7 @@ export const MapView: React.FC<MapViewProps> = ({
       </div>
 
       {/* ── Mappa (nascosta su mobile se tab=lista) ── */}
-      <div className={`rounded-panel overflow-hidden shadow-panel flex-1 relative z-0 border-4 border-line dark:border-line ${mobileTab === 'lista' ? 'hidden md:block' : 'block'}`}
-        style={{ minHeight: 0 }}
+      <div className={`rounded-panel overflow-hidden shadow-panel h-[55dvh] min-h-[18rem] flex-none md:h-auto md:min-h-0 md:flex-1 relative z-0 border-4 border-line dark:border-line ${mobileTab === 'lista' ? 'hidden md:block' : 'block'}`}
       >
         <MapContainer
           center={defaultCenter}
@@ -1964,7 +1978,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
         {/* Overlay hint doppio click */}
         {onGoFullscreen && (
-          <div className="absolute bottom-3 right-3 z-[400] bg-surface/80 dark:bg-surface/80 backdrop-blur-sm rounded-md px-3 py-1.5 pointer-events-none">
+          <div className="absolute bottom-3 right-3 z-[400] hidden md:block bg-surface/80 dark:bg-surface/80 backdrop-blur-sm rounded-md px-3 py-1.5 pointer-events-none">
             <p className="text-xs font-semibold text-secondary uppercase tracking-normal flex items-center gap-1.5">
               <Maximize2 size={10} /> Doppio click per fullscreen
             </p>
@@ -1980,7 +1994,7 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
 
         {/* Legenda colori */}
-        <div className="absolute top-3 left-3 z-[400] bg-surface/90 dark:bg-canvas/90 backdrop-blur-sm rounded-md px-3 py-2 shadow pointer-events-none">
+        <div className="absolute top-3 right-3 z-[400] bg-surface/90 dark:bg-canvas/90 backdrop-blur-sm rounded-md px-3 py-2 shadow pointer-events-none">
           <div className="space-y-1">
             {([
               { category: 'cliente', label: 'Cliente' },
