@@ -1338,6 +1338,7 @@ export const ProductsView: React.FC = () => {
         }))}
       />
 
+      <div className="cockpit-results-heading"><span>Esplora il catalogo</span><span>{filtered.length.toLocaleString('it-IT')} {filtered.length === 1 ? 'articolo' : 'articoli'}</span></div>
       {/* ── Category chips ── */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {CATEGORIES.map(c => (

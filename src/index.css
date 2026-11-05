@@ -241,3 +241,26 @@ h1 { font-weight: 750; letter-spacing: -.035em; }
   .cockpit-product-actions > button:last-child { grid-column: span 2; }
 }
 html { touch-action: pan-x pan-y; }
+
+/* Page-level operational summaries and workspaces */
+.cockpit-page-header { align-items: end; }
+.cockpit-page-tabs { padding: .3rem; border: 1px solid rgb(var(--syrio-line)); border-radius: .85rem; background: rgb(var(--syrio-surface)); box-shadow: var(--syrio-shadow); }
+.cockpit-page-tabs button { border-radius: .6rem; padding: .7rem 1rem; font-size: .8125rem; }
+.cockpit-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin: 1.25rem 0; border: 1px solid rgb(var(--syrio-line)); border-radius: 1rem; background: rgb(var(--syrio-line)); box-shadow: var(--syrio-shadow); }
+.cockpit-overview > div { min-width: 0; padding: 1.15rem 1.35rem; background: rgb(var(--syrio-surface)); }
+.cockpit-overview span { display: block; color: rgb(var(--syrio-muted)); font-size: .75rem; font-weight: 600; }
+.cockpit-overview strong { display: block; margin-top: .5rem; color: rgb(var(--syrio-foreground)); font-family: 'Manrope', sans-serif; font-size: 1.35rem; font-weight: 800; letter-spacing: -.04em; overflow-wrap: anywhere; }
+.cockpit-kanban { scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: rgb(var(--syrio-line)) transparent; }
+.cockpit-kanban-column { scroll-snap-align: start; border: 1px solid rgb(var(--syrio-line)); border-radius: 1rem; }
+.cockpit-analytics-summary > div { border-radius: 1rem; padding: 1.2rem; box-shadow: var(--syrio-shadow); }
+.cockpit-analytics-summary > div > p:nth-child(2) { font-family: 'Manrope', sans-serif; font-weight: 800; letter-spacing: -.045em; }
+@media (max-width: 767px) {
+  .cockpit-overview { gap: 1px; }
+  .cockpit-overview > div { padding: .85rem .7rem; }
+  .cockpit-overview span { min-height: 2.1em; font-size: .6875rem; line-height: 1.2; }
+  .cockpit-overview strong { font-size: 1.05rem; }
+  .cockpit-page-tabs { max-width: 100%; }
+  .cockpit-kanban-column { width: min(18rem, 82vw); }
+}
+.cockpit-results-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; font-family: 'Manrope', sans-serif; font-size: .875rem; font-weight: 700; color: rgb(var(--syrio-foreground)); }
+.cockpit-results-heading span:last-child { color: rgb(var(--syrio-muted)); font-family: inherit; font-size: .75rem; font-weight: 600; white-space: nowrap; }

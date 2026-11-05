@@ -734,8 +734,13 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
         )}
       </div>
 
+      <div className="cockpit-overview" aria-label="Riepilogo offerte">
+        <div><span>In lavorazione</span><strong>{Object.values(offers).filter(offer => offer.status === 'bozza').length.toLocaleString('it-IT')}</strong></div>
+        <div><span>Inviate</span><strong>{Object.values(offers).filter(offer => offer.status === 'inviata').length.toLocaleString('it-IT')}</strong></div>
+        <div><span>Accettate</span><strong>{Object.values(offers).filter(offer => offer.status === 'accettata').length.toLocaleString('it-IT')}</strong></div>
+      </div>
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel w-fit">
+      <div className="cockpit-page-tabs flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel w-fit">
         {([
           { id: 'offerte' as const, label: 'Offerte', icon: FileText },
           { id: 'ordini' as const, label: 'Ordini', icon: ShoppingBag },

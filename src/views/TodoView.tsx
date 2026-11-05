@@ -802,6 +802,11 @@ export const TodoView: React.FC = () => {
         </div>
       </div>
 
+      <div className="cockpit-overview" aria-label="Riepilogo attività">
+        <div><span>Da fare</span><strong>{daFare.toLocaleString('it-IT')}</strong></div>
+        <div><span>Scadute</span><strong>{scaduti.toLocaleString('it-IT')}</strong></div>
+        <div><span>Completate</span><strong>{fatto.toLocaleString('it-IT')}</strong></div>
+      </div>
       {/* Search */}
       <div className="flex items-center gap-2 px-4 py-2.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel focus-within:border-accent transition-colors">
         <Search size={15} className="text-muted flex-shrink-0" />

@@ -246,13 +246,14 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact,
   return (
     <div className="pb-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="cockpit-page-header flex flex-wrap justify-between items-center gap-4 mb-5">
         <div><h1 className="text-2xl text-foreground dark:text-foreground tracking-tight">Pipeline</h1>
           <p className="cockpit-page-description">Segui le opportunità e pianifica la prossima azione.</p></div>
         {activeTab === 'kanban' && (
           <div className="flex items-center gap-2">
             <button
               onClick={runPipelineAnalysis}
+              aria-label="Analizza pipeline"
               className="flex items-center gap-1.5 bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent px-3.5 py-2.5 rounded-md font-bold uppercase text-xs tracking-wide hover:bg-accent-soft dark:hover:bg-accent-soft/50 transition-colors"
             >
               <Sparkles size={14} /> <span className="hidden sm:inline">Analizza</span>
@@ -268,7 +269,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact,
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel mb-5 w-fit max-w-full overflow-x-auto overscroll-x-contain">
+      <div className="cockpit-page-tabs flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel mb-5 w-fit max-w-full overflow-x-auto overscroll-x-contain">
         {([
           { id: 'prospecting', label: 'Prospecting', icon: Radar },
           { id: 'kanban', label: 'Deals', icon: Columns },
@@ -300,22 +301,27 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact,
       {/* Kanban — only when activeTab === kanban */}
       {activeTab === 'kanban' && <>
 
+      <div className="cockpit-overview" aria-label="Riepilogo pipeline">
+        <div><span>Opportunità aperte</span><strong>{filteredDeals.length.toLocaleString('it-IT')}</strong></div>
+        <div><span>Valore complessivo</span><strong>{filteredDeals.reduce((sum, deal) => sum + deal.value, 0).toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}</strong></div>
+        <div><span>Azioni scadute</span><strong>{filteredDeals.filter(deal => deal.nextActionDeadline && deal.nextActionDeadline < Date.now()).length.toLocaleString('it-IT')}</strong></div>
+      </div>
       {/* Empty state */}
       {filteredDeals.length === 0 && (
-        <div className="text-center py-20 text-muted dark:text-secondary">
+        <div className="text-center py-8 text-muted dark:text-secondary">
           <p className="font-bold tracking-tight text-sm text-secondary dark:text-muted">Nessun deal attivo</p>
           <p className="text-xs mt-1">Apri una scheda azienda e aggiungi un deal</p>
         </div>
       )}
 
       {/* Kanban columns — scroll orizzontale */}
-      <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar">
+      <div className="cockpit-kanban flex gap-4 overflow-x-auto pb-6">
         {STAGES.map(stage => {
           const stageDeals = filteredDeals.filter(d => d.stage === stage.id);
           const stageTotal = stageDeals.reduce((sum, d) => sum + d.value, 0);
 
           return (
-            <div key={stage.id} className="flex-shrink-0 w-72 rounded-panel bg-canvas dark:bg-surface/40 p-2.5 overflow-hidden">
+            <div key={stage.id} className="cockpit-kanban-column flex-shrink-0 w-72 rounded-panel bg-raised dark:bg-surface/40 p-3 overflow-hidden">
               {/* Accento di stage */}
               <div className={`h-1 rounded-full mb-3 ${stage.bar}`} />
               {/* Column header */}
