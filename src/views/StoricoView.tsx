@@ -1104,7 +1104,7 @@ export function StoricoView() {
       />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="cockpit-history-summary grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label={`Fatturato ${annoPrev}`} value={fmtEur(totPrev)} sub={`${clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0).length} clienti attivi`} color="bg-action" icon={Euro} />
         <KPICard label={`Fatturato ${annoCorr}`} value={fmtEur(totCorr)} sub={`${deltaYoY > 0 ? '+' : ''}${deltaYoY.toFixed(1)}% vs ${annoPrev}`} color={deltaYoY >= 0 ? 'bg-success' : 'bg-danger'} icon={TrendingUp} />
         <KPICard label="Clienti Dormienti" value={String(dormienti.length)} sub={`attivi ${annoPrev}, assenti ${annoCorr}`} color="bg-warning" icon={AlertTriangle} />

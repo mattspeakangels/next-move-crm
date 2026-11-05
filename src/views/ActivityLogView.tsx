@@ -441,7 +441,7 @@ export const ActivityLogView: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl  dark:text-foreground  ">Attività</h1>
-          <p className="text-muted text-sm font-bold uppercase tracking-normal">Diario commerciale</p>
+          <p className="cockpit-page-description">Il diario delle tue attività commerciali.</p>
         </div>
         <button
           onClick={() => setShowQuickAdd(v => !v)}
@@ -475,7 +475,7 @@ export const ActivityLogView: React.FC = () => {
       )}
 
       {/* KPI settimana */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="cockpit-activity-summary grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Visite', value: kpiVisits, color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/20' },
           { label: 'Chiamate', value: kpiCalls, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft' },

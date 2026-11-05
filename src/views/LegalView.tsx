@@ -2,13 +2,13 @@ import { FileText, Mail, Shield } from 'lucide-react';
 
 export function LegalView() {
   return (
-    <div className="max-w-3xl">
+    <div className="cockpit-legal max-w-5xl">
       <h1 className="text-3xl   tracking-tight mb-2">Documenti Legali</h1>
       <p className="text-secondary dark:text-muted mb-8">
         Informazioni importanti sulla privacy, termini di uso e sicurezza.
       </p>
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Privacy Policy */}
         <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
           <div className="flex items-start gap-4">

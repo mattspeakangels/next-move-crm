@@ -146,10 +146,10 @@ export const AnalyticsView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
           <h1 className="text-2xl  dark:text-foreground ">Analytics</h1>
-          <p className="text-muted text-sm font-bold">Business Intelligence</p>
+          <p className="cockpit-page-description">I numeri che raccontano il tuo andamento commerciale.</p>
         </div>
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -198,7 +198,7 @@ export const AnalyticsView: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
           <h3 className="text-lg font-semibold  mb-4">Trend Mensile</h3>
           {monthlySales.length > 0 ? (
@@ -233,7 +233,7 @@ export const AnalyticsView: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line">
           <h3 className="text-lg font-semibold  mb-4">Top 10 Prodotti</h3>
           {topProducts.length > 0 ? (

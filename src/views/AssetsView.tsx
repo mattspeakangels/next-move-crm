@@ -273,7 +273,7 @@ export const AssetsView: React.FC = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl  dark:text-foreground  ">Parco Installato</h1>
-          <p className="text-muted text-sm font-bold uppercase tracking-normal">Asset dei clienti</p>
+          <p className="cockpit-page-description">Asset dei clienti, scadenze e interventi da programmare.</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -284,7 +284,7 @@ export const AssetsView: React.FC = () => {
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="cockpit-activity-summary grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Attivi', value: kpiAttivi, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft' },
           { label: 'Da sostituire', value: kpiDaSostituire, color: 'text-danger', bg: 'bg-danger-soft dark:bg-danger-soft' },

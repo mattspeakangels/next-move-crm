@@ -1115,7 +1115,7 @@ export const ProspectingView: React.FC<ProspectingViewProps> = ({ onNavigate }) 
 
   return (
     <div className="space-y-5 pb-6">
-      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-canvas dark:bg-canvas">
+      <div className="sticky top-14 md:top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-canvas dark:bg-canvas">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl  text-foreground dark:text-foreground flex items-center gap-2.5">
             <Radar size={24} className="text-accent" />

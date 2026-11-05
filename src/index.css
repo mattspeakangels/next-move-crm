@@ -222,3 +222,22 @@ h1 { font-weight: 750; letter-spacing: -.035em; }
   .cockpit-filter-bar > select { min-width: 0; }
   .cockpit-filter-bar > button { justify-content: center; }
 }
+
+/* Per-page workspace refinements */
+.cockpit-section-intro { padding: 1.5rem; border: 1px solid rgb(var(--syrio-line)); border-radius: 1rem; background: rgb(var(--syrio-surface)); }
+.cockpit-section-intro h1 { font-size: 1.6rem; }
+.cockpit-section-intro p { margin-top: .4rem; color: rgb(var(--syrio-muted)); font-size: .875rem; }
+.cockpit-activity-summary > div { text-align: left; padding: 1.1rem; border: 1px solid rgb(var(--syrio-line)); }
+.cockpit-activity-summary > div > p:first-child { font-family: 'Manrope', sans-serif; font-size: 1.6rem; font-weight: 800; }
+.cockpit-history-summary > div { min-width: 0; }
+.cockpit-search-bar { min-height: 3rem; box-shadow: var(--syrio-shadow); }
+@media (max-width: 767px) {
+  .agenda-period { width: 100%; justify-content: space-between; }
+  .agenda-view-switcher { width: 100%; }
+  .agenda-view-switcher button { flex: 1; }
+  .cockpit-content :where(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px; }
+  .cockpit-product-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+  .cockpit-product-actions > button { justify-content: center; padding-left: .75rem; padding-right: .75rem; }
+  .cockpit-product-actions > button:last-child { grid-column: span 2; }
+}
+html { touch-action: pan-x pan-y; }

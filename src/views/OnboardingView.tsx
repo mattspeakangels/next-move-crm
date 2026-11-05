@@ -24,7 +24,7 @@ export const OnboardingView: React.FC = () => {
       <div className="bg-surface dark:bg-surface p-8 rounded-panel shadow-panel max-w-md w-full">
         <Wordmark className="text-3xl mb-8" />
         <h1 className="text-3xl  mb-2 dark:text-foreground  ">Benvenuto</h1>
-        <p className="text-muted font-bold mb-8 uppercase tracking-normal text-xs">Configura il tuo profilo</p>
+        <p className="cockpit-page-description mb-8">Configura il tuo profilo per iniziare.</p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

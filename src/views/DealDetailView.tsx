@@ -36,7 +36,7 @@ export const DealDetailView: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-secondary"><ArrowLeft size={20}/> Torna indietro</button>
 
-      <div className="bg-surface dark:bg-surface rounded-panel p-5 sm:p-8 shadow-sm border dark:border-line">
+      <div className="cockpit-detail-card bg-surface dark:bg-surface rounded-panel p-5 sm:p-8 shadow-sm border dark:border-line">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
           <div className="min-w-0">
             <span className="text-xs font-semibold uppercase tracking-normal text-accent bg-accent-soft px-3 py-1 rounded-full mb-3 inline-block">

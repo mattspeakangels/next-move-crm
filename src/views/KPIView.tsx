@@ -110,7 +110,7 @@ export const KPIView: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl  dark:text-foreground  ">KPI & Metriche</h1>
-        <p className="text-muted text-sm font-bold uppercase tracking-normal">Salute del processo commerciale</p>
+        <p className="cockpit-page-description">La salute del tuo processo commerciale, in sintesi.</p>
       </div>
 
       {/* Cerchi metriche — stile Salesforce Italy SURG */}

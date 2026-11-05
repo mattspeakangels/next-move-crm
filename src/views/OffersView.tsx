@@ -713,7 +713,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl  dark:text-foreground  ">Offerte & Ordini</h1>
-          <p className="text-muted text-sm font-bold uppercase tracking-normal">Preventivi e trattative vinte</p>
+          <p className="cockpit-page-description">Preventivi, trattative vinte e ordini in un unico spazio.</p>
         </div>
         {activeTab === 'offerte' && (
           <div className="flex flex-wrap gap-2">

@@ -488,8 +488,8 @@ export const SettingsView: React.FC = () => {
   );
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-10">
-
+    <div className="cockpit-settings max-w-4xl mx-auto space-y-6 pb-10">
+      <header className="cockpit-section-intro"><h1>Impostazioni</h1><p>Gestisci il tuo profilo e personalizza il tuo spazio di lavoro.</p></header>
       <GroupLabel first>Account & Profilo</GroupLabel>
 
       {/* Account */}

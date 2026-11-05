@@ -762,13 +762,14 @@ export const TodoView: React.FC = () => {
     <div className="space-y-5 pb-6">
 
       {/* Header (fisso in cima durante lo scroll, resta la lista sottostante a muoversi) */}
-      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-canvas dark:bg-canvas">
-        <div className="flex items-center justify-between">
+      <div className="sticky top-14 md:top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 pt-1 pb-2 bg-canvas dark:bg-canvas">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl  text-foreground dark:text-foreground flex items-center gap-2.5">
               <CheckSquare size={24} className="text-accent" />
               To Do
             </h1>
+            <p className="cockpit-page-description">Le tue attività, organizzate per priorità.</p>
             {scaduti > 0 && (
               <p className="text-xs text-danger font-bold mt-0.5 flex items-center gap-1">
                 <AlertCircle size={11} /> {scaduti} {scaduti === 1 ? 'attività scaduta' : 'attività scadute'}

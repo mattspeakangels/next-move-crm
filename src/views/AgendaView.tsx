@@ -1356,9 +1356,9 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
     return (
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="bg-surface dark:bg-surface rounded-panel overflow-hidden border border-line dark:border-line">
+        <div className="bg-surface dark:bg-surface rounded-panel overflow-x-auto border border-line dark:border-line">
           {/* Intestazione giorni */}
-          <div className="grid border-b border-line dark:border-line" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
+          <div className="grid min-w-[560px] border-b border-line dark:border-line" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
             <div className="border-r border-line dark:border-line" />
             {days.map((day, i) => {
               const isToday = isSameDay(day, today);
@@ -1372,7 +1372,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
           </div>
 
           {/* Griglia ore */}
-          <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+          <div className="min-w-[560px] overflow-y-auto" style={{ maxHeight: '60vh' }}>
             <div className="grid" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
               {/* Colonna ore */}
               <div>
@@ -1549,10 +1549,10 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
       <div className="bg-surface dark:bg-surface rounded-panel shadow-sm border border-line dark:border-line overflow-hidden">
 
         {/* Calendar toolbar */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-line dark:border-line">
-          <div className="flex items-center gap-2">
+        <div className="agenda-toolbar flex flex-wrap items-center justify-between gap-3 px-3 sm:px-5 pt-4 pb-3 border-b border-line dark:border-line">
+          <div className="agenda-period flex items-center gap-1 sm:gap-2">
             <button onClick={prevPeriod} className="p-1.5 rounded-md hover:bg-raised dark:hover:bg-raised text-muted transition-colors"><ChevronLeft size={18} /></button>
-            <span className="font-semibold text-sm dark:text-foreground min-w-[160px] text-center">
+            <span className="font-semibold text-sm dark:text-foreground min-w-0 sm:min-w-[160px] text-center">
               {calMode === 'month' ? renderMonthHeader() : calMode === 'week' ? renderWeekHeader() : 'Tutte le attività'}
             </span>
             <button onClick={nextPeriod} className="p-1.5 rounded-md hover:bg-raised dark:hover:bg-raised text-muted transition-colors"><ChevronRight size={18} /></button>
@@ -1560,7 +1560,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
           </div>
 
           {/* View switcher */}
-          <div className="flex gap-1 bg-raised dark:bg-raised p-1 rounded-md">
+          <div className="agenda-view-switcher flex gap-1 bg-raised dark:bg-raised p-1 rounded-md">
             {(['month', 'week', 'list'] as CalendarMode[]).map(mode => (
               <button
                 key={mode}
@@ -1581,7 +1581,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
             {calMode === 'month' ? renderMonthGrid() : (
               <>
                 {renderWeekGrid()}
-                <div className="mt-3">{renderWeekTimegrid()}</div>
+                <div className="mt-3"><p className="mb-2 text-xs text-muted sm:hidden">Scorri la griglia per vedere tutti i giorni →</p>{renderWeekTimegrid()}</div>
               </>
             )}
           </div>

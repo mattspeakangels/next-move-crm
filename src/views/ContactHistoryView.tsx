@@ -401,7 +401,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
     <div className="space-y-5 pb-20">
 
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={onBack}
           className="p-2 rounded-panel bg-raised dark:bg-surface text-secondary hover:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/30 transition-colors"

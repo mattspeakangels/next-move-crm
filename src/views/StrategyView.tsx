@@ -982,14 +982,14 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ onNavigateToContact 
           <h1 className="text-2xl  text-foreground dark:text-foreground flex items-center gap-2.5">
             <Target className="text-accent" size={26} />Strategia
           </h1>
-          <p className="text-xs font-bold text-muted mt-0.5">Gruppi e clienti su cui concentrare le energie</p>
+          <p className="cockpit-page-description">Gruppi e clienti su cui concentrare le energie.</p>
         </div>
         <button onClick={() => setShowChooser(true)} className="w-11 h-11 rounded-panel bg-action text-action-foreground flex items-center justify-center shadow-panel hover:bg-action-hover flex-shrink-0">
           <Plus size={22} />
         </button>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel focus-within:border-accent transition-colors">
+      <div className="cockpit-search-bar flex items-center gap-2 px-4 py-2.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel focus-within:border-accent transition-colors">
         <Search size={15} className="text-muted flex-shrink-0" />
         <input
           type="text"

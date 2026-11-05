@@ -7,6 +7,11 @@ import { AuthProvider } from './lib/authContext';
 import { initSentry } from './config/sentry';
 import './index.css';
 
+// Safari exposes pinch as gesture events even when the viewport is locked.
+const preventPageGesture = (event: Event) => event.preventDefault();
+document.addEventListener('gesturestart', preventPageGesture, { passive: false });
+document.addEventListener('gesturechange', preventPageGesture, { passive: false });
+
 // Initialize Sentry error tracking
 initSentry();
 
