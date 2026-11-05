@@ -411,7 +411,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           { label: 'Opportunità attive', value: activeDeals.length.toLocaleString('it-IT'), icon: Target },
           { label: 'Valore pipeline', value: `€ ${totalPipeline.toLocaleString('it-IT')}`, icon: TrendingUp },
           { label: 'Offerte inviate', value: pendingOffers.toLocaleString('it-IT'), icon: FileText },
-        ].map(({ label, value, icon: Icon }) => <Panel key={label} className="p-4"><Icon size={20} className="text-accent mb-3" /><p className="text-sm text-muted">{label}</p><p className="text-xl font-medium tabular-nums mt-2">{value}</p></Panel>)}
+        ].map(({ label, value, icon: Icon }) => <Panel key={label} className="cockpit-kpi"><div className="cockpit-kpi-heading"><span>{label}</span><span className="cockpit-kpi-icon"><Icon size={18} /></span></div><p className="cockpit-kpi-value tabular-nums">{value}</p></Panel>)}
       </section>
       <section className="syrio-dashboard-actions">
       {/* ── Da Fare Oggi ── */}
@@ -509,9 +509,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       {todayDeals.length === 0 && <Panel className="p-5"><h2 className="text-lg font-medium">Le tue prossime mosse</h2><p className="text-sm text-muted mt-2">Nessuna azione in scadenza nelle prossime 48 ore.</p><button onClick={() => onNavigate?.('deals')} className="text-accent text-sm mt-3">Consulta la pipeline <ChevronRight size={14} className="inline" /></button></Panel>}
       </section>
+      <div className="cockpit-dashboard-calendar"><DealCalendar deals={activeDeals} contacts={contacts} /></div>
       <div className="syrio-dashboard-secondary space-y-5">
         <div className="grid lg:grid-cols-2 gap-5"><div className="space-y-5 min-w-0">      {/* ── Calendario Deal ── */}
-      <DealCalendar deals={activeDeals} contacts={contacts} />
+
 
       {/* ── Coach AI Card ── */}
       <div className="syrio-panel p-5">

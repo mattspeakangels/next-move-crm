@@ -1641,7 +1641,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
-              <h1 className="text-2xl  dark:text-foreground  ">Clienti</h1>
+              <h1 className="text-2xl dark:text-foreground">Clienti</h1>
+              <p className="cockpit-page-description">Relazioni, contatti e opportunità in un unico posto.</p>
               <div className="flex gap-2 mt-2 flex-wrap">
                 {searchTerm && initialSearch && (
                   <button onClick={() => { setSearchTerm(''); onClearFilter?.(); }}
@@ -1699,7 +1700,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
 
             return (
               <>
-                <div className="flex flex-col md:flex-row gap-3">
+                <div className="cockpit-filter-bar flex flex-col md:flex-row gap-3">
                   <SearchDropdown
                     className="flex-1"
                     value={searchTerm}

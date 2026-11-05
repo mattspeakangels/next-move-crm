@@ -1446,7 +1446,8 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
       {/* Header */}
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <h1 className="text-2xl  dark:text-foreground">Agenda</h1>
+        <div><h1 className="text-2xl dark:text-foreground">Agenda</h1>
+          <p className="cockpit-page-description">Appuntamenti e attività, organizzati intorno alla tua giornata.</p></div>
         <div className="flex items-center flex-wrap gap-2">
           {/* Import da Outlook PST */}
           <input

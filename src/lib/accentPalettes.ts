@@ -129,7 +129,7 @@ export function representativeColor(value: string | undefined): string {
 export type FontFamilyKey = 'sans' | 'serif' | 'rounded' | 'mono';
 
 export const FONT_STACKS: Record<FontFamilyKey, string> = {
-  sans: `'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,
+  sans: `'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,
   serif: `'Lora', Georgia, Cambria, 'Times New Roman', serif`,
   rounded: `'Quicksand', ui-rounded, -apple-system, sans-serif`,
   mono: `'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace`,

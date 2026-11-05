@@ -247,7 +247,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact,
     <div className="pb-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl  text-foreground dark:text-foreground tracking-tight">Pipeline</h1>
+        <div><h1 className="text-2xl text-foreground dark:text-foreground tracking-tight">Pipeline</h1>
+          <p className="cockpit-page-description">Segui le opportunità e pianifica la prossima azione.</p></div>
         {activeTab === 'kanban' && (
           <div className="flex items-center gap-2">
             <button

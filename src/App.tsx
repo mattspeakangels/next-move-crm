@@ -176,7 +176,8 @@ function AppContent() {
         <div className="px-7 py-7">
           <Wordmark className="text-3xl" />
         </div>
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+        <div className="cockpit-nav-label">Area di lavoro</div>
+        <nav aria-label="Navigazione principale" className="flex-1 px-4 space-y-1 overflow-y-auto">
           {historyRef.current.length > 0 && (
             <button onClick={goBack} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-normal rounded-panel transition-all text-muted hover:bg-canvas dark:hover:bg-raised dark:hover:text-foreground mb-2 border border-line dark:border-line">
               <ChevronLeft size={20} /> Indietro
@@ -188,6 +189,7 @@ function AppContent() {
             </button>
           ))}
         </nav>
+        <div className="cockpit-profile"><span className="cockpit-profile-avatar">{(profile?.name || "S").trim().charAt(0).toUpperCase() || "S"}</span><span><strong>{profile?.name || "Il tuo spazio"}</strong><small>Area commerciale</small></span></div>
       </aside>
 
       {/* ── MOBILE TOP BAR ── */}
