@@ -400,15 +400,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   return (
     <div className="syrio-dashboard pb-8">
 
-      <section className="syrio-hero hidden md:flex flex-col justify-center">
+      <section className="syrio-hero flex flex-col justify-center">
         <p className="text-sm text-white/90 mb-3">{profile?.name ? `Buongiorno ${profile.name.split(' ')[0]}` : 'La tua giornata commerciale'}</p>
-        <h1>Ogni opportunità è una nuova <span className="text-[#e2bc93]">destinazione.</span></h1>
-        <p className="text-sm text-white/80 mt-4">Direzione, opportunità, risultati.</p>
+        <h1>Le tue prossime mosse, <span className="cockpit-hero-accent">a colpo d’occhio.</span></h1>
+        <p className="text-sm text-white/80 mt-4">{urgentDeals.length} azioni scadute · {soonDeals.length} entro 48 ore</p>
       </section>
-      <div className="md:hidden">
-        <h1 className="text-2xl">{profile?.name ? `Buongiorno ${profile.name.split(' ')[0]}` : 'La tua giornata'}</h1>
-        <p className="text-sm text-muted mt-2">{urgentDeals.length} azioni scadute · {soonDeals.length} entro 48 ore</p>
-      </div>
       <section className="syrio-dashboard-kpis grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Panoramica commerciale">
         {[
           { label: 'Clienti in portafoglio', value: activeContacts.toLocaleString('it-IT'), icon: Users },

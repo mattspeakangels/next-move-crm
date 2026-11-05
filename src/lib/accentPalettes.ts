@@ -114,13 +114,14 @@ export function cssVarsForPalette(value: string | undefined, dark = false): Reco
   vars['--syrio-accent-soft'] = rgb(palette[dark ? 900 : 100]);
   vars['--syrio-action'] = rgb(palette[300]);
   vars['--syrio-action-hover'] = rgb(palette[200]);
+  vars['--syrio-action-foreground'] = '10 35 39';
   return vars;
 }
 
 // Colore "rappresentativo" (shade 600) da mostrare come anteprima/valore
 // corrente nell'input color, sia per i vecchi preset sia per un hex libero.
 export function representativeColor(value: string | undefined): string {
-  if (!value || value === 'indigo') return '#e0ba90';
+  if (!value || value === 'indigo') return '#247f81';
   if (value.startsWith('#')) return value;
   return (ACCENT_PALETTES[value as AccentPaletteKey] || ACCENT_PALETTES.indigo)[600];
 }

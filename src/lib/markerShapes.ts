@@ -143,7 +143,7 @@ export function priorityStarDivIcon(size = 24): L.DivIcon {
     html: `<div style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.45));width:${size}px;height:${size}px;">
       <svg viewBox="0 0 24 24" width="${size}" height="${size}">
         <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z"
-          fill="#e2bc93" stroke="#131617" stroke-width="1.8" stroke-linejoin="round"/>
+          fill="#78ddc1" stroke="#131617" stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
     </div>`,
     iconSize: [size, size],

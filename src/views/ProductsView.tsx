@@ -303,7 +303,7 @@ const VisualList: React.FC<{
   };
 
   const thumbGrad = (p: Product) => {
-    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#946239';
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#176f77';
     const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : c1 + '99';
     return `linear-gradient(135deg, ${c1}, ${c2})`;
   };
@@ -427,7 +427,7 @@ const GridList: React.FC<{
   const catStyle = (p: Product) => CAT_STYLE[normCat(p.category)] ?? CAT_STYLE['accessori'];
 
   const heroGrad = (p: Product) => {
-    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#946239';
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#176f77';
     const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : '#c08d62';
     return `linear-gradient(180deg, ${c1} 0%, ${c2} 100%)`;
   };
@@ -773,7 +773,7 @@ const ProductDetailModal: React.FC<{
   const st = stockSt(p);
 
   const heroGrad = () => {
-    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#946239';
+    const c1 = p.colors?.[0] ? getColorHex(p.colors[0]) : '#176f77';
     const c2 = p.colors?.[1] ? getColorHex(p.colors[1]) : c1 + '99';
     return `linear-gradient(160deg, ${c1} 0%, ${c2} 100%)`;
   };

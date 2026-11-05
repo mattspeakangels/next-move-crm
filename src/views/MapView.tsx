@@ -191,7 +191,7 @@ const homeIcon = L.divIcon({
 
 const stopIcon = (n: number) => L.divIcon({
   className: '',
-  html: `<div style="width:28px;height:28px;border-radius:50%;background:#946239;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:white;font-family:sans-serif;">${n}</div>`,
+  html: `<div style="width:28px;height:28px;border-radius:50%;background:#176f77;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:white;font-family:sans-serif;">${n}</div>`,
   iconSize: [28, 28], iconAnchor: [14, 14],
 });
 
@@ -792,7 +792,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
                 <div style={{ padding: '2px 0', lineHeight: 1.2 }}>
                   <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company}</p>
                   <button onClick={() => toggle(c.id)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, width: '100%', padding: '3px 6px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', background: selected ? '#fee2e2' : '#946239', color: selected ? '#dc2626' : '#fff', border: 'none', cursor: 'pointer' }}>
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, width: '100%', padding: '3px 6px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', background: selected ? '#fee2e2' : '#176f77', color: selected ? '#dc2626' : '#fff', border: 'none', cursor: 'pointer' }}>
                     {selected ? '− Rimuovi' : '+ Aggiungi'}
                   </button>
                 </div>
@@ -826,7 +826,7 @@ const ItinerarioView: React.FC<ItinerarioViewProps> = ({ contacts, onClose, isVi
             );
           })}
           {roadRouteCoords.length > 1 && (
-            <Polyline positions={roadRouteCoords} pathOptions={{ color: '#946239', weight: 5, opacity: 0.85 }} />
+            <Polyline positions={roadRouteCoords} pathOptions={{ color: '#176f77', weight: 5, opacity: 0.85 }} />
           )}
         </MapContainer>
 
@@ -1633,7 +1633,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   // ── NORMAL MODE ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-[calc(100dvh-140px)] md:h-[calc(100vh-70px)]">
+    <div className="flex flex-col h-[calc(100dvh-140px)] md:h-[calc(100vh-88px)]">
 
       {/* ── Header compatto ── */}
       <div className="bg-surface dark:bg-surface rounded-[1.5rem] px-4 py-3 shadow-sm border border-line dark:border-line mb-3 flex-shrink-0">
@@ -1980,7 +1980,7 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
 
         {/* Legenda colori */}
-        <div className="absolute top-3 left-3 z-[400] bg-surface/90 dark:bg-canvas/90 backdrop-blur-sm rounded-md px-3 py-2 shadow pointer-events-none">
+        <div className="absolute top-3 left-14 z-[400] bg-surface/90 dark:bg-canvas/90 backdrop-blur-sm rounded-md px-3 py-2 shadow pointer-events-none">
           <div className="space-y-1">
             {([
               { category: 'cliente', label: 'Cliente' },

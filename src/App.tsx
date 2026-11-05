@@ -172,7 +172,7 @@ function AppContent() {
     <div className={`min-h-screen text-foreground ${theme === 'dark' ? 'dark bg-canvas' : 'bg-canvas'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-surface dark:bg-surface border-r border-line dark:border-line hidden md:flex flex-col z-20">
+      <aside className="cockpit-sidebar fixed left-0 top-0 h-screen w-64 bg-surface dark:bg-surface border-r border-line dark:border-line hidden md:flex flex-col z-20">
         <div className="px-7 py-7">
           <Wordmark className="text-3xl" />
         </div>
@@ -217,8 +217,12 @@ function AppContent() {
       </header>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-canvas dark:bg-canvas">
-        <div style={accentStyle} className={currentView === 'map' ? 'p-2 md:p-3' : 'p-4 md:p-8 max-w-7xl mx-auto'}>
+      <main className="cockpit-main md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-canvas dark:bg-canvas">
+        <div className="cockpit-topbar hidden md:flex">
+          <div><span>Area di lavoro</span><span aria-hidden="true" className="cockpit-topbar-separator">/</span><strong>{baseNavItems.find(item => item.id === currentView)?.label || 'CRM'}</strong></div>
+          <span className="cockpit-topbar-date">{new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+        </div>
+        <div style={accentStyle} className={currentView === 'map' ? 'cockpit-content cockpit-map p-2 md:p-3' : 'cockpit-content p-4 md:p-8 max-w-7xl mx-auto'}>
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>

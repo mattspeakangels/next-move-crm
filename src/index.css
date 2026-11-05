@@ -110,3 +110,62 @@ table,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Sales Cockpit: a calm, legible blue and green workspace. */
+:root {
+  --syrio-canvas: 239 244 244; --syrio-surface: 255 255 255; --syrio-raised: 232 241 240;
+  --syrio-line: 213 228 226; --syrio-foreground: 20 44 52; --syrio-secondary: 70 99 101;
+  --syrio-muted: 91 117 117; --syrio-accent: 26 119 119; --syrio-accent-soft: 222 244 237;
+  --syrio-action: 26 91 109; --syrio-action-hover: 19 73 90; --syrio-action-foreground: 255 255 255;
+  --syrio-radius: .75rem; --syrio-radius-control: .5rem; --syrio-shadow: 0 4px 18px rgb(19 58 65 / .05);
+  --syrio-editorial-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --syrio-chart-1: #238c88; --syrio-chart-2: #286d9a; --syrio-chart-3: #57bca2; --syrio-chart-4: #5398b0;
+  --syrio-chart-5: #19546b; --syrio-chart-6: #80c9bc; --syrio-chart-7: #608a9f; --syrio-chart-8: #96cbb5;
+}
+.dark {
+  --syrio-canvas: 11 28 36; --syrio-surface: 17 39 47; --syrio-raised: 25 51 59;
+  --syrio-line: 48 75 80; --syrio-foreground: 231 244 242; --syrio-secondary: 187 211 208;
+  --syrio-muted: 157 187 183; --syrio-accent: 111 216 187; --syrio-accent-soft: 26 66 65;
+  --syrio-action: 61 156 150; --syrio-action-hover: 86 184 171; --syrio-action-foreground: 7 31 36;
+  --syrio-chart-1: #6bd5b7; --syrio-chart-2: #74b5dd; --syrio-chart-3: #46b29f; --syrio-chart-4: #73c5d0;
+}
+h1 { font-weight: 750; letter-spacing: -.035em; }
+.syrio-wordmark { font-weight: 800; letter-spacing: .08em; }
+.cockpit-sidebar { background: #102c40; border-color: #244b59; }
+.cockpit-sidebar .syrio-wordmark { color: #78ddc1; }
+.cockpit-sidebar nav button { color: #bbd4d4; }
+.cockpit-sidebar nav button:hover { background: #214a5a; color: #fff; }
+.cockpit-sidebar nav button[aria-current="page"] { background: #285769; color: #d3fff1; border-color: #39776f; }
+.syrio-hero { position: relative; overflow: hidden; min-height: 11rem; border: 0; background: linear-gradient(115deg, #12394f, #17605e); color: #fff; }
+.syrio-hero h1 { font-size: clamp(1.65rem, 3vw, 2.35rem); max-width: 40rem; font-weight: 750; }
+.cockpit-hero-accent { color: #78ddc1; }
+@media (max-width: 767px) { .syrio-hero { min-height: 0; padding: 1.35rem; } .syrio-hero h1 { font-size: 1.5rem; } }
+.syrio-login-landscape {
+  background: radial-gradient(circle at 75% 20%, rgb(69 191 162 / .22), transparent 38%), linear-gradient(145deg, #102c40, #175c60);
+  color: #effbf8;
+}
+.syrio-login-landscape .syrio-wordmark { color: #78ddc1; }
+.syrio-login-landscape .syrio-tagline { color: #b5dcda; }
+
+/* A shared workspace frame keeps every section visually consistent. */
+.cockpit-topbar { min-height: 4rem; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 2rem; background: rgb(var(--syrio-surface)); border-bottom: 1px solid rgb(var(--syrio-line)); color: rgb(var(--syrio-muted)); font-size: .8125rem; }
+.cockpit-topbar strong { color: rgb(var(--syrio-foreground)); font-weight: 700; }
+.cockpit-topbar-separator { padding: 0 .75rem; opacity: .55; }
+.cockpit-topbar-date { text-transform: capitalize; }
+.cockpit-content { min-width: 0; }
+.cockpit-content h1 { line-height: 1.2; }
+.cockpit-content :where(input:not([type='checkbox']):not([type='radio']), select, textarea) { border-radius: .625rem; }
+.cockpit-content :where(input, select, textarea) { transition: border-color .15s ease, box-shadow .15s ease; }
+.cockpit-content :where(input, select, textarea):focus-visible { outline-color: rgb(var(--syrio-accent)); }
+.cockpit-content :where(table) { width: 100%; }
+.cockpit-content :where(th) { letter-spacing: .04em; }
+.cockpit-content :where(.shadow-sm, .shadow-panel) { box-shadow: 0 4px 18px rgb(17 61 68 / .055); }
+.cockpit-content :where(.rounded-panel) { border-radius: .75rem; }
+.cockpit-content :where(button) { transition-duration: .15s; }
+.cockpit-main nav[aria-label] { min-width: 0; }
+@media (max-width: 767px) {
+  .cockpit-content:not(.cockpit-map) { padding: 1rem; }
+  .cockpit-content h1 { font-size: 1.5rem; }
+  .cockpit-main { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+  .cockpit-main + nav { height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 -4px 20px rgb(16 44 64 / .06); }
+}
