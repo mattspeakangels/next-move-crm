@@ -264,3 +264,5 @@ html { touch-action: pan-x pan-y; }
 }
 .cockpit-results-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; font-family: 'Manrope', sans-serif; font-size: .875rem; font-weight: 700; color: rgb(var(--syrio-foreground)); }
 .cockpit-results-heading span:last-child { color: rgb(var(--syrio-muted)); font-family: inherit; font-size: .75rem; font-weight: 600; white-space: nowrap; }
+
+.customer-work-heading{list-style:none}.customer-work-heading::-webkit-details-marker{display:none}.customer-work-card[open] .customer-work-heading{border-bottom:1px solid rgb(var(--syrio-line))}.customer-work-avatar{display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;border-radius:9px;background:rgb(var(--syrio-accent-soft));color:rgb(var(--syrio-accent));font-weight:750;font-size:15px}

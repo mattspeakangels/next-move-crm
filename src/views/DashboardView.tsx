@@ -1,3 +1,4 @@
+import { groupCustomerWork, todoDeadline, UNASSIGNED_CUSTOMER } from '../lib/customerWork';
 import { useState } from 'react';
 import { Panel } from '../components/ui/Syrio';
 import { useStore } from '../store/useStore';
@@ -6,7 +7,6 @@ import {
   Users,
   Target,
   CheckCircle2,
-  AlarmClock,
   Zap,
   Phone,
   Mail,
@@ -271,9 +271,10 @@ function getCoachSuggestion(
 
 interface DashboardProps {
   onNavigate?: (view: import('../types').NavView) => void;
+  onNavigateToContact?: (contactId: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToContact }) => {
   const storeState = useStore();
   const { contacts, deals, offers, assets, updateDeal, profile, addActivity } = storeState;
   const vitality = selectVitality(storeState);
@@ -304,7 +305,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     .filter(d => d.nextActionDeadline && daysDiff(d.nextActionDeadline) >= 0 && daysDiff(d.nextActionDeadline) <= 2)
     .sort((a, b) => a.nextActionDeadline - b.nextActionDeadline);
 
-  const todayDeals = [...urgentDeals, ...soonDeals];
+  const customerGroups = groupCustomerWork(contacts, activeDeals, Object.values(storeState.todos));
 
   // NextActionModal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -402,8 +403,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       <section className="syrio-hero flex flex-col justify-center">
         <p className="text-sm text-white/90 mb-3">{profile?.name ? `Buongiorno ${profile.name.split(' ')[0]}` : 'La tua giornata commerciale'}</p>
-        <h1>Le tue prossime mosse, <span className="cockpit-hero-accent">a colpo d’occhio.</span></h1>
-        <p className="text-sm text-white/80 mt-4">{urgentDeals.length} azioni scadute · {soonDeals.length} entro 48 ore</p>
+        <h1>I clienti da seguire, <span className="cockpit-hero-accent">a colpo d’occhio.</span></h1>
+        <p className="text-sm text-white/80 mt-4">{customerGroups.filter(g=>g.id!==UNASSIGNED_CUSTOMER).length} clienti con un prossimo passo · {urgentDeals.length} azioni della pipeline scadute</p>
       </section>
       <section className="syrio-dashboard-kpis grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Panoramica commerciale">
         {[
@@ -414,100 +415,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         ].map(({ label, value, icon: Icon }) => <Panel key={label} className="cockpit-kpi"><div className="cockpit-kpi-heading"><span>{label}</span><span className="cockpit-kpi-icon"><Icon size={18} /></span></div><p className="cockpit-kpi-value tabular-nums">{value}</p></Panel>)}
       </section>
       <section className="syrio-dashboard-actions">
-      {/* ── Da Fare Oggi ── */}
-      {todayDeals.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <AlarmClock size={14} className="text-danger" />
-            <h2 className="text-lg font-medium text-foreground">Le tue prossime mosse</h2>
-          </div>
-
-          <div className="space-y-3">
-            {todayDeals.map(deal => {
-              const diff = daysDiff(deal.nextActionDeadline);
-              const isOverdue = diff < 0;
-              const company = contacts[deal.contactId]?.company ?? '—';
-
-              return (
-                <div
-                  key={deal.id}
-                  className={`rounded-panel border overflow-hidden ${
-                    isOverdue
-                      ? 'border-danger/40 bg-surface'
-                      : 'border-warning/40 bg-surface'
-                  }`}
-                >
-                  {/* Card top */}
-                  <div className="p-4">
-                    {/* Badge */}
-                    <div className="flex items-center gap-2 mb-2">
-                      {isOverdue ? (
-                        <span className="bg-danger text-status-foreground text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                          URGENTE — FAI ORA
-                        </span>
-                      ) : (
-                        <span className="bg-warning text-warning text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                          ENTRO {diff === 0 ? 'OGGI' : `${diff + 1}GG`}
-                        </span>
-                      )}
-                      <span className="text-xs text-muted font-bold ml-auto">
-                        {formatDate(deal.nextActionDeadline)}
-                      </span>
-                    </div>
-
-                    {/* Company + action */}
-                    <p className="font-semibold text-sm text-foreground dark:text-foreground">{company}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      {deal.nextActionType && (
-                        <span className="text-accent">{ACTION_ICON[deal.nextActionType]}</span>
-                      )}
-                      <p className="text-xs text-secondary dark:text-muted font-bold truncate">
-                        {deal.nextAction || 'Nessuna azione definita'}
-                      </p>
-                    </div>
-                    <p className="text-xs text-muted mt-0.5">
-                      €{(deal.value / 1000).toFixed(0)}k · {deal.stage}
-                    </p>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex border-t-2 border-current border-opacity-10 divide-x divide-current divide-opacity-10"
-                    style={{ borderColor: isOverdue ? '#fca5a5' : '#fde68a' }}>
-                    {/* ✓ Done */}
-                    <button
-                      onClick={() => handleDone(deal)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors ${
-                        isOverdue
-                          ? 'text-danger hover:bg-danger-soft dark:hover:bg-danger-soft'
-                          : 'text-warning hover:bg-warning-soft dark:hover:bg-warning-soft'
-                      }`}
-                    >
-                      <CheckCircle2 size={14} /> Fatto
-                    </button>
-
-                    {/* Snooze chips */}
-                    {SNOOZE_DAYS.map(days => (
-                      <button
-                        key={days}
-                        onClick={() => handleSnooze(deal, days)}
-                        className={`flex-1 py-3 text-xs font-semibold transition-colors ${
-                          isOverdue
-                            ? 'text-danger hover:bg-danger-soft dark:hover:bg-danger-soft'
-                            : 'text-warning hover:bg-warning-soft dark:hover:bg-warning-soft'
-                        }`}
-                      >
-                        +{days}gg
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {todayDeals.length === 0 && <Panel className="p-5"><h2 className="text-lg font-medium">Le tue prossime mosse</h2><p className="text-sm text-muted mt-2">Nessuna azione in scadenza nelle prossime 48 ore.</p><button onClick={() => onNavigate?.('deals')} className="text-accent text-sm mt-3">Consulta la pipeline <ChevronRight size={14} className="inline" /></button></Panel>}
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-3"><div><h2 className="text-lg font-semibold text-foreground">Clienti da seguire</h2><p className="text-xs text-muted mt-1">Apri un cliente per vedere insieme richieste e prossime azioni.</p></div><button onClick={()=>onNavigate?.('todo')} className="text-xs font-semibold text-accent">Vedi tutte le attività →</button></div>
+      {customerGroups.length===0 ? <Panel className="p-5"><p className="text-sm text-muted">Nessun cliente ha attività aperte o prossime azioni. Aggiungi un’attività per iniziare.</p><button onClick={()=>onNavigate?.('todo')} className="text-accent text-sm mt-3">Apri To Do →</button></Panel> : <div className="space-y-3">{customerGroups.map((group,index)=><details key={group.id} className="customer-work-card bg-surface border border-line rounded-panel overflow-hidden" open={index===0}>
+        <summary className="customer-work-heading cursor-pointer p-4 flex items-center gap-3"><span className="customer-work-avatar">{group.id===UNASSIGNED_CUSTOMER?'?':group.name.trim().charAt(0).toUpperCase()}</span><span className="min-w-0 flex-1"><strong className="block text-sm text-foreground">{group.name}</strong><span className="text-xs text-muted">{group.deals.length+group.todos.length} {group.deals.length+group.todos.length===1?'cosa da seguire':'cose da seguire'}</span></span><span className="text-xs font-semibold text-accent">Dettagli ▾</span></summary>
+        <div className="px-4 pb-4 space-y-2"><div className="flex justify-end">{group.id!==UNASSIGNED_CUSTOMER&&<button className="text-xs font-semibold text-accent" onClick={()=>onNavigateToContact?.(group.id)}>Apri scheda cliente →</button>}</div>
+        {group.todos.map(todo=><div key={todo.id} className="rounded-md border border-line p-3 flex items-start gap-3"><button type="button" aria-label={'Completa '+todo.titolo} onClick={()=>storeState.updateTodo(todo.id,{status:'fatto',completedAt:Date.now()})} className="mt-0.5 text-accent"><CheckCircle2 size={18}/></button><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-foreground">{todo.titolo}</p><p className="text-xs text-muted mt-1">{Number.isFinite(todoDeadline(todo.scadenza))?'Scadenza '+new Date(todoDeadline(todo.scadenza)).toLocaleDateString('it-IT'):'Senza scadenza'} · {todo.priorita==='alta'?'Priorità alta':todo.priorita==='bassa'?'Priorità bassa':'Priorità normale'}</p></div><button onClick={()=>onNavigate?.('todo')} className="text-xs text-accent">To Do →</button></div>)}
+        {group.deals.map(deal=><div key={deal.id} className="rounded-md border border-line p-3"><div className="flex items-start gap-2"><span className="text-accent mt-0.5">{deal.nextActionType&&ACTION_ICON[deal.nextActionType]}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">{deal.nextAction}</p><p className="text-xs text-muted mt-1">Opportunità · {deal.nextActionDeadline?formatDate(deal.nextActionDeadline):'Senza scadenza'} · {deal.stage}</p></div></div><div className="flex flex-wrap gap-2 mt-3"><button onClick={()=>handleDone(deal)} className="text-xs font-semibold text-accent">Registra esito</button>{SNOOZE_DAYS.map(days=><button key={days} onClick={()=>handleSnooze(deal,days)} className="text-xs text-muted border border-line rounded px-2 py-1">+{days} gg</button>)}</div></div>)}
+        </div></details>)}</div>}
       </section>
       <div className="cockpit-dashboard-calendar"><DealCalendar deals={activeDeals} contacts={contacts} /></div>
       <div className="syrio-dashboard-secondary space-y-5">

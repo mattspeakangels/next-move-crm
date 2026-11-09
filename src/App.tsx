@@ -118,7 +118,7 @@ function AppContent() {
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard': return <Dashboard onNavigate={goTo} />;
+      case 'dashboard': return <Dashboard onNavigate={goTo} onNavigateToContact={navigateToContact} />;
       case 'contacts': return <ContactsView selectedContactId={selectedContactId} onClearSelectedContact={() => setSelectedContactId(null)} onNewOfferForContact={newOfferForContact} />;
       case 'deals': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       case 'offers': return <OffersView initialContactId={pendingNewOfferContactId} onInitialContactConsumed={() => setPendingNewOfferContactId(null)} />;
@@ -134,7 +134,7 @@ function AppContent() {
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
       case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
-      default: return <Dashboard onNavigate={goTo} />;
+      default: return <Dashboard onNavigate={goTo} onNavigateToContact={navigateToContact} />;
     }
   };
 
