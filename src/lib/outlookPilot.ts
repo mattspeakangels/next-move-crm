@@ -7,26 +7,30 @@ export interface OutlookMessage {
   from?: { emailAddress?: { name?: string; address?: string } };
 }
 
-const clientId = import.meta.env.VITE_MICROSOFT_CLIENT_ID as string | undefined;
+export const configuredClientId = (import.meta.env.VITE_MICROSOFT_CLIENT_ID as string | undefined)?.trim() || '';
 const scopes = ['Mail.ReadBasic'];
 let client: PublicClientApplication | undefined;
+let activeClientId = '';
 
-export const outlookConfigured = Boolean(clientId?.trim());
-
-async function getClient() {
-  if (!clientId?.trim()) throw new Error('Configurazione Microsoft mancante: serve un Application (client) ID autorizzato.');
-  if (!client) {
-    client = new PublicClientApplication({
-      auth: { clientId: clientId.trim(), authority: 'https://login.microsoftonline.com/organizations', redirectUri: window.location.origin },
+async function getClient(clientId?: string) {
+  const id = (clientId || activeClientId).trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    throw new Error('Inserisci un ID applicazione Microsoft valido.');
+  }
+  if (!client || activeClientId !== id) {
+    const next = new PublicClientApplication({
+      auth: { clientId: id, authority: 'https://login.microsoftonline.com/organizations', redirectUri: window.location.origin },
       cache: { cacheLocation: 'memoryStorage' },
     });
-    await client.initialize();
+    await next.initialize();
+    client = next;
+    activeClientId = id;
   }
   return client;
 }
 
-export async function connectOutlook(): Promise<AccountInfo> {
-  const msal = await getClient();
+export async function connectOutlook(clientId: string): Promise<AccountInfo> {
+  const msal = await getClient(clientId);
   const result = await msal.loginPopup({ scopes, prompt: 'select_account' });
   if (!result.account) throw new Error('Microsoft non ha restituito un account.');
   return result.account;
