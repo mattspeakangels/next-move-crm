@@ -1,3 +1,7 @@
+import { CustomerRequestsSection } from '../components/contacts/CustomerRequestsSection';
+import { CustomerCommunications } from '../components/contacts/CustomerCommunications';
+import { DealCommercialDetails } from '../components/contacts/DealCommercialDetails';
+import { DealOperationalFlow } from '../components/contacts/DealOperationalFlow';
 import { showNotice, confirmAction } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -1502,6 +1506,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
               );
             })()}
 
+            {editingContact?.id && contacts[editingContact.id] && <CustomerCommunications contactId={editingContact.id} />}
+            {editingContact?.id && contacts[editingContact.id] && <CustomerRequestsSection contactId={editingContact.id} />}
+
             {/* SEZIONE 2 - Profilazione Blaklader (collassabile) */}
             {editingContact?.id && contacts[editingContact.id] && (
               <ProfilingCollapsible contact={contacts[editingContact.id]} />
@@ -1617,6 +1624,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
                 </section>
               );
             })()}
+
+            {editingContact?.id && contacts[editingContact.id] && Object.values(deals).filter(deal => deal.contactId === editingContact.id).map(deal => <div key={deal.id}><DealCommercialDetails deal={deal} /><DealOperationalFlow deal={deal} /></div>)}
 
             {/* SEZIONE 7 - Offerte (solo in modifica) */}
             {editingContact?.id && contacts[editingContact.id] && (

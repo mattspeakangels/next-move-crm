@@ -26,3 +26,13 @@ test('orders by earliest valid deadline and treats invalid dates as unscheduled'
   assert.equal(todoDeadline('2026-02-30'), Infinity);
   assert.equal(todoDeadline(undefined), Infinity);
 });
+test('open customer requests appear with their customer and influence deadline order', () => {
+  const requests = [
+    { id: 'r1', contactId: 'b', status: 'in_progress', dueDate: '2026-11-01', category: 'after_sales' },
+    { id: 'r2', contactId: 'a', status: 'closed', dueDate: '2026-10-01', category: 'marketing' },
+  ];
+  const groups = groupCustomerWork({ a: { company: 'Alfa' }, b: { company: 'Beta' } }, [], [{ id: 't', contactId: 'a', status: 'da-fare', scadenza: '2026-11-10' }], requests);
+  assert.deepEqual(groups.map(group => group.id), ['b', 'a']);
+  assert.deepEqual(groups[0].requests.map(request => request.id), ['r1']);
+  assert.equal(groups[1].requests.length, 0);
+});

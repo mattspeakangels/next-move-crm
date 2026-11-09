@@ -1,9 +1,15 @@
+import type { CustomerRequest } from '../types/customerRequest';
+import type { CustomerCommunication } from '../types/customerCommunication';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry, Group, StrategicFocus } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
 interface StoreState {
+  customerCommunications: Record<string, CustomerCommunication>;
+  saveCustomerCommunication: (item: CustomerCommunication) => void;
+  customerRequests: Record<string, CustomerRequest>;
+  saveCustomerRequest: (request: CustomerRequest) => void;
   contacts: Record<string, Contact>;
   deals: Record<string, Deal>;
   offers: Record<string, Offer>;
@@ -140,6 +146,10 @@ function syncCustomerType(contact: Contact): Contact {
 export const useStore = create<StoreState>()(
   persist(
     (set) => ({
+      customerCommunications: {},
+      saveCustomerCommunication: (item) => set(state => ({ customerCommunications: { ...state.customerCommunications, [item.id]: item } })),
+      customerRequests: {},
+      saveCustomerRequest: (request) => set((state) => ({ customerRequests: { ...state.customerRequests, [request.id]: request } })),
       contacts: {},
       deals: {},
       offers: {},
@@ -425,6 +435,8 @@ export const useStore = create<StoreState>()(
       name: 'next-move-storage',
       storage: createJSONStorage(() => idbStorage),
       partialize: (state) => ({
+        customerCommunications: state.customerCommunications,
+        customerRequests: state.customerRequests,
         contacts: state.contacts,
         deals: state.deals,
         offers: state.offers,

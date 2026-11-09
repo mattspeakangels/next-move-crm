@@ -1,0 +1,30 @@
+import { useState } from 'react';
+import type { Deal } from '../../types';
+import type { CommercialDetails, CommercialLine } from '../../types/dealDetails';
+import { useStore } from '../../store/useStore';
+
+const input = 'w-full border border-line rounded-md p-2 bg-canvas text-foreground text-sm';
+const emptyLine = (): CommercialLine => ({ id: crypto.randomUUID(), product: '', variant: '', quantity: '', dealerPrice: '', suggestedPrice: '', endUserPrice: '' });
+const initial = (deal: Deal): CommercialDetails => deal.commercialDetails ?? { dealerId: '', endUserId: '', salesMode: 'direct', tenderDeadline: '', competitor: '', lines: [], notes: '' };
+
+export function DealCommercialDetails({ deal }: { deal: Deal }) {
+  const { contacts, updateDeal } = useStore();
+  const [draft, setDraft] = useState(() => initial(deal));
+  const [editing, setEditing] = useState(false);
+  const setLine = (id: string, patch: Partial<CommercialLine>) => setDraft(d => ({ ...d, lines: d.lines.map(line => line.id === id ? { ...line, ...patch } : line) }));
+  const save = () => { updateDeal(deal.id, { commercialDetails: draft, updatedAt: Date.now() }); setEditing(false); };
+  return <details className="mt-2 rounded-md border border-line p-3">
+    <summary className="cursor-pointer text-sm font-semibold">Dettagli commerciali · {deal.nomeStorico || deal.nextAction || deal.stage} · €{deal.value.toLocaleString('it-IT')}</summary>
+    {!editing ? <div className="mt-3 space-y-2 text-sm"><p>{draft.salesMode === 'tender' ? 'Vendita con gara' : 'Vendita senza gara'}{draft.tenderDeadline && draft.salesMode === 'tender' ? ` · Scadenza ${draft.tenderDeadline}` : ''}</p><p>Dealer: {contacts[draft.dealerId]?.company || 'Non indicato'} · Utilizzatore: {contacts[draft.endUserId]?.company || 'Non indicato'}</p><p>{draft.lines.length} righe prodotto</p><button type="button" className="text-accent" onClick={() => { setDraft(initial(deal)); setEditing(true); }}>Modifica dettagli</button></div> : <div className="mt-3 grid gap-3">
+      <label>Dealer facoltativo<select className={input} value={draft.dealerId} onChange={e => setDraft({ ...draft, dealerId: e.target.value })}><option value="">Non indicato</option>{Object.values(contacts).map(c => <option key={c.id} value={c.id}>{c.company}</option>)}</select></label>
+      <label>Utilizzatore finale<select className={input} value={draft.endUserId} onChange={e => setDraft({ ...draft, endUserId: e.target.value })}><option value="">Non indicato</option>{Object.values(contacts).map(c => <option key={c.id} value={c.id}>{c.company}</option>)}</select></label>
+      <label>Modalità<select className={input} value={draft.salesMode} onChange={e => setDraft({ ...draft, salesMode: e.target.value as CommercialDetails['salesMode'] })}><option value="direct">Senza gara</option><option value="tender">Con gara</option></select></label>
+      {draft.salesMode === 'tender' && <label>Scadenza gara<input type="date" className={input} value={draft.tenderDeadline} onChange={e => setDraft({ ...draft, tenderDeadline: e.target.value })}/></label>}
+      <label>Concorrente<input className={input} value={draft.competitor} onChange={e => setDraft({ ...draft, competitor: e.target.value })}/></label>
+      <div className="space-y-3"><strong>Prodotti e prezzi</strong>{draft.lines.map((line, i) => <div key={line.id} className="grid gap-2 border border-line p-3 rounded-md"><strong>Articolo {i + 1}</strong>{([['product','Prodotto'], ['variant','Variante'], ['quantity','Quantità'], ['dealerPrice','Prezzo dealer'], ['suggestedPrice','Prezzo consigliato facoltativo'], ['endUserPrice','Prezzo finale solo se noto']] as const).map(([key,label]) => <label key={key} className="text-sm">{label}<input className={input} type={key === 'product' || key === 'variant' ? 'text' : 'number'} min={key === 'product' || key === 'variant' ? undefined : 0} step="any" value={line[key]} onChange={e => setLine(line.id, { [key]: e.target.value })}/></label>)}<button type="button" className="text-danger text-sm" onClick={() => setDraft({ ...draft, lines: draft.lines.filter(l => l.id !== line.id) })}>Rimuovi articolo</button></div>)}<button type="button" className="text-accent text-sm" onClick={() => setDraft({ ...draft, lines: [...draft.lines, emptyLine()] })}>+ Aggiungi articolo</button></div>
+      <fieldset className="border border-line rounded-md p-3 grid gap-2"><legend className="font-semibold">Personalizzazione VAS</legend><label>Gestione<select className={input} value={draft.vas?.managedBy ?? ''} onChange={e => { const managedBy = e.target.value as 'blaklader' | 'dealer' | 'customer' | ''; setDraft({ ...draft, vas: managedBy ? { technique: '', logo: '', position: '', dimensions: '', colours: '', quantity: '', moq: '', processing: '', setupCost: '', discount: '', ...draft.vas, managedBy, ...(managedBy !== 'blaklader' ? { setupCost: '', discount: '' } : {}) } : null }); }}><option value="">Non prevista / da definire</option><option value="blaklader">Blåkläder</option><option value="dealer">Dealer</option><option value="customer">Cliente</option></select></label>{draft.vas && ([['technique','Tecnica'], ['logo','Logo'], ['position','Posizione'], ['dimensions','Dimensioni'], ['colours','Colori'], ['quantity','Quantità'], ['moq','MOQ o scaglione'], ['processing','Lavorazione'], ...(draft.vas.managedBy === 'blaklader' ? [['setupCost','Costo cliché'], ['discount','Sconto']] as const : [])] as const).map(([key, label]) => <label key={key} className="text-sm">{label}<input className={input} value={draft.vas?.[key] ?? ''} onChange={e => setDraft(d => d.vas ? { ...d, vas: { ...d.vas, [key]: e.target.value } } : d)} /></label>)}</fieldset>
+      <label>Note commerciali<textarea className={input} value={draft.notes} onChange={e => setDraft({ ...draft, notes: e.target.value })}/></label>
+      <div className="flex gap-3"><button type="button" className="bg-accent text-white rounded-md px-3 py-2" onClick={save}>Salva</button><button type="button" onClick={() => { setDraft(initial(deal)); setEditing(false); }}>Annulla</button></div>
+    </div>}
+  </details>;
+}

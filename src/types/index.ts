@@ -226,6 +226,8 @@ export interface Deal {
   nomeStorico?: string;
   orderPdfUrl?: string;
   orderPdfName?: string;
+  commercialDetails?: import('./dealDetails').CommercialDetails;
+  operationalFlow?: import('./dealDetails').OperationalFlow;
 }
 
 export interface Activity {
