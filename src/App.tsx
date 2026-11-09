@@ -177,7 +177,7 @@ function AppContent() {
           <Wordmark className="text-3xl" />
         </div>
         <div className="cockpit-nav-label">Area di lavoro</div>
-        <nav aria-label="Navigazione principale" className="flex-1 px-4 space-y-1 overflow-y-auto">
+        <nav aria-label="Navigazione principale" className="flex-1 min-h-0 px-4 space-y-1 overflow-y-auto no-scrollbar">
           {historyRef.current.length > 0 && (
             <button onClick={goBack} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-normal rounded-panel transition-all text-muted hover:bg-canvas dark:hover:bg-raised dark:hover:text-foreground mb-2 border border-line dark:border-line">
               <ChevronLeft size={20} /> Indietro
