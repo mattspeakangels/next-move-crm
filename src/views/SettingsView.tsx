@@ -11,6 +11,7 @@ import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 import { GmailIntegration } from '../components/settings/GmailIntegration';
+import { OutlookPilot } from '../components/settings/OutlookPilot';
 import { downloadBackup, restoreBackupFromFile } from '../lib/backup';
 import { Download, Upload } from 'lucide-react';
 
@@ -932,6 +933,7 @@ export const SettingsView: React.FC = () => {
       <ClaudeApiKeySection />
       <MicrophonePermissionSection />
       <GmailIntegration />
+      <OutlookPilot />
       <PuliziaTerritorio />
       <AppUpdateSection />
 
