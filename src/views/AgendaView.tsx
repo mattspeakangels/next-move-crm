@@ -5,7 +5,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw, Route } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../types';
-import { callGeminiClient } from '../lib/geminiClient';
+import { runAiTask, type CloseVisitType } from '../lib/aiTasks';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
@@ -344,7 +344,6 @@ interface AgendaViewProps {
   onViewItinerary?: (date: string) => void;
 }
 
-type CloseVisitType = 'prima-visita' | 'follow-up' | 'offerta' | 'chiamata';
 
 export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onViewItinerary }) => {
   const {
@@ -519,64 +518,18 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
 
   const analyzeResoconto = async () => {
     if (!closeNotes.trim()) return;
-    const apiKey = useStore.getState().claudeApiKey.trim();
-    if (!apiKey) { setAiError('API Key assente. Vai in Impostazioni → Gemini AI e inserisci la tua chiave Gemini.'); return; }
 
     setAiAnalyzing(true);
     setAiError(null);
     setAiTodos([]);
 
-    const today = new Date().toISOString().split('T')[0];
     const contactName = closingActivity?.contactId ? contacts[closingActivity.contactId]?.company ?? '' : '';
 
-    const visitContext: Record<CloseVisitType, string> = {
-      'prima-visita': `prima visita commerciale / demo prodotto. Estrai tutte le azioni concrete emerse (offerte, campionature, schede tecniche, appuntamenti di follow-up, ecc.). Presta attenzione a eventuali impegni presi con il cliente.`,
-      'follow-up': `visita di follow-up / ricontatto. Estrai le azioni di continuità: invii promessi, conferme, appuntamenti successivi, eventuali offerte da aggiornare.`,
-      'offerta': `visita per presentazione/consegna offerta o quotazione. Estrai le azioni legate alla trattativa: follow-up sull'offerta, richieste di modifica prezzi, date di risposta attese dal cliente.`,
-      'chiamata': `chiamata telefonica o email. Estrai solo le azioni concrete emerse: risposte da dare, materiali da inviare, appuntamenti da fissare.`,
-    };
-
     try {
-      const prompt = `Sei un assistente per un agente commerciale Blaklader (workwear premium).
-Data oggi: ${today}. Cliente: "${contactName}".
-Tipo di contatto: ${visitContext[derivedVisitType]}
-
-Dal seguente resoconto, estrai TUTTE le azioni concrete da fare.
-Per ogni azione specifica una data di esecuzione (quando farlo) e una scadenza massima, basandoti sulle urgenze menzionate nel testo.
-
-RESOCONTO:
----
-${closeNotes}
----
-
-Rispondi SOLO con un array JSON valido:
-[
-  {
-    "titolo": "descrizione concisa dell'azione",
-    "tipo": "offerta"|"scheda-tecnica"|"email-info"|"chiamata-follow"|"campionatura"|"demo"|"visita"|"altro",
-    "priorita": "alta"|"media"|"bassa",
-    "dataEsecuzione": "YYYY-MM-DD",
-    "scadenza": "YYYY-MM-DD",
-    "note": "dettaglio utile (opzionale, stringa vuota se non necessario)"
-  }
-]
-
-Regole:
-- "alta" se c'è urgenza esplicita (entro oggi/domani/48h/fine settimana)
-- "media" se entro 1-2 settimane
-- "bassa" se non c'è urgenza definita
-- dataEsecuzione = quando iniziare; scadenza = deadline massima
-- Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
-- Includi SOLO azioni concrete, non osservazioni generiche
-
-Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
-- Usa "visita" quando si fissa un incontro di persona con il cliente a una data precisa (es. "fissato appuntamento", "ci vediamo", "passo a trovarlo", "devo tornare/ripassare da lui")
-- Usa "chiamata-follow" quando si tratta di richiamarlo telefonicamente a una data precisa, senza incontro di persona
-- Usa "demo" quando si tratta di una dimostrazione prodotto pianificata a una data precisa
-- Qualsiasi frase che indica un impegno preso con il cliente per una data specifica (appuntamento, visita, richiamata, demo) DEVE avere dataEsecuzione valorizzata con la data esatta, non lasciata vuota
-- Per le date relative usa Data oggi come riferimento: "giovedì della prossima settimana" = il giovedì della settimana successiva a quella corrente (non della settimana in corso), "lunedì prossimo"/"martedì prossimo" ecc. = stessa logica`;
-
-      const raw = (await callGeminiClient(apiKey, prompt)).trim();
+      const raw = (await runAiTask({
+        type: 'analizza-resoconto',
+        data: { contactName, visitType: derivedVisitType, notes: closeNotes },
+      })).trim();
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Risposta non valida');
       const parsed: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] = JSON.parse(match[0]);
@@ -645,8 +598,6 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
   };
 
   const analyzeAllResoconti = async () => {
-    const apiKey = useStore.getState().claudeApiKey.trim();
-    if (!apiKey) { setBatchError('API Key assente. Vai in Impostazioni → Gemini AI e inserisci la tua chiave Gemini.'); return; }
     const batch = pendingBatchActivities.slice(0, MAX_BATCH_SIZE);
     if (batch.length === 0) return;
 
@@ -654,7 +605,6 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
     setBatchError(null);
     setBatchGroups([]);
 
-    const today = new Date().toISOString().split('T')[0];
     const items = batch.map(a => ({
       id: a.id,
       contactName: a.contactId ? contacts[a.contactId]?.company ?? '' : '',
@@ -663,50 +613,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
     }));
 
     try {
-      const prompt = `Sei un assistente per un agente commerciale Blaklader (workwear premium).
-Data oggi: ${today}.
-
-Di seguito trovi i resoconti di ${items.length} visite/appuntamenti commerciali GIA CONCLUSI, ognuno identificato da un "id" esatto. Per OGNUNO, estrai TUTTE le azioni concrete da fare (offerte, campionature, schede tecniche, follow-up, appuntamenti, ecc.), con data di esecuzione e scadenza basate sulle urgenze menzionate nel testo.
-
-VISITE:
----
-${items.map(it => `[id: ${it.id}] Cliente: "${it.contactName}" | Data visita: ${it.date}\nResoconto: ${it.notes}`).join('\n---\n')}
----
-
-Rispondi SOLO con un array JSON valido, UN elemento per OGNI id fornito (anche con "todos": [] se non ci sono azioni concrete), in questo formato:
-[
-  {
-    "id": "<id esatto fornito>",
-    "todos": [
-      {
-        "titolo": "descrizione concisa dell'azione",
-        "tipo": "offerta"|"scheda-tecnica"|"email-info"|"chiamata-follow"|"campionatura"|"demo"|"visita"|"altro",
-        "priorita": "alta"|"media"|"bassa",
-        "dataEsecuzione": "YYYY-MM-DD",
-        "scadenza": "YYYY-MM-DD",
-        "note": "dettaglio utile (opzionale, stringa vuota se non necessario)"
-      }
-    ]
-  }
-]
-
-Regole:
-- "alta" se c'è urgenza esplicita (entro oggi/domani/48h/fine settimana)
-- "media" se entro 1-2 settimane
-- "bassa" se non c'è urgenza definita
-- dataEsecuzione = quando iniziare; scadenza = deadline massima
-- Se il testo non menziona date, usa buon senso commerciale (offerta: 2gg, chiamata follow: 1 sett, campionatura: 2 sett)
-- Includi SOLO azioni concrete, non osservazioni generiche
-- Non omettere nessun id: se una visita non genera azioni, restituisci "todos": []
-
-Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
-- Usa "visita" quando si fissa un incontro di persona con il cliente a una data precisa (es. "fissato appuntamento", "ci vediamo", "passo a trovarlo", "devo tornare/ripassare da lui")
-- Usa "chiamata-follow" quando si tratta di richiamarlo telefonicamente a una data precisa, senza incontro di persona
-- Usa "demo" quando si tratta di una dimostrazione prodotto pianificata a una data precisa
-- Qualsiasi frase che indica un impegno preso con il cliente per una data specifica (appuntamento, visita, richiamata, demo) DEVE avere dataEsecuzione valorizzata con la data esatta, non lasciata vuota
-- Per le date relative usa Data oggi come riferimento: "giovedì della prossima settimana" = il giovedì della settimana successiva a quella corrente (non della settimana in corso), "lunedì prossimo"/"martedì prossimo" ecc. = stessa logica`;
-
-      const raw = (await callGeminiClient(apiKey, prompt, Math.min(8192, 500 + items.length * 300))).trim();
+      const raw = (await runAiTask({ type: 'analizza-resoconti', data: { items } })).trim();
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Risposta non valida');
       const parsed: { id: string; todos: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] }[] = JSON.parse(match[0]);

@@ -1,68 +1,14 @@
 import { apiAuthHeaders } from '../../lib/apiAuth';
 import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { callGeminiClient } from '../../lib/geminiClient';
+import { runAiTask } from '../../lib/aiTasks';
 import {
   Mic, Square, Sparkles, X, CheckCircle, AlertCircle,
   ChevronDown, ChevronUp, MessageSquare, Loader2, ClipboardList,
 } from 'lucide-react';
 import type { Contact, ProfilingData, Obiezione } from '../../types';
-import { useStore } from '../../store/useStore';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const DEALER_PAIN_POINTS = [
-  'Resi / difetti cucitura fornitore attuale',
-  'Mancanza DPI Cat. III',
-  'No supporto formativo ai venditori',
-  'Margini insufficienti',
-  'Gestione riordino macchinosa',
-  'Nessun portale B2B',
-  'No Brand premium riconoscibile',
-  'Clienti finali chiedono qualità superiore',
-  'Concorrenti zona trattano stesso brand',
-];
-
-const ENDUSER_PAIN_POINTS = [
-  'Capi si rompono/logorano troppo presto',
-  'Reclami RSPP su DPI non conformi',
-  'Gestione taglie caotica',
-  'Nessun controllo TCO/spesa reale',
-  'Fornitore inaffidabile su consegne',
-  'No logo / immagine coordinata',
-  'Ispezione INAIL/ASL recente',
-  'Cambio DVR imminente',
-  'Nuovo cantiere / commessa PNRR',
-];
-
-const DEALER_PRODUCTS = [
-  'Pantaloni 1990 X1900 (bestseller)',
-  'Multinorma / Antifiamma (Cat. III)',
-  'Alta Visibilità Cl.2-3',
-  'Scarpe Elite / Striker (1970)',
-  'Softshell 4491',
-  'Linea Donna / Premaman',
-  'Guanti tecnici',
-  'B2B Webshop demo',
-  'Gamma freddo (3 strati)',
-  'Linea Service',
-];
-
-const ENDUSER_PRODUCTS = [
-  'Pantaloni 1990 X1900',
-  'Multinorma / Antifiamma (Cat. III)',
-  'Alta Visibilità Cl.2-3',
-  'Scarpe Elite / Striker',
-  'Giacca Softshell 4491',
-  'Linea Freddo (3 strati)',
-  'Guanti tecnici Cat. III',
-  'B2B Webshop demo',
-  'Schede EN per DVR RSPP',
-  'Linea Donna / Premaman',
-  'Personalizzazione logo',
-];
-
-const BRANDS = ['Diadora', 'U-Power', 'Snickers', 'E.Strauss', 'Cofra', 'Kapriol', 'Sparco', 'Mascot', 'Fristads', 'Portwest', 'Clique', 'Helly Hansen', 'Altro'];
 
 const CAT_BADGE: Record<Obiezione['categoria'], string> = {
   prezzo: 'bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger',
@@ -83,103 +29,6 @@ const CAT_LABEL: Record<Obiezione['categoria'], string> = {
   logistica: 'Logistica',
   altro: 'Altro',
 };
-
-// ─── Prompt builder ───────────────────────────────────────────────────────────
-
-function buildPrompt(transcript: string, isDealer: boolean, contactName: string): string {
-  const painList = isDealer ? DEALER_PAIN_POINTS : ENDUSER_PAIN_POINTS;
-  const productList = isDealer ? DEALER_PRODUCTS : ENDUSER_PRODUCTS;
-
-  const baseInstruction = `Sei un assistente commerciale per Blaklader Italia (workwear premium). Hai registrato una conversazione di vendita con "${contactName}", ${isDealer ? 'un RIVENDITORE/DEALER' : 'un CLIENTE FINALE (end-user azienda)'}.
-
-Dal trascritto seguente, estrai tutte le informazioni rilevanti per la scheda di profilazione e identifica le obiezioni sollevate.
-
-TRASCRITTO:
----
-${transcript}
----
-
-Rispondi SOLO con un oggetto JSON valido, senza testo aggiuntivo:`;
-
-  const qualShape = `{
-      "esigenzaReale": numero 1-5,
-      "decisionMaker": numero 1-5,
-      "aperturaFornitore": numero 1-5,
-      "timeline": numero 1-5,
-      "budget": numero 1-5
-    }`;
-
-  const obiezioniShape = `[
-    {
-      "testo": "l'obiezione esatta o parafrasata del cliente",
-      "categoria": "prezzo|fornitore-attuale|qualita|timing|brand|logistica|altro",
-      "risposta": "risposta commerciale suggerita specifica per Blaklader, max 2 righe"
-    }
-  ]`;
-
-  if (isDealer) {
-    return `${baseInstruction}
-
-{
-  "profiling": {
-    "segmento": ""|"A1"|"A2"|"A3"|"A4",
-    "numDipendenti": "es. 12",
-    "fatturatoEst": "es. €2M",
-    "percWorkwear": ""|"<5%"|"5-15%"|"15-30%"|">30%"|"Non dichiarato",
-    "brandAttuali": ["solo brand da questa lista: ${BRANDS.join(', ')}"],
-    "brandDominante": "brand principale citato",
-    "dpiCatIII": ""|"no"|"soloScarpe"|"siParziale"|"siCompleto",
-    "reclamiResi": ""|"no"|"si",
-    "reclamiMotivo": "...",
-    "painPoints": ["solo da questa lista esatta: ${painList.map(p => `"${p}"`).join(', ')}"],
-    "painPrioritario": "il problema principale emerso",
-    "fraseEsatta": "le parole più significative del cliente, virgolette",
-    "prodottiInteresse": ["solo da questa lista: ${productList.map(p => `"${p}"`).join(', ')}"],
-    "competitor": [{"brand": "...", "tone": "positivo|neutro|negativo"}],
-    "qualificazione": ${qualShape},
-    "noteQualificazione": "...",
-    "nextStepData": "azione/data concordata"
-  },
-  "obiezioni": ${obiezioniShape},
-  "riassunto": "2-3 righe che sintetizzano l'esito"
-}
-
-Regole: includi SOLO i campi dove hai trovato informazioni concrete. I painPoints devono corrispondere ESATTAMENTE alle stringhe della lista. Per la qualificazione: 1=molto sfavorevole, 5=molto favorevole. Non inventare nulla.`;
-  } else {
-    return `${baseInstruction}
-
-{
-  "profiling": {
-    "rsppNome": "...",
-    "respAcquisti": "...",
-    "numDipendentiTotali": "es. 85",
-    "numDipendentiDPI": "es. 60",
-    "fatturatoStimato": ""|"<1M€"|"1-5M€"|"5-20M€"|"20-100M€"|">100M€",
-    "livelloDPI": ""|"catI"|"catII"|"catIII"|"nonSanno",
-    "rischiSpecifici": ["Antifiamma","Arco elettrico","Schizzi metallo fuso","Rischio chimico","Alta visibilità","Lavoro in quota","Freddo / intemperie","Abrasione meccanica"],
-    "dvrAggiornato": ""|"si"|"no"|"nonSa",
-    "ispezioniRecenti": ""|"no"|"si",
-    "ispezioniEsito": "...",
-    "fornitoreAttuale": "es. U-Power tramite dealer locale",
-    "frequenzaRinnovo": ""|"Quando si rompe"|"Ogni 6 mesi"|"Annuale"|"Contratto quadro"|"Non definita",
-    "durataMediaCapo": "es. 8 mesi",
-    "spesaDipAnno": "es. €120",
-    "lamenteleLavoratori": "...",
-    "painPoints": ["solo da questa lista esatta: ${painList.map(p => `"${p}"`).join(', ')}"],
-    "painPrioritario": "il problema principale emerso",
-    "fraseEsatta": "le parole più significative del cliente",
-    "prodottiInteresse": ["solo da questa lista: ${productList.map(p => `"${p}"`).join(', ')}"],
-    "qualificazione": ${qualShape},
-    "noteQualificazione": "...",
-    "nextStepData": "azione/data concordata"
-  },
-  "obiezioni": ${obiezioniShape},
-  "riassunto": "2-3 righe che sintetizzano l'esito"
-}
-
-Regole: includi SOLO i campi dove hai trovato informazioni concrete. I painPoints devono corrispondere ESATTAMENTE alle stringhe della lista. Non inventare nulla.`;
-  }
-}
 
 // ─── Merge helper ─────────────────────────────────────────────────────────────
 
@@ -674,12 +523,6 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   // ── Claude Analysis ────────────────────────────────────────────────────────
 
   const analyze = async () => {
-    const apiKey = useStore.getState().claudeApiKey.trim();
-    if (!apiKey) {
-      setError('API Key assente. Vai in Impostazioni → Gemini AI e inserisci la tua chiave Gemini.');
-      return;
-    }
-
     shouldRecordRef.current = false;
     srRef.current?.stop();
     clearNoResultsTimer();
@@ -699,9 +542,10 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     setInterim('');
 
     try {
-      const prompt = buildPrompt(text, isDealer, contact.company);
-
-      const raw = (await callGeminiClient(apiKey, prompt, 2048)).trim();
+      const raw = (await runAiTask({
+        type: 'analizza-conversazione',
+        data: { transcript: text, isDealer, contactName: contact.company },
+      })).trim();
       const match = raw.match(/\{[\s\S]*\}/);
       if (!match) throw new Error('Risposta non valida da Gemini');
 
