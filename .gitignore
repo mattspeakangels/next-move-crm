@@ -39,3 +39,7 @@ ANALISI-SALESFORCE-VS-NEXTMOVE.md
 
 # DUO collaboration mailbox
 .duo/
+
+# Log e cache locali degli strumenti
+firestore-debug.log
+.serena/
