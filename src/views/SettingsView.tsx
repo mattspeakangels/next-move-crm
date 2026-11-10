@@ -2,7 +2,7 @@ import { confirmAction } from '../components/ui/Feedback';
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, Eye, EyeOff, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
 import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
 import { DEFAULT_SECTORS, sectorLabel } from '../lib/sectors';
@@ -16,6 +16,7 @@ import { WorkspaceSection } from '../components/settings/WorkspaceSection';
 import { useWorkspace } from '../lib/workspaceContext';
 import { canManage } from '../lib/workspace';
 import { downloadBackup, restoreBackupFromFile } from '../lib/backup';
+import { runAiTask } from '../lib/aiTasks';
 import { Download, Upload } from 'lucide-react';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
@@ -103,150 +104,62 @@ const AppUpdateSection: React.FC = () => {
   );
 };
 
-// ── Claude API Key Section ──────────────────────────────────────────────────
+// ── Assistente AI ───────────────────────────────────────────────────────────
+// La chiave Gemini sta sul server (variabile d'ambiente di Vercel): qui si può solo
+// verificare che il servizio risponda.
 
-const ClaudeApiKeySection: React.FC = () => {
-  const storedKey = useStore(s => s.claudeApiKey);
-  const setClaudeApiKey = useStore(s => s.setClaudeApiKey);
-  const [key, setKey] = useState(storedKey);
-  const [show, setShow] = useState(false);
-  const [saved, setSaved] = useState(false);
+const AiAssistantSection: React.FC = () => {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [testError, setTestError] = useState('');
 
-  const storedPreview = storedKey.length > 10
-    ? `${storedKey.slice(0, 14)}...${storedKey.slice(-4)}`
-    : '';
-
-  const handleSave = () => {
-    setClaudeApiKey(key.trim());
-    setSaved(true);
-    setTestStatus('idle');
-    setTimeout(() => setSaved(false), 2500);
-  };
-
-  const handleClear = () => {
-    setClaudeApiKey('');
-    setKey('');
-    setSaved(false);
-    setTestStatus('idle');
-  };
-
   const handleTest = async () => {
-    const k = storedKey.trim();
-    if (!k) { setTestStatus('fail'); setTestError('Nessuna chiave salvata'); return; }
     setTestStatus('testing');
     setTestError('');
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${k}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 5 } }),
-        },
-      );
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        throw new Error(`${res.status} ${body}`);
-      }
+      await runAiTask({ type: 'verifica-ai' });
       setTestStatus('ok');
-    } catch (e: any) {
+    } catch (e) {
       setTestStatus('fail');
-      const msg: string = e.message || '';
-      if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('API_KEY_INVALID')) {
-        setTestError('Chiave non valida. Genera una nuova key su aistudio.google.com');
-      } else if (msg.includes('Failed to fetch') || msg.includes('network')) {
-        setTestError('Errore di rete. Verifica la connessione internet.');
-      } else {
-        setTestError(msg || 'Errore sconosciuto');
-      }
+      const msg = e instanceof Error ? e.message : '';
+      setTestError(msg.includes('Failed to fetch')
+        ? 'Errore di rete. Verifica la connessione internet.'
+        : msg || 'Errore sconosciuto');
     }
   };
-
-  const hasKey = !!storedKey;
 
   return (
     <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles size={16} className="text-accent" />
-        <h2 className="text-xs font-semibold text-secondary dark:text-muted  ">Gemini AI — API Key</h2>
-        {hasKey && testStatus === 'idle' && (
-          <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success flex items-center gap-1">
-            <CheckCircle2 size={10} /> Salvata
-          </span>
-        )}
+        <h2 className="text-xs font-semibold text-secondary dark:text-muted  ">Assistente AI</h2>
         {testStatus === 'ok' && (
           <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-success-soft text-success dark:bg-success-soft dark:text-success flex items-center gap-1">
-            <CheckCircle2 size={10} /> Valida ✓
+            <CheckCircle2 size={10} /> Attivo
           </span>
         )}
         {testStatus === 'fail' && (
           <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-danger-soft text-danger dark:bg-danger-soft dark:text-danger">
-            ✗ Non valida
+            ✗ Non disponibile
           </span>
         )}
       </div>
 
-      {storedPreview && (
-        <p className="text-xs text-muted font-mono bg-canvas dark:bg-raised/50 rounded-lg px-3 py-1.5">
-          Salvata: <span className="text-secondary dark:text-muted">{storedPreview}</span>
-        </p>
-      )}
-
       <p className="text-xs text-muted dark:text-secondary">
-        Necessaria per registrazione conversazioni, analisi resoconto e funzionalità AI.
-        Ottienila gratis su <span className="font-mono text-accent">aistudio.google.com</span>.
+        Registrazione conversazioni, analisi dei resoconti e le altre funzioni AI sono gestite dal
+        server di Syrio: non serve inserire nessuna chiave su questo dispositivo.
       </p>
 
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <input
-            type={show ? 'text' : 'password'}
-            value={key}
-            onChange={e => { setKey(e.target.value); setSaved(false); setTestStatus('idle'); }}
-            placeholder="sk-ant-api03-..."
-            className="w-full text-sm border border-line dark:border-line rounded-md px-3 py-2.5 pr-10 bg-canvas dark:bg-raised dark:text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-          <button
-            type="button"
-            onClick={() => setShow(v => !v)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-secondary dark:hover:text-muted"
-          >
-            {show ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          onClick={handleSave}
-          disabled={!key.trim()}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md bg-action hover:bg-action-hover disabled:opacity-40 disabled:cursor-not-allowed text-action-foreground text-sm font-semibold transition-colors"
-        >
-          {saved ? <><CheckCircle2 size={15} /> Salvata!</> : 'Salva'}
-        </button>
-        <button
-          onClick={handleTest}
-          disabled={!hasKey || testStatus === 'testing'}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md border border-accent dark:border-accent text-accent dark:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold transition-colors"
-        >
-          {testStatus === 'testing' ? '...' : 'Testa'}
-        </button>
-        {hasKey && (
-          <button
-            onClick={handleClear}
-            className="px-4 py-2.5 rounded-md border border-danger dark:border-danger text-danger hover:bg-danger-soft dark:hover:bg-danger-soft text-sm font-semibold transition-colors"
-          >
-            <X size={15} />
-          </button>
-        )}
-      </div>
+      <button
+        onClick={handleTest}
+        disabled={testStatus === 'testing'}
+        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md border border-accent dark:border-accent text-accent dark:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold transition-colors"
+      >
+        {testStatus === 'testing' ? 'Verifica in corso…' : 'Verifica'}
+      </button>
 
       {testStatus === 'fail' && testError && (
         <p className="text-xs text-danger dark:text-danger bg-danger-soft dark:bg-danger-soft rounded-lg px-3 py-2">{testError}</p>
       )}
-
     </div>
   );
 };
@@ -941,7 +854,7 @@ export const SettingsView: React.FC = () => {
 
       <GroupLabel>Integrazioni & Strumenti</GroupLabel>
 
-      <ClaudeApiKeySection />
+      <AiAssistantSection />
       <MicrophonePermissionSection />
       <GmailIntegration />
       <OutlookPilot />
