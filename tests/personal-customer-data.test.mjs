@@ -1,10 +1,12 @@
+// Progetto emulatore distinto da tests/rules.test.mjs: i due file svuotano il database prima di
+// ogni test e, condividendo lo stesso progetto, si cancellavano i dati a vicenda.
 import { test, before, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 let env;
 const user = uid => env.authenticatedContext(uid, { email: `${uid}@example.com`, email_verified: true }).firestore();
-before(async () => { env = await initializeTestEnvironment({ projectId: 'demo-syrio', firestore: { rules: readFileSync('firestore.rules', 'utf8') } }); });
+before(async () => { env = await initializeTestEnvironment({ projectId: 'demo-syrio-personale', firestore: { rules: readFileSync('firestore.rules', 'utf8') } }); });
 beforeEach(async () => { await env.clearFirestore(); });
 after(async () => { await env.cleanup(); });
 for (const collection of ['customerRequests', 'customerCommunications']) {

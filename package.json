@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-syrio \"node --test tests/rules.test.mjs tests/personal-customer-data.test.mjs\"",
+    "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-syrio \"node --test --test-concurrency=1 tests/rules.test.mjs tests/personal-customer-data.test.mjs\"",
     "test:api": "node --test tests/api-security.test.mjs",
     "test": "node --test tests/customer-work.test.mjs tests/api-security.test.mjs tests/spreadsheet.test.mjs"
   },
