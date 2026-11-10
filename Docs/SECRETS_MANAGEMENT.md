@@ -10,6 +10,24 @@ This document outlines the secrets management strategy for Next Move CRM:
 
 ---
 
+## Chiave Gemini (funzioni AI)
+
+Tutte le funzioni AI (analisi resoconti, conversazioni registrate, preparazione visita,
+catalogo, trascrizioni) passano da endpoint `/api/*` autenticati con il token Firebase
+dell'utente e usano la variabile d'ambiente `GEMINI_API_KEY` impostata su Vercel
+(Production e Preview). La chiave non è mai nel browser, nello store, su Firestore o nei backup.
+
+- Le analisi operative (`analizza-resoconto`, `analizza-resoconti`, `analizza-conversazione`)
+  hanno un limite di 60 richieste all'ora per utente; le analisi strategiche restano a 5.
+- Le chiavi personali salvate dalle versioni precedenti (campo `claudeApiKey` in
+  `users/{uid}/settings/app` e nei file di backup scaricati prima di questa modifica) vengono
+  cancellate dal cloud al primo accesso, ma **vanno comunque rigenerate** su
+  aistudio.google.com: possono essere rimaste in vecchi backup.
+- Rotazione: genera una nuova chiave, aggiorna `GEMINI_API_KEY` su Vercel, ridistribuisci,
+  poi elimina la vecchia.
+
+---
+
 ## Vercel Environment Variables (Production)
 
 ### Required Variables
@@ -29,8 +47,8 @@ ADMIN_API_TOKEN=sk_live_[random_32_chars]
 # Frontend also needs this for build time
 VITE_ADMIN_API_TOKEN=sk_live_[random_32_chars]
 
-# Claude API key
-ANTHROPIC_API_KEY=sk-ant-[anthropic_key]
+# Chiave Google Gemini (solo server, mai in variabili VITE_)
+GEMINI_API_KEY=[chiave_gemini]
 
 # Upstash Redis (for rate limiting)
 UPSTASH_REDIS_REST_URL=https://[region].upstash.io
@@ -53,7 +71,7 @@ CLOUD_SCHEDULER_TOKEN=[random_32_chars]
 # Using Vercel CLI
 vercel env add ADMIN_API_TOKEN
 vercel env add VITE_ADMIN_API_TOKEN
-vercel env add ANTHROPIC_API_KEY
+vercel env add GEMINI_API_KEY
 vercel env add UPSTASH_REDIS_REST_URL
 vercel env add UPSTASH_REDIS_REST_TOKEN
 vercel env add VITE_SENTRY_DSN
