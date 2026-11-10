@@ -266,3 +266,92 @@ html { touch-action: pan-x pan-y; }
 .cockpit-results-heading span:last-child { color: rgb(var(--syrio-muted)); font-family: inherit; font-size: .75rem; font-weight: 600; white-space: nowrap; }
 
 .customer-work-heading{list-style:none}.customer-work-heading::-webkit-details-marker{display:none}.customer-work-card[open] .customer-work-heading{border-bottom:1px solid rgb(var(--syrio-line))}.customer-work-avatar{display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;border-radius:9px;background:rgb(var(--syrio-accent-soft));color:rgb(var(--syrio-accent));font-weight:750;font-size:15px}
+
+/* ── Densità compatta ──────────────────────────────────────────────────────────
+   Uno strato unico che stringe riquadri, campi, titoli e barra laterale in tutta
+   l'area di lavoro, senza toccare le singole viste. I selettori hanno il prefisso
+   .cockpit-content / .cockpit-sidebar: così prevalgono sulle classi di spaziatura
+   scritte nei componenti (p-6, space-y-6, text-2xl…) e si possono togliere in blocco. */
+:root { --syrio-radius: .625rem; --syrio-radius-control: .4375rem; --syrio-shadow: 0 1px 2px rgb(19 58 65 / .05), 0 2px 10px rgb(19 58 65 / .04); }
+
+/* Riquadri: meno aria interna, angoli più asciutti */
+.cockpit-content .p-8, .cockpit-content .md\:p-8 { padding: 1.25rem; }
+.cockpit-content .p-6, .cockpit-content .md\:p-6, .cockpit-content .sm\:p-6 { padding: 1rem; }
+.cockpit-content .p-5, .cockpit-content .md\:p-5 { padding: .875rem; }
+.cockpit-content .rounded-panel { border-radius: var(--syrio-radius); }
+.cockpit-content :is(.rounded-2xl, .rounded-3xl) { border-radius: .75rem; }
+.cockpit-content :where(.shadow-sm, .shadow-panel) { box-shadow: var(--syrio-shadow); }
+
+/* Ritmo verticale tra sezioni */
+.cockpit-content .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.25rem; }
+.cockpit-content .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+.cockpit-content .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: .875rem; }
+.cockpit-content .gap-8 { gap: 1.25rem; }
+.cockpit-content .gap-6 { gap: 1rem; }
+.cockpit-content .mb-8 { margin-bottom: 1.25rem; }
+.cockpit-content .mb-6 { margin-bottom: 1rem; }
+.cockpit-content .mt-8 { margin-top: 1.25rem; }
+.cockpit-content .mt-6 { margin-top: 1rem; }
+
+/* Titoli e numeri: gerarchia più fine */
+.cockpit-content .text-4xl { font-size: 1.75rem; line-height: 2.1rem; }
+.cockpit-content .text-3xl { font-size: 1.5rem; line-height: 1.9rem; }
+.cockpit-content .text-2xl { font-size: 1.25rem; line-height: 1.65rem; }
+.cockpit-content .text-xl { font-size: 1.0625rem; line-height: 1.5rem; }
+.cockpit-content h1 { font-size: 1.375rem; font-weight: 750; letter-spacing: -.03em; }
+.cockpit-page-description { margin-top: .2rem; font-size: .8125rem; }
+
+/* Campi: bordo sottile e peso normale al posto del grassetto con bordo doppio */
+.cockpit-content :is(input, select, textarea).border-2 { border-width: 1px; }
+.cockpit-content :is(input, select, textarea):is(.font-bold, .font-semibold) { font-weight: 500; }
+.cockpit-content :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { border-radius: var(--syrio-radius-control); }
+.cockpit-content :is(input, select, textarea):focus { box-shadow: 0 0 0 3px rgb(var(--syrio-accent) / .14); }
+
+/* Componenti di pagina già condivisi */
+.syrio-dashboard { gap: .875rem; }
+.syrio-dashboard .syrio-hero { min-height: 0; padding: 1.1rem 1.5rem; border-radius: .75rem; }
+.cockpit-content .syrio-hero h1 { font-size: 1.5rem; letter-spacing: -.04em; }
+.syrio-dashboard-kpis { gap: .75rem; }
+.cockpit-kpi { min-height: 0; padding: .8rem 1rem; border-radius: var(--syrio-radius); }
+.cockpit-kpi-icon { width: 1.9rem; height: 1.9rem; border-radius: .55rem; }
+.cockpit-kpi-icon svg { width: 15px; height: 15px; }
+.cockpit-kpi-value { margin-top: .3rem; font-size: 1.35rem; }
+.syrio-dashboard-actions > .syrio-panel { padding: 1rem; }
+.cockpit-section-intro { padding: 1rem; border-radius: var(--syrio-radius); }
+.cockpit-section-intro h1 { font-size: 1.375rem; }
+.cockpit-filter-bar { padding: .5rem; border-radius: var(--syrio-radius); }
+.cockpit-search-bar { min-height: 2.5rem; }
+.cockpit-page-tabs { padding: .2rem; border-radius: .625rem; }
+.cockpit-page-tabs button { padding: .45rem .8rem; border-radius: .45rem; }
+.cockpit-overview { margin: .875rem 0; border-radius: var(--syrio-radius); }
+.cockpit-overview > div { padding: .75rem 1rem; }
+.cockpit-overview strong { margin-top: .25rem; font-size: 1.2rem; }
+.cockpit-kanban-column { border-radius: var(--syrio-radius); }
+.cockpit-analytics-summary > div { padding: .85rem 1rem; border-radius: var(--syrio-radius); }
+.cockpit-activity-summary > div { padding: .8rem 1rem; }
+.cockpit-activity-summary > div > p:first-child { font-size: 1.35rem; }
+
+@media (min-width: 768px) {
+  /* Cornice: barra superiore e margini della pagina */
+  .cockpit-topbar { min-height: 3.25rem; padding: 0 1.5rem; font-size: .8125rem; }
+  .cockpit-content:not(.cockpit-map) { padding: 1.25rem 1.5rem 2rem; }
+
+  /* Campi e pulsanti grandi tornano a un'altezza da scrivania (su telefono restano comodi al tocco) */
+  .cockpit-content :is(input:not([type='checkbox']):not([type='radio']), select):is(.p-3, .p-3\.5, .p-4, .py-3, .py-3\.5, .py-4, .py-2\.5, .p-2\.5) { padding-top: .45rem; padding-bottom: .45rem; }
+  .cockpit-content :is(input:not([type='checkbox']):not([type='radio']), select):is(.p-3, .p-3\.5, .p-4) { padding-left: .75rem; padding-right: .75rem; }
+  .cockpit-content :is(input:not([type='checkbox']):not([type='radio']), select, textarea):not([class*='text-xs']):not([class*='text-sm']):not([class*='text-[']) { font-size: .875rem; line-height: 1.4; }
+  .cockpit-content textarea:is(.p-3, .p-3\.5, .p-4) { padding: .55rem .75rem; }
+  .cockpit-content :is(button, a):is(.py-3, .py-3\.5, .py-4) { padding-top: .5rem; padding-bottom: .5rem; }
+  .cockpit-content :is(button, a).py-2\.5 { padding-top: .45rem; padding-bottom: .45rem; }
+
+  /* Barra laterale */
+  .cockpit-sidebar > div:first-child { padding: 1.25rem 1.5rem .6rem; }
+  .cockpit-sidebar .syrio-wordmark { font-size: 1.3rem; }
+  .cockpit-nav-label { padding: .35rem 1.75rem; }
+  .cockpit-sidebar nav { --tw-space-y-reverse: 0; }
+  .cockpit-sidebar nav > :not([hidden]) ~ :not([hidden]) { margin-top: 1px; }
+  .cockpit-sidebar nav button { min-height: 2.2rem; padding-top: .35rem; padding-bottom: .35rem; font-size: .8125rem; border-radius: .5rem; }
+  .cockpit-sidebar nav button svg { width: 17px; height: 17px; }
+  .cockpit-profile { padding: .75rem 1.25rem; margin: .5rem 1rem .4rem; }
+  .cockpit-profile-avatar { width: 2rem; height: 2rem; border-radius: .6rem; }
+}
