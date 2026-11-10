@@ -2,7 +2,7 @@ import { confirmAction } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { blakladerUrl, enrichProduct } from '../lib/blaklader';
-import * as XLSX from 'xlsx';
+import * as XLSX from '../lib/spreadsheet';
 import { useStore } from '../store/useStore';
 import {
   Plus, Upload, X, MoreHorizontal, Package,

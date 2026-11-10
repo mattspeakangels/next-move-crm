@@ -6,7 +6,7 @@ import { DealOperationalFlow } from '../components/contacts/DealOperationalFlow'
 import { showNotice, confirmAction } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '../lib/spreadsheet';
 import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, FileText, ArrowLeft, Activity, History, Calendar, TrendingUp, ClipboardList, Download, Link, Image as ImageIcon, ZoomIn, ArrowUp, ArrowDown, StickyNote, Star, RefreshCw } from 'lucide-react';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';

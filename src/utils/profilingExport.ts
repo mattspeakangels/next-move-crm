@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from '../lib/spreadsheet';
 import type { Contact, DealerProfiling, EndUserProfiling, ProfilingData, QualificationCriteria, QualificationBadge } from '../types';
 
 export function calcQualBadge(q: QualificationCriteria): QualificationBadge {

@@ -1,7 +1,7 @@
 import { showNotice } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '../lib/spreadsheet';
 import { useStoricoStore, ClienteRecord, ClienteDettagliato as ClienteDettagliatoType } from '../store/storicoStore';
 import { useStore } from '../store/useStore';
 import { useToast } from '../components/ui/ToastContext';

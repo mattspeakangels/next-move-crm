@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { OperationalReport } from '../components/analytics/OperationalReport';
-import * as XLSX from 'xlsx';
+import * as XLSX from '../lib/spreadsheet';
 import { useStore } from '../store/useStore';
 import {
   selectMonthlySales, selectTopCustomers, selectTopProducts, selectSalesByStage,
