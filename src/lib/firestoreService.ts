@@ -1,13 +1,12 @@
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { setDoc, deleteDoc } from 'firebase/firestore';
+import { docRef, type DataCollection } from './paths';
 
-const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions'] as const;
-export type CollectionName = typeof COLLECTIONS[number];
+export type CollectionName = DataCollection;
 
-export function upsertDoc(userId: string, col: CollectionName, id: string, data: object) {
-  return setDoc(doc(db, 'users', userId, col, id), data, { merge: true });
+export function upsertDoc(col: CollectionName, id: string, data: object) {
+  return setDoc(docRef(col, id), data, { merge: true });
 }
 
-export function deleteFirestoreDoc(userId: string, col: CollectionName, id: string) {
-  return deleteDoc(doc(db, 'users', userId, col, id));
+export function deleteFirestoreDoc(col: CollectionName, id: string) {
+  return deleteDoc(docRef(col, id));
 }

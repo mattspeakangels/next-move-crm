@@ -1,5 +1,6 @@
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { docRef } from './paths';
+import { setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { auth } from './firebase';
 import { dataUrlToBlob } from './uploadPdf';
 import type { BiDocument } from '../types';
 
@@ -21,7 +22,7 @@ export async function uploadBiDocument(contactId: string, file: File): Promise<B
   const chunks = splitIntoChunks(base64, CHUNK_SIZE);
   const uploadedAt = Date.now();
 
-  await setDoc(doc(db, 'users', userId, 'bi_docs', docId), {
+  await setDoc(docRef('bi_docs', docId), {
     contactId,
     name: file.name,
     contentType: file.type,
@@ -32,7 +33,7 @@ export async function uploadBiDocument(contactId: string, file: File): Promise<B
 
   await Promise.all(
     chunks.map((chunk, i) =>
-      setDoc(doc(db, 'users', userId, 'bi_doc_chunks', `${docId}_${i}`), { data: chunk })
+      setDoc(docRef('bi_doc_chunks', `${docId}_${i}`), { data: chunk })
     )
   );
 
@@ -47,26 +48,26 @@ export async function uploadBiDocument(contactId: string, file: File): Promise<B
 }
 
 export async function deleteBiDocument(biDoc: BiDocument): Promise<void> {
-  const [, userId, docId] = biDoc.url.split(':');
-  const metaSnap = await getDoc(doc(db, 'users', userId, 'bi_docs', docId));
+  const [, , docId] = biDoc.url.split(':');
+  const metaSnap = await getDoc(docRef('bi_docs', docId));
   const chunkCount: number = metaSnap.data()?.chunks ?? 0;
   await Promise.all([
-    deleteDoc(doc(db, 'users', userId, 'bi_docs', docId)),
+    deleteDoc(docRef('bi_docs', docId)),
     ...Array.from({ length: chunkCount }, (_, i) =>
-      deleteDoc(doc(db, 'users', userId, 'bi_doc_chunks', `${docId}_${i}`))
+      deleteDoc(docRef('bi_doc_chunks', `${docId}_${i}`))
     ),
   ]);
 }
 
 export async function downloadBiDocument(biDoc: BiDocument): Promise<void> {
-  const [, userId, docId] = biDoc.url.split(':');
-  const metaSnap = await getDoc(doc(db, 'users', userId, 'bi_docs', docId));
+  const [, , docId] = biDoc.url.split(':');
+  const metaSnap = await getDoc(docRef('bi_docs', docId));
   const meta = metaSnap.data();
   if (!meta) throw new Error('Documento non trovato in archivio');
   const chunkCount: number = meta.chunks ?? 1;
   const chunkSnaps = await Promise.all(
     Array.from({ length: chunkCount }, (_, i) =>
-      getDoc(doc(db, 'users', userId, 'bi_doc_chunks', `${docId}_${i}`))
+      getDoc(docRef('bi_doc_chunks', `${docId}_${i}`))
     )
   );
   const dataUrl = chunkSnaps.map(s => s.data()?.data ?? '').join('');

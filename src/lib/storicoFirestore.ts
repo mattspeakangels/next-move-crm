@@ -1,7 +1,8 @@
+import { docRef, colRef } from './paths';
 import { db } from './firebase';
 import {
   doc, getDoc, getDocs,
-  collection, writeBatch,
+  writeBatch,
 } from 'firebase/firestore';
 import { ClienteRecord, ClienteDettagliato, StoricoBudget } from '../store/storicoStore';
 
@@ -27,7 +28,6 @@ async function runBatch(ops: { ref: ReturnType<typeof doc>; data: object | null 
 }
 
 export async function saveStoricoToFirestore(
-  userId: string,
   clienti: ClienteRecord[],
   anni: string[],
   fileName: string,
@@ -36,27 +36,27 @@ export async function saveStoricoToFirestore(
 ) {
   const meta: StoricoMeta = { clienti, anni, fileName, budget, updatedAt: Date.now() };
   const ops = [
-    { ref: doc(db, 'users', userId, 'storico', 'meta'), data: meta as object },
+    { ref: docRef('storico', 'meta'), data: meta as object },
     ...clientiDettagliati.map(c => ({
-      ref: doc(db, 'users', userId, 'storico_dettagliati', String(c.clientId)),
+      ref: docRef('storico_dettagliati', String(c.clientId)),
       data: c as object,
     })),
   ];
   await runBatch(ops);
 }
 
-export async function loadStoricoFromFirestore(userId: string): Promise<{
+export async function loadStoricoFromFirestore(): Promise<{
   clienti: ClienteRecord[];
   clientiDettagliati: ClienteDettagliato[];
   anni: string[];
   fileName: string;
   budget: StoricoBudget;
 } | null> {
-  const metaSnap = await getDoc(doc(db, 'users', userId, 'storico', 'meta'));
+  const metaSnap = await getDoc(docRef('storico', 'meta'));
   if (!metaSnap.exists()) return null;
 
   const meta = metaSnap.data() as StoricoMeta;
-  const detSnap = await getDocs(collection(db, 'users', userId, 'storico_dettagliati'));
+  const detSnap = await getDocs(colRef('storico_dettagliati'));
   const clientiDettagliati = detSnap.docs.map(d => d.data() as ClienteDettagliato);
 
   return {
@@ -68,10 +68,10 @@ export async function loadStoricoFromFirestore(userId: string): Promise<{
   };
 }
 
-export async function deleteStoricoFromFirestore(userId: string) {
-  const metaRef = doc(db, 'users', userId, 'storico', 'meta');
+export async function deleteStoricoFromFirestore() {
+  const metaRef = docRef('storico', 'meta');
   const metaSnap = await getDoc(metaRef);
-  const detSnap = await getDocs(collection(db, 'users', userId, 'storico_dettagliati'));
+  const detSnap = await getDocs(colRef('storico_dettagliati'));
 
   const ops: { ref: ReturnType<typeof doc>; data: null }[] = [
     { ref: metaRef, data: null },

@@ -1,5 +1,6 @@
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { docRef } from './paths';
+import { setDoc, getDoc } from 'firebase/firestore';
+import { auth } from './firebase';
 
 const CHUNK_SIZE = 500_000;
 
@@ -14,7 +15,7 @@ export async function uploadOfferPdf(offerId: string, file: File): Promise<{ url
   const base64 = await fileToBase64(file);
   const chunks = splitIntoChunks(base64, CHUNK_SIZE);
 
-  await setDoc(doc(db, 'users', userId, 'offer_pdfs', offerId), {
+  await setDoc(docRef('offer_pdfs', offerId), {
     name: file.name,
     chunks: chunks.length,
     updatedAt: Date.now(),
@@ -22,7 +23,7 @@ export async function uploadOfferPdf(offerId: string, file: File): Promise<{ url
 
   await Promise.all(
     chunks.map((chunk, i) =>
-      setDoc(doc(db, 'users', userId, 'offer_pdf_chunks', `${offerId}_${i}`), { data: chunk })
+      setDoc(docRef('offer_pdf_chunks', `${offerId}_${i}`), { data: chunk })
     )
   );
 
@@ -30,14 +31,14 @@ export async function uploadOfferPdf(offerId: string, file: File): Promise<{ url
 }
 
 export async function getPdfDataUrl(pdfUrl: string): Promise<string> {
-  const [, userId, offerId] = pdfUrl.split(':');
-  const metaSnap = await getDoc(doc(db, 'users', userId, 'offer_pdfs', offerId));
+  const [, , offerId] = pdfUrl.split(':');
+  const metaSnap = await getDoc(docRef('offer_pdfs', offerId));
   const meta = metaSnap.data();
   if (!meta) throw new Error('PDF non trovato in archivio');
   const chunkCount: number = meta.chunks ?? 1;
   const chunkSnaps = await Promise.all(
     Array.from({ length: chunkCount }, (_, i) =>
-      getDoc(doc(db, 'users', userId, 'offer_pdf_chunks', `${offerId}_${i}`))
+      getDoc(docRef('offer_pdf_chunks', `${offerId}_${i}`))
     )
   );
   return chunkSnaps.map(s => s.data()?.data ?? '').join('');

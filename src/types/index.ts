@@ -226,6 +226,8 @@ export interface Deal {
   nomeStorico?: string;
   orderPdfUrl?: string;
   orderPdfName?: string;
+  commercialDetails?: import('./dealDetails').CommercialDetails;
+  operationalFlow?: import('./dealDetails').OperationalFlow;
 }
 
 export interface Activity {
@@ -326,6 +328,7 @@ export interface AuditLog {
   collection: string;           // contacts, deals, offers, etc
   documentId: string;           // the document that was changed
   operation: AuditOperation;    // CREATE, UPDATE, DELETE
+  authorUid?: string;           // chi ha fatto la modifica (workspace condiviso)
   changes?: Record<string, any>; // fields that changed (for UPDATE)
   previousValues?: Record<string, any>;
   newValues?: Record<string, any>;

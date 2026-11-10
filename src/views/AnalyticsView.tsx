@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { OperationalReport } from '../components/analytics/OperationalReport';
 import * as XLSX from 'xlsx';
 import { useStore } from '../store/useStore';
 import {
@@ -159,6 +160,8 @@ export const AnalyticsView: React.FC = () => {
         </button>
         <input type="file" accept=".csv,.xlsx,.xls" ref={fileInputRef} onChange={handleCSVImport} className="hidden" />
       </div>
+
+      <OperationalReport />
 
       <div className="cockpit-analytics-summary grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">

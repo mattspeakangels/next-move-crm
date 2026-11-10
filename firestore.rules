@@ -1,8 +1,90 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function memberPath(wid) {
+      return /databases/$(database)/documents/workspaces/$(wid)/members/$(request.auth.uid);
+    }
+    function member(wid) {
+      return signedIn() && exists(memberPath(wid)) && get(memberPath(wid)).data.status == 'active';
+    }
+    function roleIn(wid, roles) {
+      return member(wid) && get(memberPath(wid)).data.role in roles;
+    }
+    function invitePath() {
+      return /databases/$(database)/documents/invites/$(myEmail());
+    }
+
+    // Area personale: impostazioni (con chiave API), To Do, obiettivi, prospecting.
+    // Resta leggibile anche come sorgente della migrazione verso il workspace.
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth.uid == userId;
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /userProfiles/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /workspaces/{wid} {
+      allow read: if member(wid);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if roleIn(wid, ['owner', 'admin'])
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if false;
+
+      match /members/{uid} {
+        allow read: if member(wid);
+        allow create: if
+          // owner/admin aggiungono membri (mai un altro owner)
+          (roleIn(wid, ['owner', 'admin']) && request.resource.data.role != 'owner')
+          // chi crea il workspace si registra come owner nello stesso batch
+          || (signedIn() && uid == request.auth.uid
+              && request.resource.data.role == 'owner'
+              && getAfter(/databases/$(database)/documents/workspaces/$(wid)).data.ownerUid == request.auth.uid
+              && !exists(/databases/$(database)/documents/workspaces/$(wid)))
+          // l'invitato entra solo come se stesso, con il ruolo dell'invito, con email verificata
+          || (signedIn() && uid == request.auth.uid
+              && request.auth.token.email_verified == true
+              && exists(invitePath())
+              && get(invitePath()).data.wid == wid
+              && request.resource.data.role == get(invitePath()).data.role
+              && request.resource.data.status == 'active');
+        // owner/admin cambiano ruolo e stato; nessuno può promuovere a owner o toccare l'owner
+        allow update: if roleIn(wid, ['owner', 'admin'])
+          && resource.data.role != 'owner'
+          && request.resource.data.role != 'owner'
+          && request.resource.data.uid == resource.data.uid;
+        allow delete: if false;
+      }
+
+      // Storico modifiche: solo aggiunte, mai riscritture.
+      match /audit_logs/{id} {
+        allow read: if member(wid);
+        allow create: if member(wid) && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // Report operativi: accesso esclusivo a owner e amministratori attivi.
+      match /operationalReports/{id} {
+        allow read, write: if roleIn(wid, ['owner', 'admin']);
+      }
+
+      // Tutti i dati condivisi dell'azienda (clienti, offerte, attività, documenti…).
+      match /{col}/{id} {
+        allow read, write: if member(wid) && !(col in ['members', 'audit_logs', 'operationalReports']);
+      }
+    }
+
+    // Un solo invito pendente per email (scelta v1).
+    match /invites/{email} {
+      allow read: if signedIn() && (email == myEmail()
+        || (resource != null && roleIn(resource.data.wid, ['owner', 'admin'])));
+      allow create: if roleIn(request.resource.data.wid, ['owner', 'admin'])
+        && request.resource.data.role != 'owner'
+        && request.resource.data.email == email;
+      allow delete: if signedIn() && (email == myEmail() || roleIn(resource.data.wid, ['owner', 'admin']));
+      allow update: if false;
     }
   }
 }

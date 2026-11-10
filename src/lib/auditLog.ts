@@ -1,5 +1,5 @@
-import { collection, addDoc, getDocs } from 'firebase/firestore';
-import { db } from './firebase';
+import { colRef } from './paths';
+import { addDoc, getDocs } from 'firebase/firestore';
 import { AuditLog, AuditOperation } from '../types';
 
 export async function logAuditEvent(
@@ -16,6 +16,7 @@ export async function logAuditEvent(
     const auditEntry: Omit<AuditLog, 'id'> = {
       timestamp: Date.now(),
       collection: collectionName,
+      authorUid: userId,
       documentId,
       operation,
       changes: Object.keys(changes).length > 0 ? changes : undefined,
@@ -23,8 +24,9 @@ export async function logAuditEvent(
       newValues: newValues && Object.keys(newValues).length > 0 ? newValues : undefined,
     };
 
-    const auditCollection = collection(db, 'users', userId, 'audit_logs');
-    await addDoc(auditCollection, auditEntry);
+    const auditCollection = colRef('audit_logs');
+    // Firestore rifiuta i campi undefined (changes/previousValues assenti): li togliamo.
+    await addDoc(auditCollection, JSON.parse(JSON.stringify(auditEntry)));
   } catch (error) {
     console.error('Failed to log audit event:', error);
   }
@@ -53,9 +55,9 @@ function calculateChanges(
   return changes;
 }
 
-export async function getAuditLogs(userId: string, limit = 100): Promise<AuditLog[]> {
+export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
   try {
-    const auditCollection = collection(db, 'users', userId, 'audit_logs');
+    const auditCollection = colRef('audit_logs');
     const snapshot = await getDocs(auditCollection);
 
     const logs: AuditLog[] = [];

@@ -11,6 +11,10 @@ import { useAuth } from '../lib/authContext';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { PuliziaTerritorio } from '../components/settings/PuliziaTerritorio';
 import { GmailIntegration } from '../components/settings/GmailIntegration';
+import { OutlookPilot } from '../components/settings/OutlookPilot';
+import { WorkspaceSection } from '../components/settings/WorkspaceSection';
+import { useWorkspace } from '../lib/workspaceContext';
+import { canManage } from '../lib/workspace';
 import { downloadBackup, restoreBackupFromFile } from '../lib/backup';
 import { Download, Upload } from 'lucide-react';
 
@@ -421,6 +425,7 @@ export const SettingsView: React.FC = () => {
   const resetStorico = useStoricoStore(s => s.reset);
   const { showToast } = useToast();
   const { user, logout, resetPassword } = useAuth();
+  const { role: workspaceRole } = useWorkspace();
   const [newProduct, setNewProduct] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -436,6 +441,10 @@ export const SettingsView: React.FC = () => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (!canManage(workspaceRole)) {
+      showToast('Solo titolare e amministratori possono ripristinare un backup: sostituirebbe i dati di tutto lo spazio aziendale.', 'error');
+      return;
+    }
     requireAuth(
       'Ripristinare il backup?',
       `Tutti i dati attuali dell'app verranno sostituiti con quelli del file "${file.name}". L'operazione non è reversibile.`,
@@ -583,6 +592,9 @@ export const SettingsView: React.FC = () => {
           className="w-full border border-line dark:border-line rounded-md px-4 py-2 bg-transparent font-bold text-accent"
         />
       </div>
+
+      {/* ── Spazio aziendale: membri, ruoli, inviti ── */}
+      <WorkspaceSection />
 
       <GroupLabel>Aspetto & Personalizzazione</GroupLabel>
 
@@ -932,6 +944,7 @@ export const SettingsView: React.FC = () => {
       <ClaudeApiKeySection />
       <MicrophonePermissionSection />
       <GmailIntegration />
+      <OutlookPilot />
       <PuliziaTerritorio />
       <AppUpdateSection />
 

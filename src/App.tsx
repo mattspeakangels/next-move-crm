@@ -2,6 +2,8 @@ import { DialogFrame } from './components/ui/DialogFrame';
 import { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { useAuth } from './lib/authContext';
 import { useFirestoreSync } from './lib/useFirestoreSync';
+import { WorkspaceProvider, useWorkspace } from './lib/workspaceContext';
+import { Button as SyrioButton } from './components/ui/Syrio';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { useProspectingReminders } from './hooks/useProspectingReminders';
 import { LoginView } from './views/LoginView';
@@ -281,20 +283,48 @@ function AppContent() {
   );
 }
 
-function AuthGate() {
-  const { user, loading } = useAuth();
-  useFirestoreSync(user?.uid ?? '');
+function FullScreenSpinner({ message }: { message?: string }) {
+  return (
+    <div className="min-h-screen bg-canvas flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      {message && <p className="text-sm text-secondary">{message}</p>}
+    </div>
+  );
+}
 
-  if (loading) {
+function WorkspaceGate() {
+  const { status, error, progress, uid, workspace, retry } = useWorkspace();
+  const { logout } = useAuth();
+  useFirestoreSync(status === 'ready' && workspace ? { uid, wid: workspace.id } : null);
+
+  if (status === 'loading') return <FullScreenSpinner />;
+  if (status === 'migrating') {
+    return <FullScreenSpinner message={progress ?? 'Preparazione dello spazio aziendale…'} />;
+  }
+  if (status === 'error') {
     return (
-      <div className="min-h-screen bg-canvas flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-canvas flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-base text-foreground max-w-md">{error || 'Spazio aziendale non disponibile.'}</p>
+        <div className="flex gap-3">
+          <SyrioButton type="button" onClick={retry}>Riprova</SyrioButton>
+          <SyrioButton type="button" variant="secondary" onClick={() => { void logout(); }}>Esci</SyrioButton>
+        </div>
       </div>
     );
   }
-
-  if (!user) return <LoginView />;
   return <AppContent />;
+}
+
+function AuthGate() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <FullScreenSpinner />;
+  if (!user) return <LoginView />;
+  return (
+    <WorkspaceProvider user={user}>
+      <WorkspaceGate />
+    </WorkspaceProvider>
+  );
 }
 
 export default function App() {

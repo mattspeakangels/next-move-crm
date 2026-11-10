@@ -1,5 +1,6 @@
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { docRef } from './paths';
+import { setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { auth } from './firebase';
 import { dataUrlToBlob } from './uploadPdf';
 import { compressImage } from './imageCompress';
 import type { ContactPhoto } from '../types';
@@ -22,7 +23,7 @@ export async function uploadContactPhoto(contactId: string, file: File): Promise
   const chunks = splitIntoChunks(dataUrl, CHUNK_SIZE);
   const uploadedAt = Date.now();
 
-  await setDoc(doc(db, 'users', userId, 'contact_photos', docId), {
+  await setDoc(docRef('contact_photos', docId), {
     contactId,
     name: file.name,
     contentType: 'image/jpeg',
@@ -34,7 +35,7 @@ export async function uploadContactPhoto(contactId: string, file: File): Promise
 
   await Promise.all(
     chunks.map((chunk, i) =>
-      setDoc(doc(db, 'users', userId, 'contact_photo_chunks', `${docId}_${i}`), { data: chunk })
+      setDoc(docRef('contact_photo_chunks', `${docId}_${i}`), { data: chunk })
     )
   );
 
@@ -50,26 +51,26 @@ export async function uploadContactPhoto(contactId: string, file: File): Promise
 }
 
 export async function deleteContactPhoto(photo: ContactPhoto): Promise<void> {
-  const [, userId, docId] = photo.url.split(':');
-  const metaSnap = await getDoc(doc(db, 'users', userId, 'contact_photos', docId));
+  const [, , docId] = photo.url.split(':');
+  const metaSnap = await getDoc(docRef('contact_photos', docId));
   const chunkCount: number = metaSnap.data()?.chunks ?? 0;
   await Promise.all([
-    deleteDoc(doc(db, 'users', userId, 'contact_photos', docId)),
+    deleteDoc(docRef('contact_photos', docId)),
     ...Array.from({ length: chunkCount }, (_, i) =>
-      deleteDoc(doc(db, 'users', userId, 'contact_photo_chunks', `${docId}_${i}`))
+      deleteDoc(docRef('contact_photo_chunks', `${docId}_${i}`))
     ),
   ]);
 }
 
 export async function getContactPhotoFullDataUrl(photo: ContactPhoto): Promise<string> {
-  const [, userId, docId] = photo.url.split(':');
-  const metaSnap = await getDoc(doc(db, 'users', userId, 'contact_photos', docId));
+  const [, , docId] = photo.url.split(':');
+  const metaSnap = await getDoc(docRef('contact_photos', docId));
   const meta = metaSnap.data();
   if (!meta) throw new Error('Foto non trovata in archivio');
   const chunkCount: number = meta.chunks ?? 1;
   const chunkSnaps = await Promise.all(
     Array.from({ length: chunkCount }, (_, i) =>
-      getDoc(doc(db, 'users', userId, 'contact_photo_chunks', `${docId}_${i}`))
+      getDoc(docRef('contact_photo_chunks', `${docId}_${i}`))
     )
   );
   return chunkSnaps.map(s => s.data()?.data ?? '').join('');

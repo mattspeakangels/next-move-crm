@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { collection, onSnapshot, doc, setDoc, writeBatch, deleteField } from 'firebase/firestore';
+import { onSnapshot, setDoc, writeBatch, deleteField, type DocumentReference } from 'firebase/firestore';
 import { db } from './firebase';
+import { colRef, docRef, isShared, type DataCollection, type DataContext } from './paths';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
 
-const COLLECTIONS = ['contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets', 'sequences', 'prospectingTracks', 'prospectEmailDrafts', 'prospectHistory', 'groups', 'strategicFocuses'] as const;
+const COLLECTIONS: readonly DataCollection[] = ['customerCommunications', 'customerRequests', 'contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets', 'sequences', 'prospectingTracks', 'prospectEmailDrafts', 'prospectHistory', 'groups', 'strategicFocuses'];
 
 // Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
 // cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
@@ -39,37 +40,60 @@ function sanitizeForFirestore(data: Record<string, any>): Record<string, any> {
   return out;
 }
 
-async function flushWrites(
-  userId: string,
-  col: string,
-  changes: { id: string; data: any }[],
-  deletes: string[],
-) {
-  const allOps = [
-    ...changes.map(c => ({ type: 'set' as const, id: c.id, data: c.data })),
-    ...deletes.map(id => ({ type: 'del' as const, id, data: null })),
-  ];
+type WriteOp =
+  | { type: 'create'; id: string; data: Record<string, any> }
+  | { type: 'update'; id: string; fields: Record<string, any>; full: Record<string, any> }
+  | { type: 'del'; id: string };
 
-  for (let i = 0; i < allOps.length; i += BATCH_SIZE) {
-    const chunk = allOps.slice(i, i + BATCH_SIZE);
+/**
+ * Diff superficiale tra due versioni di un documento: solo i campi di primo livello
+ * cambiati. Scrivere i soli campi modificati evita che due colleghi che lavorano
+ * sullo stesso cliente si cancellino a vicenda le modifiche.
+ */
+function changedFields(prev: Record<string, any>, curr: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const k of Object.keys(curr)) if (curr[k] !== prev[k]) out[k] = curr[k];
+  for (const k of Object.keys(prev)) if (!(k in curr)) out[k] = undefined;
+  return out;
+}
+
+async function commitOps(ctx: DataContext, col: DataCollection, ops: WriteOp[]) {
+  for (let i = 0; i < ops.length; i += BATCH_SIZE) {
+    const chunk = ops.slice(i, i + BATCH_SIZE);
     const batch = writeBatch(db);
     for (const op of chunk) {
-      const ref = doc(db, 'users', userId, col, op.id);
-      if (op.type === 'set') batch.set(ref, sanitizeForFirestore(op.data), { merge: true });
+      const ref = docRef(col, op.id, ctx);
+      if (op.type === 'create') batch.set(ref, sanitizeForFirestore(op.data), { merge: true });
+      else if (op.type === 'update') batch.update(ref, sanitizeForFirestore(op.fields));
       else batch.delete(ref);
     }
-    await batch.commit();
+    try {
+      await batch.commit();
+    } catch (err: any) {
+      // update() fallisce se il documento remoto non esiste (es. creato offline o
+      // cancellato da un collega): riscriviamo i singoli documenti per intero, così
+      // un solo caso limite non fa perdere l'intero batch.
+      if (err?.code !== 'not-found') throw err;
+      for (const op of chunk) {
+        const ref: DocumentReference = docRef(col, op.id, ctx);
+        if (op.type === 'update') await setDoc(ref, sanitizeForFirestore(op.full), { merge: true });
+        else if (op.type === 'create') await setDoc(ref, sanitizeForFirestore(op.data), { merge: true });
+      }
+    }
   }
 }
 
-export function useFirestoreSync(userId: string) {
+export function useFirestoreSync(ctx: DataContext | null) {
+  const uid = ctx?.uid ?? '';
+  const wid = ctx?.wid ?? '';
   // true mentre applichiamo allo store dati appena arrivati da Firestore: il
   // subscribe piu' sotto lo controlla per non "rispedire" al cloud dati che
   // arrivano dal cloud stesso (eco inutile, non un'azione dell'utente).
   const isApplyingRemoteRef = useRef(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!uid || !wid) return;
+    const dataCtx: DataContext = { uid, wid };
 
     const unsubscribers: Array<() => void> = [];
 
@@ -86,7 +110,7 @@ export function useFirestoreSync(userId: string) {
       let lastRemote: Record<string, any> = (useStore.getState() as any)[col] || {};
 
       const unsub = onSnapshot(
-        collection(db, 'users', userId, col),
+        colRef(col, dataCtx),
         snapshot => {
           // Eco della nostra stessa scrittura ottimistica (fase cache-locale
           // prima della conferma server): lo stato locale la riflette gia'.
@@ -133,7 +157,7 @@ export function useFirestoreSync(userId: string) {
       unsubscribers.push(unsub);
     }
 
-    const settingsRef = doc(db, 'users', userId, 'settings', 'app');
+    const settingsRef = docRef('settings', 'app', dataCtx);
     let lastRemoteSettings: Record<string, any> = {};
     for (const field of SETTINGS_FIELDS) lastRemoteSettings[field] = (useStore.getState() as any)[field];
     let settingsSeen = false;
@@ -187,33 +211,43 @@ export function useFirestoreSync(userId: string) {
 
         if (curr === prev) continue;
 
-        const changes: { id: string; data: any; isNew: boolean }[] = [];
-        const deletes: string[] = [];
+        const ops: WriteOp[] = [];
+        const shared = isShared(col);
+        const audit: { id: string; isNew: boolean; prev?: any; data?: any }[] = [];
 
         for (const [id, data] of Object.entries(curr)) {
-          if (curr[id] !== prev[id]) {
-            changes.push({ id, data, isNew: !prev[id] });
+          if (curr[id] === prev[id]) continue;
+          const before = prev[id];
+          if (!before) {
+            const stamped = shared ? { ...data, createdBy: data?.createdBy ?? uid, updatedBy: uid } : data;
+            ops.push({ type: 'create', id, data: stamped });
+          } else {
+            const fields = changedFields(before, data);
+            if (Object.keys(fields).length === 0) continue;
+            const stampedFields = shared ? { ...fields, updatedBy: uid } : fields;
+            const full = shared ? { ...data, updatedBy: uid } : data;
+            ops.push({ type: 'update', id, fields: stampedFields, full });
           }
+          audit.push({ id, isNew: !before, prev: before, data });
         }
         for (const id of Object.keys(prev)) {
-          if (!curr[id]) deletes.push(id);
+          if (!curr[id]) ops.push({ type: 'del', id });
         }
 
-        if (changes.length === 0 && deletes.length === 0) continue;
+        if (ops.length === 0) continue;
 
-        // Batch su Firestore (chunked per rispettare il limite 500)
-        flushWrites(userId, col, changes.map(c => ({ id: c.id, data: c.data })), deletes)
+        commitOps(dataCtx, col, ops)
           .catch(err => console.error(`Firestore batch write failed [${col}]:`, err));
 
         // Audit log solo per modifiche singole (non per import massivi)
-        if (changes.length <= 5) {
-          for (const { id, data, isNew } of changes) {
-            if (isNew) logAuditEvent(userId, col, id, 'CREATE', {}, data);
-            else logAuditEvent(userId, col, id, 'UPDATE', prev[id], data);
+        if (audit.length <= 5) {
+          for (const a of audit) {
+            if (a.isNew) logAuditEvent(uid, col, a.id, 'CREATE', {}, a.data);
+            else logAuditEvent(uid, col, a.id, 'UPDATE', a.prev, a.data);
           }
         }
-        for (const id of deletes) {
-          logAuditEvent(userId, col, id, 'DELETE', prev[id], {});
+        for (const op of ops) {
+          if (op.type === 'del') logAuditEvent(uid, col, op.id, 'DELETE', prev[op.id], {});
         }
       }
 
@@ -233,5 +267,5 @@ export function useFirestoreSync(userId: string) {
     return () => {
       unsubscribers.forEach(u => u());
     };
-  }, [userId]);
+  }, [uid, wid]);
 }

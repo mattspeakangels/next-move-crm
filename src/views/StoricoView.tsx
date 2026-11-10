@@ -760,7 +760,7 @@ export function StoricoView() {
   useEffect(() => {
     if (!user || clienti.length > 0) return;
     setFirestoreLoading(true);
-    loadStoricoFromFirestore(user.uid)
+    loadStoricoFromFirestore()
       .then(data => {
         if (data) {
           setClienti(data.clienti);
@@ -777,7 +777,7 @@ export function StoricoView() {
   const handleReset = useCallback(async () => {
     reset();
     if (user) {
-      deleteStoricoFromFirestore(user.uid).catch(() => {});
+      deleteStoricoFromFirestore().catch(() => {});
     }
   }, [user, reset]);
 
@@ -892,7 +892,7 @@ export function StoricoView() {
 
       // Sync su Firestore per renderlo disponibile su tutti i dispositivi
       if (user && parsedRecords.length > 0) {
-        saveStoricoToFirestore(user.uid, parsedRecords, [...anniSet].sort(), file.name, budget, parsedDettagliato)
+        saveStoricoToFirestore(parsedRecords, [...anniSet].sort(), file.name, budget, parsedDettagliato)
           .then(() => showToast('Storico sincronizzato sul cloud ✅', 'success'))
           .catch(() => showToast('Sync cloud fallita — dati salvati localmente', 'error'));
       }
