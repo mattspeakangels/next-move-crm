@@ -8,7 +8,11 @@ const COLLECTIONS = ['customerRequests', 'customerCommunications', 'contacts', '
 
 // Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
 // cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
-const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder', 'claudeApiKey'] as const;
+const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder'] as const;
+
+// Campo di una versione precedente: la chiave Gemini stava nelle impostazioni dell'utente.
+// Ora è solo sul server, quindi se è rimasta nel documento remoto va cancellata.
+const LEGACY_API_KEY_FIELD = 'claudeApiKey';
 
 // Firestore WriteBatch ha un limite di 500 operazioni per batch
 const BATCH_SIZE = 400;
@@ -156,6 +160,10 @@ export function useFirestoreSync(userId: string) {
         settingsSeen = true;
 
         const remote = snap.data();
+        if (remote[LEGACY_API_KEY_FIELD] !== undefined) {
+          setDoc(settingsRef, { [LEGACY_API_KEY_FIELD]: deleteField() }, { merge: true })
+            .catch(err => console.error('Rimozione della vecchia chiave AI non riuscita:', err));
+        }
         const localState = useStore.getState();
         const updates: Record<string, any> = {};
         let changed = false;

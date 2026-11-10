@@ -8,7 +8,7 @@ const BACKUP_VERSION = 1;
 const APP_STORE_KEYS = [
   'contacts', 'deals', 'offers', 'products', 'activities', 'salesTransactions',
   'assets', 'checkIns', 'targets', 'theme', 'profile', 'discountApprovalThreshold',
-  'todos', 'footerTabs', 'sidebarOrder', 'claudeApiKey', 'sequences',
+  'todos', 'footerTabs', 'sidebarOrder', 'sequences',
   'prospectingTracks', 'prospectEmailDrafts', 'prospectHistory', 'groups', 'strategicFocuses',
 ] as const;
 

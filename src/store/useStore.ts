@@ -32,7 +32,6 @@ interface StoreState {
   todos: Record<string, TodoItem>;
   footerTabs: NavView[];
   sidebarOrder: NavView[];
-  claudeApiKey: string;
   sequences: Record<string, Sequence>;
   prospectingTracks: Record<string, ProspectingTrack>;
   prospectEmailDrafts: Record<string, ProspectEmailDraft>;
@@ -55,7 +54,6 @@ interface StoreState {
   toggleTheme: () => void;
   resetAll: () => void;
   setDiscountApprovalThreshold: (value: number) => void;
-  setClaudeApiKey: (key: string) => void;
 
   // Aziende
   addContact: (contact: Contact) => void;
@@ -172,7 +170,6 @@ export const useStore = create<StoreState>()(
       todos: {},
       footerTabs: ['dashboard', 'deals', 'agenda', 'contacts'],
       sidebarOrder: [],
-      claudeApiKey: '',
       sequences: {},
       prospectingTracks: {},
       prospectEmailDrafts: {},
@@ -205,7 +202,6 @@ export const useStore = create<StoreState>()(
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       resetAll: () => set({ contacts: {}, deals: {}, offers: {}, products: {}, activities: {}, targets: {}, assets: {}, prospectingTracks: {}, prospectEmailDrafts: {}, prospectHistory: {}, groups: {}, strategicFocuses: {} }),
       setDiscountApprovalThreshold: (value) => set({ discountApprovalThreshold: value }),
-      setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
       addContact: (contact) => set((state) => ({
         contacts: { ...state.contacts, [contact.id]: syncCustomerType(contact) }
@@ -459,7 +455,6 @@ export const useStore = create<StoreState>()(
         todos: state.todos,
         footerTabs: state.footerTabs,
         sidebarOrder: state.sidebarOrder,
-        claudeApiKey: state.claudeApiKey,
         sequences: state.sequences,
         prospectingTracks: state.prospectingTracks,
         prospectEmailDrafts: state.prospectEmailDrafts,
@@ -475,6 +470,15 @@ export const useStore = create<StoreState>()(
             contactCount: Object.keys(state.contacts || {}).length,
             productCount: Object.keys(state.products || {}).length,
           });
+
+          // La chiave Gemini non vive più nel browser (ora è sul server): se una
+          // versione precedente l'aveva salvata, va tolta dalla memoria e dall'archivio
+          // locale. La riscrittura parte dopo l'idratazione, quando lo store esiste.
+          const legacy = state as StoreState & { claudeApiKey?: string };
+          if (legacy.claudeApiKey !== undefined) {
+            delete legacy.claudeApiKey;
+            queueMicrotask(() => useStore.setState({}));
+          }
 
           // Migrazione una tantum: i task rimasti su "in-corso" erano bloccati lì
           // dal vecchio bug del checkbox a 3 stati (vedi TodoView) e andavano segnati come fatti.
