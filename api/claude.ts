@@ -2,10 +2,16 @@
 // Uses Google Gemini (via callGemini) with model cascade fallback
 
 import { z } from 'zod';
-import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
+import { checkRateLimit, checkRateLimitByIP, checkRateLimitCustom } from './upstash-ratelimit.js';
 import { applyCors, handleCorsPreFlight } from './cors.js';
 import { callGemini, GeminiError } from './_gemini.js';
 import { requireUser } from './_auth.js';
+import { AiTaskRequestSchema, buildAiTask, isAiTaskType } from './_aiTasks.js';
+
+// Le analisi operative (resoconti, conversazioni) si usano più volte al giorno:
+// hanno un limite per utente proprio, più ampio dei 5/ora delle analisi strategiche.
+const AI_TASK_LIMIT = 60;
+const AI_TASK_WINDOW_SECONDS = 3600;
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {
@@ -322,6 +328,40 @@ Analizza il flusso in italiano:
 Sii concreto e specifico su questa azienda, niente consigli generici.`;
 }
 
+// ─── Analisi operative ────────────────────────────────────────────────────────
+
+type ApiResponse = {
+  status: (code: number) => { json: (data: unknown) => void };
+  setHeader: (name: string, value: string) => void;
+  json: (data: unknown) => void;
+};
+
+async function handleAiTask(body: unknown, uid: string, res: ApiResponse): Promise<void> {
+  const parsed = AiTaskRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`);
+    res.status(400).json({ error: 'Dati della richiesta non validi', details: issues });
+    return;
+  }
+
+  const limit = await checkRateLimitCustom(`ratelimit:ai-task:${uid}`, AI_TASK_LIMIT, AI_TASK_WINDOW_SECONDS);
+  if (!limit.allowed) {
+    const retryAfter = Math.ceil((limit.resetAt - Date.now()) / 1000);
+    res.setHeader('Retry-After', retryAfter.toString());
+    res.status(429).json({ error: `Limite raggiunto: massimo ${AI_TASK_LIMIT} analisi all'ora` });
+    return;
+  }
+
+  const { prompt, maxOutputTokens } = buildAiTask(parsed.data);
+  try {
+    res.json({ result: await callGemini(prompt, { maxOutputTokens }) });
+  } catch (err) {
+    const message = err instanceof GeminiError ? err.message : (err instanceof Error ? err.message : 'error');
+    console.error('[claude api] analisi operativa', parsed.data.type, message);
+    res.status(500).json({ error: `Nessun modello disponibile (${message})` });
+  }
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: { method: string; body: unknown; headers: Record<string, string> }, res: {
@@ -351,6 +391,12 @@ export default async function handler(req: { method: string; body: unknown; head
   const user = await requireUser(req, res);
   if (!user) {
     logError('Unauthorized API access', { endpoint: '/api/claude', status: 401 });
+    return;
+  }
+
+  // Analisi operative: instradate a parte, con il loro limite per utente.
+  if (isAiTaskType((req.body as { type?: unknown } | null)?.type)) {
+    await handleAiTask(req.body, user.uid, res);
     return;
   }
 
