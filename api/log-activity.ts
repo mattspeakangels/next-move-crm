@@ -1,3 +1,4 @@
+import { requireUser } from './_auth.js';
 // Vercel Node.js serverless function
 // Registra attività — parsing AI di un resoconto in linguaggio naturale.
 // Hardening: pattern api/claude.ts (CORS whitelist, rate limit, auth, zod).
@@ -170,12 +171,9 @@ export default async function handler(
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1];
-  const validToken = process.env.ADMIN_API_TOKEN;
-  if (!token || token !== validToken) {
-    logError('Unauthorized API access', { endpoint: '/api/log-activity', status: 401, hasToken: !!token });
-    res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
+  const user = await requireUser(req, res);
+  if (!user) {
+    logError('Unauthorized API access', { endpoint: '/api/log-activity', status: 401 });
     return;
   }
 
@@ -190,7 +188,7 @@ export default async function handler(
     return;
   }
 
-  const rateLimitResult = await checkRateLimit(token);
+  const rateLimitResult = await checkRateLimit(user.uid);
   if (!rateLimitResult.allowed) {
     const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
     res.setHeader('Retry-After', retryAfter.toString());

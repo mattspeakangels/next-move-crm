@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../../lib/apiAuth';
 import { DialogFrame } from '../ui/DialogFrame';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sparkles, List, FileText, Wand2, CheckSquare, Copy, Check, X, Loader2 } from 'lucide-react';
@@ -79,10 +80,9 @@ export function SelectionAI() {
     setCopied(false);
     setPos(null);
     try {
-      const token = import.meta.env.VITE_ADMIN_API_TOKEN;
       const res = await fetch('/api/claude', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
         body: JSON.stringify({ type: 'testo-ai', data: { action, text } }),
       });
       if (!res.ok) {

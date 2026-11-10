@@ -1,3 +1,5 @@
+import { requireUser } from './_auth.js';
+import { applyCors, handleCorsPreFlight } from './cors.js';
 // Endpoint autocontenuto — nessun import da file locali per isolare il problema di bundle
 import { callGemini, GeminiError } from './_gemini.js';
 
@@ -48,14 +50,8 @@ export default async function handler(
   },
 ) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).json({});
-    return;
-  }
+  if (handleCorsPreFlight(req, res)) return;
+  applyCors(req, res);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -63,13 +59,7 @@ export default async function handler(
   }
 
   // Auth
-  const token = req.headers['authorization']?.split(' ')[1];
-  const serverToken = process.env.ADMIN_API_TOKEN;
-  console.log('[catalog] auth check — received:', token ? token.substring(0, 6) + '...' : 'MISSING', '| env set:', !!serverToken, '| match:', token === serverToken);
-  if (!token || token !== serverToken) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
+  if (!await requireUser(req, res)) return;
 
   // Validazione
   const body = req.body as Record<string, unknown>;

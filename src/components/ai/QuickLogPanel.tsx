@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../../lib/apiAuth';
 import { DialogFrame } from '../ui/DialogFrame';
 import { useMemo, useState } from 'react';
 import { Mic, Square, Loader2, X, Check, AlertTriangle, Trash2 } from 'lucide-react';
@@ -192,7 +193,6 @@ export function QuickLogPanel({ onClose }: Props) {
     setPhase('analyzing');
     setErrorMsg(null);
     try {
-      const token = import.meta.env.VITE_ADMIN_API_TOKEN;
       const contactHints = contactList
         .filter(c => c.id && c.company)
         .slice(0, 100)
@@ -204,7 +204,7 @@ export function QuickLogPanel({ onClose }: Props) {
 
       const res = await fetch('/api/log-activity', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
         body: JSON.stringify({
           transcript: transcript.trim(),
           contacts: contactHints,

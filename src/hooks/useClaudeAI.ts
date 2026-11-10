@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../lib/apiAuth';
 import { useState } from 'react';
 
 type AIType = 'prepara-visita' | 'analizza-pipeline' | 'email-offerta' | 'analizza-prospecting';
@@ -20,13 +21,9 @@ export function useClaudeAI(): UseClaudeAIReturn {
     setError(null);
     setResult(null);
     try {
-      const token = import.meta.env.VITE_ADMIN_API_TOKEN;
       const res = await fetch('/api/claude', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
         body: JSON.stringify({ type, data }),
       });
 

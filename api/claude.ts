@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { checkRateLimit, checkRateLimitByIP } from './upstash-ratelimit.js';
 import { applyCors, handleCorsPreFlight } from './cors.js';
 import { callGemini, GeminiError } from './_gemini.js';
+import { requireUser } from './_auth.js';
 
 // Simple logging for API errors (Sentry integration handled by frontend)
 function logError(message: string, context: Record<string, unknown>) {
@@ -347,18 +348,9 @@ export default async function handler(req: { method: string; body: unknown; head
 
   // ─── Authentication & Rate Limiting ──────────────────────────────────────
 
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1];
-  const validToken = process.env.ADMIN_API_TOKEN;
-
-  if (!token || token !== validToken) {
-    logError('Unauthorized API access', {
-      endpoint: '/api/claude',
-      status: 401,
-      hasToken: !!token,
-      tokenMatch: token === validToken,
-    });
-    res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
+  const user = await requireUser(req, res);
+  if (!user) {
+    logError('Unauthorized API access', { endpoint: '/api/claude', status: 401 });
     return;
   }
 
@@ -385,11 +377,11 @@ export default async function handler(req: { method: string; body: unknown; head
     return;
   }
 
-  // Check rate limit by user token (5 requests per hour, persisted via Upstash Redis)
-  const rateLimitResult = await checkRateLimit(token);
+  // Limite per utente (persistito su Upstash Redis)
+  const rateLimitResult = await checkRateLimit(user.uid);
   if (!rateLimitResult.allowed) {
     logError('Rate limit exceeded', {
-      token: token.substring(0, 10) + '...',
+      uid: user.uid,
       remaining: rateLimitResult.remaining,
       resetAt: new Date(rateLimitResult.resetAt).toISOString(),
     });

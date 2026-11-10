@@ -1,3 +1,4 @@
+import { requireUser } from './_auth.js';
 import { writeFileSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -74,12 +75,14 @@ function parsePST(filePath: string): PSTEvent[] {
 }
 
 export default async function handler(
-  req: { method: string; body: any },
+  req: { method: string; body: any; headers: Record<string, string | string[] | undefined> },
   res: { status: (c: number) => { json: (b: unknown) => void } }
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!await requireUser(req, res)) return;
 
   const { data } = req.body as { data: string };
   if (!data) return res.status(400).json({ error: 'Missing base64 PST data' });

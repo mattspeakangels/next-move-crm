@@ -1,3 +1,4 @@
+import { requireUser } from './_auth.js';
 /**
  * /api/transcribe — Trascrizione audio via Google Cloud Speech-to-Text
  *
@@ -7,7 +8,7 @@
  * servizi vocali Google: not-allowed) non è affidabile.
  *
  * Env richieste: GOOGLE_SPEECH_API_KEY (API key ristretta a speech.googleapis.com),
- * ADMIN_API_TOKEN (stesso token bearer delle altre funzioni AI).
+ * il token di accesso Firebase dell'utente (vedi _auth.ts).
  */
 
 import { applyCors, handleCorsPreFlight } from './cors.js';
@@ -69,19 +70,15 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1];
-  const validToken = process.env.ADMIN_API_TOKEN;
-  if (!token || !validToken || token !== validToken) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   const apiKey = process.env.GOOGLE_SPEECH_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'GOOGLE_SPEECH_API_KEY non configurata' });
   }
 
-  const allowed = await checkTranscribeRateLimit(token.slice(0, 16));
+  const allowed = await checkTranscribeRateLimit(user.uid);
   if (!allowed) {
     return res.status(429).json({ error: 'Limite trascrizioni raggiunto, riprova più tardi' });
   }

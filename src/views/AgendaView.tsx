@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../lib/apiAuth';
 import { confirmAction } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useRef, useMemo } from 'react';
@@ -433,14 +434,10 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
     setVoiceState('parsing');
     setVoiceError(null);
     try {
-      const token = import.meta.env.VITE_ADMIN_TOKEN;
       const contactList = Object.values(contacts).map(c => ({ id: c.id, company: c.company }));
       const res = await fetch('/api/parse-activity', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
         body: JSON.stringify({ transcript, contacts: contactList }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1060,7 +1057,7 @@ Regole per il campo "tipo" (fondamentale per non perdere appuntamenti):
 
       const res = await fetch('/api/parse-pst', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
         body: JSON.stringify({ data: base64 }),
       });
       const json = await res.json();

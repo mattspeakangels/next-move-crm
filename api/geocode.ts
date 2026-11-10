@@ -1,5 +1,6 @@
+import { requireUser } from './_auth.js';
 export default async function handler(
-  req: { method: string; query: Record<string, string | string[] | undefined> },
+  req: { method: string; query: Record<string, string | string[] | undefined>; headers: Record<string, string | string[] | undefined> },
   res: {
     status: (code: number) => { json: (body: unknown) => void };
   }
@@ -7,6 +8,8 @@ export default async function handler(
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!await requireUser(req, res)) return;
 
   const { address, city, province } = req.query;
   const cityStr = Array.isArray(city) ? city[0] : city;

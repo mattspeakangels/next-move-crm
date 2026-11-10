@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../lib/apiAuth';
 export interface ScrapedContact {
   company: string;
   email: string;
@@ -57,6 +58,7 @@ function extractEmail(doc: Document, rawText: string): string {
 
 async function fetchViaProxy(url: string): Promise<string> {
   const r = await fetch(`/api/scrape-proxy?url=${encodeURIComponent(url)}`, {
+    headers: await apiAuthHeaders(),
     signal: AbortSignal.timeout(15000),
   });
   if (!r.ok) {

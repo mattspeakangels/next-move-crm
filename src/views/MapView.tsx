@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../lib/apiAuth';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, Marker, CircleMarker, Popup, Circle, Polyline, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
@@ -1301,7 +1302,7 @@ export const MapView: React.FC<MapViewProps> = ({
       try {
         const params = new URLSearchParams({ city });
         if (prov) params.set('province', prov);
-        const res = await fetch(`/api/geocode?${params}`);
+        const res = await fetch(`/api/geocode?${params}`, { headers: await apiAuthHeaders() });
         const data = await res.json();
 
         if (Array.isArray(data) && data.length > 0) {
@@ -1351,7 +1352,7 @@ export const MapView: React.FC<MapViewProps> = ({
       if (c.address) params.set('address', c.address);
       if (c.city) params.set('city', c.city);
       if (c.province) params.set('province', c.province);
-      const res = await fetch(`/api/geocode?${params}`);
+      const res = await fetch(`/api/geocode?${params}`, { headers: await apiAuthHeaders() });
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         const lat = parseFloat(data[0].lat);
