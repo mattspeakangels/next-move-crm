@@ -43,3 +43,53 @@ for (const url of [
 test('un indirizzo pubblico è accettato', async () => {
   assert.equal((await assertPublicUrl('https://93.184.216.34/pagina')).hostname, '93.184.216.34');
 });
+
+// ─── Analisi AI lato server (api/_aiTasks.ts) ───────────────────────────────
+
+const { AiTaskRequestSchema, buildAiTask, isAiTaskType, MAX_RESOCONTI } = await import('../api/_aiTasks.ts');
+
+test('le analisi AI accettano solo i tipi previsti, mai un prompt libero', () => {
+  assert.equal(isAiTaskType('analizza-resoconto'), true);
+  assert.equal(isAiTaskType('prompt'), false);
+  assert.equal(AiTaskRequestSchema.safeParse({ type: 'prompt', data: { prompt: 'ciao' } }).success, false);
+  assert.equal(AiTaskRequestSchema.safeParse({ type: 'analizza-resoconto', prompt: 'ciao' }).success, false);
+});
+
+test('resoconto: dati mancanti o troppo lunghi sono rifiutati', () => {
+  const ok = { type: 'analizza-resoconto', data: { contactName: 'Rossi', visitType: 'follow-up', notes: 'Inviare offerta' } };
+  assert.equal(AiTaskRequestSchema.safeParse(ok).success, true);
+  assert.equal(AiTaskRequestSchema.safeParse({ ...ok, data: { ...ok.data, notes: '' } }).success, false);
+  assert.equal(AiTaskRequestSchema.safeParse({ ...ok, data: { ...ok.data, visitType: 'altro' } }).success, false);
+  assert.equal(AiTaskRequestSchema.safeParse({ ...ok, data: { ...ok.data, notes: 'x'.repeat(20001) } }).success, false);
+});
+
+test('resoconti a gruppi: oltre il tetto la richiesta è rifiutata', () => {
+  const item = i => ({ id: `a${i}`, contactName: 'Rossi', date: '2026-11-10', notes: 'ok' });
+  const make = n => ({ type: 'analizza-resoconti', data: { items: Array.from({ length: n }, (_, i) => item(i)) } });
+  assert.equal(AiTaskRequestSchema.safeParse(make(MAX_RESOCONTI)).success, true);
+  assert.equal(AiTaskRequestSchema.safeParse(make(MAX_RESOCONTI + 1)).success, false);
+  assert.equal(AiTaskRequestSchema.safeParse(make(0)).success, false);
+});
+
+test('i prompt contengono i dati inviati e i limiti di token di prima', () => {
+  const resoconto = buildAiTask(AiTaskRequestSchema.parse({
+    type: 'analizza-resoconto', data: { contactName: 'Rossi Srl', visitType: 'offerta', notes: 'Richiamare giovedì' },
+  }));
+  assert.match(resoconto.prompt, /Cliente: "Rossi Srl"/);
+  assert.match(resoconto.prompt, /Richiamare giovedì/);
+  assert.match(resoconto.prompt, /presentazione\/consegna offerta/);
+  assert.equal(resoconto.maxOutputTokens, 1024);
+
+  const gruppo = buildAiTask(AiTaskRequestSchema.parse({
+    type: 'analizza-resoconti',
+    data: { items: [{ id: 'act_1', contactName: 'Bianchi', date: '2026-11-09', notes: 'Campionatura' }] },
+  }));
+  assert.match(gruppo.prompt, /\[id: act_1\] Cliente: "Bianchi" \| Data visita: 2026-11-09/);
+  assert.equal(gruppo.maxOutputTokens, 800);
+
+  const dealer = buildAiTask(AiTaskRequestSchema.parse({
+    type: 'analizza-conversazione', data: { transcript: 'Buongiorno', isDealer: true, contactName: 'Verdi' },
+  }));
+  assert.match(dealer.prompt, /RIVENDITORE\/DEALER/);
+  assert.equal(dealer.maxOutputTokens, 2048);
+});
