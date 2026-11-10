@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../../lib/apiAuth';
 import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { callGeminiClient } from '../../lib/geminiClient';
@@ -425,10 +426,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     });
     const res = await fetch('/api/transcribe', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_ADMIN_API_TOKEN}`,
-      },
+      headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
       body: JSON.stringify({ audio: base64 }),
     });
     const data = await res.json().catch(() => ({}));

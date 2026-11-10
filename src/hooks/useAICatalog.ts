@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../lib/apiAuth';
 import { useState, useCallback, useEffect } from 'react';
 import { Contact, ContactSegment } from '../types';
 
@@ -58,8 +59,6 @@ export function useAICatalog() {
   }, [state.suggestions, state.processedIds]);
 
   const run = useCallback(async (contacts: Contact[]) => {
-    const token = import.meta.env.VITE_ADMIN_API_TOKEN as string;
-
     // Filtra contatti già processati
     const already = new Set(state.processedIds);
     const toProcess = contacts.filter(c => !already.has(c.id));
@@ -84,10 +83,7 @@ export function useAICatalog() {
       try {
         const res = await fetch('/api/catalog', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) },
           body: JSON.stringify({
             contacts: batch.map(c => ({
               id: c.id,

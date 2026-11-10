@@ -1,8 +1,13 @@
+import { requireUser } from './_auth.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Senza autenticazione questo endpoint era un relay aperto: chiunque poteva inviare
+  // email con allegati a nome dell'app, scegliendo anche il mittente.
+  if (!await requireUser(req, res)) return;
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'RESEND_API_KEY non configurata' });

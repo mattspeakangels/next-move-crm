@@ -1,3 +1,5 @@
+import { requireUser } from './_auth.js';
+import { applyCors, handleCorsPreFlight } from './cors.js';
 // Endpoint autocontenuto — nessun import locale
 import { callGemini, GeminiError } from './_gemini.js';
 
@@ -48,16 +50,11 @@ export default async function handler(
     json: (data: unknown) => void;
   },
 ) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') { res.status(200).json({}); return; }
+  if (handleCorsPreFlight(req, res)) return;
+  applyCors(req, res);
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const token = req.headers['authorization']?.split(' ')[1];
-  const serverToken = process.env.ADMIN_API_TOKEN;
-  if (!token || token !== serverToken) { res.status(401).json({ error: 'Unauthorized' }); return; }
+  if (!await requireUser(req, res)) return;
 
   const body = req.body as Record<string, unknown>;
   const transcript = typeof body?.transcript === 'string' ? body.transcript.trim() : '';

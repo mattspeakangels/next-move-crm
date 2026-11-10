@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from '../lib/apiAuth';
 import { CustomerRequestsSection } from '../components/contacts/CustomerRequestsSection';
 import { CustomerCommunications } from '../components/contacts/CustomerCommunications';
 import { DealCommercialDetails } from '../components/contacts/DealCommercialDetails';
@@ -812,7 +813,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       if (editingContact.city) params.set('city', editingContact.city);
       if (editingContact.province) params.set('province', editingContact.province);
       if (editingContact.address) params.set('address', editingContact.address);
-      const res = await fetch(`/api/geocode?${params}`);
+      const res = await fetch(`/api/geocode?${params}`, { headers: await apiAuthHeaders() });
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         const jitter = () => (Math.random() - 0.5) * 0.004;
@@ -1109,7 +1110,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ initialSearch = '', 
       if (city) params.set('city', city);
       if (province) params.set('province', province);
       if (address) params.set('address', address);
-      const res = await fetch(`/api/geocode?${params}`);
+      const res = await fetch(`/api/geocode?${params}`, { headers: await apiAuthHeaders() });
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         const jitter = () => (Math.random() - 0.5) * 0.004;

@@ -1,3 +1,4 @@
+import { apiAuthHeaders } from './apiAuth';
 export function blakladerUrl(code: string, productUrl?: string): string {
   if (productUrl) return productUrl;
   return `https://www.blaklader.it/?s=${encodeURIComponent(code.trim())}`;
@@ -13,7 +14,7 @@ export async function enrichProduct(code: string): Promise<{
   try {
     const url = `/api/blaklader-enrich?code=${encodeURIComponent(code)}`;
     console.log(`[enrich] richiesta: code="${code}" → ${url}`);
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: await apiAuthHeaders() });
     console.log(`[enrich] risposta: status=${res.status}, ok=${res.ok}`);
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');

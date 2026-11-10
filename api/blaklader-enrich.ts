@@ -1,3 +1,6 @@
+import { requireUser } from './_auth.js';
+import { applyCors, handleCorsPreFlight } from './cors.js';
+import { safeFetch } from './_safeFetch.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -148,12 +151,10 @@ export default async function handler(
     end: () => void;
   }
 ) {
-  const origin = req.headers['origin'] || '';
-  res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') { res.status(200).json({}); return; }
+  if (handleCorsPreFlight(req, res)) return;
+  applyCors(req, res);
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
+  if (!await requireUser(req, res)) return;
 
   const code = String(req.query.code ?? '').trim();
   if (!code) { res.status(400).json({ error: 'Parametro code mancante' }); return; }
@@ -188,7 +189,7 @@ export default async function handler(
 
     // --- URL fornito manualmente ---
     if (manualUrl) {
-      const r = await fetch(manualUrl, { headers: hdrs });
+      const r = await safeFetch(manualUrl, { headers: hdrs, signal: AbortSignal.timeout(8000) });
       if (!r.ok) { res.status(502).json({ error: `HTTP ${r.status}` }); return; }
       const html = await r.text();
       const fromData = findProductInNextData(html, articleCode, baseUrl);
@@ -203,7 +204,11 @@ export default async function handler(
       return;
     }
 
-    if (!domain.includes('blaklader')) {
+    // Solo host blaklader reali (es. www.blaklader.it): "includes" accettava anche
+    // blaklader.sito-altrui.com o 127.0.0.1/blaklader.
+    let baseHost = '';
+    try { baseHost = new URL(baseUrl).hostname.toLowerCase(); } catch { /* dominio non valido */ }
+    if (!/(^|\.)blaklader\.[a-z]{2,3}(\.[a-z]{2})?$/.test(baseHost)) {
       res.status(400).json({ error: 'Configura il dominio del sito prodotti nelle Impostazioni.' });
       return;
     }
@@ -221,7 +226,7 @@ export default async function handler(
     } catch { /* ignora */ }
 
     if (listingPageUrl) {
-      const rListing = await fetch(listingPageUrl, { headers: hdrs, signal: AbortSignal.timeout(5000) }).catch(() => null);
+      const rListing = await safeFetch(listingPageUrl, { headers: hdrs, signal: AbortSignal.timeout(5000) }).catch(() => null);
       if (rListing?.ok) {
         const html = await rListing.text();
         const fromListing = findProductInNextData(html, articleCode, baseUrl);
