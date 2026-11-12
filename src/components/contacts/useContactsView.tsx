@@ -1,3 +1,5 @@
+/** Bozza del cliente nella scheda: i campi si compilano man mano (l'id c'è sempre). */
+export type ContactDraft = Partial<Contact>;
 import { apiAuthHeaders } from '../../lib/apiAuth';
 import { showNotice, confirmAction } from '../ui/Feedback';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -14,8 +16,8 @@ export function useContactsView({ initialSearch = '', onClearFilter, selectedCon
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [detailContact, setDetailContact] = useState<any>(null);
-  const [editingContact, setEditingContact] = useState<any>(null);
+  const [detailContact, setDetailContact] = useState<ContactDraft | null>(null);
+  const [editingContact, setEditingContact] = useState<ContactDraft | null>(null);
   const [addDealForContact, setAddDealForContact] = useState<string | null>(null);
   const [pendingDeleteAll, setPendingDeleteAll] = useState(false);
   const [historyContact, setHistoryContact] = useState<Contact | null>(null);
@@ -105,8 +107,8 @@ export function useContactsView({ initialSearch = '', onClearFilter, selectedCon
         const jitter = () => (Math.random() - 0.5) * 0.004;
         const lat = parseFloat(data[0].lat) + jitter();
         const lng = parseFloat(data[0].lon) + jitter();
-        setEditingContact((prev: any) => ({ ...prev, lat, lng }));
-        if (contacts[editingContact.id]) updateContact(editingContact.id, { lat, lng });
+        setEditingContact((prev) => ({ ...prev, lat, lng }));
+        if (editingContact.id && contacts[editingContact.id]) updateContact(editingContact.id, { lat, lng });
         setGeoStatus('ok');
       } else {
         setGeoStatus('error');
@@ -118,13 +120,13 @@ export function useContactsView({ initialSearch = '', onClearFilter, selectedCon
     }
   };
 
-  const openDetail = (contact?: Contact | any) => {
+  const openDetail = (contact?: ContactDraft) => {
     setGeoStatus('idle');
     if (contact) {
       setDetailContact(contact);
       setEditingContact(contact);
     } else {
-      const newContact = {
+      const newContact: ContactDraft = {
         id: `c_${Date.now()}`,
         company: '',
         customerType: 'end-user',
@@ -223,16 +225,18 @@ export function useContactsView({ initialSearch = '', onClearFilter, selectedCon
 
   const handleSave = async () => {
     if (!editingContact?.company) return showNotice('Inserisci la ragione sociale');
-    const isNew = !contacts[editingContact.id];
+    // L'id c'è sempre: la bozza nasce da un contatto esistente o con id generato
+    const draftId = editingContact.id ?? '';
+    const isNew = !contacts[draftId];
     if (isNew) {
       addContact(editingContact as Contact);
     } else {
-      updateContact(editingContact.id, editingContact);
+      updateContact(draftId, editingContact);
     }
     setDetailContact(null);
 
-    const contactId = editingContact.id;
-    const updates: Record<string, any> = {};
+    const contactId = draftId;
+    const updates: Partial<Contact> = {};
 
     // Geocodifica automatica solo per nuovi clienti con almeno città o indirizzo
     if (isNew && (editingContact.city || editingContact.province || editingContact.address)) {
@@ -241,7 +245,7 @@ export function useContactsView({ initialSearch = '', onClearFilter, selectedCon
     }
 
     // Geocodifica automatica delle sedi aggiuntive che non hanno ancora coordinate
-    const locations: any[] = editingContact.locations || [];
+    const locations = editingContact.locations || [];
     const toGeocode = locations.filter(l => (l.city || l.province || l.address) && !(l.lat && l.lng));
     if (toGeocode.length > 0) {
       const geocoded = await Promise.all(

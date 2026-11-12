@@ -1,3 +1,4 @@
+import { asCaught } from '../utils/errors';
 import {
   GoogleAuthProvider,
   linkWithPopup,
@@ -41,7 +42,8 @@ export async function connectGmail(): Promise<string> {
       throw new Error('Google non ha restituito un access token valido.');
     }
     return credential.accessToken;
-  } catch (error: any) {
+  } catch (caught) {
+    const error = asCaught(caught);
     if (error.code === 'auth/popup-closed-by-user') {
       throw new Error('Collegamento annullato.');
     }

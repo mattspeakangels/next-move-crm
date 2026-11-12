@@ -1,3 +1,4 @@
+import { asCaught } from '../utils/errors';
 // Compressione lato client via Canvas: ridimensiona e ricodifica in JPEG
 // per tenere le foto (assortimento/negozio) il più leggere possibile prima
 // di salvarle come base64 in Firestore (niente Firebase Storage in questo progetto).
@@ -58,7 +59,8 @@ export async function compressImage(file: File): Promise<CompressedImage> {
     try {
       const jpegBlob = await toJpegViaHeic2any(file);
       img = await loadImage(jpegBlob);
-    } catch (heicErr: any) {
+    } catch (caught) {
+      const heicErr = asCaught(caught);
       // Log dettagliato per diagnosticare il formato reale del file dal telefono.
       console.error('[compressImage] decodifica fallita', {
         name: file.name,

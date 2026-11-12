@@ -50,7 +50,7 @@ export function ContactDetailHeader({ v }: { v: ContactsModel }) {
         <div className="flex items-center gap-2 flex-wrap">
           {editingContact?.id && contacts[editingContact.id] && (
             <button
-              onClick={() => setHistoryContact(contacts[editingContact.id])}
+              onClick={() => setHistoryContact(contacts[editingContact.id ?? ''])}
               className="flex items-center gap-1.5 bg-accent-soft dark:bg-accent-soft/30 text-accent px-3 py-2.5 rounded-panel font-semibold uppercase text-xs tracking-normal hover:bg-accent-soft transition-colors"
             >
               <History size={14} /> <span className="hidden sm:inline">Storico</span>

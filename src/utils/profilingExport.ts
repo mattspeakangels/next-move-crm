@@ -192,7 +192,7 @@ ${p.competitor && p.competitor.length > 0 ? `
   <div class="section-title">7 · Competitor Citati</div>
   <table class="comp-table">
     <tr><th>Brand Citato</th><th>Parole Usate / Tono</th></tr>
-    ${p.competitor.map((c: any) => `<tr><td><strong>${c.brand}</strong></td><td>${c.tone}</td></tr>`).join('')}
+    ${p.competitor.map((c) => `<tr><td><strong>${c.brand}</strong></td><td>${c.tone}</td></tr>`).join('')}
   </table>
 </div>` : ''}
 

@@ -2,7 +2,7 @@ import { confirmAction } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Asset, AssetStatus } from '../types';
+import { Asset, AssetStatus, Contact } from '../types';
 import {
   Package, Plus, X, Pencil, Trash2, AlertTriangle, CheckCircle,
   Clock, Archive, ChevronDown, ChevronUp, Calendar, Hash, Euro,
@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<AssetStatus, { label: string; color: string; bg: str
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
 interface AssetFormProps {
-  contacts: Record<string, { company: string }>;
+  contacts: Record<string, Contact>;
   initial?: Partial<Asset>;
   onSave: (asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onClose: () => void;
@@ -82,14 +82,14 @@ const AssetForm: React.FC<AssetFormProps> = ({ contacts, initial, onSave, onClos
               totalCount={Object.keys(contacts).length}
               inputWrapperClassName={() => 'w-full flex items-center gap-2 border-2 border-line dark:border-line rounded-panel px-4 py-3 bg-surface dark:bg-canvas dark:text-foreground font-bold text-sm outline-none focus-within:border-accent transition-all'}
               results={sortByRelevance(contactSearch, (contactSearch.trim()
-                ? Object.values(contacts).filter((c: any) => matchSearch(contactSearch, [c.company]))
+                ? Object.values(contacts).filter((c) => matchSearch(contactSearch, [c.company]))
                 : Object.values(contacts)
-              ), (c: any) => [c.company]).slice(0, 8).map((c: any) => ({
+              ), (c) => [c.company]).slice(0, 8).map((c) => ({
                 key: c.id,
                 item: c,
                 label: c.company,
               }))}
-              onSelect={(c: any) => { setData(d => ({ ...d, contactId: c.id })); setContactSearch(c.company); }}
+              onSelect={(c) => { setData(d => ({ ...d, contactId: c.id })); setContactSearch(c.company); }}
             />
           </div>
 

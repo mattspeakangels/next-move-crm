@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, TrendingUp, Activity, ChevronLeft, ChevronRight,
   Video, MonitorPlay, Wrench, GraduationCap, Laptop, Building2, Store, Car,
 } from 'lucide-react';
-import { ActivityType, Activity as ActivityRecord } from '../types';
+import { ActivityType, Activity as ActivityRecord, Contact } from '../types';
 import { useToast } from '../components/ui/ToastContext';
 import { PdfButton } from '../components/ui/PdfButton';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
@@ -118,7 +118,7 @@ const OFFER_COLOR: Record<string, string> = {
 // ─── Quick-add form ───────────────────────────────────────────────────────────
 
 interface QuickAddProps {
-  contacts: Record<string, { company: string; contactName?: string; city?: string; email?: string; phone?: string }>;
+  contacts: Record<string, Contact>;
   onSave: (contactId: string, type: ActivityType, notes: string) => void;
   onClose: () => void;
 }
@@ -152,15 +152,15 @@ const QuickAdd: React.FC<QuickAddProps> = ({ contacts, onSave, onClose }) => {
           totalCount={Object.keys(contacts).length}
           inputWrapperClassName={() => 'flex items-center gap-2 px-3 py-2.5 bg-transparent border-2 border-line dark:border-line rounded-md font-bold outline-none focus-within:border-accent transition-all text-sm dark:text-foreground'}
           results={sortByRelevance(contactSearch, (contactSearch.trim()
-            ? Object.values(contacts).filter((c: any) => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
+            ? Object.values(contacts).filter((c) => matchSearch(contactSearch, [c.company, c.contactName, c.city, c.email, c.phone]))
             : Object.values(contacts)
-          ), (c: any) => [c.company, c.contactName]).slice(0, 8).map((c: any) => ({
+          ), (c) => [c.company, c.contactName]).slice(0, 8).map((c) => ({
             key: c.id,
             item: c,
             label: c.company || c.contactName,
             sublabel: [c.company && c.contactName, c.city].filter(Boolean).join(' · ') || undefined,
           }))}
-          onSelect={(c: any) => { setContactId(c.id); setContactSearch(c.company || c.contactName); }}
+          onSelect={(c) => { setContactId(c.id); setContactSearch(c.company || c.contactName); }}
         />
         <div className="flex gap-2">
           {TYPES.map(t => (
@@ -541,7 +541,7 @@ export const ActivityLogView: React.FC = () => {
           className="border-2 border-line dark:border-line rounded-panel px-4 py-2 bg-surface dark:bg-surface dark:text-foreground text-xs font-bold outline-none"
         >
           <option value="">Tutti i clienti</option>
-          {contactOptions.map((c: any) => <option key={c.id} value={c.id}>{c.company}</option>)}
+          {contactOptions.map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}
         </select>
       </div>
 

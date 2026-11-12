@@ -1,5 +1,5 @@
 import { Building2 } from 'lucide-react';
-import { ContactSegment } from '../../types';
+import { ContactSegment, CustomerType, ContactStatus } from '../../types';
 import { allSectors, sectorLabel } from '../../lib/sectors';
 import { ContactsModel } from './useContactsView';
 
@@ -17,14 +17,14 @@ export function ContactMainFields({ v }: { v: ContactsModel }) {
 
           <div>
             <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Tipologia</label>
-            <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.segment === 'dealer' ? 'dealer' : 'end-user'} onChange={e => setEditingContact({...editingContact, segment: e.target.value as ContactSegment, customerType: e.target.value})}>
+            <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.segment === 'dealer' ? 'dealer' : 'end-user'} onChange={e => setEditingContact({...editingContact, segment: e.target.value as ContactSegment, customerType: e.target.value as CustomerType})}>
               <option value="end-user">End User (Utilizzatore Finale)</option>
               <option value="dealer">Dealer (Rivenditore)</option>
             </select>
           </div>
           <div>
             <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">Status CRM</label>
-            <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.status || 'potenziale'} onChange={e => setEditingContact({...editingContact, status: e.target.value})}>
+            <select className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none" value={editingContact?.status || 'potenziale'} onChange={e => setEditingContact({...editingContact, status: e.target.value as ContactStatus})}>
               <option value="potenziale">Potenziale</option>
               <option value="cliente">Cliente Attivo</option>
             </select>

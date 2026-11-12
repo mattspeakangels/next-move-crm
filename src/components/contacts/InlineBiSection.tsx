@@ -1,3 +1,4 @@
+import { asCaught } from '../../utils/errors';
 import { showNotice } from '../ui/Feedback';
 import React, { useState, useRef } from 'react';
 import { Trash2, Upload, FileText, Download } from 'lucide-react';
@@ -30,7 +31,8 @@ export const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) 
       const doc = await uploadBiDocument(contactId, file);
       const current = contacts[contactId]?.biDocuments ?? [];
       updateContact(contactId, { biDocuments: [...current, doc] });
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore caricamento documento');
     } finally {
       setUploading(false);
@@ -44,7 +46,8 @@ export const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) 
     try {
       const { downloadBiDocument } = await import('../../lib/uploadBiDocument');
       await downloadBiDocument(doc);
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore download documento');
     } finally {
       setDownloadingId(null);
@@ -60,7 +63,8 @@ export const InlineBiSection: React.FC<{ contactId: string }> = ({ contactId }) 
       await deleteBiDocument(doc);
       const current = contacts[contactId]?.biDocuments ?? [];
       updateContact(contactId, { biDocuments: current.filter(d => d.id !== docId) });
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore eliminazione documento');
     } finally {
       setDeletingId(null);

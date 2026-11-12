@@ -1,3 +1,4 @@
+import type { Stakeholder } from '../../types';
 import { Plus, Users, Trash2 } from 'lucide-react';
 import { ContactsModel } from './useContactsView';
 
@@ -6,20 +7,20 @@ export function ContactStakeholders({ v }: { v: ContactsModel }) {
   return (
     <>
       {(() => {
-        const allSh: typeof editingContact.stakeholders = editingContact?.stakeholders || [];
-        const titolare = allSh.find((s: any) => s.role === 'Titolare');
-        const altre = allSh.filter((s: any) => s.role !== 'Titolare');
+        const allSh: Stakeholder[] = editingContact?.stakeholders || [];
+        const titolare = allSh.find((s) => s.role === 'Titolare');
+        const altre = allSh.filter((s) => s.role !== 'Titolare');
 
         const setTitolare = (field: string, val: string) => {
           if (titolare) {
-            setEditingContact({ ...editingContact, stakeholders: allSh.map((s: any) => s.role === 'Titolare' ? { ...s, [field]: val } : s) });
+            setEditingContact({ ...editingContact, stakeholders: allSh.map((s) => s.role === 'Titolare' ? { ...s, [field]: val } : s) });
           } else {
             setEditingContact({ ...editingContact, stakeholders: [{ id: `sh_titolare_${Date.now()}`, role: 'Titolare', firstName: '', lastName: '', email: '', phone: '', [field]: val }, ...altre] });
           }
         };
 
         const updateAltra = (id: string, field: string, val: string) => {
-          setEditingContact({ ...editingContact, stakeholders: allSh.map((s: any) => s.id === id ? { ...s, [field]: val } : s) });
+          setEditingContact({ ...editingContact, stakeholders: allSh.map((s) => s.id === id ? { ...s, [field]: val } : s) });
         };
 
         const addAltra = () => {
@@ -28,7 +29,7 @@ export function ContactStakeholders({ v }: { v: ContactsModel }) {
         };
 
         const removeAltra = (id: string) => {
-          setEditingContact({ ...editingContact, stakeholders: allSh.filter((s: any) => s.id !== id) });
+          setEditingContact({ ...editingContact, stakeholders: allSh.filter((s) => s.id !== id) });
         };
 
         const inputCls = "w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all text-sm";
@@ -64,7 +65,7 @@ export function ContactStakeholders({ v }: { v: ContactsModel }) {
               </div>
 
               {/* Altre figure */}
-              {altre.map((s: any) => (
+              {altre.map((s) => (
                 <div key={s.id} className="bg-surface dark:bg-surface rounded-panel p-5 shadow-sm border-2 border-line dark:border-line relative">
                   <button onClick={() => removeAltra(s.id)} className="absolute top-4 right-4 p-1.5 rounded-lg text-danger hover:bg-danger-soft dark:hover:bg-danger-soft transition-colors">
                     <Trash2 size={14} />

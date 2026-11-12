@@ -26,7 +26,7 @@ export function ContactOpenDeals({ v }: { v: ContactsModel }) {
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-semibold text-muted uppercase tracking-normal">Opportunità aperte</span>
                 <button
-                  onClick={() => setAddDealForContact(editingContact.id)}
+                  onClick={() => setAddDealForContact(editingContact.id ?? null)}
                   className="text-xs font-semibold text-accent bg-accent-soft px-2 py-1 rounded-full uppercase flex items-center gap-1 hover:bg-accent-soft transition-colors"
                 >
                   <Plus size={10}/> Aggiungi

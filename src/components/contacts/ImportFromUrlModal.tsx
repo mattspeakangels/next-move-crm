@@ -42,7 +42,7 @@ export const ImportFromUrlModal: React.FC<ImportFromUrlModalProps> = ({ onClose,
       if (!/^https?:\/\//i.test(cleanUrl)) cleanUrl = 'https://' + cleanUrl;
       const result = await scrapeContactFromUrl(cleanUrl);
       setData(result);
-    } catch (e: any) {
+    } catch {
       setError('Impossibile raggiungere il sito. Prova con un URL diverso o compila manualmente.');
     } finally {
       setLoading(false);

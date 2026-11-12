@@ -5,7 +5,7 @@ import { AddDealModal } from '../components/deals/AddDealModal';
 import { ImportFromUrlModal } from '../components/contacts/ImportFromUrlModal';
 import { DeviceAuthModal } from '../components/ui/DeviceAuthModal';
 import { ContactHistoryView } from './ContactHistoryView';
-import { useContactsView } from '../components/contacts/useContactsView';
+import { useContactsView, type ContactDraft } from '../components/contacts/useContactsView';
 import { ContactDetail } from '../components/contacts/ContactDetail';
 import { ContactListPanel } from '../components/contacts/ContactListPanel';
 
@@ -102,7 +102,7 @@ export const ContactsView: React.FC<ContactsViewProps> = (props) => {
           onClose={() => setShowImportModal(false)}
           onImport={scraped => {
             const now = Date.now();
-            const newContact = {
+            const newContact: ContactDraft = {
               id: `c_${now}`,
               company: scraped.company,
               customerType: 'end-user',

@@ -9,7 +9,7 @@ export const useInitializeProducts = () => {
   useEffect(() => {
     const productCount = Object.keys(products).length;
     if (productCount === 0 && productsData.length > 0) {
-      productsData.forEach((p: any) => {
+      productsData.forEach((p) => {
         addProduct({
           id: p.id,
           code: p.code,

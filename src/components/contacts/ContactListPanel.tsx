@@ -2,7 +2,7 @@ import { confirmAction } from '../ui/Feedback';
 import { Plus, Phone, MapPin, Building2, X, Users, UserPlus, Trash2, Upload, History, Link, ArrowUp, ArrowDown, Star, RefreshCw } from 'lucide-react';
 import { SearchDropdown } from '../ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../../utils/search';
-import { ContactsModel } from './useContactsView';
+import { ContactsModel, type ContactDraft } from './useContactsView';
 
 export function ContactListPanel({ v }: { v: ContactsModel }) {
   const { initialSearch, onClearFilter, contacts, updateContact, deleteContact, searchTerm, setSearchTerm, fileInputRef, setDetailContact, setEditingContact, setPendingDeleteAll, setHistoryContact, setShowImportModal, activeTab, setActiveTab, topFilter, setTopFilter, subFilter, setSubFilter, visibleCount, setVisibleCount, sortBy, setSortBy, sortDir, setSortDir, clientiCount, prospectCount, rankedFilteredList, fileInputRefProspect, openDetail, handleFileUpload, recheckDealerClassification } = v;
@@ -125,7 +125,7 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                 <Link size={18} /> <span className="hidden md:inline">Da URL</span>
               </button>
               <button onClick={() => {
-                const newContact = {
+                const newContact: ContactDraft = {
                   id: `c_${Date.now()}`,
                   company: '', customerType: 'end-user',
                   status: statusFilter,

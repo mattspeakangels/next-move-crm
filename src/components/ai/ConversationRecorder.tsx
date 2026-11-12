@@ -1,3 +1,5 @@
+import { getSpeechRecognition, type SpeechRecognitionLike, type SpeechResultEventLike, type SpeechErrorEventLike } from '../../types/speech';
+import { asCaught } from '../../utils/errors';
 import { apiAuthHeaders } from '../../lib/apiAuth';
 import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -37,7 +39,8 @@ export function mergeProfilingPatch(
   patch: Record<string, unknown>,
   newObiezioni: Obiezione[],
 ): ProfilingData {
-  const result: any = { ...existing };
+  // Fusione per chiave dinamica: il risultato è trattato come mappa di campi
+  const result: Record<string, unknown> = { ...existing };
 
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined || value === null) continue;
@@ -45,17 +48,18 @@ export function mergeProfilingPatch(
     if (Array.isArray(value) && value.length === 0) continue;
 
     if (key === 'qualificazione' && typeof value === 'object' && !Array.isArray(value)) {
-      result.qualificazione = { ...result.qualificazione };
+      const qualificazione = { ...(result.qualificazione as Record<string, number>) };
       for (const [qk, qv] of Object.entries(value as Record<string, number>)) {
-        if (typeof qv === 'number' && qv > 1) result.qualificazione[qk] = qv;
+        if (typeof qv === 'number' && qv > 1) qualificazione[qk] = qv;
       }
+      result.qualificazione = qualificazione;
       continue;
     }
 
     if (key === 'competitor' && Array.isArray(value)) {
-      const existing_arr: any[] = result[key] || [];
+      const existing_arr = (result[key] || []) as { brand?: string }[];
       const merged = [...existing_arr];
-      for (const item of value as any[]) {
+      for (const item of value as { brand?: string }[]) {
         if (!merged.some(e => e.brand === item.brand)) merged.push(item);
       }
       result[key] = merged;
@@ -63,7 +67,7 @@ export function mergeProfilingPatch(
     }
 
     if (Array.isArray(value)) {
-      const existing_arr: string[] = result[key] || [];
+      const existing_arr = (result[key] || []) as string[];
       result[key] = [...new Set([...existing_arr, ...(value as string[])])];
       continue;
     }
@@ -72,14 +76,14 @@ export function mergeProfilingPatch(
   }
 
   // Merge obiezioni (deduplicate by testo)
-  const existingOb: Obiezione[] = result.obiezioni || [];
+  const existingOb = (result.obiezioni || []) as Obiezione[];
   const merged: Obiezione[] = [...existingOb];
   for (const ob of newObiezioni) {
     if (!merged.some(e => e.testo === ob.testo)) merged.push(ob);
   }
   result.obiezioni = merged;
 
-  return result as ProfilingData;
+  return result as unknown as ProfilingData;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -117,7 +121,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   const [liveStats, setLiveStats] = useState({ transcribed: 0, pending: 0, failed: 0, processing: false });
   const [recoveredDraft, setRecoveredDraft] = useState(false);
 
-  const srRef = useRef<any>(null);
+  const srRef = useRef<SpeechRecognitionLike | null>(null);
   const shouldRecordRef = useRef(false);
   const fullTranscriptRef = useRef('');      // testo finalizzato dalle sessioni SR già concluse
   const sessionFinalRef = useRef('');        // finale della sessione SR corrente (ricostruito ad ogni evento)
@@ -171,8 +175,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
   };
 
   const startSR = useCallback(() => {
-    const w = window as any;
-    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    const SR = getSpeechRecognition();
     if (!SR) return;
 
     const sr = new SR();
@@ -196,7 +199,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
     sr.onspeechstart = () => setSrStatus('speech');
     sr.onspeechend = () => setSrStatus('listening');
 
-    sr.onresult = (e: any) => {
+    sr.onresult = (e: SpeechResultEventLike) => {
       clearNoResultsTimer();
       // Su Android Chrome (continuous) ogni evento onresult contiene TUTTI i
       // risultati della sessione corrente: ricostruiamo il finale da zero ad
@@ -228,7 +231,7 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
       }
     };
 
-    sr.onerror = (e: any) => {
+    sr.onerror = (e: SpeechErrorEventLike) => {
       if (e.error === 'aborted') return;
       if (e.error === 'no-speech') {
         // normale — SR si riavvia da onend
@@ -422,7 +425,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
         1000,
       );
       startChunk(stream);
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
         setError('Permesso microfono negato. Abilita il microfono nelle impostazioni del browser/app, poi riprova.');
       } else if (err?.name === 'NotFoundError') {
@@ -573,7 +577,8 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
         riassunto: parsed.riassunto ?? '',
       });
       setPhase('done');
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       setError(`Errore analisi: ${err.message ?? 'Riprovare'}`);
       setPhase(transcript ? 'idle' : 'idle');
     }
@@ -863,11 +868,11 @@ export const ConversationRecorder: React.FC<ConversationRecorderProps> = ({
                       <p className="text-xs text-muted italic">Nessun campo estratto dalla conversazione.</p>
                     ) : (
                       appliedFields.map(field => {
-                        const val = (result.profiling as any)[field];
+                        const val = result.profiling[field];
                         const display = Array.isArray(val)
-                          ? val.map((v: any) => typeof v === 'object' ? `${v.brand} (${v.tone})` : v).join(' · ')
+                          ? val.map((v) => typeof v === 'object' ? `${v.brand} (${v.tone})` : v).join(' · ')
                           : typeof val === 'object'
-                            ? Object.entries(val).map(([k, v]) => `${k}: ${v}`).join(' · ')
+                            ? Object.entries(val as Record<string, unknown>).map(([k, v]) => `${k}: ${v}`).join(' · ')
                             : String(val);
                         return (
                           <div key={field} className="flex gap-3 items-start">

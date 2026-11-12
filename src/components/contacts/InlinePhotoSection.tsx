@@ -1,3 +1,5 @@
+import type { ContactPhoto } from '../../types';
+import { asCaught } from '../../utils/errors';
 import { showNotice } from '../ui/Feedback';
 import { DialogFrame } from '../ui/DialogFrame';
 import React, { useState, useRef } from 'react';
@@ -28,20 +30,22 @@ export const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId 
         const current = contacts[contactId]?.photos ?? [];
         updateContact(contactId, { photos: [...current, photo] });
       }
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore caricamento foto');
     } finally {
       setUploading(false);
     }
   };
 
-  const openViewer = async (photo: any) => {
+  const openViewer = async (photo: ContactPhoto) => {
     setViewer({ photo, fullUrl: null, loading: true });
     try {
       const { getContactPhotoFullDataUrl } = await import('../../lib/uploadPhoto');
       const fullUrl = await getContactPhotoFullDataUrl(photo);
       setViewer({ photo, fullUrl, loading: false });
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore apertura foto');
       setViewer(null);
     }
@@ -57,7 +61,8 @@ export const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId 
       const current = contacts[contactId]?.photos ?? [];
       updateContact(contactId, { photos: current.filter(p => p.id !== photoId) });
       setViewer(null);
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore eliminazione foto');
     } finally {
       setDeletingId(null);

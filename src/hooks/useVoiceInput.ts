@@ -1,7 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRec = any;
+import { getSpeechRecognition, type SpeechRecognitionLike, type SpeechResultEventLike, type SpeechErrorEventLike } from '../types/speech';
 
 interface VoiceInputOptions {
   onFinal?: (text: string) => void;
@@ -12,7 +10,7 @@ export function useVoiceInput() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const recRef = useRef<AnyRec>(null);
+  const recRef = useRef<SpeechRecognitionLike | null>(null);
   const finalRef = useRef('');
 
   const isSupported =
@@ -20,8 +18,7 @@ export function useVoiceInput() {
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   const start = useCallback((opts?: VoiceInputOptions) => {
-    const w = window as AnyRec;
-    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    const SR = getSpeechRecognition();
     if (!SR) { setError('SpeechRecognition non supportato'); return; }
 
     const rec = new SR();
@@ -30,7 +27,7 @@ export function useVoiceInput() {
     rec.interimResults = true;
     finalRef.current = '';
 
-    rec.onresult = (event: AnyRec) => {
+    rec.onresult = (event: SpeechResultEventLike) => {
       // Su Android Chrome ogni evento onresult può ricontenere TUTTI i
       // risultati della sessione (resultIndex inaffidabile): il testo finale
       // va ricostruito da zero ad ogni evento invece di accumulare i delta,
@@ -46,7 +43,7 @@ export function useVoiceInput() {
       setTranscript((final + interim).trim());
     };
 
-    rec.onerror = (e: AnyRec) => {
+    rec.onerror = (e: SpeechErrorEventLike) => {
       const map: Record<string, string> = {
         'not-allowed': 'Permesso microfono negato. Abilitalo nelle impostazioni del sito e ricarica la pagina.',
         'service-not-allowed': "Microfono non consentito dal browser. Su PWA installata prova ad aprire l'app in Chrome.",

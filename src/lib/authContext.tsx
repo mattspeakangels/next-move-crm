@@ -1,3 +1,4 @@
+import { asCaught } from '../utils/errors';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   User, onAuthStateChanged,
@@ -74,7 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // sulla schermata di login pur essendo autenticato su Google.
         const result = await signInWithPopup(auth, provider);
         recordSuccessfulLogin(result.user.email).catch(console.error);
-      } catch (popupError: any) {
+      } catch (caught) {
+        const popupError = asCaught(caught);
         // Se il popup non è praticabile (bloccato o non supportato dal browser),
         // su mobile ricadiamo sul redirect come ultima risorsa.
         if (
@@ -88,7 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         throw popupError;
       }
-    } catch (error: any) {
+    } catch (caught) {
+      const error = asCaught(caught);
       recordFailedLogin(undefined).catch(console.error);
 
       if (error.code === 'auth/popup-closed-by-user') {
@@ -106,7 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoginError(undefined);
       const result = await signInWithEmailAndPassword(auth, email, password);
       recordSuccessfulLogin(result.user.email).catch(console.error);
-    } catch (error: any) {
+    } catch (caught) {
+      const error = asCaught(caught);
       const msg: Record<string, string> = {
         'auth/invalid-credential': 'Email o password non corretti.',
         'auth/user-not-found': 'Nessun account con questa email.',
@@ -114,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'auth/too-many-requests': 'Troppi tentativi. Riprova più tardi.',
         'auth/invalid-email': 'Email non valida.',
       };
-      setLoginError(msg[error.code] ?? 'Accesso non riuscito. Riprova.');
+      setLoginError(msg[error.code ?? ''] ?? 'Accesso non riuscito. Riprova.');
       recordFailedLogin(undefined).catch(console.error);
     }
   };
@@ -124,13 +128,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoginError(undefined);
       const result = await createUserWithEmailAndPassword(auth, email, password);
       recordSuccessfulLogin(result.user.email).catch(console.error);
-    } catch (error: any) {
+    } catch (caught) {
+      const error = asCaught(caught);
       const msg: Record<string, string> = {
         'auth/email-already-in-use': 'Questa email è già registrata.',
         'auth/invalid-email': 'Email non valida.',
         'auth/weak-password': 'Password troppo debole (minimo 6 caratteri).',
       };
-      setLoginError(msg[error.code] ?? 'Registrazione non riuscita. Riprova.');
+      setLoginError(msg[error.code ?? ''] ?? 'Registrazione non riuscita. Riprova.');
     }
   };
 
@@ -138,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoginError(undefined);
       await sendPasswordResetEmail(auth, email);
-    } catch (error: any) {
+    } catch {
       setLoginError('Impossibile inviare email di reset. Controlla l\'indirizzo.');
     }
   };

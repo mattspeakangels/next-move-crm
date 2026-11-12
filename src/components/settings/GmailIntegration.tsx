@@ -1,3 +1,4 @@
+import { asCaught } from '../../utils/errors';
 import React, { useState } from 'react';
 import { Mail, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
@@ -21,7 +22,8 @@ export const GmailIntegration: React.FC = () => {
       const token = await connectGmail();
       setAccessToken(token);
       setStatus('idle');
-    } catch (e: any) {
+    } catch (caught) {
+      const e = asCaught(caught);
       setError(e.message || 'Errore nel collegamento a Gmail.');
       setStatus('error');
     }
@@ -38,7 +40,8 @@ export const GmailIntegration: React.FC = () => {
       if (newActivities.length > 0) addActivitiesBatch(newActivities);
       setResult({ found: messages.length, created: newActivities.length });
       setStatus('done');
-    } catch (e: any) {
+    } catch (caught) {
+      const e = asCaught(caught);
       setError(e.message || 'Errore durante la sincronizzazione.');
       setStatus('error');
     }

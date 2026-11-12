@@ -1,3 +1,4 @@
+import { asCaught } from '../utils/errors';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
@@ -39,7 +40,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       const { url, name } = await uploadOfferPdf(dealId, file);
       updateDeal(dealId, { orderPdfUrl: url, orderPdfName: name });
       showToast('PDF ordine caricato!', 'success');
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showToast(err?.message ?? 'Errore caricamento PDF', 'error');
     } finally {
       setUploadingOrderId(null);
@@ -140,7 +142,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       showToast('Ordine creato!', 'success');
       setShowOrderModal(false);
       resetOrderModal();
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showToast(err?.message ?? 'Errore creazione ordine', 'error');
     } finally {
       setOrderCreating(false);
@@ -190,7 +193,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       setPdfModalFile(null);
       setPdfModalAmount(0);
       setPdfModalEmailBody('');
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showToast(err?.message ?? 'Errore caricamento PDF', 'error');
     } finally {
       setPdfModalUploading(false);
@@ -207,7 +211,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       const { url, name } = await uploadOfferPdf(offerId, file);
       updateOffer(offerId, { pdfUrl: url, pdfName: name });
       showToast('PDF caricato!', 'success');
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showToast(err?.message ?? 'Errore caricamento PDF', 'error');
     } finally {
       setUploadingId(null);
@@ -360,7 +365,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
       try {
         const { url, name } = await uploadOfferPdf(offerId, offerPdfFile);
         pdfFields = { pdfUrl: url, pdfName: name };
-      } catch (err: any) {
+      } catch (caught) {
+        const err = asCaught(caught);
         showToast(err?.message ?? 'Errore caricamento PDF', 'error');
         setSavingOffer(false);
         return;
@@ -425,7 +431,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
         setTimeout(() => {
           window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}${bodyParam}`;
         }, 600);
-      } catch (err: any) {
+      } catch (caught) {
+        const err = asCaught(caught);
         showToast(err?.message ?? 'Errore', 'error');
       }
       return;

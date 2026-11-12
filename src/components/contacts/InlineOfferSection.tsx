@@ -1,3 +1,4 @@
+import { asCaught } from '../../utils/errors';
 import { showNotice } from '../ui/Feedback';
 import React, { useState, useRef } from 'react';
 import { Plus, Trash2, Upload, FileText, Download } from 'lucide-react';
@@ -29,7 +30,8 @@ export const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId 
       const { uploadOfferPdf } = await import('../../lib/uploadPdf');
       const { url, name } = await uploadOfferPdf(offerId, file);
       updateOffer(offerId, { pdfUrl: url, pdfName: name });
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore caricamento PDF');
     } finally {
       setUploadingPdfId(null);
@@ -58,7 +60,8 @@ export const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId 
       });
       setShowPdfQuick(false);
       setQuickPdfFile(null);
-    } catch (err: any) {
+    } catch (caught) {
+      const err = asCaught(caught);
       showNotice(err?.message ?? 'Errore caricamento PDF');
     } finally {
       setQuickPdfUploading(false);

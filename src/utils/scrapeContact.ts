@@ -21,7 +21,7 @@ function extractJsonLd(doc: Document): Record<string, any> | null {
       const data = JSON.parse(s.textContent || '');
       const items = Array.isArray(data) ? data : [data];
       const org = items.find(
-        (i: any) => i['@type'] && ['Organization', 'LocalBusiness', 'Corporation', 'Store', 'Restaurant', 'Hotel'].some(t => i['@type'] === t || (Array.isArray(i['@type']) && i['@type'].includes(t)))
+        (i) => i['@type'] && ['Organization', 'LocalBusiness', 'Corporation', 'Store', 'Restaurant', 'Hotel'].some(t => i['@type'] === t || (Array.isArray(i['@type']) && i['@type'].includes(t)))
       );
       if (org) return org;
     } catch { /* skip invalid JSON */ }
