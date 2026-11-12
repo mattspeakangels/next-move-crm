@@ -1,5 +1,5 @@
 import type { ClienteDettagliato } from '../store/storicoStore';
-import { parseAmount } from './storicoParse';
+import { parseAmount, type SheetRows } from './storicoParse';
 
 // Lettura del formato pivot dello Storico (export tabella pivot con anni e mesi in colonna).
 // ─── PIVOT FORMAT PARSER ──────────────────────────────────────────────────────
@@ -9,23 +9,23 @@ export const PIVOT_MONTH_MAP: Record<string, number> = {
   jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
 };
 
-export function isPivotFormat(rows: any[][]): boolean {
+export function isPivotFormat(rows: SheetRows): boolean {
   if (rows.length < 6) return false;
   const r1 = rows[1] || [];
   const r4 = rows[4] || [];
   // "Somma di Invoice Amount" è il segnale più affidabile: appare molte volte in row 4
-  const hasSommaInvoice = r4.some((v: any) =>
+  const hasSommaInvoice = r4.some((v) =>
     String(v || '').toLowerCase().includes('somma di invoice amount')
   );
   // Anni 2020-2030 in row 1, accetta sia number che string
-  const hasYear = r1.some((v: any) => {
+  const hasYear = r1.some((v) => {
     const n = typeof v === 'number' ? v : parseInt(String(v || ''), 10);
     return !isNaN(n) && n >= 2020 && n <= 2030;
   });
   return hasSommaInvoice && hasYear;
 }
 
-export function parsePivotData(rows: any[][]): ClienteDettagliato[] {
+export function parsePivotData(rows: SheetRows): ClienteDettagliato[] {
   const r1 = rows[1] || [], r2 = rows[2] || [], r3 = rows[3] || [], r4 = rows[4] || [];
 
   // Mappa colonne: (anno, mese, giorno) → {colAmt, colQty}

@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown, AlertTriangle, ChevronDown, ChevronUp, Minus } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import { fmtEur } from '../../lib/storicoFormat';
+import { fmtEur, fatturatoAnno } from '../../lib/storicoFormat';
 import type { StoricoViewModel } from './useStoricoView';
 
 export function StoricoTab({ v }: { v: StoricoViewModel }) {
@@ -57,8 +57,8 @@ export function StoricoTab({ v }: { v: StoricoViewModel }) {
             </thead>
             <tbody>
               {clientiSorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(c => {
-                const cPrev = (((c as any)[`fatturato${annoPrev}`] as number) || 0);
-                const cCorr = (((c as any)[`fatturato${annoCorr}`] as number) || 0);
+                const cPrev = fatturatoAnno(c, annoPrev);
+                const cCorr = fatturatoAnno(c, annoCorr);
                 const delta = cPrev > 0 ? ((cCorr - cPrev) / cPrev * 100) : null;
                 const isDormiente = cPrev > 0 && cCorr === 0;
                 const isNuovo = cPrev === 0 && cCorr > 0;

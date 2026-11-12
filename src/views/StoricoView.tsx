@@ -1,7 +1,7 @@
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
 import { Upload, TrendingUp, Target, Zap, AlertTriangle, Euro, BarChart3, Star, RefreshCw } from 'lucide-react';
-import { fmtEur } from '../lib/storicoFormat';
+import { fmtEur, fatturatoAnno } from '../lib/storicoFormat';
 import { KPICard } from '../components/storico/StoricoCards';
 import { useStoricoView } from '../components/storico/useStoricoView';
 import { StoricoTab } from '../components/storico/StoricoTab';
@@ -100,13 +100,13 @@ export function StoricoView() {
           key: String(c.clientId),
           item: c,
           label: c.nome || `#${c.clientId}`,
-          sublabel: `${fmtEur((((c as any)[`fatturato${annoCorr}`] as number) || 0))} (${annoCorr})`,
+          sublabel: `${fmtEur(fatturatoAnno(c, annoCorr))} (${annoCorr})`,
         }))}
       />
 
       {/* KPI Row */}
       <div className="cockpit-history-summary grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label={`Fatturato ${annoPrev}`} value={fmtEur(totPrev)} sub={`${clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0).length} clienti attivi`} color="bg-action" icon={Euro} />
+        <KPICard label={`Fatturato ${annoPrev}`} value={fmtEur(totPrev)} sub={`${clienti.filter(c => fatturatoAnno(c, annoPrev) > 0).length} clienti attivi`} color="bg-action" icon={Euro} />
         <KPICard label={`Fatturato ${annoCorr}`} value={fmtEur(totCorr)} sub={`${deltaYoY > 0 ? '+' : ''}${deltaYoY.toFixed(1)}% vs ${annoPrev}`} color={deltaYoY >= 0 ? 'bg-success' : 'bg-danger'} icon={TrendingUp} />
         <KPICard label="Clienti Dormienti" value={String(dormienti.length)} sub={`attivi ${annoPrev}, assenti ${annoCorr}`} color="bg-warning" icon={AlertTriangle} />
         <KPICard label={`Nuovi ${annoCorr}`} value={String(nuoviCorr.length)} sub={`non presenti in ${annoPrev}`} color="bg-action" icon={Star} />

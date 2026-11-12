@@ -1,4 +1,7 @@
 import { showNotice } from '../components/ui/Feedback';
+/** Righe di un foglio letto con sheet_to_json({ header: 1 }): celle di tipo vario. */
+export type SheetRows = unknown[][];
+
 import type { ClienteRecord, ClienteDettagliato } from '../store/storicoStore';
 
 // ─── PARSER ───────────────────────────────────────────────────────────────────
@@ -8,7 +11,7 @@ import type { ClienteRecord, ClienteDettagliato } from '../store/storicoStore';
  * Gestisce sia numeri già parsati (7529) sia stringhe italiane ("7.529" o "7.529 ").
  * I numeri italiani usano il punto come separatore migliaia e la virgola come decimale.
  */
-export function parseAmount(val: string | number | null | undefined): number {
+export function parseAmount(val: unknown): number {
   if (val === null || val === undefined || val === '') return 0;
   if (typeof val === 'number') return Math.abs(isNaN(val) ? 0 : val);
 
@@ -45,7 +48,7 @@ export function parseAmount(val: string | number | null | undefined): number {
   return isNaN(n) ? 0 : Math.abs(n);
 }
 
-export function parseMargin(val: string | number | null | undefined): number {
+export function parseMargin(val: unknown): number {
   if (val === null || val === undefined || val === '') return 0;
   if (typeof val === 'number') return isNaN(val) ? 0 : val;
   const s = String(val).replace(',', '.').trim();
@@ -56,7 +59,7 @@ export function parseMargin(val: string | number | null | undefined): number {
 /**
  * Rileva le posizioni delle colonne cercando i header.
  */
-export function detectColumns(rows: any[][]): {
+export function detectColumns(rows: SheetRows): {
   colCustomerName: number;
   colItemId: number;
   colItemName: number;
@@ -124,7 +127,7 @@ export function detectColumns(rows: any[][]): {
  * Parsing ordini individuali dalla nuova struttura orizzontale.
  * Ogni riga = 1 ordine, con colonne rilevate dinamicamente.
  */
-export function parseCSVData(rows: any[][]): ClienteDettagliato[] {
+export function parseCSVData(rows: SheetRows): ClienteDettagliato[] {
   const clientMap = new Map<string, ClienteDettagliato>();
   const cols = detectColumns(rows);
 

@@ -1,3 +1,4 @@
+import { fatturatoAnno } from '../../lib/storicoFormat';
 import { showNotice } from '../ui/Feedback';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import * as XLSX from '../../lib/spreadsheet';
@@ -196,17 +197,17 @@ export function useStoricoView() {
 
   // Determina dinamicamente gli anni da confrontare in base ai dati reali
   const anniConDatiKPI = ([2023, 2024, 2025, 2026] as const).filter(y =>
-    clienti.some(c => ((c as any)[`fatturato${y}`] || 0) > 0)
+    clienti.some(c => fatturatoAnno(c, y) > 0)
   );
   const annoCorr: number = anniConDatiKPI.length > 0 ? anniConDatiKPI[anniConDatiKPI.length - 1] : 2024;
   const annoPrev: number = anniConDatiKPI.length > 1 ? anniConDatiKPI[anniConDatiKPI.length - 2] : annoCorr - 1;
-  const totCorr = clienti.reduce((s, c) => s + (((c as any)[`fatturato${annoCorr}`] as number) || 0), 0);
-  const totPrev = clienti.reduce((s, c) => s + (((c as any)[`fatturato${annoPrev}`] as number) || 0), 0);
+  const totCorr = clienti.reduce((s, c) => s + fatturatoAnno(c, annoCorr), 0);
+  const totPrev = clienti.reduce((s, c) => s + fatturatoAnno(c, annoPrev), 0);
   // Mantieni tot2024 per compatibilità con sezione Budget che lo usa
   const tot2024 = clienti.reduce((s, c) => s + c.fatturato2024, 0);
   const deltaYoY = totPrev > 0 ? ((totCorr - totPrev) / totPrev * 100) : 0;
-  const dormienti = clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) === 0);
-  const nuoviCorr = clienti.filter(c => (((c as any)[`fatturato${annoPrev}`] as number) || 0) === 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) > 0);
+  const dormienti = clienti.filter(c => fatturatoAnno(c, annoPrev) > 0 && fatturatoAnno(c, annoCorr) === 0);
+  const nuoviCorr = clienti.filter(c => fatturatoAnno(c, annoPrev) === 0 && fatturatoAnno(c, annoCorr) > 0);
 
   // Budget calculations
   const budgetAnnuale = budget.annuale || 0;
@@ -217,18 +218,18 @@ export function useStoricoView() {
 
   // Sort clienti
   const clientiSorted = [...clienti]
-    .filter(c => !filterDormienti || ((((c as any)[`fatturato${annoPrev}`] as number) || 0) > 0 && (((c as any)[`fatturato${annoCorr}`] as number) || 0) === 0))
+    .filter(c => !filterDormienti || (fatturatoAnno(c, annoPrev) > 0 && fatturatoAnno(c, annoCorr) === 0))
     .filter(c => matchSearch(searchQuery, [c.nome]))
     .sort((a, b) => {
       let va = 0, vb = 0;
       if (sortField === 'id') { va = a.clientId; vb = b.clientId; }
-      else if (sortField === 'f2023') { va = (((a as any)[`fatturato${annoPrev}`] as number) || 0); vb = (((b as any)[`fatturato${annoPrev}`] as number) || 0); }
-      else if (sortField === 'f2024') { va = (((a as any)[`fatturato${annoCorr}`] as number) || 0); vb = (((b as any)[`fatturato${annoCorr}`] as number) || 0); }
+      else if (sortField === 'f2023') { va = fatturatoAnno(a, annoPrev); vb = fatturatoAnno(b, annoPrev); }
+      else if (sortField === 'f2024') { va = fatturatoAnno(a, annoCorr); vb = fatturatoAnno(b, annoCorr); }
       else if (sortField === 'delta') {
-        const aPrev = (((a as any)[`fatturato${annoPrev}`] as number) || 0);
-        const aCorr = (((a as any)[`fatturato${annoCorr}`] as number) || 0);
-        const bPrev = (((b as any)[`fatturato${annoPrev}`] as number) || 0);
-        const bCorr = (((b as any)[`fatturato${annoCorr}`] as number) || 0);
+        const aPrev = fatturatoAnno(a, annoPrev);
+        const aCorr = fatturatoAnno(a, annoCorr);
+        const bPrev = fatturatoAnno(b, annoPrev);
+        const bCorr = fatturatoAnno(b, annoCorr);
         va = aPrev > 0 ? (aCorr - aPrev) / aPrev : 0;
         vb = bPrev > 0 ? (bCorr - bPrev) / bPrev : 0;
       }
@@ -237,12 +238,12 @@ export function useStoricoView() {
 
   // Chart data
   const topClientiChart = [...clienti]
-    .sort((a, b) => (((b as any)[`fatturato${annoCorr}`] as number) || 0) - (((a as any)[`fatturato${annoCorr}`] as number) || 0))
+    .sort((a, b) => fatturatoAnno(b, annoCorr) - fatturatoAnno(a, annoCorr))
     .slice(0, 12)
     .map(c => ({
       name: c.nome ? (c.nome.length > 15 ? c.nome.substring(0, 15) + '…' : c.nome) : `#${c.clientId}`,
-      [`${annoPrev}`]: Math.round((((c as any)[`fatturato${annoPrev}`] as number) || 0)),
-      [`${annoCorr}`]: Math.round((((c as any)[`fatturato${annoCorr}`] as number) || 0)),
+      [`${annoPrev}`]: Math.round(fatturatoAnno(c, annoPrev)),
+      [`${annoCorr}`]: Math.round(fatturatoAnno(c, annoCorr)),
     }));
 
   // ── RIEPILOGO PER CLIENTE ──────────────────────────────────────────────────
