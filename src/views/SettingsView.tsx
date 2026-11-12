@@ -404,6 +404,10 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="cockpit-settings max-w-4xl mx-auto space-y-6 pb-10">
       <header className="cockpit-section-intro"><h1>Impostazioni</h1><p>Gestisci il tuo profilo e personalizza il tuo spazio di lavoro.</p></header>
+
+      {/* Aggiornamento app in cima: è l'azione più usata dopo un rilascio */}
+      <AppUpdateSection />
+
       <GroupLabel first>Account & Profilo</GroupLabel>
 
       {/* Account */}
@@ -848,7 +852,6 @@ export const SettingsView: React.FC = () => {
       <GmailIntegration />
       <OutlookPilot />
       <PuliziaTerritorio />
-      <AppUpdateSection />
 
       <GroupLabel>Backup Dati</GroupLabel>
 
