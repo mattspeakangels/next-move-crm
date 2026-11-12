@@ -10,6 +10,7 @@ import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, Calendar, Settings, Map, X, BarChart3, ChevronLeft, Menu, MoreHorizontal, type LucideIcon } from 'lucide-react';
 import { getSection, sectionOf, primaryView, orderMainSections, footerSections, type SectionId } from './lib/navSections';
 import { SectionTabs } from './components/layouts/SectionTabs';
+import { recordSectionOpen } from './lib/usageCounter';
 import { SEED_SEQUENCES } from './data/prospectingSequences';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -77,6 +78,9 @@ function AppContent() {
     setMobileMenuOpen(false);
     window.history.pushState({ view }, '');
   };
+
+  // Contatore anonimo delle aperture (una per ogni cambio di scheda, non per ogni render)
+  useEffect(() => { recordSectionOpen(currentView); }, [currentView]);
 
   // Ultima scheda aperta per ogni voce: tornando sulla voce si riapre quella
   const lastTabRef = useRef<Partial<Record<SectionId, NavView>>>({});

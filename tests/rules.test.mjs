@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import {
   initializeTestEnvironment, assertSucceeds, assertFails,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection, writeBatch, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection, writeBatch, getDocs, query, where, increment } from 'firebase/firestore';
 
 const WID = 'ws1';
 let env;
@@ -146,4 +146,31 @@ test("il workspace non si cancella e l'owner non si cambia", async () => {
   await assertFails(deleteDoc(doc(db(users.owner), 'workspaces', WID)));
   await assertFails(updateDoc(doc(db(users.admin), 'workspaces', WID), { ownerUid: 'admin' }));
   await assertSucceeds(updateDoc(doc(db(users.admin), 'workspaces', WID), { name: 'Nuovo nome' }));
+});
+
+// ─── Contatore anonimo delle aperture (Blocco 6) ─────────────────────────────
+
+const counter = (f, id = '2026-11_offers') => doc(f, 'workspaces', WID, 'usage_counters', id);
+const open1 = { section: 'opportunita', tab: 'offers', month: '2026-11' };
+
+test('contatore: un membro aggiunge solo 1, senza altri campi', async () => {
+  const f = db(users.sales);
+  await assertSucceeds(setDoc(counter(f), { ...open1, count: increment(1) }, { merge: true }));
+  await assertSucceeds(setDoc(counter(f), { ...open1, count: increment(1) }, { merge: true }));
+  await assertFails(setDoc(counter(f), { ...open1, count: increment(5) }, { merge: true }));
+  await assertFails(updateDoc(counter(f), { count: 0 }));
+  await assertFails(setDoc(counter(f), { ...open1, count: increment(1), uid: 'sales' }, { merge: true }));
+  await assertFails(setDoc(counter(f, '2026-11_deals'), { ...open1, count: 1 }));
+  await assertFails(setDoc(counter(f, '2026-11_x'), { section: 'oggi', tab: 'x', month: 'novembre', count: 1 }));
+});
+
+test('contatore: lo leggono solo titolare e admin, nessuno lo cancella', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await setDoc(counter(ctx.firestore()), { ...open1, count: 3 }); });
+  await assertFails(getDoc(counter(db(users.sales))));
+  await assertFails(getDocs(collection(db(users.sales), 'workspaces', WID, 'usage_counters')));
+  await assertSucceeds(getDoc(counter(db(users.admin))));
+  await assertSucceeds(getDocs(collection(db(users.owner), 'workspaces', WID, 'usage_counters')));
+  await assertFails(deleteDoc(counter(db(users.owner))));
+  await assertFails(setDoc(counter(db(users.outsider)), { ...open1, count: increment(1) }, { merge: true }));
+  await assertFails(setDoc(counter(db(users.off)), { ...open1, count: increment(1) }, { merge: true }));
 });

@@ -15,7 +15,7 @@ export const SHARED = [
   'checkIns', 'groups', 'strategicFocuses', 'sequences',
   'storico', 'storico_dettagliati',
   'offer_pdfs', 'offer_pdf_chunks', 'bi_docs', 'bi_doc_chunks', 'contact_photos', 'contact_photo_chunks',
-  'audit_logs',
+  'audit_logs', 'usage_counters',
 ] as const;
 
 export const PERSONAL = [

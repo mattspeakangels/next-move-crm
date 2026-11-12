@@ -1,3 +1,4 @@
+import { UsageTable } from '../components/analytics/UsageTable';
 import type { DealStage } from '../types';
 import React, { useRef, useState } from 'react';
 import { OperationalReport } from '../components/analytics/OperationalReport';
@@ -542,6 +543,8 @@ export const AnalyticsView: React.FC = () => {
           </>
         )}
       </div>
+      {/* Uso delle sezioni: solo titolare e amministratori */}
+      <UsageTable />
     </div>
   );
 };
