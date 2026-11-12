@@ -1,9 +1,8 @@
-import { BISalesPeriod, BITopItem, SalesTransaction, ActivityType } from '../types';
+import { BISalesPeriod, BITopItem, ActivityType, Deal } from '../types';
+import type { StoreState as FullStoreState } from './useStore';
 
-interface StoreState {
-  contacts: Record<string, any>;
-  salesTransactions: Record<string, SalesTransaction>;
-}
+// I selettori leggono solo queste collezioni dello store
+type StoreState = Pick<FullStoreState, 'contacts' | 'deals' | 'activities' | 'targets' | 'salesTransactions'>;
 
 // Monthly revenue trend (from SalesTransaction)
 export const selectMonthlySales = (state: StoreState, yearsBack: number = 2): BISalesPeriod[] => {
@@ -105,7 +104,7 @@ export const selectSalesByStage = (state: StoreState): BITopItem[] => {
 };
 
 // Missing selectors for existing components
-export const selectDealsByPriority = (state: any) => {
+export const selectDealsByPriority = (state: StoreState) => {
   const deals = state.deals || {};
   const now = Date.now();
   const today = new Date(now);
@@ -115,13 +114,13 @@ export const selectDealsByPriority = (state: any) => {
   const weekEnd = new Date(today);
   weekEnd.setDate(weekEnd.getDate() + 7);
 
-  const scaduti: any[] = [];
-  const oggi: any[] = [];
-  const ore48: any[] = [];
-  const settimana: any[] = [];
-  const resto: any[] = [];
+  const scaduti: Deal[] = [];
+  const oggi: Deal[] = [];
+  const ore48: Deal[] = [];
+  const settimana: Deal[] = [];
+  const resto: Deal[] = [];
 
-  Object.values(deals).forEach((deal: any) => {
+  Object.values(deals).forEach((deal) => {
     if (!deal.nextActionDeadline) return;
     const deadline = new Date(deal.nextActionDeadline);
     if (deadline < today) scaduti.push(deal);
@@ -134,28 +133,28 @@ export const selectDealsByPriority = (state: any) => {
   return { scaduti, oggi, ore48, settimana, resto };
 };
 
-export const selectPipelinePesata = (state: any) => {
+export const selectPipelinePesata = (state: StoreState) => {
   const deals = state.deals || {};
   return Object.values(deals).reduce((sum: number, deal: any) => sum + (deal.value || 0), 0);
 };
 
-export const selectTargetProgress = (state: any, month: number, year: number) => {
+export const selectTargetProgress = (state: StoreState, month: number, year: number) => {
   const targetId = `${year}-${month}`;
   const target = state.targets[targetId];
   if (!target) return 0;
   return target.closedValue > 0 ? Math.round((target.closedValue / target.targetValue) * 100) : 0;
 };
 
-export const selectWinRate = (state: any) => {
+export const selectWinRate = (state: StoreState) => {
   const deals = state.deals || {};
-  const closedDeals = Object.values(deals).filter((d: any) => d.stage === 'chiuso-vinto' || d.stage === 'chiuso-perso');
-  const won = Object.values(deals).filter((d: any) => d.stage === 'chiuso-vinto').length;
+  const closedDeals = Object.values(deals).filter((d) => d.stage === 'chiuso-vinto' || d.stage === 'chiuso-perso');
+  const won = Object.values(deals).filter((d) => d.stage === 'chiuso-vinto').length;
   return closedDeals.length > 0 ? Math.round((won / closedDeals.length) * 100) : 0;
 };
 
 // Vitality: % deals opened in the last 30 days vs total active deals
-export const selectVitality = (state: any): number => {
-  const deals = Object.values(state.deals || {}) as any[];
+export const selectVitality = (state: StoreState): number => {
+  const deals = Object.values(state.deals || {});
   const activeDeals = deals.filter(d => !['chiuso-vinto', 'chiuso-perso'].includes(d.stage));
   if (activeDeals.length === 0) return 0;
   const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -164,8 +163,8 @@ export const selectVitality = (state: any): number => {
 };
 
 // Progression: % active deals that changed stage in the last 30 days
-export const selectProgression = (state: any): number => {
-  const deals = Object.values(state.deals || {}) as any[];
+export const selectProgression = (state: StoreState): number => {
+  const deals = Object.values(state.deals || {});
   const activeDeals = deals.filter(d => !['chiuso-vinto', 'chiuso-perso'].includes(d.stage));
   if (activeDeals.length === 0) return 0;
   const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -174,17 +173,17 @@ export const selectProgression = (state: any): number => {
 };
 
 // Silent contacts: contacts with no activities in the last 90 days
-export const selectSilentContacts = (state: any): Array<{ id: string; company: string; lastActivity: number | null }> => {
+export const selectSilentContacts = (state: StoreState): Array<{ id: string; company: string; lastActivity: number | null }> => {
   const contacts = state.contacts || {};
-  const activities = Object.values(state.activities || {}) as any[];
+  const activities = Object.values(state.activities || {});
   const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
 
   return Object.values(contacts)
-    .filter((c: any) => c.status === 'cliente')
-    .map((c: any) => {
+    .filter((c) => c.status === 'cliente')
+    .map((c) => {
       const contactActivities = activities.filter(a => a.contactId === c.id);
       const lastActivity = contactActivities.length > 0
-        ? Math.max(...contactActivities.map((a: any) => a.date || a.createdAt || 0))
+        ? Math.max(...contactActivities.map((a) => a.date || a.createdAt || 0))
         : null;
       return { id: c.id, company: c.company, lastActivity };
     })
@@ -194,12 +193,13 @@ export const selectSilentContacts = (state: any): Array<{ id: string; company: s
 };
 
 // Lost reason distribution
-export const selectLostReasonDistribution = (state: any): BITopItem[] => {
-  const deals = Object.values(state.deals || {}) as any[];
+export const selectLostReasonDistribution = (state: StoreState): BITopItem[] => {
+  const deals = Object.values(state.deals || {});
   const lost = deals.filter(d => d.stage === 'chiuso-perso' && d.lostReason);
   if (lost.length === 0) return [];
   const map = new Map<string, number>();
-  lost.forEach(d => map.set(d.lostReason, (map.get(d.lostReason) || 0) + 1));
+  // lostReason è sempre presente (filtro sopra): il controllo serve solo al tipo
+  lost.forEach(d => { if (d.lostReason) map.set(d.lostReason, (map.get(d.lostReason) || 0) + 1); });
   const total = lost.length;
   const labels: Record<string, string> = {
     prezzo: 'Prezzo',
@@ -219,12 +219,13 @@ export const selectLostReasonDistribution = (state: any): BITopItem[] => {
 };
 
 // Competitor analysis from lost deals
-export const selectCompetitorAnalysis = (state: any): BITopItem[] => {
-  const deals = Object.values(state.deals || {}) as any[];
+export const selectCompetitorAnalysis = (state: StoreState): BITopItem[] => {
+  const deals = Object.values(state.deals || {});
   const withCompetitor = deals.filter(d => d.competitor);
   if (withCompetitor.length === 0) return [];
   const map = new Map<string, { total: number; lost: number }>();
   withCompetitor.forEach(d => {
+    if (!d.competitor) return; // sempre presente (filtro sopra): controllo solo per il tipo
     const c = map.get(d.competitor) || { total: 0, lost: 0 };
     c.total++;
     if (d.stage === 'chiuso-perso') c.lost++;
@@ -242,8 +243,8 @@ export const selectCompetitorAnalysis = (state: any): BITopItem[] => {
 };
 
 // Account pipeline: top contacts by active pipeline value
-export const selectAccountPipeline = (state: any, limit = 10): BITopItem[] => {
-  const deals = Object.values(state.deals || {}) as any[];
+export const selectAccountPipeline = (state: StoreState, limit = 10): BITopItem[] => {
+  const deals = Object.values(state.deals || {});
   const contacts = state.contacts || {};
   const activeDeals = deals.filter(d => !['chiuso-vinto', 'chiuso-perso'].includes(d.stage));
   const map = new Map<string, { value: number; count: number }>();
@@ -267,8 +268,8 @@ export const selectAccountPipeline = (state: any, limit = 10): BITopItem[] => {
 };
 
 // Activity mix: breakdown by type
-export const selectActivityMix = (state: any): Array<{ type: ActivityType; label: string; count: number; percentage: string; color: string }> => {
-  const activities = Object.values(state.activities || {}) as any[];
+export const selectActivityMix = (state: StoreState): Array<{ type: ActivityType; label: string; count: number; percentage: string; color: string }> => {
+  const activities = Object.values(state.activities || {});
   if (activities.length === 0) return [];
   const map = new Map<string, number>();
   activities.forEach(a => map.set(a.type, (map.get(a.type) || 0) + 1));
@@ -293,8 +294,8 @@ export const selectActivityMix = (state: any): Array<{ type: ActivityType; label
 };
 
 // Activity mix for last N weeks (activities per week by type)
-export const selectActivityPerWeek = (state: any, weeks = 8) => {
-  const activities = Object.values(state.activities || {}) as any[];
+export const selectActivityPerWeek = (state: StoreState, weeks = 8) => {
+  const activities = Object.values(state.activities || {});
   const result = Array.from({ length: weeks }, (_, i) => {
     const weekEnd = new Date();
     weekEnd.setHours(23, 59, 59, 999);
