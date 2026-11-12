@@ -17,9 +17,9 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
           <Popup><strong>Partenza — {HOME.label}</strong></Popup>
         </Marker>
         {itinUserPos && <Marker position={itinUserPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
-        {mapMarkersToShow.map((c: any) => {
+        {mapMarkersToShow.map((c) => {
           const selected = selectedIds.includes(c.id);
-          const stopIdx = activeRoute.findIndex((s: any) => s.id === c.id);
+          const stopIdx = activeRoute.findIndex((s) => s.id === c.id);
           const popup = (
             <Popup minWidth={90} maxWidth={160} className="compact-popup">
               <div style={{ padding: '2px 0', lineHeight: 1.2 }}>

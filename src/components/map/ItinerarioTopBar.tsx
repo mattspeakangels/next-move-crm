@@ -48,13 +48,13 @@ export function ItinerarioTopBar({ v }: { v: ItinerarioModel }) {
 
         {showFiltersBar && (
           <div className="w-full max-h-[30dvh] overflow-y-auto overscroll-contain flex flex-wrap items-center gap-1.5 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel p-2 shadow-panel mt-1">
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
               className="flex-1 min-w-[100px] bg-canvas dark:bg-canvas rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase text-secondary dark:text-foreground outline-none">
               <option value="tutti">Tutti</option>
               <option value="clienti">Clienti</option>
               <option value="prospect">Prospect</option>
             </select>
-            <select value={filterSegment ?? ''} onChange={e => setFilterSegment((e.target.value || null) as any)}
+            <select value={filterSegment ?? ''} onChange={e => setFilterSegment((e.target.value || null) as typeof filterSegment)}
               className="flex-1 min-w-[120px] bg-canvas dark:bg-canvas rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase text-secondary dark:text-foreground outline-none">
               <option value="">Tutti i segmenti</option>
               <option value="dealer">🏪 Dealer</option>
@@ -97,7 +97,7 @@ export function ItinerarioTopBar({ v }: { v: ItinerarioModel }) {
           placeholder="Cerca cliente per nome o città…"
           inputWrapperClassName={() => 'flex items-center gap-2 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel px-3 py-2.5 shadow-panel focus-within:ring-2 focus-within:ring-warning transition-all'}
           dropdownClassName="z-[800]"
-          onSelect={(c: any) => {
+          onSelect={(c) => {
             const already = selectedIds.includes(c.id);
             if (!already) {
               setSelectedIds(prev => [...prev, c.id]);
@@ -106,7 +106,7 @@ export function ItinerarioTopBar({ v }: { v: ItinerarioModel }) {
             setItinFlyTo([c.lat, c.lng]);
             setSearchItinQuery('');
           }}
-          results={itinSearchResults.map((c: any) => {
+          results={itinSearchResults.map((c) => {
             const already = selectedIds.includes(c.id);
             const isCliente = c.status === 'cliente';
             return {

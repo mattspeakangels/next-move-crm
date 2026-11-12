@@ -6,7 +6,7 @@ import { CatalogSuggestion } from '../../hooks/useAICatalog';
 import { matchSearch, sortByRelevance } from '../../utils/search';
 import { MARKER_ICON_PX, MARKER_CIRCLE_RADIUS } from '../../lib/markerShapes';
 import { MapViewProps } from '../../views/MapView';
-import { requestPosition, calculateDistance } from './mapShared';
+import { requestPosition, calculateDistance, hasCoords } from './mapShared';
 
 type MapFilter = 'tutti' | 'clienti' | 'prospect';
 type MobileTab = 'mappa' | 'lista';
@@ -207,7 +207,7 @@ export function useMapView(props: MapViewProps) {
   };
 
   const allContacts  = Object.values(contacts);
-  const allMapped    = allContacts.filter(c => c.lat && c.lng);
+  const allMapped    = allContacts.filter(hasCoords);
   const nClienti     = allMapped.filter(c => c.status === 'cliente').length;
   const nProspect    = allMapped.filter(c => c.status === 'potenziale').length;
 
@@ -250,11 +250,11 @@ export function useMapView(props: MapViewProps) {
 
   // Marker principali + un marker per ogni sede secondaria geocodificata (locations[])
   const visibleMarkers = useMemo(() => {
-    const primary = filtered.map((c: any) => ({ ...c, markerKey: c.id, sedeLabel: null }));
-    const secondary = filtered.flatMap((c: any) =>
+    const primary = filtered.map((c) => ({ ...c, markerKey: c.id, sedeLabel: null }));
+    const secondary = filtered.flatMap((c) =>
       (c.locations || [])
-        .filter((l: any) => l.lat && l.lng)
-        .map((l: any) => ({
+        .filter((l) => l.lat && l.lng)
+        .map((l) => ({
           ...c,
           markerKey: `${c.id}__${l.id}`,
           lat: l.lat,

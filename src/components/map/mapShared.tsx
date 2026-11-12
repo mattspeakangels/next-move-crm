@@ -1,3 +1,4 @@
+import type { Contact } from '../../types';
 import React, { useEffect } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import { LocateFixed } from 'lucide-react';
@@ -118,3 +119,11 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
+
+/** Contatto con coordinate valide, cioè mostrabile in mappa. */
+export type MappedContact = Contact & { lat: number; lng: number };
+
+/** Stesso controllo usato da sempre per i marker (`c.lat && c.lng`), con il tipo corretto. */
+export function hasCoords(c: Contact | undefined): c is MappedContact {
+  return !!c && !!c.lat && !!c.lng;
+}

@@ -5,7 +5,7 @@ import { matchSearch, sortByRelevance } from '../../utils/search';
 import { MARKER_ICON_PX, MARKER_CIRCLE_RADIUS } from '../../lib/markerShapes';
 import { PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { requestPosition, calculateDistance } from './mapShared';
+import { requestPosition, calculateDistance, hasCoords } from './mapShared';
 import { HOME, AVG_SPEED_KMH, dateKey, nearestNeighbor } from './itinerarioShared';
 import { ItinerarioViewProps } from './ItinerarioView';
 
@@ -70,28 +70,28 @@ export function useItinerario(props: ItinerarioViewProps) {
   const itinSearchResults = useMemo(() =>
     searchItinNorm.length >= 1
       ? sortByRelevance(searchItinNorm, allContactsList
-          .filter((c: any) =>
-            c.lat && c.lng &&
+          .filter(hasCoords)
+          .filter((c) =>
             matchSearch(searchItinNorm, [c.company, c.contactName, c.city, c.province])
-          ), (c: any) => [c.company, c.contactName])
+          ), (c) => [c.company, c.contactName])
           .slice(0, 6)
       : [],
     [searchItinNorm, allContactsList]
   );
 
   const mapped = useMemo(() =>
-    Object.values(contacts).filter((c: any) => c.lat && c.lng),
+    Object.values(contacts).filter(hasCoords),
     [contacts]
   );
 
   const availableProvinces = useMemo(() =>
-    [...new Set(mapped.map((c: any) => c.province).filter(Boolean))].sort() as string[]
+    [...new Set(mapped.map((c) => c.province).filter(Boolean))].sort() as string[]
   , [mapped]);
   const availableSectors = useMemo(() =>
-    [...new Set(mapped.map((c: any) => c.sector).filter(Boolean))].sort() as string[]
+    [...new Set(mapped.map((c) => c.sector).filter(Boolean))].sort() as string[]
   , [mapped]);
 
-  const visible = useMemo(() => mapped.filter((c: any) => {
+  const visible = useMemo(() => mapped.filter((c) => {
     if (filterStatus === 'clienti' && c.status !== 'cliente') return false;
     if (filterStatus === 'prospect' && c.status !== 'potenziale') return false;
     if (filterSegment && c.segment !== filterSegment) return false;
@@ -111,7 +111,7 @@ export function useItinerario(props: ItinerarioViewProps) {
   // In modalita' "solo itinerario" (attivata quando si arriva dall'Agenda per un giorno
   // specifico) la mappa mostra solo le tappe già selezionate, non tutti i clienti/prospect.
   const mapMarkersToShow = useMemo(
-    () => onlyRouteOnMap ? visible.filter((c: any) => selectedIds.includes(c.id)) : visible,
+    () => onlyRouteOnMap ? visible.filter((c) => selectedIds.includes(c.id)) : visible,
     [visible, onlyRouteOnMap, selectedIds]
   );
 
@@ -123,7 +123,7 @@ export function useItinerario(props: ItinerarioViewProps) {
     });
 
   const optimizedRoute = useMemo(() =>
-    nearestNeighbor(selectedIds.map(id => contacts[id]).filter(Boolean).map((c: any) => ({ id: c.id, lat: c.lat, lng: c.lng }))),
+    nearestNeighbor(selectedIds.map(id => contacts[id]).filter(hasCoords).map((c) => ({ id: c.id, lat: c.lat, lng: c.lng }))),
     [selectedIds, contacts]
   );
 
@@ -149,24 +149,24 @@ export function useItinerario(props: ItinerarioViewProps) {
     // nell'itinerario del nuovo giorno, non di quello in cui era stato creato.
     const seenContacts = new Set<string>();
     const saved = Object.values(activities)
-      .filter((a: any) =>
+      .filter((a) =>
         (a.type === 'visita' || a.type === 'sopralluogo') &&
         dateKey(a.date) === date &&
         contacts[a.contactId]?.lat && contacts[a.contactId]?.lng
       )
-      .sort((a: any, b: any) => a.date - b.date)
-      .filter((a: any) => {
+      .sort((a, b) => a.date - b.date)
+      .filter((a) => {
         if (seenContacts.has(a.contactId)) return false; // una sola tappa per cliente/giorno
         seenContacts.add(a.contactId);
         return true;
       });
     if (saved.length === 0) return; // magari Firestore non ha ancora sincronizzato: riprova al prossimo update
 
-    const ids = saved.map((a: any) => a.contactId as string);
+    const ids = saved.map((a) => a.contactId as string);
     setSelectedIds(ids);
     setManualOrder(ids);
     const times: Record<string, string> = {};
-    saved.forEach((a: any) => {
+    saved.forEach((a) => {
       const d = new Date(a.date);
       times[a.contactId] = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     });
@@ -178,10 +178,10 @@ export function useItinerario(props: ItinerarioViewProps) {
   // Route attiva: manuale (drag) oppure auto-ottimizzata
   const activeRoute = useMemo(() => {
     if (!manualOrder) return optimizedRoute;
-    const byId: Record<string, any> = {};
-    optimizedRoute.forEach((s: any) => { byId[s.id] = s; });
+    const byId: Record<string, typeof optimizedRoute[number]> = {};
+    optimizedRoute.forEach((s) => { byId[s.id] = s; });
     const ordered = manualOrder.filter(id => byId[id]).map(id => byId[id]);
-    const extras = optimizedRoute.filter((s: any) => !manualOrder.includes(s.id));
+    const extras = optimizedRoute.filter((s) => !manualOrder.includes(s.id));
     return [...ordered, ...extras];
   }, [optimizedRoute, manualOrder]);
 
@@ -193,7 +193,7 @@ export function useItinerario(props: ItinerarioViewProps) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const currentOrder = activeRoute.map((s: any) => s.id as string);
+    const currentOrder = activeRoute.map((s) => s.id as string);
     const oldIndex = currentOrder.indexOf(active.id as string);
     const newIndex = currentOrder.indexOf(over.id as string);
     setManualOrder(arrayMove(currentOrder, oldIndex, newIndex));
@@ -201,7 +201,7 @@ export function useItinerario(props: ItinerarioViewProps) {
 
   const legs = useMemo(() => {
     let cum = 0, cumMins = 0, prevLat = HOME.lat, prevLng = HOME.lng;
-    return activeRoute.map((s: any) => {
+    return activeRoute.map((s) => {
       const d = calculateDistance(prevLat, prevLng, s.lat, s.lng);
       const legMins = Math.round((d / AVG_SPEED_KMH) * 60);
       cum += d; cumMins += legMins;
@@ -229,7 +229,7 @@ export function useItinerario(props: ItinerarioViewProps) {
 
   const routeCoords: [number, number][] = useMemo(() =>
     activeRoute.length > 0
-      ? [[HOME.lat, HOME.lng], ...activeRoute.map((s: any) => [s.lat, s.lng] as [number, number])]
+      ? [[HOME.lat, HOME.lng], ...activeRoute.map((s) => [s.lat, s.lng] as [number, number])]
       : [],
     [activeRoute]
   );
@@ -237,7 +237,7 @@ export function useItinerario(props: ItinerarioViewProps) {
   // Fetch real road geometry from OSRM whenever the route changes
   useEffect(() => {
     if (activeRoute.length === 0) { setRoadRouteCoords([]); return; }
-    const waypoints = [[HOME.lng, HOME.lat], ...activeRoute.map((s: any) => [s.lng, s.lat])];
+    const waypoints = [[HOME.lng, HOME.lat], ...activeRoute.map((s) => [s.lng, s.lat])];
     const coords = waypoints.map(([lng, lat]) => `${lng},${lat}`).join(';');
     const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
     let cancelled = false;
@@ -256,7 +256,7 @@ export function useItinerario(props: ItinerarioViewProps) {
   const googleMapsUrl = useMemo(() => {
     if (activeRoute.length === 0) return '';
     return `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/` +
-      activeRoute.map((s: any) => `${s.lat},${s.lng}`).join('/');
+      activeRoute.map((s) => `${s.lat},${s.lng}`).join('/');
   }, [activeRoute]);
 
   const addToAgenda = () => {
@@ -272,11 +272,11 @@ export function useItinerario(props: ItinerarioViewProps) {
     // non duplicata, dalla tappa dell'itinerario).
     const stopIds = new Set(effectiveTimes.map(({ stopId }) => stopId));
     Object.values(activities)
-      .filter((a: any) =>
+      .filter((a) =>
         dateKey(a.date) === date &&
         (a.id.startsWith('act_itin_') || ((a.type === 'visita' || a.type === 'sopralluogo') && stopIds.has(a.contactId)))
       )
-      .forEach((a: any) => deleteActivity(a.id));
+      .forEach((a) => deleteActivity(a.id));
 
     const prefix = `act_itin_${date}_`;
     effectiveTimes.forEach(({ stopId, effective }) => {

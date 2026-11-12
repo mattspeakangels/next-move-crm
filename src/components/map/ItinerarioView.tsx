@@ -1,3 +1,4 @@
+import type { Contact } from '../../types';
 import { DialogFrame } from '../ui/DialogFrame';
 import React from 'react';
 import { MapStyleButton } from '../ui/MapStyleControl';
@@ -10,7 +11,7 @@ import { ItinerarioTopBar } from './ItinerarioTopBar';
 
 // Itinerario del giorno: tappe ordinabili, percorso ottimizzato, mappa e foglio inferiore.
 export interface ItinerarioViewProps {
-  contacts: Record<string, any>;
+  contacts: Record<string, Contact>;
   onClose: () => void;
   isVisible: boolean;
   // Data richiesta dall'esterno (es. dall'Agenda, "Vedi itinerario" per un giorno specifico).
