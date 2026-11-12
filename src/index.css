@@ -471,3 +471,6 @@ body { background: radial-gradient(1200px 600px at 85% -10%, rgb(var(--syrio-acc
   .cockpit-content .min-h-screen.-m-4 { margin: 0; }
   .cockpit-content .sticky.top-0.bg-surface { top: 3.75rem; }
 }
+/* Menu ⋯ dei "Clienti da seguire": il riquadro non deve tagliarlo e deve stare sopra i vicini */
+.customer-work-card:has(.customer-work-menu) { overflow: visible; position: relative; z-index: 25; }
+.customer-work-menu { box-shadow: 0 18px 40px -16px rgb(0 0 0 / .45); }
