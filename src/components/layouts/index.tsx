@@ -19,7 +19,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate }) => {
   const { theme } = useStore();
 
-  const menuItems: { id: NavView; label: string; icon: any }[] = [
+  const menuItems: { id: NavView; label: string; icon: React.ElementType }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'contacts', label: 'Aziende', icon: Users },
     { id: 'offers', label: 'Offerte', icon: FileText },

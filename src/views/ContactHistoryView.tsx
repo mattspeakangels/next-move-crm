@@ -383,7 +383,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
       );
     }
 
-    if (ev.kind === 'ordine' && ev.raw && 'unitPrice' in (ev.raw as any)) {
+    if (ev.kind === 'ordine' && ev.raw && 'unitPrice' in ev.raw) {
       const t = ev.raw as SalesTransaction;
       return t.notes ? (
         <p className="text-xs text-secondary dark:text-muted whitespace-pre-wrap">{t.notes}</p>

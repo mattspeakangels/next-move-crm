@@ -1,3 +1,4 @@
+import type { DealStage } from '../types';
 import React, { useRef, useState } from 'react';
 import { OperationalReport } from '../components/analytics/OperationalReport';
 import * as XLSX from '../lib/spreadsheet';
@@ -114,7 +115,7 @@ export const AnalyticsView: React.FC = () => {
             quantity,
             unitPrice,
             totalAmount,
-            stage: (stage || 'chiuso-vinto') as any,
+            stage: (stage || 'chiuso-vinto') as DealStage,
             notes: `Importato da storico (${dateStr})`,
             createdAt: Date.now(),
           });

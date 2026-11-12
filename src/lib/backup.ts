@@ -19,10 +19,10 @@ export function createBackupPayload() {
   const storicoState = useStoricoStore.getState();
 
   const app: Record<string, unknown> = {};
-  for (const k of APP_STORE_KEYS) app[k] = (appState as any)[k];
+  for (const k of APP_STORE_KEYS) app[k] = (appState as unknown as Record<string, unknown>)[k];
 
   const storico: Record<string, unknown> = {};
-  for (const k of STORICO_STORE_KEYS) storico[k] = (storicoState as any)[k];
+  for (const k of STORICO_STORE_KEYS) storico[k] = (storicoState as unknown as Record<string, unknown>)[k];
 
   return { version: BACKUP_VERSION, exportedAt: new Date().toISOString(), app, storico };
 }
@@ -43,7 +43,8 @@ export function downloadBackup() {
 
 export async function restoreBackupFromFile(file: File): Promise<void> {
   const text = await file.text();
-  let payload: any;
+  // Contenuto del file: controllato campo per campo qui sotto
+  let payload: { app?: Record<string, unknown>; storico?: Record<string, unknown> } | null;
   try {
     payload = JSON.parse(text);
   } catch {
@@ -57,13 +58,13 @@ export async function restoreBackupFromFile(file: File): Promise<void> {
   for (const k of APP_STORE_KEYS) {
     if (k in payload.app) appUpdates[k] = payload.app[k];
   }
-  useStore.setState(appUpdates as any);
+  useStore.setState(appUpdates as Partial<ReturnType<typeof useStore.getState>>);
 
   if (payload.storico && typeof payload.storico === 'object') {
     const storicoUpdates: Record<string, unknown> = {};
     for (const k of STORICO_STORE_KEYS) {
       if (k in payload.storico) storicoUpdates[k] = payload.storico[k];
     }
-    useStoricoStore.setState(storicoUpdates as any);
+    useStoricoStore.setState(storicoUpdates as Partial<ReturnType<typeof useStoricoStore.getState>>);
   }
 }

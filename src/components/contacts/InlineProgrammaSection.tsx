@@ -74,7 +74,7 @@ export const InlineProgrammaSection: React.FC<{ contactId: string }> = ({ contac
       {showForm && (
         <div className="bg-surface dark:bg-surface rounded-panel p-4 border-2 border-accent dark:border-accent mb-3 space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <select value={newType} onChange={e => setNewType(e.target.value as any)}
+            <select value={newType} onChange={e => setNewType(e.target.value as typeof newType)}
               className="w-full border-2 border-line dark:border-line rounded-md px-3 py-2.5 bg-surface dark:bg-raised dark:text-foreground text-sm font-bold outline-none focus:border-accent">
               <option value="visita">Visita</option>
               <option value="chiamata">Chiamata</option>

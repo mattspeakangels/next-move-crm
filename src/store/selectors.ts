@@ -135,7 +135,7 @@ export const selectDealsByPriority = (state: StoreState) => {
 
 export const selectPipelinePesata = (state: StoreState) => {
   const deals = state.deals || {};
-  return Object.values(deals).reduce((sum: number, deal: any) => sum + (deal.value || 0), 0);
+  return Object.values(deals).reduce((sum: number, deal) => sum + (deal.value || 0), 0);
 };
 
 export const selectTargetProgress = (state: StoreState, month: number, year: number) => {

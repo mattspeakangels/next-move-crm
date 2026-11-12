@@ -330,8 +330,8 @@ export interface AuditLog {
   operation: AuditOperation;    // CREATE, UPDATE, DELETE
   authorUid?: string;           // chi ha fatto la modifica (workspace condiviso)
   changes?: Record<string, { from: unknown; to: unknown }>; // fields that changed (for UPDATE)
-  previousValues?: Record<string, any>;
-  newValues?: Record<string, any>;
+  previousValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
 }
 
 export interface CheckIn {

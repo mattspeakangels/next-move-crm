@@ -233,9 +233,9 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                       <div className="min-w-0">
                         <h3 className="font-semibold dark:text-foreground  leading-tight break-words">{contact.company}</h3>
                         <span className={`text-xs font-semibold uppercase tracking-normal px-2 py-0.5 rounded-full ${
-                          (contact as any).customerType === 'dealer' ? 'bg-accent-soft text-accent' : 'bg-accent-soft text-accent'
+                          contact.customerType === 'dealer' ? 'bg-accent-soft text-accent' : 'bg-accent-soft text-accent'
                         }`}>
-                          {(contact as any).customerType === 'dealer' ? 'Dealer' : 'End User'}
+                          {contact.customerType === 'dealer' ? 'Dealer' : 'End User'}
                         </span>
                       </div>
                     </div>
@@ -257,15 +257,15 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                   <div className="space-y-1.5">
                     <p className="flex items-center gap-2 text-xs font-bold text-secondary dark:text-muted">
                       <MapPin size={13} className="text-muted flex-shrink-0" />
-                      {contact.city || 'Città non inserita'} {(contact as any).province ? `(${(contact as any).province})` : ''}
+                      {contact.city || 'Città non inserita'} {contact.province ? `(${contact.province})` : ''}
                     </p>
                     <p className="flex items-center gap-2 text-xs font-bold text-secondary dark:text-muted">
                       <Phone size={13} className="text-muted flex-shrink-0" />
                       {contact.phone || 'Nessun telefono'}
                     </p>
-                    {(contact as any).stakeholders?.length > 0 && (
+                    {(contact.stakeholders?.length ?? 0) > 0 && (
                       <p className={`flex items-center gap-1.5 text-xs font-bold w-max px-2 py-1 rounded-lg mt-2 ${isProspect ? 'text-warning bg-warning-soft dark:bg-warning-soft' : 'text-accent bg-accent-soft dark:bg-accent-soft/20'}`}>
-                        <Users size={13} /> {(contact as any).stakeholders.length} Referent{(contact as any).stakeholders.length === 1 ? 'e' : 'i'}
+                        <Users size={13} /> {(contact.stakeholders?.length ?? 0)} Referent{(contact.stakeholders?.length ?? 0) === 1 ? 'e' : 'i'}
                       </p>
                     )}
                   </div>

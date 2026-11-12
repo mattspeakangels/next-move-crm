@@ -12,7 +12,7 @@ export const InlinePhotoSection: React.FC<{ contactId: string }> = ({ contactId 
   const { contacts, updateContact } = useStore();
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [viewer, setViewer] = useState<{ photo: any; fullUrl: string | null; loading: boolean } | null>(null);
+  const [viewer, setViewer] = useState<{ photo: ContactPhoto; fullUrl: string | null; loading: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const contact = contacts[contactId];

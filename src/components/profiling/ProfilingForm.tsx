@@ -374,7 +374,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
             <Section open={openSections.has(0)} onToggle={() => toggleSection(0)} title="1. Profilo Rivenditore" icon={<Users size={13} />}>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Segmento</p>
-                <RadioGroup value={d.segmento} onChange={v => upD({ segmento: v as any })} options={[
+                <RadioGroup value={d.segmento} onChange={v => upD({ segmento: v as DealerProfiling['segmento'] })} options={[
                   { value: 'A1', label: 'A1 · Grossista' },
                   { value: 'A2', label: 'A2 · Safety Specialist' },
                   { value: 'A3', label: 'A3 · Ferramenta Storica' },
@@ -439,7 +439,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   DPI Cat. III Trattati <Tip text={TIPS.dpiCatIII} />
                 </p>
-                <RadioGroup value={d.dpiCatIII} onChange={v => upD({ dpiCatIII: v as any })} options={[
+                <RadioGroup value={d.dpiCatIII} onChange={v => upD({ dpiCatIII: v as DealerProfiling['dpiCatIII'] })} options={[
                   { value: 'no', label: 'No — gap totale' },
                   { value: 'soloScarpe', label: 'Solo scarpe' },
                   { value: 'siParziale', label: 'Sì parziale' },
@@ -453,7 +453,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Reclami / Resi Frequenti</p>
-                <RadioGroup value={d.reclamiResi} onChange={v => upD({ reclamiResi: v as any })} options={[
+                <RadioGroup value={d.reclamiResi} onChange={v => upD({ reclamiResi: v as DealerProfiling['reclamiResi'] })} options={[
                   { value: 'no', label: 'No' }, { value: 'si', label: 'Sì' },
                 ]} />
                 {d.reclamiResi === 'si' && (
@@ -572,7 +572,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
             <Section open={openSections.has(1)} onToggle={() => toggleSection(1)} title="2. Profilo Azienda" icon={<Users size={13} />}>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Segmento Edilizia</p>
-                <RadioGroup value={e.segmentoEdilizia} onChange={v => upE({ segmentoEdilizia: v as any })} options={[
+                <RadioGroup value={e.segmentoEdilizia} onChange={v => upE({ segmentoEdilizia: v as EndUserProfiling['segmentoEdilizia'] })} options={[
                   { value: 'B1', label: 'B1 · PNRR / GC' },
                   { value: 'B2', label: 'B2 · Impiantistica' },
                   { value: 'B3', label: 'B3 · Eccellenza' },
@@ -581,7 +581,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Segmento Industria</p>
-                <RadioGroup value={e.segmentoIndustria} onChange={v => upE({ segmentoIndustria: v as any })} options={[
+                <RadioGroup value={e.segmentoIndustria} onChange={v => upE({ segmentoIndustria: v as EndUserProfiling['segmentoIndustria'] })} options={[
                   { value: 'C1', label: 'C1 · Metal / Fonderia' },
                   { value: 'C2', label: 'C2 · Power & Utilities' },
                   { value: 'C3', label: 'C3 · Meccanica Avanzata' },
@@ -618,7 +618,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
             <Section open={openSections.has(2)} onToggle={() => toggleSection(2)} title="3. Sicurezza & Compliance" icon={<CheckSquare size={13} />}>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Livello DPI Richiesti</p>
-                <RadioGroup value={e.livelloDPI} onChange={v => upE({ livelloDPI: v as any })} options={[
+                <RadioGroup value={e.livelloDPI} onChange={v => upE({ livelloDPI: v as EndUserProfiling['livelloDPI'] })} options={[
                   { value: 'catI', label: 'Cat. I — uso generico' },
                   { value: 'catII', label: 'Cat. II — rischi medi' },
                   { value: 'catIII', label: 'Cat. III — obbligatori' },
@@ -636,13 +636,13 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2 flex items-center gap-1">
                   DVR Aggiornato <Tip text={TIPS.dvrAggiornato} />
                 </p>
-                <RadioGroup value={e.dvrAggiornato} onChange={v => upE({ dvrAggiornato: v as any })} options={[
+                <RadioGroup value={e.dvrAggiornato} onChange={v => upE({ dvrAggiornato: v as EndUserProfiling['dvrAggiornato'] })} options={[
                   { value: 'si', label: 'Sì' }, { value: 'no', label: 'No' }, { value: 'nonSa', label: 'Non sa' },
                 ]} />
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Ispezioni Recenti (INAIL/ASL)</p>
-                <RadioGroup value={e.ispezioniRecenti} onChange={v => upE({ ispezioniRecenti: v as any })} options={[
+                <RadioGroup value={e.ispezioniRecenti} onChange={v => upE({ ispezioniRecenti: v as EndUserProfiling['ispezioniRecenti'] })} options={[
                   { value: 'no', label: 'No' }, { value: 'si', label: 'Sì' },
                 ]} />
                 {e.ispezioniRecenti === 'si' && (
@@ -653,7 +653,7 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Conservano Schede Tecniche EN?</p>
-                <RadioGroup value={e.schedeEN} onChange={v => upE({ schedeEN: v as any })} options={[
+                <RadioGroup value={e.schedeEN} onChange={v => upE({ schedeEN: v as EndUserProfiling['schedeEN'] })} options={[
                   { value: 'siCompleto', label: 'Sì — archivio completo' },
                   { value: 'soloRziale', label: 'Solo parzialmente' },
                   { value: 'no', label: 'No (rischio legale)' },
@@ -797,8 +797,8 @@ export const ProfilingForm: React.FC<ProfilingFormProps> = ({ contact }) => {
                       onClick={() => {
                         const newOb = ob.filter((_, j) => j !== i);
                         isDealer
-                          ? upD({ obiezioni: newOb } as any)
-                          : upE({ obiezioni: newOb } as any);
+                          ? upD({ obiezioni: newOb })
+                          : upE({ obiezioni: newOb });
                       }}
                       className="p-1 opacity-0 group-hover:opacity-100 text-muted hover:text-danger transition-all flex-shrink-0"
                     >

@@ -444,7 +444,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
   const handlePrint = async (offer: Offer) => {
     // If PDF attached, print that instead of the generated HTML
     if (offer.pdfUrl) {
-      try { await openOfferPdf(offer.pdfUrl, true); } catch (err: any) { showToast(err?.message ?? 'Errore apertura PDF', 'error'); }
+      try { await openOfferPdf(offer.pdfUrl, true); } catch (err) { showToast(asCaught(err).message ?? 'Errore apertura PDF', 'error'); }
       return;
     }
     const contact = contacts[offer.contactId];

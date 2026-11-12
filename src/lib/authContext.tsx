@@ -12,7 +12,7 @@ const provider = new GoogleAuthProvider();
 const isMobile = () =>
   /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   window.matchMedia('(display-mode: standalone)').matches ||
-  ('standalone' in navigator && (navigator as any).standalone === true);
+  ('standalone' in navigator && (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 interface AuthContextType {
   user: User | null;

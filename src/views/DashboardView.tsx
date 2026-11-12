@@ -348,7 +348,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
       id: `act_${Date.now()}`,
       contactId: activeDealForModal.contactId,
       dealId: activeDealForModal.id,
-      type: activityType as any,
+      type: activityType,
       date: now,
       outcome: 'completata',
       outcomeType: outcome.outcomeType,

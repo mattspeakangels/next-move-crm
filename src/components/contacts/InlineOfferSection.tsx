@@ -1,3 +1,4 @@
+import type { OfferStatus } from '../../types';
 import { asCaught } from '../../utils/errors';
 import { showNotice } from '../ui/Feedback';
 import React, { useState, useRef } from 'react';
@@ -76,7 +77,7 @@ export const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId 
     setFormItems(prev => [...prev, { id: `fi_${Date.now()}`, productId: '', description: '', quantity: 1, price: 0, discount: 0 }]);
   };
 
-  const updateFormItem = (id: string, field: string, value: any) => {
+  const updateFormItem = (id: string, field: string, value: string | number) => {
     setFormItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
   };
 
@@ -187,7 +188,7 @@ export const InlineOfferSection: React.FC<{ contactId: string }> = ({ contactId 
                 <span className="font-semibold text-sm text-accent">€{offer.totalAmount.toLocaleString('it-IT')}</span>
                 <select
                   value={offer.status}
-                  onChange={e => updateOffer(offer.id, { status: e.target.value as any })}
+                  onChange={e => updateOffer(offer.id, { status: e.target.value as OfferStatus })}
                   className="text-xs font-semibold border border-line dark:border-line rounded-lg px-1.5 py-1 bg-surface dark:bg-raised dark:text-foreground outline-none"
                 >
                   <option value="bozza">Bozza</option>

@@ -14,7 +14,17 @@ export interface ScrapedContact {
   notes: string;
 }
 
-function extractJsonLd(doc: Document): Record<string, any> | null {
+/** Dati di un'organizzazione in JSON-LD (schema.org): solo i campi letti qui. */
+interface JsonLdOrg {
+  name?: string;
+  telephone?: string;
+  email?: string;
+  taxID?: string;
+  description?: string;
+  address?: { streetAddress?: string; addressLocality?: string; postalCode?: string; addressRegion?: string; addressCountry?: string };
+}
+
+function extractJsonLd(doc: Document): JsonLdOrg | null {
   const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
   for (const s of scripts) {
     try {

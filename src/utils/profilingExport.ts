@@ -27,7 +27,8 @@ export function exportProfilingPDF(contact: Contact, profiling: ProfilingData) {
   const total = calcQualTotal(profiling.qualificazione);
   const color = BADGE_COLORS[badge];
   const isDealer = profiling.type === 'dealer';
-  const p = profiling as any;
+  // Lettura uniforme dei campi di entrambi i tipi di profilazione
+  const p = profiling as Partial<DealerProfiling> & Partial<EndUserProfiling>;
 
   const html = `<!DOCTYPE html>
 <html lang="it">
@@ -319,7 +320,8 @@ export function exportProfilingXLS(contact: Contact, profiling: ProfilingData) {
   const isDealer = profiling.type === 'dealer';
   const badge = calcQualBadge(profiling.qualificazione);
   const total = calcQualTotal(profiling.qualificazione);
-  const p = profiling as any;
+  // Lettura uniforme dei campi di entrambi i tipi di profilazione
+  const p = profiling as Partial<DealerProfiling> & Partial<EndUserProfiling>;
 
   const wb = XLSX.utils.book_new();
   const sheetName = isDealer ? '📋 DEALER' : '🏗️ END USER';

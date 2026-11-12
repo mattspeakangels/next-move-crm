@@ -1,3 +1,4 @@
+import type { Contact } from '../../types';
 import { Plus, MapPin, Trash2 } from 'lucide-react';
 import { ContactsModel } from './useContactsView';
 
@@ -6,7 +7,7 @@ export function ContactLocations({ v }: { v: ContactsModel }) {
   return (
     <>
       {(() => {
-        const locations: any[] = editingContact?.locations || [];
+        const locations: NonNullable<Contact['locations']> = editingContact?.locations || [];
         const inputCls = "w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent transition-all text-sm";
         const labelCls = "text-xs font-semibold text-muted uppercase tracking-normal block mb-1";
 

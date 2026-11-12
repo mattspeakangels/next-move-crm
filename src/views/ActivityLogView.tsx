@@ -593,7 +593,7 @@ export const ActivityLogView: React.FC = () => {
               {isExpanded && (
                 <div className="border-t border-line dark:border-line divide-y divide-line dark:divide-line">
                   {Array.from(contactMap.entries()).map(([contactId, events]) => {
-                    const company = (contacts as any)[contactId]?.company ?? 'Azienda sconosciuta';
+                    const company = contacts[contactId]?.company ?? 'Azienda sconosciuta';
                     const sortedEvents = [...events].sort((a, b) => b.ts - a.ts);
 
                     return (

@@ -15,7 +15,7 @@ export interface StoreState {
   toggleTheme: () => void;
   profile: AppProfile | null;
   updateProfile: (profile: Partial<AppProfile>) => void;
-  setProfile: (profile: any, ...args: any[]) => void; 
+  setProfile: (profile: unknown, ...args: unknown[]) => void; 
   resetAll: () => void;
 
   contacts: Record<string, Contact>;
