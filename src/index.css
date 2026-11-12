@@ -376,3 +376,98 @@ html { touch-action: pan-x pan-y; }
   .cockpit-content :is(button, a).py-\[18px\] svg { width: 16px; height: 16px; }
   .cockpit-content :is(button, a).px-8 { padding-left: 1.25rem; padding-right: 1.25rem; }
 }
+
+/* ── Stile morbido ─────────────────────────────────────────────────────────────
+   Terzo strato: angoli ampi, riquadri che si staccano dallo sfondo con l'ombra e
+   non con il bordo, barra laterale sospesa, pulsanti e campi arrotondati.
+   Tutto per variabili e selettori con prefisso, così si regola in un punto solo. */
+:root {
+  --syrio-radius: 1.25rem; --syrio-radius-control: .8rem; --syrio-radius-inner: .9rem;
+  --syrio-canvas: 242 246 246; --syrio-line: 226 235 234; --syrio-raised: 236 243 242;
+  --syrio-shadow: 0 1px 1px rgb(19 58 65 / .03), 0 10px 30px -12px rgb(19 58 65 / .16);
+  --syrio-hairline: rgb(19 58 65 / .07);
+}
+.dark {
+  --syrio-canvas: 9 23 30; --syrio-surface: 17 37 45; --syrio-raised: 25 49 58; --syrio-line: 38 63 70;
+  --syrio-shadow: 0 1px 0 rgb(255 255 255 / .03) inset, 0 14px 34px -14px rgb(0 0 0 / .55);
+  --syrio-hairline: rgb(255 255 255 / .06);
+}
+body { background: radial-gradient(1200px 600px at 85% -10%, rgb(var(--syrio-accent) / .07), transparent 60%), rgb(var(--syrio-canvas)); background-attachment: fixed; }
+.cockpit-main, .dark.bg-canvas, .bg-canvas.min-h-screen { background: transparent; }
+
+/* Riquadri: angoli ampi, bordo quasi invisibile, ombra soffice */
+.cockpit-content .rounded-panel { border-radius: var(--syrio-radius); }
+.cockpit-content :is(.rounded-2xl, .rounded-3xl) { border-radius: var(--syrio-radius); }
+.cockpit-content :is(.rounded-xl, .rounded-lg) { border-radius: var(--syrio-radius-inner); }
+.cockpit-content .rounded-md { border-radius: var(--syrio-radius-control); }
+.cockpit-content .rounded-panel .rounded-panel { border-radius: var(--syrio-radius-inner); }
+.cockpit-content :is(.border, .border-2):is(.border-line, .dark\:border-line):not(input):not(select):not(textarea) { border-color: var(--syrio-hairline); }
+.cockpit-content .rounded-panel:is(.bg-surface, .syrio-panel):not(button):not(input):not(select):not(textarea) { box-shadow: var(--syrio-shadow); }
+.syrio-panel, .cockpit-kpi, .cockpit-section-intro, .cockpit-filter-bar, .cockpit-kanban-column, .cockpit-overview, .cockpit-analytics-summary > div { border-radius: var(--syrio-radius); border-color: var(--syrio-hairline); box-shadow: var(--syrio-shadow); }
+.cockpit-content :is(.divide-y, .divide-x) > * { border-color: var(--syrio-hairline); }
+.cockpit-content :is(.border-b, .border-t):is(.border-line, .dark\:border-line) { border-color: var(--syrio-hairline); }
+
+/* Campi: fondo pieno e morbido, il bordo compare solo quando servono */
+.cockpit-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
+  border-radius: var(--syrio-radius-control); border-color: transparent; background-color: rgb(var(--syrio-raised) / .75);
+}
+.cockpit-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea):hover { border-color: rgb(var(--syrio-accent) / .25); }
+.cockpit-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea):focus { border-color: rgb(var(--syrio-accent) / .6); background-color: rgb(var(--syrio-surface)); box-shadow: 0 0 0 4px rgb(var(--syrio-accent) / .12); outline: none; }
+.cockpit-content div.border-2:has(> input) { border-radius: 999px; border-color: transparent; background-color: rgb(var(--syrio-raised) / .75); box-shadow: none; }
+.cockpit-content div.border-2:has(> input) > input { background: transparent; }
+.cockpit-content div.border-2:has(> input):focus-within { border-color: rgb(var(--syrio-accent) / .6); box-shadow: 0 0 0 4px rgb(var(--syrio-accent) / .12); }
+.cockpit-content div.border-2:has(> input) > input:focus { box-shadow: none; background: transparent; }
+
+/* Pulsanti: a pillola, etichette in minuscolo normale, niente maiuscolo gridato */
+.cockpit-content button:is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-panel):not(.w-full):not([class*='aspect-']) { border-radius: 999px; }
+.cockpit-content button.w-full:is(.rounded-md, .rounded-lg, .rounded-panel) { border-radius: var(--syrio-radius-control); }
+.cockpit-content :is(button, a).uppercase { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.cockpit-content :is(button, a):is(.font-bold, .font-black) { font-weight: 600; }
+.cockpit-content button:is(.bg-action, .syrio-button-primary) { box-shadow: 0 6px 16px -8px rgb(var(--syrio-action) / .8); }
+.cockpit-content button { transition: background-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.cockpit-content button:active:not(:disabled) { transform: scale(.98); }
+.cockpit-page-tabs { border-radius: 999px; border-color: var(--syrio-hairline); padding: .25rem; }
+.cockpit-page-tabs button, .cockpit-content .cockpit-page-tabs button { border-radius: 999px; }
+
+/* Etichette e titoli: meno peso, più respiro tipografico */
+.cockpit-content :is(label, p, span, div, th).uppercase { letter-spacing: .06em; font-weight: 600; }
+.cockpit-content :is(h2, h3) { font-weight: 650; letter-spacing: -.02em; }
+.cockpit-content h1 { font-weight: 700; }
+.cockpit-kpi-value, .cockpit-overview strong { font-weight: 700; }
+.cockpit-kpi-icon { border-radius: 999px; }
+
+/* Banner della dashboard */
+.syrio-dashboard .syrio-hero { border-radius: 1.5rem; box-shadow: 0 18px 40px -22px rgb(18 57 79 / .7); }
+
+@media (min-width: 768px) {
+  /* Barra laterale sospesa, con voci a pillola */
+  .cockpit-sidebar { top: .75rem; left: .75rem; height: calc(100vh - 1.5rem); width: 15rem; border: 1px solid rgb(255 255 255 / .06); border-radius: 1.5rem; box-shadow: 0 20px 44px -20px rgb(6 24 32 / .6); overflow: hidden; }
+  .cockpit-sidebar nav button { border-radius: 999px; padding-left: .9rem; border-color: transparent; }
+  .cockpit-sidebar nav button[aria-current='page'] { background: rgb(120 221 193 / .16); color: #d8fff3; border-color: transparent; box-shadow: none; }
+  .cockpit-sidebar nav button[aria-current='page'] svg { color: #78ddc1; }
+  .cockpit-sidebar nav button.uppercase { text-transform: none; letter-spacing: 0; font-weight: 500; border-color: rgb(255 255 255 / .1); }
+  .cockpit-profile { border-top-color: rgb(255 255 255 / .08); }
+  .cockpit-profile-avatar { border-radius: 999px; }
+  /* Intestazione senza fascia: resta solo il percorso, leggero */
+  .cockpit-topbar { background: transparent; border-bottom: 0; min-height: 3rem; padding: .5rem 1.75rem 0; }
+  .cockpit-content:not(.cockpit-map) { padding: .75rem 1.75rem 2.5rem; }
+}
+@media (max-width: 767px) {
+  .cockpit-main + nav { border-radius: 1.25rem 1.25rem 0 0; border-color: var(--syrio-hairline); }
+}
+
+/* Stile morbido · rifiniture */
+.cockpit-content :is(input, select, textarea).bg-transparent { background-color: transparent !important; box-shadow: none !important; border-color: transparent !important; }
+.cockpit-content div.border-2:has(> textarea) { border-color: rgb(var(--syrio-accent) / .28); border-radius: var(--syrio-radius-inner); }
+.cockpit-content :is(span, p).uppercase.text-success, .cockpit-content :is(span, p).uppercase.text-accent { text-transform: none; letter-spacing: 0; }
+/* Pagine a tutta altezza (scheda cliente): l'intestazione fissa diventa un riquadro sospeso */
+.cockpit-content > * > .min-h-screen.bg-canvas, .cockpit-content .min-h-screen.bg-canvas { background: transparent; }
+.cockpit-content .sticky.top-0.bg-surface { top: .5rem; border: 1px solid var(--syrio-hairline); border-radius: var(--syrio-radius); box-shadow: var(--syrio-shadow); backdrop-filter: blur(14px); background: rgb(var(--syrio-surface) / .9); }
+@media (min-width: 768px) {
+  .cockpit-content .min-h-screen.md\:-m-8 { margin: 0; }
+  .cockpit-content .sticky.top-0.bg-surface { padding: .9rem 1.25rem; }
+}
+@media (max-width: 767px) {
+  .cockpit-content .min-h-screen.-m-4 { margin: 0; }
+  .cockpit-content .sticky.top-0.bg-surface { top: 3.75rem; }
+}
