@@ -17,10 +17,12 @@ interface Props {
   companyName: string;
   onSave: (type: ActivityType, notes: string) => void;
   onClose: () => void;
+  /** Tipo preselezionato all'apertura (default: email). */
+  initialType?: ActivityType;
 }
 
-export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose }) => {
-  const [type, setType] = useState<ActivityType>('email');
+export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose, initialType = 'email' }) => {
+  const [type, setType] = useState<ActivityType>(initialType);
   const [notes, setNotes] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,14 +57,16 @@ export const QuickLogModal: React.FC<Props> = ({ companyName, onSave, onClose })
 
         <div>
           <label className="text-xs font-semibold text-muted uppercase tracking-normal block mb-1">
-            {type === 'email' ? 'Oggetto / testo email' : 'Note, esito, prossimi passi'}
+            {type === 'email' ? 'Oggetto / testo email' : type === 'chiamata' ? 'Cose salienti della call' : 'Note, esito, prossimi passi'}
           </label>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            rows={type === 'email' ? 6 : 3}
+            rows={type === 'email' || type === 'chiamata' ? 6 : 3}
             autoFocus
-            placeholder={type === 'email' ? "Incolla qui oggetto e corpo dell'email inviata/ricevuta..." : undefined}
+            placeholder={type === 'email'
+              ? "Incolla qui oggetto e corpo dell'email inviata/ricevuta..."
+              : type === 'chiamata' ? 'Di cosa avete parlato, accordi presi, prossimi passi...' : undefined}
             className="w-full border-2 border-line dark:border-line rounded-md p-3 bg-canvas dark:bg-canvas dark:text-foreground font-bold outline-none focus:border-accent resize-none"
           />
         </div>
