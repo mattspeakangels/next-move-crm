@@ -6,6 +6,7 @@ import { useStore } from '../store/useStore';
 import { Phone, MapPin, ExternalLink, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight, Download, Upload, Mic, MicOff, CheckCircle, Loader2, Calendar, Eye, MessageSquare, Sparkles, AlertCircle, RotateCcw, Route } from 'lucide-react';
 import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../types';
 import { runAiTask, type CloseVisitType } from '../lib/aiTasks';
+import { AGENDA_CATEGORIES, isShownInAgenda, loadAgendaCategories, saveAgendaCategories, type AgendaCategory } from '../lib/agendaFilter';
 import { useToast } from '../components/ui/ToastContext';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
@@ -359,6 +360,16 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
   const [calMode, setCalMode] = useState<CalendarMode>('month');
   const [anchor, setAnchor] = useState(new Date()); // month or week anchor
   const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
+  // Categorie visibili in calendario e lista (di base solo gli appuntamenti)
+  const [categories, setCategories] = useState<AgendaCategory[]>(loadAgendaCategories);
+  const toggleCategory = (id: AgendaCategory) => {
+    setCategories(prev => {
+      const next = prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id];
+      if (next.length === 0) return prev; // almeno una categoria resta attiva
+      saveAgendaCategories(next);
+      return next;
+    });
+  };
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -769,7 +780,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
     setAiError(null);
   };
 
-  const allActivities = Object.values(activities);
+  // Attività visibili in Agenda secondo le categorie scelte (mai quelle archiviate)
+  const allActivities = Object.values(activities).filter(a => isShownInAgenda(a, categories));
 
   // Filtered contacts for picker — computed outside JSX for reliability
   const filteredContacts = useMemo(() => {
@@ -1244,7 +1256,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
     // Per ogni giorno × slot: quali attività ci sono? (le attività multi-giorno, es. Fiera,
     // compaiono in ogni giorno della settimana che coprono, allo stesso orario)
     const slotMap = new Map<string, Activity[]>();
-    Object.values(activities).forEach(a => {
+    allActivities.forEach(a => {
       const d = new Date(a.date);
       const totalMins = d.getHours() * 60 + d.getMinutes();
       const startMins = HOUR_START * 60;
@@ -1479,6 +1491,24 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
           </div>
         </div>
 
+        {/* Filtro categorie */}
+        <div className="agenda-categories flex flex-wrap items-center gap-2 px-3 sm:px-5 pt-3" role="group" aria-label="Categorie mostrate">
+          {AGENDA_CATEGORIES.map(c => {
+            const active = categories.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggleCategory(c.id)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${active ? 'bg-accent-soft text-accent dark:bg-accent-soft/40' : 'bg-raised text-muted hover:text-secondary dark:bg-raised'}`}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Calendar grid */}
         {calMode !== 'list' && (
           <div className="p-4">
@@ -1494,7 +1524,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ onNavigateToContact, onV
         {/* Legend */}
         {calMode !== 'list' && (
           <div className="flex gap-4 px-5 pb-4 flex-wrap">
-            {(Object.keys(TYPE_LABELS) as ActivityType[]).map(t => (
+            {AGENDA_CATEGORIES.filter(c => categories.includes(c.id)).flatMap(c => c.types).map(t => (
               <div key={t} className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${TYPE_COLORS[t]}`} />
                 <span className="text-xs font-bold text-muted">{TYPE_LABELS[t]}</span>
