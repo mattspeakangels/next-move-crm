@@ -114,8 +114,8 @@ export function useAgendaAi(prev: AgendaStateModel) {
       if (!match) throw new Error('Risposta non valida');
       const parsed: Omit<AiExtractedTodo, 'selected' | 'creaAppuntamento'>[] = JSON.parse(match[0]);
       setAiTodos(parsed.map(t => ({ ...t, selected: true, creaAppuntamento: !!TODO_TO_ACTIVITY_TYPE[t.tipo] })));
-    } catch (err: any) {
-      setAiError(err.message ?? 'Errore analisi. Riprova.');
+    } catch (err: unknown) {
+      setAiError((err as { message?: string } | null)?.message ?? 'Errore analisi. Riprova.');
     } finally {
       setAiAnalyzing(false);
     }
@@ -209,8 +209,8 @@ export function useAgendaAi(prev: AgendaStateModel) {
       });
       setBatchGroups(groups);
       setBatchAnalyzedIds(batch.map(a => a.id));
-    } catch (err: any) {
-      setBatchError(err.message ?? 'Errore analisi. Riprova.');
+    } catch (err: unknown) {
+      setBatchError((err as { message?: string } | null)?.message ?? 'Errore analisi. Riprova.');
     } finally {
       setBatchAnalyzing(false);
     }

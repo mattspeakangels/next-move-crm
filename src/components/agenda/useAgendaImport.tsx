@@ -1,7 +1,22 @@
+import type { ActivityType } from '../../types';
 import { apiAuthHeaders } from '../../lib/apiAuth';
 import { useState, useRef } from 'react';
 import { TYPE_LABELS } from './agendaShared';
 import { AgendaFormModel } from './useAgendaForm';
+
+/** Evento letto dal file PST (stessa forma di PSTEvent in api/parse-pst.ts). */
+export interface PstEvent {
+  subject: string;
+  start: string | null;
+  end: string | null;
+  location: string;
+  organizer: string;
+  body: string;
+  isAllDay: boolean;
+  duration: number;
+}
+/** Evento PST arricchito per la finestra di importazione. */
+export type PstRow = PstEvent & { _idx: number; _contactId: string; _type: ActivityType; _duplicate: boolean };
 
 // Agenda: importazione da Outlook (PST) ed esportazione .ics.
 export function useAgendaImport(prev: AgendaFormModel) {
@@ -9,12 +24,12 @@ export function useAgendaImport(prev: AgendaFormModel) {
   // ── PST Import da Outlook ──
   const pstInputRef = useRef<HTMLInputElement>(null);
   const [pstLoading, setPstLoading] = useState(false);
-  const [pstEvents, setPstEvents] = useState<any[]>([]);
+  const [pstEvents, setPstEvents] = useState<PstRow[]>([]);
   const [pstSelected, setPstSelected] = useState<Set<number>>(new Set());
   const [pstModalOpen, setPstModalOpen] = useState(false);
   const [pstContactOverrides, setPstContactOverrides] = useState<Record<number, string>>({});
 
-  const inferActivityType = (subject: string, location: string): string => {
+  const inferActivityType = (subject: string, location: string): ActivityType => {
     const s = (subject + ' ' + location).toLowerCase();
     if (s.includes('teams') || s.includes('meet.google') || s.includes('zoom') || s.includes('call') || s.includes('remota')) return 'call-remota';
     if (s.includes('formazione') || s.includes('corso') || s.includes('training') || s.includes('eloomi')) return 'formazione';
@@ -29,15 +44,15 @@ export function useAgendaImport(prev: AgendaFormModel) {
     const beforeDash = s.split(/\s*[-–]\s*/)[0].trim();
     const allContacts = Object.values(contacts);
     // Match esatto o parziale
-    const exact = allContacts.find((c: any) =>
+    const exact = allContacts.find((c) =>
       c.company.toLowerCase() === beforeDash || s.includes(c.company.toLowerCase())
     );
-    if (exact) return (exact as any).id;
+    if (exact) return exact.id;
     // Match fuzzy: ogni parola del subject lunga >3 char
     const words = beforeDash.split(/\s+/).filter(w => w.length > 3);
     for (const w of words) {
-      const hit = allContacts.find((c: any) => c.company.toLowerCase().includes(w));
-      if (hit) return (hit as any).id;
+      const hit = allContacts.find((c) => c.company.toLowerCase().includes(w));
+      if (hit) return hit.id;
     }
     return '';
   };
@@ -93,14 +108,14 @@ export function useAgendaImport(prev: AgendaFormModel) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Errore parsing PST');
 
-      const enriched = (json.events as any[]).map((ev: any, i: number) => ({
+      const enriched: PstRow[] = (json.events as PstEvent[]).map((ev, i) => ({
         ...ev,
         _idx: i,
         _contactId: matchContact(ev.subject),
         _type: inferActivityType(ev.subject, ev.location),
         _duplicate: ev.start
-          ? Object.values(activities).some((a: any) =>
-              Math.abs(a.date - new Date(ev.start).getTime()) < 60000 &&
+          ? Object.values(activities).some((a) =>
+              Math.abs(a.date - new Date(ev.start ?? '').getTime()) < 60000 &&
               a.notes?.includes(ev.subject)
             )
           : false,
@@ -108,17 +123,17 @@ export function useAgendaImport(prev: AgendaFormModel) {
 
       // Pre-seleziona tutto tranne duplicati e senza data
       const sel = new Set<number>(
-        enriched.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx)
+        enriched.filter((e) => e.start && !e._duplicate).map((e) => e._idx)
       );
       // Inizializza override con auto-match
       const overrides: Record<number, string> = {};
-      enriched.forEach((e: any) => { overrides[e._idx] = e._contactId || ''; });
+      enriched.forEach((e) => { overrides[e._idx] = e._contactId || ''; });
       setPstEvents(enriched);
       setPstSelected(sel);
       setPstContactOverrides(overrides);
       setPstModalOpen(true);
-    } catch (err: any) {
-      showToast(`Errore: ${err.message}`, 'error');
+    } catch (err: unknown) {
+      showToast(`Errore: ${err instanceof Error ? err.message : String(err)}`, 'error');
     } finally {
       setPstLoading(false);
     }
@@ -126,13 +141,13 @@ export function useAgendaImport(prev: AgendaFormModel) {
 
   const handlePSTImport = () => {
     let imported = 0;
-    pstEvents.forEach((ev: any) => {
+    pstEvents.forEach((ev) => {
       if (!pstSelected.has(ev._idx) || !ev.start) return;
       const ts = new Date(ev.start).getTime();
       addActivity({
         id: `pst_${Date.now()}_${ev._idx}`,
         contactId: pstContactOverrides[ev._idx] ?? ev._contactId ?? '',
-        type: ev._type as any,
+        type: ev._type,
         date: ts,
         outcome: 'da-fare',
         notes: [ev.subject, ev.location ? `📍 ${ev.location}` : '', ev.body].filter(Boolean).join('\n').trim(),

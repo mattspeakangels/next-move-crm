@@ -16,7 +16,7 @@ export function AgendaPstModal({ v }: { v: AgendaCalendarModel }) {
                   <Calendar size={20} className="text-accent" /> Importa da Outlook
                 </h2>
                 <p className="text-xs text-muted mt-0.5">
-                  {pstSelected.size} / {pstEvents.filter((e: any) => e.start).length} eventi selezionati
+                  {pstSelected.size} / {pstEvents.filter((e) => e.start).length} eventi selezionati
                 </p>
               </div>
               <button aria-label="Chiudi dialogo" data-dialog-close onClick={() => setPstModalOpen(false)} className="text-muted hover:text-secondary">
@@ -26,12 +26,12 @@ export function AgendaPstModal({ v }: { v: AgendaCalendarModel }) {
 
             {/* Event list */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2 min-h-0">
-              {pstEvents.map((ev: any) => {
+              {pstEvents.map((ev) => {
                 const sel = pstSelected.has(ev._idx);
                 const overrideId = pstContactOverrides[ev._idx] ?? '';
                 const startDate = ev.start ? new Date(ev.start) : null;
                 const hasDate = !!startDate;
-                const sortedContacts = Object.values(contacts as any).sort((a: any, b: any) =>
+                const sortedContacts = Object.values(contacts).sort((a, b) =>
                   (a.company || '').localeCompare(b.company || '', 'it')
                 );
                 return (
@@ -94,7 +94,7 @@ export function AgendaPstModal({ v }: { v: AgendaCalendarModel }) {
                           }`}
                         >
                           <option value="">— Nessun cliente —</option>
-                          {(sortedContacts as any[]).map((c: any) => (
+                          {sortedContacts.map((c) => (
                             <option key={c.id} value={c.id}>{c.company}</option>
                           ))}
                         </select>
@@ -114,7 +114,7 @@ export function AgendaPstModal({ v }: { v: AgendaCalendarModel }) {
             <div className="flex flex-wrap items-center justify-between px-6 py-4 border-t border-line dark:border-line flex-shrink-0 gap-3">
               <button
                 onClick={() => {
-                  const allSelectable = pstEvents.filter((e: any) => e.start && !e._duplicate).map((e: any) => e._idx);
+                  const allSelectable = pstEvents.filter((e) => e.start && !e._duplicate).map((e) => e._idx);
                   setPstSelected(new Set(allSelectable));
                 }}
                 className="text-xs font-bold text-secondary hover:text-accent transition-colors"
