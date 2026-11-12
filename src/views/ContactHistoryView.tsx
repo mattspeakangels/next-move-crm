@@ -85,7 +85,8 @@ function matchWords(a: string, b: string): number {
 export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOfferForContact }) => {
   const { activities, offers, salesTransactions, deals, products, addActivity, deleteActivity } = useStore();
   const { showToast } = useToast();
-  const [showEmailModal, setShowEmailModal] = useState(false);
+  // Tipo preselezionato nella finestra di registrazione (null = chiusa)
+  const [logType, setLogType] = useState<ActivityType | null>(null);
   const { clientiDettagliati } = useStoricoStore();
 
   // Mappa codice prodotto → nome leggibile dal catalogo
@@ -275,7 +276,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
       notes,
       createdAt: Date.now(),
     });
-    showToast('Email registrata', 'success');
+    showToast(type === 'email' ? 'Email registrata' : type === 'chiamata' ? 'Call registrata' : 'Attività registrata', 'success');
   };
 
   const handleDeleteEmail = async (id: string) => {
@@ -439,10 +440,11 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
         ))}
       </div>
 
-      {showEmailModal && (
+      {logType && (
         <QuickLogModal
           companyName={contact.company}
-          onClose={() => setShowEmailModal(false)}
+          initialType={logType}
+          onClose={() => setLogType(null)}
           onSave={handleSaveEmail}
         />
       )}
@@ -466,7 +468,7 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {onNewOfferForContact && (
             <button
               onClick={() => onNewOfferForContact(contact.id)}
@@ -476,7 +478,13 @@ export const ContactHistoryView: React.FC<Props> = ({ contact, onBack, onNewOffe
             </button>
           )}
           <button
-            onClick={() => setShowEmailModal(true)}
+            onClick={() => setLogType('chiamata')}
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full bg-success-soft dark:bg-success-soft text-success dark:text-success hover:bg-success-soft dark:hover:bg-success-soft transition-colors"
+          >
+            <Plus size={12} /> Nuova call
+          </button>
+          <button
+            onClick={() => setLogType('email')}
             className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent hover:bg-accent-soft dark:hover:bg-accent-soft/50 transition-colors"
           >
             <Plus size={12} /> Aggiungi email
