@@ -1,15 +1,16 @@
-// Test della lettura dei file Storico (src/lib/storicoParse.ts), spostata dalla vista nel Blocco 3.
+// Test della lettura dei file Storico (src/lib/storicoParse.ts, storicoPivot.ts), spostata dalla vista nel Blocco 3.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
-const out = await build({
-  entryPoints: [fileURLToPath(new URL('../src/lib/storicoParse.ts', import.meta.url))],
+const load = async file => { const out = await build({
+  entryPoints: [fileURLToPath(new URL(`../src/lib/${file}`, import.meta.url))],
   bundle: true, write: false, format: 'esm', platform: 'node', logLevel: 'silent',
   // La notifica a schermo non serve nei test
   plugins: [{ name: 'stub-feedback', setup(b) { b.onResolve({ filter: /ui\/Feedback$/ }, () => ({ path: 'feedback', namespace: 'stub' })); b.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: 'export const showNotice = () => {};' })); } }],
-});
-const { parseAmount, isPivotFormat } = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
+}); return import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`); };
+const { parseAmount } = await load('storicoParse.ts');
+const { isPivotFormat } = await load('storicoPivot.ts');
 
 test('importi in formato italiano e numerico', () => {
   assert.equal(parseAmount(7529), 7529);

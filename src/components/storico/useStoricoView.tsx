@@ -10,7 +10,8 @@ import { matchSearch } from '../../utils/search';
 import { ChevronDown, ChevronUp, Minus } from 'lucide-react';
 import type { DealSuggerito } from '../../utils/pipelineSuggestions';
 import { generaDeal } from '../../utils/pipelineSuggestions';
-import { detectColumns, parseCSVData, convertToClienteRecord, isPivotFormat, parsePivotData } from '../../lib/storicoParse';
+import { detectColumns, parseCSVData, convertToClienteRecord } from '../../lib/storicoParse';
+import { isPivotFormat, parsePivotData } from '../../lib/storicoPivot';
 import { analyzeClientSignals } from '../../lib/storicoSignals';
 
 // Stato e calcoli della vista Storico (dati, filtri, ordinamento, finestra Pipeline).
