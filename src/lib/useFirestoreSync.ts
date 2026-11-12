@@ -4,6 +4,10 @@ import { db } from './firebase';
 import { colRef, docRef, isShared, type DataCollection, type DataContext } from './paths';
 import { useStore } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
+import { changedFields, sanitizeForFirestore as sanitize, type DocFields } from './syncDiff';
+
+// Pulizia dei campi prima della scrittura: undefined di primo livello → deleteField()
+const sanitizeForFirestore = (data: DocFields) => sanitize(data, deleteField);
 
 const COLLECTIONS: readonly DataCollection[] = ['customerCommunications', 'customerRequests', 'contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets', 'sequences', 'prospectingTracks', 'prospectEmailDrafts', 'prospectHistory', 'groups', 'strategicFocuses'];
 
@@ -18,48 +22,10 @@ const LEGACY_API_KEY_FIELD = 'claudeApiKey';
 // Firestore WriteBatch ha un limite di 500 operazioni per batch
 const BATCH_SIZE = 400;
 
-// Firestore rifiuta i valori `undefined` (es. TodoItem con completedAt/scadenza
-// non impostati): un solo campo undefined faceva fallire l'intero batch della
-// collezione, silenziosamente. Nei campi top-level undefined diventa
-// deleteField() (con merge:true rimuove il campo remoto); nei nested viene tolto.
-function stripUndefinedDeep(value: any): any {
-  if (Array.isArray(value)) {
-    return value.filter(v => v !== undefined).map(stripUndefinedDeep);
-  }
-  if (value && typeof value === 'object' && value.constructor === Object) {
-    const out: Record<string, any> = {};
-    for (const [k, v] of Object.entries(value)) {
-      if (v !== undefined) out[k] = stripUndefinedDeep(v);
-    }
-    return out;
-  }
-  return value;
-}
-
-function sanitizeForFirestore(data: Record<string, any>): Record<string, any> {
-  const out: Record<string, any> = {};
-  for (const [k, v] of Object.entries(data)) {
-    out[k] = v === undefined ? deleteField() : stripUndefinedDeep(v);
-  }
-  return out;
-}
-
 type WriteOp =
   | { type: 'create'; id: string; data: Record<string, any> }
   | { type: 'update'; id: string; fields: Record<string, any>; full: Record<string, any> }
   | { type: 'del'; id: string };
-
-/**
- * Diff superficiale tra due versioni di un documento: solo i campi di primo livello
- * cambiati. Scrivere i soli campi modificati evita che due colleghi che lavorano
- * sullo stesso cliente si cancellino a vicenda le modifiche.
- */
-function changedFields(prev: Record<string, any>, curr: Record<string, any>): Record<string, any> {
-  const out: Record<string, any> = {};
-  for (const k of Object.keys(curr)) if (curr[k] !== prev[k]) out[k] = curr[k];
-  for (const k of Object.keys(prev)) if (!(k in curr)) out[k] = undefined;
-  return out;
-}
 
 async function commitOps(ctx: DataContext, col: DataCollection, ops: WriteOp[]) {
   for (let i = 0; i < ops.length; i += BATCH_SIZE) {

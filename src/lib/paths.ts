@@ -54,14 +54,18 @@ function basePath(col: string, ctx: DataContext): [string, string] {
   throw new Error(`Collezione non instradata: ${col}. Aggiungila a SHARED o PERSONAL in paths.ts`);
 }
 
-export function colRef(col: DataCollection, ctx: DataContext = getActiveDataContext()): CollectionReference {
+/** Percorso Firestore della collezione, es. ['workspaces', wid, 'contacts']. */
+export function collectionPath(col: DataCollection, ctx: DataContext): [string, string, string] {
   const [root, id] = basePath(col, ctx);
-  return collection(db, root, id, col);
+  return [root, id, col];
+}
+
+export function colRef(col: DataCollection, ctx: DataContext = getActiveDataContext()): CollectionReference {
+  return collection(db, ...collectionPath(col, ctx));
 }
 
 export function docRef(col: DataCollection, id: string, ctx: DataContext = getActiveDataContext()): DocumentReference {
-  const [root, rootId] = basePath(col, ctx);
-  return doc(db, root, rootId, col, id);
+  return doc(db, ...collectionPath(col, ctx), id);
 }
 
 /** Percorso legacy (pre-workspace): usato SOLO dalla migrazione una tantum. */
