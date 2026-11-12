@@ -7,7 +7,9 @@ import { Button as SyrioButton } from './components/ui/Syrio';
 import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { useProspectingReminders } from './hooks/useProspectingReminders';
 import { LoginView } from './views/LoginView';
-import { LayoutDashboard, Users, Target, FileText, Calendar, Settings, Package, Map, Activity, X, BarChart3, TrendingUp, Shield, ChevronLeft, CheckSquare, Menu, Crosshair } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Calendar, Settings, Map, X, BarChart3, ChevronLeft, Menu, MoreHorizontal, type LucideIcon } from 'lucide-react';
+import { getSection, sectionOf, primaryView, orderMainSections, footerSections, type SectionId } from './lib/navSections';
+import { SectionTabs } from './components/layouts/SectionTabs';
 import { SEED_SEQUENCES } from './data/prospectingSequences';
 import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -34,6 +36,12 @@ const StoricoView    = lazy(() => import('./views/StoricoView').then(m => ({ def
 const TodoView       = lazy(() => import('./views/TodoView').then(m => ({ default: m.TodoView })));
 const LegalView      = lazy(() => import('./views/LegalView').then(m => ({ default: m.LegalView })));
 const StrategyView   = lazy(() => import('./views/StrategyView').then(m => ({ default: m.StrategyView })));
+
+// Icone delle voci del menu
+const SECTION_ICONS: Record<SectionId, LucideIcon> = {
+  oggi: LayoutDashboard, clienti: Users, opportunita: Target, agenda: Calendar,
+  mappa: Map, analisi: BarChart3, impostazioni: Settings,
+};
 
 const ViewLoader = () => (
   <div className="flex items-center justify-center h-64">
@@ -69,6 +77,11 @@ function AppContent() {
     setMobileMenuOpen(false);
     window.history.pushState({ view }, '');
   };
+
+  // Ultima scheda aperta per ogni voce: tornando sulla voce si riapre quella
+  const lastTabRef = useRef<Partial<Record<SectionId, NavView>>>({});
+  lastTabRef.current[sectionOf(currentView)] = currentView === 'map-full' ? 'map' : currentView;
+  const goToSection = (id: SectionId) => goTo(lastTabRef.current[id] ?? primaryView(id));
 
   const goBack = () => {
     const prev = historyRef.current.pop();
@@ -140,35 +153,13 @@ function AppContent() {
     }
   };
 
-  const baseNavItems = [
-    { id: 'dashboard' as NavView, icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'deals' as NavView, icon: Target, label: 'Pipeline' },
-    { id: 'strategia' as NavView, icon: Crosshair, label: 'Strategia' },
-    { id: 'contacts' as NavView, icon: Users, label: 'Clienti' },
-    { id: 'offers' as NavView, icon: FileText, label: 'Offerte' },
-    { id: 'products' as NavView, icon: Package, label: 'Prodotti' },
-    { id: 'agenda' as NavView, icon: Calendar, label: 'Agenda' },
-    { id: 'attivita' as NavView, icon: Activity, label: 'Attività' },
-    { id: 'map' as NavView, icon: Map, label: 'Mappa' },
-    { id: 'todo' as NavView, icon: CheckSquare, label: 'To Do' },
-    { id: 'analytics' as NavView, icon: BarChart3, label: 'Analytics' },
-    { id: 'storico' as NavView, icon: TrendingUp, label: 'Storico' },
-    { id: 'legal' as NavView, icon: Shield, label: 'Legal' },
-    { id: 'settings' as NavView, icon: Settings, label: 'Impostazioni' },
-  ];
-
-  // Ordine personalizzato dalle Impostazioni: le voci non ancora ordinate (es. aggiunte
-  // dopo l'ultima volta che l'utente ha riordinato) restano in coda nell'ordine di default.
-  const navItems = sidebarOrder && sidebarOrder.length > 0
-    ? [
-        ...sidebarOrder.map(id => baseNavItems.find(n => n.id === id)).filter((n): n is typeof baseNavItems[number] => !!n),
-        ...baseNavItems.filter(n => !sidebarOrder.includes(n.id)),
-      ]
-    : baseNavItems;
-
-  // Mobile bottom bar: usa footerTabs dallo store, fallback ai primi 4
-  const activeTabs = (footerTabs && footerTabs.length > 0 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts']) as NavView[];
-  const mobileMain = navItems.filter(n => activeTabs.includes(n.id));
+  // Menu a voci raggruppate (Blocco 5): ogni voce apre la sua ultima scheda
+  const currentSection = sectionOf(currentView);
+  const toNavItem = (id: SectionId) => ({ id, icon: SECTION_ICONS[id], label: getSection(id).label });
+  const navItems = orderMainSections(sidebarOrder).map(toNavItem);
+  const settingsItem = toNavItem('impostazioni');
+  const mobileMain = footerSections(footerTabs).map(toNavItem);
+  const currentTabLabel = getSection(currentSection).tabs.find(t => t.view === currentView)?.label;
 
   return (
     <div className={`min-h-screen text-foreground ${theme === 'dark' ? 'dark bg-canvas' : 'bg-canvas'}`}>
@@ -185,8 +176,8 @@ function AppContent() {
               <ChevronLeft size={20} /> Indietro
             </button>
           )}
-          {navItems.map(({ id, icon: Icon, label }) => (
-            <button key={id} onClick={() => goTo(id)} aria-current={currentView === id ? 'page' : undefined} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${currentView === id ? 'bg-accent-soft text-accent border border-accent/25' : 'border border-transparent text-muted hover:bg-raised hover:text-foreground'}`}>
+          {[...navItems, settingsItem].map(({ id, icon: Icon, label }) => (
+            <button key={id} onClick={() => goToSection(id)} aria-current={currentSection === id ? 'page' : undefined} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${id === 'impostazioni' ? '!mt-4 ' : ''}${currentSection === id ? 'bg-accent-soft text-accent border border-accent/25' : 'border border-transparent text-muted hover:bg-raised hover:text-foreground'}`}>
               <Icon size={20} />{label}
             </button>
           ))}
@@ -223,10 +214,11 @@ function AppContent() {
       {/* ── MAIN CONTENT ── */}
       <main className="cockpit-main md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-canvas dark:bg-canvas">
         <div className="cockpit-topbar hidden md:flex">
-          <div><span>Area di lavoro</span><span aria-hidden="true" className="cockpit-topbar-separator">/</span><strong>{baseNavItems.find(item => item.id === currentView)?.label || 'CRM'}</strong></div>
+          <div><span>Area di lavoro</span><span aria-hidden="true" className="cockpit-topbar-separator">/</span><strong>{getSection(currentSection).label}</strong>{currentTabLabel && getSection(currentSection).tabs.length > 1 && (<><span aria-hidden="true" className="cockpit-topbar-separator">/</span><span>{currentTabLabel}</span></>)}</div>
           <span className="cockpit-topbar-date">{new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
         </div>
         <div style={accentStyle} className={currentView === 'map' ? 'cockpit-content cockpit-map p-2 md:p-3' : 'cockpit-content p-4 md:p-8 max-w-7xl mx-auto'}>
+          {currentView !== 'map-full' && <SectionTabs currentView={currentView} onSelect={goTo} />}
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>
@@ -236,13 +228,20 @@ function AppContent() {
         {mobileMain.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => goTo(id)}
-            className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 py-2 transition-all ${currentView === id ? 'text-accent' : 'text-muted'}`}
+            onClick={() => goToSection(id)}
+            className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 py-2 transition-all ${currentSection === id ? 'text-accent' : 'text-muted'}`}
           >
-            <Icon size={22} strokeWidth={currentView === id ? 2.5 : 1.8} />
+            <Icon size={22} strokeWidth={currentSection === id ? 2.5 : 1.8} />
             <span className="text-xs font-medium leading-none max-w-full truncate">{label}</span>
           </button>
         ))}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 py-2 transition-all ${mobileMain.some(n => n.id === currentSection) ? 'text-muted' : 'text-accent'}`}
+        >
+          <MoreHorizontal size={22} strokeWidth={1.8} />
+          <span className="text-xs font-medium leading-none max-w-full truncate">Altro</span>
+        </button>
       </nav>
 
       {/* ── MOBILE DRAWER LATERALE (burger) ── */}
@@ -263,12 +262,12 @@ function AppContent() {
             </div>
             {/* Nav items */}
             <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-              {navItems.map(({ id, icon: Icon, label }) => (
+              {[...navItems, settingsItem].map(({ id, icon: Icon, label }) => (
                 <button
                   key={id}
-                  onClick={() => goTo(id)}
-                  aria-current={currentView === id ? 'page' : undefined}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${currentView === id ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-raised hover:text-foreground'}`}
+                  onClick={() => goToSection(id)}
+                  aria-current={currentSection === id ? 'page' : undefined}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${currentSection === id ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-raised hover:text-foreground'}`}
                 >
                   <Icon size={18} />{label}
                 </button>

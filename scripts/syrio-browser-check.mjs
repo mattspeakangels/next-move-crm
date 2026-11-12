@@ -30,7 +30,7 @@ await context.route('**/*', async route => {
 const page = await context.newPage();
 page.on('pageerror', err => errors.push(err.stack));
 await page.goto('http://127.0.0.1:5173');
-await page.getByRole('button', { name: 'Dashboard', exact: true }).first().waitFor();
+await page.getByRole('button', { name: 'Oggi', exact: true }).first().waitFor();
 await page.locator('main h1').first().waitFor();
 const phase = process.argv[2] || 'after';
 const checks = [];
@@ -50,9 +50,19 @@ await page.screenshot({animations: 'disabled', path: `${out}/dashboard-desktop-$
 await resize({ width: 390, height: 844 });
 await page.screenshot({animations: 'disabled', path: `${out}/dashboard-mobile-${phase}.png`, fullPage: true });
 await overflow('Dashboard mobile');
+// Menu a voci raggruppate: ogni vecchia sezione è una scheda dentro una voce.
+const VIEW_PATH = { Dashboard: ['Oggi', 'Panoramica'], 'To Do': ['Oggi', 'Da fare'], Clienti: ['Clienti', 'Clienti'], Strategia: ['Clienti', 'Gruppi e focus'],
+  Pipeline: ['Opportunità', 'Pipeline'], Offerte: ['Opportunità', 'Offerte'], Prodotti: ['Opportunità', 'Catalogo'], Agenda: ['Agenda', 'Calendario'],
+  'Attività': ['Agenda', 'Diario'], Mappa: ['Mappa'], Analytics: ['Analisi', 'Numeri'], Storico: ['Analisi', 'Storico vendite'],
+  Legal: ['Impostazioni', 'Documenti legali'], Impostazioni: ['Impostazioni', 'Impostazioni'] };
+async function openView(name) {
+  const [section, tab] = VIEW_PATH[name] ?? [name];
+  await page.locator('aside').getByRole('button',{name:section,exact:true}).first().click();
+  if (tab) await page.locator('main').getByRole('tab',{name:tab,exact:true}).first().click();
+}
 for (const name of ['Clienti','Pipeline','Offerte','Prodotti','Agenda','Attività','Mappa','To Do','Strategia','Analytics','Storico','Legal','Impostazioni']) {
   await resize({ width: 1440, height: 1000 });
-  await page.locator('aside').getByRole('button',{name,exact:true}).first().click();
+  await openView(name);
   await expect(page.locator('main')).not.toHaveText('');
   await page.waitForFunction(() => document.querySelector('main')?.textContent.trim().length > 20);
   await expect(page.locator('main .animate-spin')).toHaveCount(0);
@@ -64,7 +74,7 @@ for (const name of ['Clienti','Pipeline','Offerte','Prodotti','Agenda','Attivit�
 const flows = [];
 async function navigate(name) {
   await resize({ width: 1440, height: 1000 });
-  await page.locator('aside').getByRole('button',{name,exact:true}).first().click();
+  await openView(name);
   await expect(page.locator('main .animate-spin')).toHaveCount(0);
 }
 async function state() { return page.evaluate(async () => { const s=(await import('/src/store/useStore.ts')).useStore.getState(); return { contacts:s.contacts, offers:s.offers, deals:s.deals, activities:s.activities, theme:s.theme,textSize:s.textSize }; }); }

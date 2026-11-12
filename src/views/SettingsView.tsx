@@ -1,8 +1,9 @@
 import { confirmAction } from '../components/ui/Feedback';
 import React, { useState } from 'react';
+import { getSection, primaryView, orderMainSections, footerSections, MAIN_SECTION_IDS, MAX_FOOTER_SECTIONS, type SectionId } from '../lib/navSections';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Radar, FileText, Calendar, Activity, Map, CheckSquare, BarChart3, TrendingUp, Shield, Settings, ChevronUp, ChevronDown, GripVertical, Crosshair, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
+import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Calendar, Map, BarChart3, Settings, ChevronUp, ChevronDown, GripVertical, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
 import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
 import { DEFAULT_SECTORS, sectorLabel } from '../lib/sectors';
@@ -250,23 +251,11 @@ const MicrophonePermissionSection: React.FC = () => {
   );
 };
 
-const SIDEBAR_ITEMS: { id: import('../types').NavView; label: string; icon: LucideIcon }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'prospecting', label: 'Prospecting', icon: Radar },
-  { id: 'strategia', label: 'Strategia', icon: Crosshair },
-  { id: 'deals', label: 'Pipeline', icon: Target },
-  { id: 'contacts', label: 'Clienti', icon: Users },
-  { id: 'offers', label: 'Offerte', icon: FileText },
-  { id: 'products', label: 'Prodotti', icon: Package },
-  { id: 'agenda', label: 'Agenda', icon: Calendar },
-  { id: 'attivita', label: 'Attività', icon: Activity },
-  { id: 'map', label: 'Mappa', icon: Map },
-  { id: 'todo', label: 'To Do', icon: CheckSquare },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'storico', label: 'Storico', icon: TrendingUp },
-  { id: 'legal', label: 'Legal', icon: Shield },
-  { id: 'settings', label: 'Impostazioni', icon: Settings },
-];
+// Voci del menu principale con le loro icone (Blocco 5)
+const SECTION_ICON: Record<SectionId, LucideIcon> = {
+  oggi: LayoutDashboard, clienti: Users, opportunita: Target, agenda: Calendar,
+  mappa: Map, analisi: BarChart3, impostazioni: Settings,
+};
 
 const SHAPE_ICONS: Record<MarkerShape, LucideIcon> = {
   circle: Circle,
@@ -281,19 +270,15 @@ const SHAPE_ICONS: Record<MarkerShape, LucideIcon> = {
 const SidebarOrderSection: React.FC = () => {
   const { sidebarOrder, setSidebarOrder } = useStore();
 
-  const ordered = (sidebarOrder && sidebarOrder.length > 0)
-    ? [
-        ...sidebarOrder.map(id => SIDEBAR_ITEMS.find(n => n.id === id)).filter((n): n is typeof SIDEBAR_ITEMS[number] => !!n),
-        ...SIDEBAR_ITEMS.filter(n => !sidebarOrder.includes(n.id)),
-      ]
-    : SIDEBAR_ITEMS;
+  // L'ordine si salva come vista principale di ogni voce (anche i vecchi ordini vengono convertiti)
+  const ordered = orderMainSections(sidebarOrder).map(id => ({ id, label: getSection(id).label, icon: SECTION_ICON[id] }));
 
   const move = (index: number, delta: number) => {
     const target = index + delta;
     if (target < 0 || target >= ordered.length) return;
     const next = ordered.map(n => n.id);
     [next[index], next[target]] = [next[target], next[index]];
-    setSidebarOrder(next);
+    setSidebarOrder(next.map(primaryView));
   };
 
   return (
@@ -706,44 +691,31 @@ export const SettingsView: React.FC = () => {
         <h2 className="text-xs font-semibold text-secondary dark:text-muted   flex items-center gap-2">
           <span>📱</span> Barra navigazione mobile
         </h2>
-        <p className="text-xs text-muted">Seleziona fino a 5 sezioni da mostrare nella barra in basso.</p>
+        <p className="text-xs text-muted">Seleziona fino a 4 voci da mostrare nella barra in basso; le altre restano in «Altro».</p>
         {(() => {
-          const ALL_TABS: { id: import('../types').NavView; label: string }[] = [
-            { id: 'dashboard',  label: 'Dashboard'    },
-            { id: 'deals',      label: 'Pipeline'     },
-            { id: 'contacts',   label: 'Clienti'      },
-            { id: 'offers',     label: 'Offerte'      },
-            { id: 'agenda',     label: 'Agenda'       },
-            { id: 'todo',       label: 'To Do'        },
-            { id: 'attivita',   label: 'Attività'     },
-            { id: 'products',   label: 'Prodotti'     },
-            { id: 'analytics',  label: 'Analytics'    },
-            { id: 'map',        label: 'Mappa'        },
-            { id: 'storico',    label: 'Storico'      },
-            { id: 'assets',     label: 'Asset'        },
-          ];
-          const current: import('../types').NavView[] = footerTabs && footerTabs.length > 0 ? footerTabs : ['dashboard', 'deals', 'agenda', 'contacts'];
-          const toggle = (id: import('../types').NavView) => {
-            if (current.includes(id)) {
-              if (current.length > 1) setFooterTabs(current.filter(t => t !== id));
-            } else {
-              if (current.length < 5) setFooterTabs([...current, id]);
-            }
+          // Voci della barra in basso (la quinta posizione è sempre «Altro»)
+          const current = footerSections(footerTabs);
+          const toggle = (id: SectionId) => {
+            const next = current.includes(id)
+              ? (current.length > 1 ? current.filter(t => t !== id) : current)
+              : (current.length < MAX_FOOTER_SECTIONS ? [...current, id] : current);
+            setFooterTabs(next.map(primaryView));
           };
           return (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {ALL_TABS.map(({ id, label }) => {
+              {MAIN_SECTION_IDS.map(id => {
+                const label = getSection(id).label;
                 const active = current.includes(id);
                 const idx = current.indexOf(id);
                 return (
                   <button
                     key={id}
                     onClick={() => toggle(id)}
-                    disabled={!active && current.length >= 5}
+                    disabled={!active && current.length >= MAX_FOOTER_SECTIONS}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-bold border-2 transition-all ${
                       active
                         ? 'border-accent bg-accent-soft dark:bg-accent-soft/30 text-accent dark:text-accent'
-                        : current.length >= 5
+                        : current.length >= MAX_FOOTER_SECTIONS
                           ? 'border-line dark:border-line text-muted dark:text-secondary cursor-not-allowed'
                           : 'border-line dark:border-line text-secondary dark:text-muted hover:border-accent'
                     }`}
@@ -761,7 +733,7 @@ export const SettingsView: React.FC = () => {
           );
         })()}
         <p className="text-xs text-muted text-center">
-          {(footerTabs ?? []).length}/5 sezioni selezionate
+          {footerSections(footerTabs).length}/{MAX_FOOTER_SECTIONS} voci selezionate
         </p>
       </div>
 
