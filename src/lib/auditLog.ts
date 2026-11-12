@@ -7,8 +7,8 @@ export async function logAuditEvent(
   collectionName: string,
   documentId: string,
   operation: AuditOperation,
-  previousValues?: Record<string, any>,
-  newValues?: Record<string, any>
+  previousValues?: Record<string, unknown>,
+  newValues?: Record<string, unknown>
 ) {
   try {
     const changes = calculateChanges(previousValues || {}, newValues || {});
@@ -33,10 +33,10 @@ export async function logAuditEvent(
 }
 
 function calculateChanges(
-  previous: Record<string, any>,
-  current: Record<string, any>
-): Record<string, { from: any; to: any }> {
-  const changes: Record<string, { from: any; to: any }> = {};
+  previous: Record<string, unknown>,
+  current: Record<string, unknown>
+): Record<string, { from: unknown; to: unknown }> {
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
 
   // Check for updated/new fields
   for (const key in current) {

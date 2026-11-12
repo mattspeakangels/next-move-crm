@@ -2,10 +2,10 @@ import type { CustomerRequest } from '../types/customerRequest';
 import type { CustomerCommunication } from '../types/customerCommunication';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry, Group, StrategicFocus } from '../types';
+import { Contact, Deal, Offer, Product, AppProfile, Activity, SalesTransaction, Asset, CheckIn, TodoItem, NavView, Sequence, ProspectingTrack, ProspectEmailDraft, ProspectHistoryEntry, Group, StrategicFocus, Target } from '../types';
 import { idbStorage } from '../lib/idbStorage';
 
-interface StoreState {
+export interface StoreState {
   customerCommunications: Record<string, CustomerCommunication>;
   saveCustomerCommunication: (item: CustomerCommunication) => void;
   customerRequests: Record<string, CustomerRequest>;
@@ -27,7 +27,7 @@ interface StoreState {
   mapMarkerStyles: Record<string, { shape: string; color: string }>;
   mapMarkerSize: 'small' | 'medium' | 'large';
   customSectors: string[];
-  targets: Record<string, any>;
+  targets: Record<string, Target>;
   discountApprovalThreshold: number;
   todos: Record<string, TodoItem>;
   footerTabs: NavView[];
@@ -84,7 +84,7 @@ interface StoreState {
   addActivitiesBatch: (activities: Activity[]) => void;
   updateActivity: (id: string, updates: Partial<Activity>) => void;
   deleteActivity: (id: string) => void;
-  updateTarget: (target: any) => void;
+  updateTarget: (target: Target) => void;
 
   // Asset / Parco Installato
   addAsset: (asset: Asset) => void;

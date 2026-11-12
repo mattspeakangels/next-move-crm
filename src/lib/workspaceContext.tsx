@@ -5,7 +5,7 @@ import {
   resolveWorkspace, migrateLegacyData, hasLegacyData, watchMembers,
   type Member, type Workspace, type WorkspaceRole,
 } from './workspace';
-import { useStore } from '../store/useStore';
+import { useStore, type StoreState } from '../store/useStore';
 
 type Status = 'loading' | 'migrating' | 'ready' | 'error';
 
@@ -50,9 +50,9 @@ export function WorkspaceProvider({ user, children }: { user: User; children: Re
       let lastWid: string | null = null;
       try { lastWid = localStorage.getItem(LAST_WID_KEY); } catch { /* storage non disponibile */ }
       if (lastWid && lastWid !== resolved.wid) {
-        const empty: Record<string, object> = {};
+        const empty: Partial<StoreState> = {};
         for (const k of SHARED_STORE_KEYS) empty[k] = {};
-        useStore.setState(empty as any);
+        useStore.setState(empty);
       }
 
       // Primo workspace di un utente che aveva già dati: li copiamo prima di

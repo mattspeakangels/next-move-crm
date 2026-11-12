@@ -2,18 +2,37 @@ import { useEffect, useRef } from 'react';
 import { onSnapshot, setDoc, writeBatch, deleteField, type DocumentReference } from 'firebase/firestore';
 import { db } from './firebase';
 import { colRef, docRef, isShared, type DataCollection, type DataContext } from './paths';
-import { useStore } from '../store/useStore';
+import { useStore, type StoreState } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
 import { changedFields, sanitizeForFirestore as sanitize, type DocFields } from './syncDiff';
 
 // Pulizia dei campi prima della scrittura: undefined di primo livello → deleteField()
 const sanitizeForFirestore = (data: DocFields) => sanitize(data, deleteField);
 
-const COLLECTIONS: readonly DataCollection[] = ['customerCommunications', 'customerRequests', 'contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets', 'sequences', 'prospectingTracks', 'prospectEmailDrafts', 'prospectHistory', 'groups', 'strategicFocuses'];
+const COLLECTIONS = ['customerCommunications', 'customerRequests', 'contacts', 'deals', 'offers', 'products', 'activities', 'assets', 'salesTransactions', 'checkIns', 'todos', 'targets', 'sequences', 'prospectingTracks', 'prospectEmailDrafts', 'prospectHistory', 'groups', 'strategicFocuses'] as const satisfies readonly (DataCollection & keyof StoreState)[];
+type SyncedCollection = typeof COLLECTIONS[number];
+
+/** Una collezione dello store vista come mappa id → campi del documento. */
+type DocMap = Record<string, DocFields>;
+
+// Le collezioni sincronizzate sono mappe id → documento tipizzato (Contact, Deal, …):
+// qui servono come documenti generici, per confrontarli campo per campo.
+function readCollection(state: StoreState, col: SyncedCollection): DocMap {
+  return (state[col] ?? {}) as unknown as DocMap;
+}
+function collectionPatch(col: SyncedCollection, docs: DocMap): Partial<StoreState> {
+  return { [col]: docs } as Partial<StoreState>;
+}
 
 // Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
 // cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
-const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder'] as const;
+const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder'] as const satisfies readonly (keyof StoreState)[];
+
+function readSettings(state: StoreState): DocFields {
+  const out: DocFields = {};
+  for (const field of SETTINGS_FIELDS) out[field] = state[field];
+  return out;
+}
 
 // Campo di una versione precedente: la chiave Gemini stava nelle impostazioni dell'utente.
 // Ora è solo sul server, quindi se è rimasta nel documento remoto va cancellata.
@@ -23,8 +42,8 @@ const LEGACY_API_KEY_FIELD = 'claudeApiKey';
 const BATCH_SIZE = 400;
 
 type WriteOp =
-  | { type: 'create'; id: string; data: Record<string, any> }
-  | { type: 'update'; id: string; fields: Record<string, any>; full: Record<string, any> }
+  | { type: 'create'; id: string; data: DocFields }
+  | { type: 'update'; id: string; fields: DocFields; full: DocFields }
   | { type: 'del'; id: string };
 
 async function commitOps(ctx: DataContext, col: DataCollection, ops: WriteOp[]) {
@@ -39,11 +58,11 @@ async function commitOps(ctx: DataContext, col: DataCollection, ops: WriteOp[]) 
     }
     try {
       await batch.commit();
-    } catch (err: any) {
+    } catch (err: unknown) {
       // update() fallisce se il documento remoto non esiste (es. creato offline o
       // cancellato da un collega): riscriviamo i singoli documenti per intero, così
       // un solo caso limite non fa perdere l'intero batch.
-      if (err?.code !== 'not-found') throw err;
+      if ((err as { code?: string } | null)?.code !== 'not-found') throw err;
       for (const op of chunk) {
         const ref: DocumentReference = docRef(col, op.id, ctx);
         if (op.type === 'update') await setDoc(ref, sanitizeForFirestore(op.full), { merge: true });
@@ -77,7 +96,7 @@ export function useFirestoreSync(ctx: DataContext | null) {
       // arriva un nuovo snapshot, se il dato locale e' rimasto invariato da
       // allora (vince il remoto) oppure e' stato modificato nel frattempo su
       // QUESTO device (vince il locale, verra' scritto dal subscribe sotto).
-      let lastRemote: Record<string, any> = (useStore.getState() as any)[col] || {};
+      let lastRemote: DocMap = readCollection(useStore.getState(), col);
 
       const unsub = onSnapshot(
         colRef(col, dataCtx),
@@ -86,11 +105,11 @@ export function useFirestoreSync(ctx: DataContext | null) {
           // prima della conferma server): lo stato locale la riflette gia'.
           if (snapshot.metadata.hasPendingWrites) return;
 
-          const remoteData: Record<string, any> = {};
+          const remoteData: DocMap = {};
           snapshot.forEach(d => { remoteData[d.id] = d.data(); });
 
-          const localState = (useStore.getState() as any)[col] || {};
-          const merged: Record<string, any> = { ...localState };
+          const localState = readCollection(useStore.getState(), col);
+          const merged: DocMap = { ...localState };
           let changed = false;
 
           for (const [id, data] of Object.entries(remoteData)) {
@@ -118,7 +137,7 @@ export function useFirestoreSync(ctx: DataContext | null) {
 
           if (changed) {
             isApplyingRemoteRef.current = true;
-            useStore.setState({ [col]: merged } as any);
+            useStore.setState(collectionPatch(col, merged));
             isApplyingRemoteRef.current = false;
           }
         },
@@ -128,8 +147,7 @@ export function useFirestoreSync(ctx: DataContext | null) {
     }
 
     const settingsRef = docRef('settings', 'app', dataCtx);
-    let lastRemoteSettings: Record<string, any> = {};
-    for (const field of SETTINGS_FIELDS) lastRemoteSettings[field] = (useStore.getState() as any)[field];
+    let lastRemoteSettings: DocFields = readSettings(useStore.getState());
     let settingsSeen = false;
 
     const unsubSettings = onSnapshot(
@@ -140,9 +158,7 @@ export function useFirestoreSync(ctx: DataContext | null) {
         if (!snap.exists()) {
           if (!settingsSeen) {
             settingsSeen = true;
-            const localSettings: Record<string, any> = {};
-            for (const field of SETTINGS_FIELDS) localSettings[field] = (useStore.getState() as any)[field];
-            setDoc(settingsRef, sanitizeForFirestore(localSettings), { merge: true })
+            setDoc(settingsRef, sanitizeForFirestore(readSettings(useStore.getState())), { merge: true })
               .catch(err => console.error('Firestore settings write failed:', err));
           }
           return;
@@ -154,13 +170,13 @@ export function useFirestoreSync(ctx: DataContext | null) {
           setDoc(settingsRef, { [LEGACY_API_KEY_FIELD]: deleteField() }, { merge: true })
             .catch(err => console.error('Rimozione della vecchia chiave AI non riuscita:', err));
         }
-        const localState = useStore.getState();
-        const updates: Record<string, any> = {};
+        const localSettings = readSettings(useStore.getState());
+        const updates: DocFields = {};
         let changed = false;
         for (const field of SETTINGS_FIELDS) {
           if (remote[field] === undefined) continue;
-          if ((localState as any)[field] === lastRemoteSettings[field]) {
-            if ((localState as any)[field] !== remote[field]) changed = true;
+          if (localSettings[field] === lastRemoteSettings[field]) {
+            if (localSettings[field] !== remote[field]) changed = true;
             updates[field] = remote[field];
           }
         }
@@ -168,7 +184,8 @@ export function useFirestoreSync(ctx: DataContext | null) {
 
         if (changed) {
           isApplyingRemoteRef.current = true;
-          useStore.setState(updates);
+          // Solo i campi impostazioni elencati sopra, arrivati dal documento remoto
+          useStore.setState(updates as Partial<StoreState>);
           isApplyingRemoteRef.current = false;
         }
       },
@@ -180,14 +197,13 @@ export function useFirestoreSync(ctx: DataContext | null) {
       if (isApplyingRemoteRef.current) return;
 
       for (const col of COLLECTIONS) {
-        const curr = (state as any)[col] as Record<string, any>;
-        const prev = (prevState as any)[col] as Record<string, any>;
-
-        if (curr === prev) continue;
+        if (state[col] === prevState[col]) continue;
+        const curr = readCollection(state, col);
+        const prev = readCollection(prevState, col);
 
         const ops: WriteOp[] = [];
         const shared = isShared(col);
-        const audit: { id: string; isNew: boolean; prev?: any; data?: any }[] = [];
+        const audit: { id: string; isNew: boolean; prev?: DocFields; data: DocFields }[] = [];
 
         for (const [id, data] of Object.entries(curr)) {
           if (curr[id] === prev[id]) continue;
@@ -225,11 +241,9 @@ export function useFirestoreSync(ctx: DataContext | null) {
         }
       }
 
-      const changedSettings: Record<string, any> = {};
+      const changedSettings: DocFields = {};
       for (const field of SETTINGS_FIELDS) {
-        const curr = (state as any)[field];
-        const prev = (prevState as any)[field];
-        if (curr !== prev) changedSettings[field] = curr;
+        if (state[field] !== prevState[field]) changedSettings[field] = state[field];
       }
       if (Object.keys(changedSettings).length > 0) {
         setDoc(settingsRef, sanitizeForFirestore(changedSettings), { merge: true })
