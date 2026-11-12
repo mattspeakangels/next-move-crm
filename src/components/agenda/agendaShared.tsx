@@ -1,4 +1,4 @@
-import { Activity, ActivityType, ActivityOutcome, ProspectingSettore } from '../../types';
+import { Activity, ActivityType, ActivityOutcome, TodoTipo, TodoPriorita, ProspectingSettore } from '../../types';
 
 // Tipi, costanti e funzioni di data condivise dall'Agenda.
 export type FormData = {
@@ -199,4 +199,21 @@ export function slotId(dayIdx: number, slotIdx: number) {
 export function slotToTime(slotIdx: number): { h: number; m: number } {
   const totalMins = HOUR_START * 60 + slotIdx * SLOT_MINS;
   return { h: Math.floor(totalMins / 60), m: totalMins % 60 };
+}
+
+export interface AiExtractedTodo {
+  titolo: string;
+  tipo: TodoTipo;
+  priorita: TodoPriorita;
+  dataEsecuzione: string;
+  scadenza: string;
+  note: string;
+  selected: boolean;
+  creaAppuntamento: boolean;
+}
+export interface BatchGroup {
+  activityId: string;
+  contactName: string;
+  date: number;
+  todos: AiExtractedTodo[];
 }
