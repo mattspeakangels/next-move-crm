@@ -216,9 +216,9 @@ const CompactList: React.FC<{
 
             {/* Center: name + code + meta */}
             <div className="flex-1 min-w-0 py-3">
-              <div className="flex items-baseline gap-2 min-w-0">
+              <div className="flex items-baseline gap-2 min-w-0 flex-wrap sm:flex-nowrap">
                 <span
-                  className="dark:text-foreground truncate"
+                  className="dark:text-foreground line-clamp-2 break-words sm:truncate"
                   style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.3 }}
                 >
                   {pName(p)}

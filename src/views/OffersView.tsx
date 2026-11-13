@@ -857,40 +857,40 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
           const contact = contacts[offer.contactId];
           const endUserContact = offer.contactMode === 'dealer+end-user' ? contacts[offer.endUserContactId || ''] : undefined;
           return (
-            <div className={`bg-surface dark:bg-surface p-6 rounded-panel shadow-sm border-2 transition-colors ${
+            <div className={`bg-surface dark:bg-surface p-4 sm:p-6 rounded-panel shadow-sm border-2 transition-colors min-w-0 ${
               offer.status === 'inviata' ? 'border-accent dark:border-accent' : 'border-line dark:border-line'
             }`}>
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <span className="text-xs font-semibold text-accent uppercase tracking-normal bg-accent-soft dark:bg-accent-soft/30 px-3 py-1 rounded-full">
+              <div className="flex justify-between items-start gap-3 mb-3 sm:mb-4">
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-accent uppercase tracking-normal bg-accent-soft dark:bg-accent-soft/30 px-3 py-1 rounded-full whitespace-nowrap">
                     {offer.offerNumber}
                   </span>
                   {endUserContact ? (
-                    <h3 className="text-xl font-semibold mt-3 dark:text-foreground ">
+                    <h3 className="text-base sm:text-xl font-semibold mt-2 sm:mt-3 dark:text-foreground break-words">
                       {contact?.company || 'Dealer'} <span className="text-muted dark:text-secondary">→</span> {endUserContact.company}
                     </h3>
                   ) : (
-                    <h3 className="text-xl font-semibold mt-3 dark:text-foreground ">{contact?.company || 'Azienda'}</h3>
+                    <h3 className="text-base sm:text-xl font-semibold mt-2 sm:mt-3 dark:text-foreground break-words">{contact?.company || 'Azienda'}</h3>
                   )}
                   <p className="text-xs text-muted font-bold mt-0.5">
                     {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-semibold dark:text-foreground tracking-normal">
+                <div className="text-right flex-shrink-0">
+                  <p className="text-lg sm:text-2xl font-semibold dark:text-foreground tracking-normal whitespace-nowrap">
                     € {offer.totalAmount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
-              <div className="mb-4">
+              <div className="mb-3 sm:mb-4">
                 <p className="text-xs font-semibold text-muted uppercase tracking-normal mb-2">Stato offerta</p>
-                <div className="flex gap-2 flex-wrap">
+                <div className="grid grid-cols-4 gap-1.5 sm:flex sm:gap-2 sm:flex-wrap">
                   {(Object.keys(STATUS_CONFIG) as OfferStatus[]).map(s => {
                     const cfg = STATUS_CONFIG[s];
                     const isActive = offer.status === s;
                     return (
                       <button key={s} onClick={() => updateOffer(offer.id, { status: s })}
-                        className={`px-4 py-2 rounded-md font-semibold text-xs uppercase tracking-wide transition-all ${
+                        className={`px-1 sm:px-4 py-2 rounded-md font-semibold text-[11px] sm:text-xs uppercase tracking-normal sm:tracking-wide truncate transition-all ${
                           isActive ? `${cfg.activeBg} ${cfg.activeText} shadow-sm` : `${cfg.bg} ${cfg.text} hover:opacity-80`
                         }`}>
                         {cfg.label}
@@ -941,9 +941,9 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                   </div>
                 </div>
               )}
-              <div className="flex justify-between items-center pt-4 border-t border-line dark:border-line">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => handleSendEmail(offer)} className="px-4 py-2 rounded-md font-semibold text-xs uppercase bg-accent-soft dark:bg-accent-soft/30 text-accent hover:bg-action-hover hover:text-action-foreground transition-all flex items-center gap-2">
+              <div className="flex flex-wrap justify-between items-center gap-2 pt-3 sm:pt-4 border-t border-line dark:border-line">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <button onClick={() => handleSendEmail(offer)} className="px-3 sm:px-4 py-2 rounded-md font-semibold text-xs uppercase bg-accent-soft dark:bg-accent-soft/30 text-accent hover:bg-action-hover hover:text-action-foreground transition-all flex items-center gap-2">
                     <Mail size={12} /> Email
                   </button>
                   <button onClick={() => handleWriteEmail(offer)} className="px-3 py-2 rounded-md font-semibold text-xs uppercase bg-accent-soft dark:bg-accent-soft/30 text-accent hover:bg-action-hover hover:text-action-foreground transition-all flex items-center gap-1.5" title="Scrivi email con Claude AI">
@@ -957,13 +957,13 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                     {uploadingId === offer.id ? (
                       <span className="animate-spin inline-block w-3 h-3 border-2 border-warning border-t-transparent rounded-full" />
                     ) : <Upload size={12} />}
-                    {offer.pdfUrl ? 'Sostituisci PDF' : 'Allega PDF'}
+                    <span className="hidden sm:inline">{offer.pdfUrl ? 'Sostituisci ' : 'Allega '}</span>PDF
                   </button>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handlePrint(offer)} className="p-2 rounded-md bg-canvas dark:bg-raised text-muted hover:bg-raised transition-colors"><Printer size={18} /></button>
-                  <button onClick={() => openModal(offer)} className="p-2 rounded-md bg-accent-soft dark:bg-accent-soft/20 text-accent hover:bg-accent-soft transition-colors"><Edit2 size={18} /></button>
-                  <button onClick={() => removeOffer(offer.id)} className="p-2 rounded-md bg-danger-soft dark:bg-danger-soft text-danger hover:bg-danger-soft transition-colors"><Trash2 size={18} /></button>
+                <div className="flex gap-1.5 sm:gap-2 ml-auto">
+                  <button onClick={() => handlePrint(offer)} aria-label="Stampa offerta" className="p-2 rounded-md bg-canvas dark:bg-raised text-muted hover:bg-raised transition-colors"><Printer size={18} /></button>
+                  <button onClick={() => openModal(offer)} aria-label="Modifica offerta" className="p-2 rounded-md bg-accent-soft dark:bg-accent-soft/20 text-accent hover:bg-accent-soft transition-colors"><Edit2 size={18} /></button>
+                  <button onClick={() => removeOffer(offer.id)} aria-label="Elimina offerta" className="p-2 rounded-md bg-danger-soft dark:bg-danger-soft text-danger hover:bg-danger-soft transition-colors"><Trash2 size={18} /></button>
                 </div>
               </div>
             </div>
@@ -990,21 +990,21 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                 {/* Header collapsible */}
                 <button
                   onClick={() => setArchiveOpen(o => !o)}
-                  className="w-full flex items-center justify-between px-5 py-3 bg-raised dark:bg-surface rounded-panel hover:bg-raised dark:hover:bg-raised transition-colors group"
+                  className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 bg-raised dark:bg-surface rounded-panel hover:bg-raised dark:hover:bg-raised transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-x-2 gap-y-1 sm:gap-3 flex-wrap min-w-0">
                     <span className="text-xs font-semibold uppercase tracking-normal text-secondary">Archivio</span>
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-success bg-success-soft dark:bg-success-soft px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-success bg-success-soft dark:bg-success-soft px-2 py-0.5 rounded-full">
                       <CheckCircle size={11} /> {archived.filter(o => o.status === 'accettata').length} accettate
                     </span>
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-danger bg-danger-soft dark:bg-danger-soft px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-danger bg-danger-soft dark:bg-danger-soft px-2 py-0.5 rounded-full">
                       <XCircle size={11} /> {archived.filter(o => o.status === 'rifiutata').length} rifiutate
                     </span>
-                    <span className="text-xs font-semibold text-muted">
+                    <span className="text-xs font-semibold text-muted whitespace-nowrap">
                       · € {archived.filter(o => o.status === 'accettata').reduce((s, o) => s + o.totalAmount, 0).toLocaleString('it-IT', { maximumFractionDigits: 0 })} vinti
                     </span>
                   </div>
-                  {archiveOpen ? <ChevronUp size={16} className="text-muted" /> : <ChevronDown size={16} className="text-muted" />}
+                  {archiveOpen ? <ChevronUp size={16} className="text-muted flex-shrink-0" /> : <ChevronDown size={16} className="text-muted flex-shrink-0" />}
                 </button>
 
                 {/* Lista compatta archivio */}
@@ -1014,7 +1014,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                       const contact = contacts[offer.contactId];
                       const won = offer.status === 'accettata';
                       return (
-                        <div key={offer.id} className={`flex items-center justify-between px-5 py-3.5 gap-4 ${idx < archived.length - 1 ? 'border-b border-line dark:border-line/60' : ''} hover:bg-canvas dark:hover:bg-raised/40 transition-colors`}>
+                        <div key={offer.id} className={`flex flex-wrap sm:flex-nowrap items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 gap-x-3 gap-y-2 ${idx < archived.length - 1 ? 'border-b border-line dark:border-line/60' : ''} hover:bg-canvas dark:hover:bg-raised/40 transition-colors`}>
                           {/* Icona stato */}
                           <div className="flex-shrink-0">
                             {won
@@ -1026,8 +1026,8 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/30 px-2 py-0.5 rounded-full">{offer.offerNumber}</span>
-                              <span className="text-sm font-semibold text-foreground dark:text-foreground truncate">{contact?.company || 'Azienda'}</span>
+                              <span className="text-xs font-semibold text-accent bg-accent-soft dark:bg-accent-soft/30 px-2 py-0.5 rounded-full whitespace-nowrap">{offer.offerNumber}</span>
+                              <span className="text-sm font-semibold text-foreground dark:text-foreground truncate max-w-full">{contact?.company || 'Azienda'}</span>
                             </div>
                             <p className="text-xs text-muted mt-0.5">
                               {new Date(offer.date).toLocaleDateString('it-IT')} · {offer.items.length} articol{offer.items.length === 1 ? 'o' : 'i'}
@@ -1040,7 +1040,7 @@ export const OffersView: React.FC<OffersViewProps> = ({ initialContactId, onInit
                           </div>
 
                           {/* Azioni minime */}
-                          <div className="flex gap-1.5 flex-shrink-0">
+                          <div className="flex gap-1.5 flex-shrink-0 w-full sm:w-auto justify-end border-t border-line/50 pt-2 sm:border-0 sm:pt-0">
                             {offer.pdfUrl && (
                               <PdfButton pdfUrl={offer.pdfUrl} pdfName={offer.pdfName}
                                 className="p-1.5 rounded-lg text-warning hover:bg-warning-soft dark:hover:bg-warning-soft transition-colors">

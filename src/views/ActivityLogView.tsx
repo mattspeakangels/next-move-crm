@@ -538,7 +538,7 @@ export const ActivityLogView: React.FC = () => {
         <select
           value={filterContact}
           onChange={e => setFilterContact(e.target.value)}
-          className="border-2 border-line dark:border-line rounded-panel px-4 py-2 bg-surface dark:bg-surface dark:text-foreground text-xs font-bold outline-none"
+          className="w-full sm:w-auto max-w-full min-w-0 truncate border-2 border-line dark:border-line rounded-panel px-4 py-2 bg-surface dark:bg-surface dark:text-foreground text-xs font-bold outline-none"
         >
           <option value="">Tutti i clienti</option>
           {contactOptions.map((c) => <option key={c.id} value={c.id}>{c.company}</option>)}

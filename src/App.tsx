@@ -216,7 +216,7 @@ function AppContent() {
       </header>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="cockpit-main md:pl-64 min-h-screen pb-20 pt-14 md:pt-0 md:pb-0 bg-canvas dark:bg-canvas">
+      <main className="cockpit-main md:pl-64 min-h-screen pb-36 pt-14 md:pt-0 md:pb-0 bg-canvas dark:bg-canvas">
         <div className="cockpit-topbar hidden md:flex">
           <div><span>Area di lavoro</span><span aria-hidden="true" className="cockpit-topbar-separator">/</span><strong>{getSection(currentSection).label}</strong>{currentTabLabel && getSection(currentSection).tabs.length > 1 && (<><span aria-hidden="true" className="cockpit-topbar-separator">/</span><span>{currentTabLabel}</span></>)}</div>
           <span className="cockpit-topbar-date">{new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
