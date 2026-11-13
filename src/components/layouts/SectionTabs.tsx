@@ -1,13 +1,15 @@
 import type { NavView } from '../../types';
-import { getSection, sectionOf } from '../../lib/navSections';
+import { getSection, sectionOf, tabsFor } from '../../lib/navSections';
 
 /** Schede della voce di menu corrente (es. Opportunità: Pipeline · Offerte · Catalogo). */
-export function SectionTabs({ currentView, onSelect }: { currentView: NavView; onSelect: (view: NavView) => void }) {
+export function SectionTabs({ currentView, role, onSelect }: { currentView: NavView; role: string | null; onSelect: (view: NavView) => void }) {
   const section = getSection(sectionOf(currentView));
-  if (section.tabs.length < 2) return null;
+  // Solo le schede permesse alla mansione
+  const tabs = tabsFor(section.id, role);
+  if (tabs.length < 2) return null;
   return (
     <div role="tablist" aria-label={section.label} className="section-tabs flex gap-1 mb-4 overflow-x-auto no-scrollbar">
-      {section.tabs.map(tab => {
+      {tabs.map(tab => {
         const active = tab.view === currentView;
         return (
           <button

@@ -6,24 +6,26 @@ import type { User } from 'firebase/auth';
 import { db } from './firebase';
 import { SHARED, legacyColRef } from './paths';
 
-export type WorkspaceRole = 'owner' | 'admin' | 'sales' | 'customer_service' | 'graphics' | 'bdr';
+export type WorkspaceRole = 'owner' | 'admin' | 'sales' | 'customer_service' | 'marketing' | 'accounting' | 'graphics' | 'bdr';
 export type MemberStatus = 'active' | 'disabled';
 
 export const ROLE_LABELS: Record<WorkspaceRole, string> = {
   owner: 'Titolare',
   admin: 'Amministratore',
   sales: 'Commerciale',
-  customer_service: 'Customer service',
-  graphics: 'Ufficio personalizzazione',
-  bdr: 'BDR',
+  customer_service: 'Customer care',
+  marketing: 'Marketing',
+  accounting: 'Amministrazione',
+  graphics: 'Personalizzazioni',
+  bdr: 'Commerciale (BDR)', // ruolo storico: non più assegnabile, resta per chi lo ha già
 };
 
 /** Ruoli assegnabili da un invito o da un cambio ruolo (owner non si assegna). */
-export const ASSIGNABLE_ROLES: WorkspaceRole[] = ['admin', 'sales', 'customer_service', 'graphics', 'bdr'];
+export const ASSIGNABLE_ROLES: WorkspaceRole[] = ['admin', 'sales', 'customer_service', 'marketing', 'accounting', 'graphics'];
 
-export interface Workspace { id: string; name: string; ownerUid: string; createdAt: number; legacyMigratedAt?: number }
-export interface Member { uid: string; email: string; displayName: string; role: WorkspaceRole; status: MemberStatus; joinedAt: number }
-export interface Invite { email: string; wid: string; workspaceName: string; role: WorkspaceRole; invitedBy: string; createdAt: number }
+export interface Workspace { id: string; name: string; ownerUid: string; createdAt: number; legacyMigratedAt?: number; outlookClientId?: string }
+export interface Member { uid: string; email: string; displayName: string; role: WorkspaceRole; status: MemberStatus; joinedAt: number; outlookConnectedAt?: number | null }
+export interface Invite { email: string; wid: string; workspaceName: string; role: WorkspaceRole; invitedBy: string; createdAt: number; name?: string }
 interface UserProfile { activeWorkspaceId?: string; workspaceIds?: string[]; email?: string }
 
 const wsDoc = (wid: string) => doc(db, 'workspaces', wid);
@@ -96,7 +98,7 @@ async function acceptInvite(user: User, invite: Invite) {
   }
   const now = Date.now();
   const batch = writeBatch(db);
-  batch.set(memberDoc(invite.wid, user.uid), memberFor(user, invite.role, now));
+  batch.set(memberDoc(invite.wid, user.uid), memberFor(user, invite.role, now, invite.name));
   batch.set(profileDoc(user.uid), {
     activeWorkspaceId: invite.wid, workspaceIds: arrayUnion(invite.wid), email: user.email ?? '', updatedAt: serverTimestamp(),
   }, { merge: true });
@@ -104,11 +106,12 @@ async function acceptInvite(user: User, invite: Invite) {
   await batch.commit();
 }
 
-function memberFor(user: User, role: WorkspaceRole, now: number): Member {
+function memberFor(user: User, role: WorkspaceRole, now: number, invitedName?: string): Member {
   return {
     uid: user.uid,
     email: (user.email ?? '').toLowerCase(),
-    displayName: user.displayName || user.email?.split('@')[0] || 'Utente',
+    // Il nome scritto dal titolare nell'invito ha la precedenza
+    displayName: invitedName?.trim() || user.displayName || user.email?.split('@')[0] || 'Utente',
     role,
     status: 'active',
     joinedAt: now,
@@ -183,13 +186,13 @@ export function watchInvites(wid: string, cb: (invites: Invite[]) => void): Unsu
   }, err => console.error('Lettura inviti non riuscita:', err));
 }
 
-export async function createInvite(ws: { id: string; name: string }, email: string, role: WorkspaceRole, invitedBy: string) {
+export async function createInvite(ws: { id: string; name: string }, email: string, role: WorkspaceRole, invitedBy: string, name = '') {
   const clean = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new Error('Indirizzo email non valido.');
   if (!ASSIGNABLE_ROLES.includes(role)) throw new Error('Ruolo non assegnabile.');
   const existing = await getDoc(inviteDoc(clean)).catch(() => null);
   if (existing?.exists()) throw new Error('Esiste già un invito in attesa per questa email.');
-  const invite: Invite = { email: clean, wid: ws.id, workspaceName: ws.name, role, invitedBy, createdAt: Date.now() };
+  const invite: Invite = { email: clean, wid: ws.id, workspaceName: ws.name, role, invitedBy, createdAt: Date.now(), ...(name.trim() ? { name: name.trim().slice(0, 80) } : {}) };
   await setDoc(inviteDoc(clean), invite);
 }
 
@@ -199,3 +202,16 @@ export const updateMember = (wid: string, uid: string, changes: Partial<Pick<Mem
   updateDoc(memberDoc(wid, uid), changes);
 
 export const renameWorkspace = (wid: string, name: string) => updateDoc(wsDoc(wid), { name: name.trim() });
+
+/** ID dell'app Microsoft dell'azienda (pubblico, non un segreto): lo usano tutti i collaboratori per Outlook. */
+export const setWorkspaceOutlookClientId = (wid: string, clientId: string) =>
+  updateDoc(wsDoc(wid), { outlookClientId: clientId.trim() });
+
+/** Il collaboratore segna (o toglie) il proprio collegamento a Outlook: visibile al titolare nel pannello Team. */
+export const setMyOutlookConnected = (wid: string, uid: string, connected: boolean) =>
+  updateDoc(memberDoc(wid, uid), { outlookConnectedAt: connected ? Date.now() : null });
+
+export function watchWorkspace(wid: string, cb: (ws: Workspace) => void): Unsubscribe {
+  return onSnapshot(wsDoc(wid), snap => { if (snap.exists()) cb({ id: wid, ...(snap.data() as Omit<Workspace, 'id'>) }); },
+    err => console.error('Lettura spazio aziendale non riuscita:', err));
+}

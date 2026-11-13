@@ -46,3 +46,21 @@ test('la vista principale di ogni voce è la prima scheda', () => {
   assert.equal(nav.primaryView('opportunita'), 'deals');
   assert.equal(nav.primaryView('oggi'), 'dashboard');
 });
+
+test('ogni mansione vede le sue voci e parte dalla sua schermata', () => {
+  assert.deepEqual(nav.sectionsForRole('owner'), nav.MAIN_SECTION_IDS);
+  assert.deepEqual(nav.sectionsForRole('customer_service'), ['clienti', 'opportunita', 'agenda']);
+  assert.deepEqual(nav.tabsFor('opportunita', 'customer_service').map(t => t.view), ['offers']);
+  assert.deepEqual(nav.sectionsForRole('marketing'), ['clienti', 'mappa', 'analisi']);
+  assert.deepEqual(nav.sectionsForRole('accounting'), ['clienti', 'opportunita', 'analisi']);
+  assert.deepEqual(nav.sectionsForRole('graphics'), ['clienti', 'opportunita']);
+  assert.equal(nav.homeView('accounting'), 'offers');
+  assert.equal(nav.homeView('marketing'), 'analytics');
+  for (const r of Object.keys(nav.ROLE_ACCESS)) {
+    assert.equal(nav.canOpenView(nav.homeView(r), r), true, `${r} apre la sua schermata iniziale`);
+    assert.equal(nav.canOpenView('settings', r), true, `${r} apre Impostazioni`);
+  }
+  assert.equal(nav.canOpenView('deals', 'graphics'), false);
+  assert.equal(nav.canOpenView('map-full', 'marketing'), true);
+  assert.equal(nav.canOpenView('map-full', 'graphics'), false);
+});

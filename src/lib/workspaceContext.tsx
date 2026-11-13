@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from 'firebase/auth';
 import { setActiveDataContext } from './paths';
 import {
-  resolveWorkspace, migrateLegacyData, hasLegacyData, watchMembers,
+  resolveWorkspace, migrateLegacyData, hasLegacyData, watchMembers, watchWorkspace,
   type Member, type Workspace, type WorkspaceRole,
 } from './workspace';
 import { useStore, type StoreState } from '../store/useStore';
@@ -87,7 +87,9 @@ export function WorkspaceProvider({ user, children }: { user: User; children: Re
   useEffect(() => {
     const wid = state.workspace?.id;
     if (state.status !== 'ready' || !wid) return;
-    return watchMembers(wid, members => {
+    // Dati dello spazio (nome, ID Outlook aziendale) in tempo reale
+    const unsubWs = watchWorkspace(wid, ws => setState(s => ({ ...s, workspace: ws })));
+    const unsubMembers = watchMembers(wid, members => {
       const me = members.find(m => m.uid === user.uid);
       setState(s => {
         if (me && me.status !== 'active') {
@@ -96,6 +98,7 @@ export function WorkspaceProvider({ user, children }: { user: User; children: Re
         return { ...s, members, role: me?.role ?? s.role };
       });
     });
+    return () => { unsubWs(); unsubMembers(); };
   }, [state.status, state.workspace?.id, user.uid]);
 
   const value: WorkspaceContextValue = { ...state, uid: user.uid, retry: () => setAttempt(a => a + 1) };

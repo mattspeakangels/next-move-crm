@@ -8,7 +8,7 @@ import { useInitializeProducts } from './hooks/useInitializeProducts';
 import { useProspectingReminders } from './hooks/useProspectingReminders';
 import { LoginView } from './views/LoginView';
 import { LayoutDashboard, Users, Target, Calendar, Settings, Map, X, BarChart3, ChevronLeft, Menu, MoreHorizontal, type LucideIcon } from 'lucide-react';
-import { getSection, sectionOf, primaryView, orderMainSections, footerSections, type SectionId } from './lib/navSections';
+import { getSection, sectionOf, primaryView, orderMainSections, footerSections, sectionsForRole, tabsFor, canOpenView, homeView, type SectionId } from './lib/navSections';
 import { SectionTabs } from './components/layouts/SectionTabs';
 import { recordSectionOpen } from './lib/usageCounter';
 import { SEED_SEQUENCES } from './data/prospectingSequences';
@@ -52,9 +52,16 @@ const ViewLoader = () => (
 
 // Analytics feature enabled
 function AppContent() {
-  const [currentView, setCurrentView] = useState<NavView>(
-    () => (localStorage.getItem('nm_last_view') as NavView) ?? 'offers'
-  );
+  // Mansione nello spazio aziendale: decide voci di menu e schermata iniziale
+  const { role } = useWorkspace();
+  const [currentView, setCurrentView] = useState<NavView>(() => {
+    const saved = localStorage.getItem('nm_last_view') as NavView | null;
+    return saved && canOpenView(saved, role) ? saved : homeView(role);
+  });
+  // Se la mansione cambia (o la vista salvata non è più permessa) si torna alla schermata della mansione
+  useEffect(() => {
+    if (!canOpenView(currentView, role)) setCurrentView(homeView(role));
+  }, [role, currentView]);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const historyRef = useRef<NavView[]>([]);
@@ -71,7 +78,8 @@ function AppContent() {
     repairCustomerTypes();
   }, [repairCustomerTypes]);
 
-  const goTo = (view: NavView) => {
+  const goTo = (requested: NavView) => {
+    const view = canOpenView(requested, role) ? requested : homeView(role);
     historyRef.current = [...historyRef.current, currentView];
     setCurrentView(view);
     localStorage.setItem('nm_last_view', view);
@@ -85,7 +93,10 @@ function AppContent() {
   // Ultima scheda aperta per ogni voce: tornando sulla voce si riapre quella
   const lastTabRef = useRef<Partial<Record<SectionId, NavView>>>({});
   lastTabRef.current[sectionOf(currentView)] = currentView === 'map-full' ? 'map' : currentView;
-  const goToSection = (id: SectionId) => goTo(lastTabRef.current[id] ?? primaryView(id));
+  const goToSection = (id: SectionId) => {
+    const last = lastTabRef.current[id];
+    goTo(last && canOpenView(last, role) ? last : (tabsFor(id, role)[0]?.view ?? primaryView(id)));
+  };
 
   const goBack = () => {
     const prev = historyRef.current.pop();
@@ -160,9 +171,11 @@ function AppContent() {
   // Menu a voci raggruppate (Blocco 5): ogni voce apre la sua ultima scheda
   const currentSection = sectionOf(currentView);
   const toNavItem = (id: SectionId) => ({ id, icon: SECTION_ICONS[id], label: getSection(id).label });
-  const navItems = orderMainSections(sidebarOrder).map(toNavItem);
+  const allowedSections = sectionsForRole(role);
+  const navItems = orderMainSections(sidebarOrder).filter(id => allowedSections.includes(id)).map(toNavItem);
   const settingsItem = toNavItem('impostazioni');
-  const mobileMain = footerSections(footerTabs).map(toNavItem);
+  const footerAllowed = footerSections(footerTabs).filter(id => allowedSections.includes(id));
+  const mobileMain = (footerAllowed.length > 0 ? footerAllowed : allowedSections.slice(0, 4)).map(toNavItem);
   const currentTabLabel = getSection(currentSection).tabs.find(t => t.view === currentView)?.label;
 
   return (
@@ -222,7 +235,7 @@ function AppContent() {
           <span className="cockpit-topbar-date">{new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
         </div>
         <div style={accentStyle} className={currentView === 'map' ? 'cockpit-content cockpit-map p-2 md:p-3' : 'cockpit-content p-4 md:p-8 max-w-7xl mx-auto'}>
-          {currentView !== 'map-full' && <SectionTabs currentView={currentView} onSelect={goTo} />}
+          {currentView !== 'map-full' && <SectionTabs currentView={currentView} role={role} onSelect={goTo} />}
           <Suspense fallback={<ViewLoader />}>{renderView()}</Suspense>
         </div>
       </main>

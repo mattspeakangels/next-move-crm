@@ -401,6 +401,9 @@ export const SettingsView: React.FC = () => {
       {/* Aggiornamento app in cima: è l'azione più usata dopo un rilascio */}
       <AppUpdateSection />
 
+      {/* ── Team: collaboratori, mansioni, inviti, Outlook aziendale ── */}
+      <WorkspaceSection />
+
       <GroupLabel first>Account & Profilo</GroupLabel>
 
       {/* Account */}
@@ -495,8 +498,6 @@ export const SettingsView: React.FC = () => {
         />
       </div>
 
-      {/* ── Spazio aziendale: membri, ruoli, inviti ── */}
-      <WorkspaceSection />
 
       <GroupLabel>Aspetto & Personalizzazione</GroupLabel>
 

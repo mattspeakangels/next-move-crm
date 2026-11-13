@@ -71,3 +71,58 @@ export function footerSections(footerTabs: readonly NavView[] | undefined): Sect
   const s = toSections(footerTabs ?? [], MAIN_SECTION_IDS).slice(0, MAX_FOOTER_SECTIONS);
   return s.length > 0 ? s : [...DEFAULT_FOOTER_SECTIONS];
 }
+
+// ─── Accesso per mansione ────────────────────────────────────────────────────
+// Ogni mansione vede solo le voci (e le schede) del suo lavoro e parte dalla sua
+// schermata. È un'organizzazione del menu, non un blocco di sicurezza: i dati
+// condivisi restano leggibili da tutti i membri (regole Firestore).
+
+/** Mansioni: stessi valori di WorkspaceRole (src/lib/workspace.ts). */
+export type RoleKey = 'owner' | 'admin' | 'sales' | 'customer_service' | 'marketing' | 'accounting' | 'graphics' | 'bdr';
+
+interface RoleAccess { sections: Partial<Record<SectionId, NavView[] | 'tutte'>>; home: NavView }
+
+const ALL: RoleAccess['sections'] = { oggi: 'tutte', clienti: 'tutte', opportunita: 'tutte', agenda: 'tutte', mappa: 'tutte', analisi: 'tutte' };
+
+export const ROLE_ACCESS: Record<RoleKey, RoleAccess> = {
+  owner: { sections: ALL, home: 'dashboard' },
+  admin: { sections: ALL, home: 'dashboard' },
+  sales: { sections: ALL, home: 'dashboard' },
+  bdr: { sections: ALL, home: 'dashboard' },
+  customer_service: { sections: { clienti: 'tutte', agenda: 'tutte', opportunita: ['offers'] }, home: 'contacts' },
+  marketing: { sections: { clienti: 'tutte', analisi: 'tutte', mappa: 'tutte' }, home: 'analytics' },
+  accounting: { sections: { opportunita: ['offers'], analisi: 'tutte', clienti: ['contacts'] }, home: 'offers' },
+  graphics: { sections: { clienti: ['contacts'], opportunita: ['offers'] }, home: 'contacts' },
+};
+
+function accessFor(role: string | null | undefined): RoleAccess {
+  return ROLE_ACCESS[(role ?? 'owner') as RoleKey] ?? ROLE_ACCESS.sales;
+}
+
+/** Schede visibili di una voce per la mansione (Impostazioni sempre visibile). */
+export function tabsFor(id: SectionId, role: string | null | undefined): NavTab[] {
+  const tabs = getSection(id).tabs;
+  if (id === 'impostazioni') return tabs;
+  const rule = accessFor(role).sections[id];
+  if (!rule) return [];
+  return rule === 'tutte' ? tabs : tabs.filter(t => rule.includes(t.view));
+}
+
+/** Voci del menu principale visibili per la mansione. */
+export function sectionsForRole(role: string | null | undefined): SectionId[] {
+  return MAIN_SECTION_IDS.filter(id => tabsFor(id, role).length > 0);
+}
+
+/** True se la mansione può aprire la vista (le viste senza scheda seguono la loro voce). */
+export function canOpenView(view: NavView, role: string | null | undefined): boolean {
+  const id = sectionOf(view);
+  const tabs = tabsFor(id, role);
+  if (tabs.some(t => t.view === view)) return true;
+  // map-full, prospecting, assets: seguono la scheda principale della loro voce
+  return !getSection(id).tabs.some(t => t.view === view) && tabs.length > 0;
+}
+
+/** Schermata iniziale della mansione. */
+export function homeView(role: string | null | undefined): NavView {
+  return accessFor(role).home;
+}

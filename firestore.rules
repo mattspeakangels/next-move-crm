@@ -51,10 +51,13 @@ service cloud.firestore {
               && request.resource.data.role == get(invitePath()).data.role
               && request.resource.data.status == 'active');
         // owner/admin cambiano ruolo e stato; nessuno può promuovere a owner o toccare l'owner
-        allow update: if roleIn(wid, ['owner', 'admin'])
+        allow update: if (roleIn(wid, ['owner', 'admin'])
           && resource.data.role != 'owner'
           && request.resource.data.role != 'owner'
-          && request.resource.data.uid == resource.data.uid;
+          && request.resource.data.uid == resource.data.uid)
+          // ognuno può solo segnare il proprio collegamento a Outlook
+          || (member(wid) && uid == request.auth.uid
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['outlookConnectedAt']));
         allow delete: if false;
       }
 

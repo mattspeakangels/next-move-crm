@@ -174,3 +174,21 @@ test('contatore: lo leggono solo titolare e admin, nessuno lo cancella', async (
   await assertFails(setDoc(counter(db(users.outsider)), { ...open1, count: increment(1) }, { merge: true }));
   await assertFails(setDoc(counter(db(users.off)), { ...open1, count: increment(1) }, { merge: true }));
 });
+
+// ─── Team: Outlook personale e inviti con nome ───────────────────────────────
+
+test('ognuno segna solo il proprio Outlook, senza toccare la propria mansione', async () => {
+  const f = db(users.sales);
+  await assertSucceeds(updateDoc(doc(f, 'workspaces', WID, 'members', 'sales'), { outlookConnectedAt: 123 }));
+  await assertFails(updateDoc(doc(f, 'workspaces', WID, 'members', 'sales'), { outlookConnectedAt: 1, role: 'admin' }));
+  await assertFails(updateDoc(doc(f, 'workspaces', WID, 'members', 'admin'), { outlookConnectedAt: 1 }));
+  await assertSucceeds(updateDoc(doc(db(users.owner), 'workspaces', WID, 'members', 'owner'), { outlookConnectedAt: 1 }));
+  await assertFails(updateDoc(doc(db(users.owner), 'workspaces', WID, 'members', 'owner'), { role: 'sales' }));
+});
+
+test("l'admin invita con nome e nuove mansioni; il titolare imposta l'Outlook aziendale", async () => {
+  await assertSucceeds(setDoc(doc(db(users.admin), 'invites', 'mkt@a.it'),
+    { email: 'mkt@a.it', wid: WID, workspaceName: 'A', role: 'marketing', invitedBy: 'admin', createdAt: 1, name: 'Giulia Verdi' }));
+  await assertSucceeds(updateDoc(doc(db(users.owner), 'workspaces', WID), { outlookClientId: '00000000-0000-0000-0000-000000000000' }));
+  await assertFails(updateDoc(doc(db(users.sales), 'workspaces', WID), { outlookClientId: 'x' }));
+});

@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import type { AccountInfo } from '@azure/msal-browser';
 import { connectOutlook, disconnectOutlook, fetchOutlookMessages, configuredClientId, type OutlookMessage } from '../../lib/outlookPilot';
+import { useWorkspace } from '../../lib/workspaceContext';
+import { setMyOutlookConnected } from '../../lib/workspace';
 
 export const OutlookPilot: React.FC = () => {
+  const { workspace, uid, members } = useWorkspace();
+  // ID dell'app Microsoft: quello aziendale impostato dal titolare, altrimenti quello inserito qui
+  const companyClientId = workspace?.outlookClientId || configuredClientId;
+  const me = members.find(m => m.uid === uid);
   const [account, setAccount] = useState<AccountInfo | null>(null);
-  const [clientId, setClientId] = useState(configuredClientId);
+  const [manualClientId, setClientId] = useState('');
+  const clientId = companyClientId || manualClientId;
+  const markConnected = (connected: boolean) => {
+    if (workspace) setMyOutlookConnected(workspace.id, uid, connected).catch(err => console.warn('Stato Outlook non salvato:', err));
+  };
   const [messages, setMessages] = useState<OutlookMessage[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -17,9 +27,12 @@ export const OutlookPilot: React.FC = () => {
   };
 
   return <section className="bg-surface rounded-panel p-6 border border-line space-y-4">
-    <h2 className="text-xs font-semibold text-secondary">Outlook aziendale · prova di collegamento</h2>
+    <h2 className="text-xs font-semibold text-secondary">Il mio Outlook · prova di collegamento</h2>
+    {me?.outlookConnectedAt && !account && <p className="text-xs text-success">Hai già collegato Outlook: ricollegalo per leggere le email in questa sessione.</p>}
     <p className="text-xs text-muted">Legge oggetto, mittente e data delle ultime 20 email ricevute. Non legge il corpo, non crea trattative e non invia email a servizi AI. Il consenso Microsoft può richiedere l'approvazione IT.</p>
-    {!account && <div className="space-y-2 text-xs text-secondary">
+    {!account && companyClientId && <p className="text-xs text-secondary">Outlook è già configurato per la tua azienda: premi «Collega Outlook» e accedi con il tuo account Microsoft.</p>}
+    {!account && !companyClientId && <div className="space-y-2 text-xs text-secondary">
+      <p>Il titolare può impostare l'ID una volta sola per tutti in Impostazioni → Team e spazio aziendale.</p>
       <p>Per provare serve registrare Next Move in Microsoft Entra. Potresti poterlo fare tu: se Microsoft richiede l’approvazione di un amministratore, rivolgiti all’IT.</p>
       <ol className="list-decimal pl-5 space-y-1">
         <li>Apri <a className="underline" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer">Microsoft Entra</a> → Identità → Applicazioni → Registrazioni app → Nuova registrazione.</li>
@@ -27,14 +40,14 @@ export const OutlookPilot: React.FC = () => {
         <li>In Autorizzazioni API aggiungi Microsoft Graph → Autorizzazioni delegate → <code>Mail.ReadBasic</code>. Copia l’<strong>ID applicazione (client)</strong> dalla panoramica e inseriscilo qui sotto. Non inserire password o segreti.</li>
       </ol>
       <label className="block font-semibold" htmlFor="outlook-client-id">ID applicazione (client)</label>
-      <input id="outlook-client-id" className="w-full rounded-md border border-line bg-surface px-3 py-2" value={clientId} onChange={e => setClientId(e.target.value)} placeholder="00000000-0000-0000-0000-000000000000" autoComplete="off" />
+      <input id="outlook-client-id" className="w-full rounded-md border border-line bg-surface px-3 py-2" value={manualClientId} onChange={e => setClientId(e.target.value)} placeholder="00000000-0000-0000-0000-000000000000" autoComplete="off" />
       <p>L’ID resta in questa pagina. L’accesso alle email richiede un consenso Microsoft separato, che potrebbe essere bloccato dalle policy aziendali.</p>
     </div>}
-    {!account ? <button disabled={!clientId.trim() || busy} className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm disabled:opacity-60" onClick={() => void run(async () => setAccount(await connectOutlook(clientId)))}>Collega Outlook</button>
+    {!account ? <button disabled={!clientId.trim() || busy} className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm disabled:opacity-60" onClick={() => void run(async () => { setAccount(await connectOutlook(clientId)); markConnected(true); })}>Collega Outlook</button>
       : <div className="space-y-3">
         <p className="text-xs text-secondary">Collegato: {account.username}</p>
         <button disabled={busy} className="w-full py-3 rounded-panel bg-action text-action-foreground font-semibold text-sm disabled:opacity-60" onClick={() => void run(async () => { setMessages(await fetchOutlookMessages(account)); setLoaded(true); })}>Leggi email recenti</button>
-        <button disabled={busy} className="text-xs underline" onClick={() => void run(async () => { await disconnectOutlook(account); setAccount(null); setMessages([]); setLoaded(false); })}>Rimuovi dati della sessione</button>
+        <button disabled={busy} className="text-xs underline" onClick={() => void run(async () => { await disconnectOutlook(account); setAccount(null); setMessages([]); setLoaded(false); markConnected(false); })}>Scollega Outlook</button>
         {loaded && <ul className="space-y-2 text-xs">{messages.length === 0 ? <li>Nessuna email trovata.</li> : messages.map(message => <li key={message.id} className="border-t border-line pt-2"><strong>{message.subject || '(senza oggetto)'}</strong><br />{message.from?.emailAddress?.name || message.from?.emailAddress?.address || 'Mittente non disponibile'} · {message.receivedDateTime ? new Date(message.receivedDateTime).toLocaleString('it-IT') : 'data non disponibile'}</li>)}</ul>}
       </div>}
     {error && <p role="alert" className="text-xs text-danger">{error}</p>}
