@@ -3,6 +3,7 @@ import { UsageTable } from '../components/analytics/UsageTable';
 import type { DealStage } from '../types';
 import React, { useRef, useState } from 'react';
 import { OperationalReport } from '../components/analytics/OperationalReport';
+import { TodoOutcomeSummary } from '../components/todo/TodoOutcomeSummary';
 import * as XLSX from '../lib/spreadsheet';
 import { useStore } from '../store/useStore';
 import {
@@ -166,6 +167,8 @@ export const AnalyticsView: React.FC = () => {
       </div>
 
       <OperationalReport />
+
+      <TodoOutcomeSummary todos={Object.values(state.todos)} />
 
       <div className="cockpit-analytics-summary grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-surface dark:bg-surface rounded-panel p-4 border border-line dark:border-line">

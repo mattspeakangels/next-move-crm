@@ -3,6 +3,7 @@ import { useWorkspace } from '../lib/workspaceContext';
 import { useState } from 'react';
 import { Panel } from '../components/ui/Syrio';
 import { CustomerWorkMenu } from '../components/dashboard/CustomerWorkMenu';
+import { TodoOutcomeDialog } from '../components/todo/TodoOutcomeDialog';
 import { useStore } from '../store/useStore';
 import {
   TrendingUp,
@@ -21,7 +22,7 @@ import {
   AlertTriangle,
   Package,
 } from 'lucide-react';
-import { Deal, NextActionType, ActivityOutcome } from '../types';
+import { Deal, NextActionType, ActivityOutcome, TodoItem } from '../types';
 import { NextActionModal } from '../components/deals/NextActionModal';
 import { OutcomeModal } from '../components/deals/OutcomeModal';
 import { ActionChoiceModal } from '../components/deals/ActionChoiceModal';
@@ -280,6 +281,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
   const storeState = useStore();
   const { workspace, uid } = useWorkspace();
   const { contacts, deals, offers, assets, updateDeal, profile, addActivity } = storeState;
+  const [outcomeTodo, setOutcomeTodo] = useState<TodoItem | null>(null);
   const vitality = selectVitality(storeState);
   const progression = selectProgression(storeState);
   const winRate = selectWinRate(storeState);
@@ -422,7 +424,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
       {customerGroups.length===0 ? <Panel className="p-5"><p className="text-sm text-muted">Nessun cliente ha attività aperte o prossime azioni. Aggiungi un’attività per iniziare.</p><button onClick={()=>onNavigate?.('todo')} className="text-accent text-sm mt-3">Apri To Do →</button></Panel> : <div className="space-y-3">{customerGroups.map((group,index)=><details key={group.id} className="customer-work-card bg-surface border border-line rounded-panel overflow-hidden" open={index===0}>
         <summary className="customer-work-heading cursor-pointer p-4 flex items-center gap-3"><span className="customer-work-avatar">{group.id===UNASSIGNED_CUSTOMER?'?':group.name.trim().charAt(0).toUpperCase()}</span><span className="min-w-0 flex-1"><strong className="block text-sm text-foreground">{group.name}</strong><span className="text-xs text-muted">{group.deals.length+group.todos.length+group.requests.length} {group.deals.length+group.todos.length+group.requests.length===1?'cosa da seguire':'cose da seguire'}</span></span><span className="text-xs font-semibold text-accent">Dettagli ▾</span><CustomerWorkMenu group={group} /></summary>
         <div className="px-4 pb-4 space-y-2"><div className="flex justify-end">{group.id!==UNASSIGNED_CUSTOMER&&<button className="text-xs font-semibold text-accent" onClick={()=>onNavigateToContact?.(group.id)}>Apri scheda cliente →</button>}</div>
-        {group.todos.map(todo=><div key={todo.id} className="rounded-md border border-line p-3 flex items-start gap-3"><button type="button" aria-label={'Completa '+todo.titolo} onClick={()=>storeState.updateTodo(todo.id,{status:'fatto',completedAt:Date.now()})} className="mt-0.5 text-accent"><CheckCircle2 size={18}/></button><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-foreground">{todo.titolo}</p><p className="text-xs text-muted mt-1">{Number.isFinite(todoDeadline(todo.scadenza))?'Scadenza '+new Date(todoDeadline(todo.scadenza)).toLocaleDateString('it-IT'):'Senza scadenza'} · {todo.priorita==='alta'?'Priorità alta':todo.priorita==='bassa'?'Priorità bassa':'Priorità normale'}</p></div><button onClick={()=>onNavigate?.('todo')} className="text-xs text-accent">To Do →</button></div>)}
+        {group.todos.map(todo=><div key={todo.id} className="rounded-md border border-line p-3 flex items-start gap-3"><button type="button" aria-label={'Completa '+todo.titolo} onClick={()=>setOutcomeTodo(todo)} className="mt-0.5 text-accent"><CheckCircle2 size={18}/></button><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-foreground">{todo.titolo}</p><p className="text-xs text-muted mt-1">{Number.isFinite(todoDeadline(todo.scadenza))?'Scadenza '+new Date(todoDeadline(todo.scadenza)).toLocaleDateString('it-IT'):'Senza scadenza'} · {todo.priorita==='alta'?'Priorità alta':todo.priorita==='bassa'?'Priorità bassa':'Priorità normale'}</p></div><button onClick={()=>onNavigate?.('todo')} className="text-xs text-accent">To Do →</button></div>)}
         {group.requests.map(request=><div key={request.id} className="rounded-md border border-line p-3"><p className="text-sm font-semibold text-foreground">{request.nextAction || request.kind}</p><p className="text-xs text-muted mt-1">{request.category === 'after_sales' ? 'Post-vendita' : 'Marketing'} · {request.dueDate ? 'Scadenza ' + request.dueDate : 'Senza scadenza'}</p><button type="button" onClick={()=>onNavigateToContact?.(request.contactId)} className="text-xs text-accent mt-2">Apri richiesta nella scheda cliente →</button></div>)}
         {group.deals.map(deal=><div key={deal.id} className="rounded-md border border-line p-3"><div className="flex items-start gap-2"><span className="text-accent mt-0.5">{deal.nextActionType&&ACTION_ICON[deal.nextActionType]}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">{deal.nextAction}</p><p className="text-xs text-muted mt-1">Opportunità · {deal.nextActionDeadline?formatDate(deal.nextActionDeadline):'Senza scadenza'} · {deal.stage}</p></div></div><div className="flex flex-wrap gap-2 mt-3"><button onClick={()=>handleDone(deal)} className="text-xs font-semibold text-accent">Registra esito</button>{SNOOZE_DAYS.map(days=><button key={days} onClick={()=>handleSnooze(deal,days)} className="text-xs text-muted border border-line rounded px-2 py-1">+{days} gg</button>)}</div></div>)}
         </div></details>)}</div>}
@@ -535,6 +537,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
 
 
       </div>
+      {outcomeTodo && (
+        <TodoOutcomeDialog
+          todo={outcomeTodo}
+          onClose={() => setOutcomeTodo(null)}
+          onSave={({ esito, esitoNote }) => {
+            storeState.updateTodo(outcomeTodo.id, { status: 'fatto', completedAt: Date.now(), esito, esitoNote, esitoAt: esito ? Date.now() : undefined });
+            setOutcomeTodo(null);
+          }}
+        />
+      )}
       {/* OutcomeModal (when marking done) */}
       {outcomeDealId && activeDealForModal && (
         <OutcomeModal

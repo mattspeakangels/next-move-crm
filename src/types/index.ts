@@ -18,6 +18,8 @@ export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' |
 export type TodoTipo = 'offerta' | 'scheda-tecnica' | 'email-info' | 'chiamata-follow' | 'campionatura' | 'demo' | 'visita' | 'altro';
 export type TodoPriorita = 'alta' | 'media' | 'bassa';
 export type TodoStatus = 'da-fare' | 'fatto';
+/** Esito commerciale registrato quando un to-do viene completato. */
+export type TodoEsito = 'ordine' | 'offerta-richiesta' | 'interessato' | 'in-attesa' | 'non-interessato' | 'nessuna-risposta';
 
 export interface TodoItem {
   id: string;
@@ -32,6 +34,10 @@ export interface TodoItem {
   createdAt: number;
   completedAt?: number;
   statusHistory?: { status: TodoStatus; at: number }[];
+  /** Com'è andata: scelto alla chiusura, modificabile dopo. */
+  esito?: TodoEsito;
+  esitoNote?: string;
+  esitoAt?: number;
   source: 'manuale' | 'visita' | 'ai' | 'follow-up';
   sourceActivityId?: string;
   /** Offerta che ha generato questo to-do (promemoria di follow-up automatico). */

@@ -8,6 +8,9 @@ import { useStore } from '../store/useStore';
 import type { TodoItem, TodoTipo, TodoPriorita, TodoStatus, NavView, Contact } from '../types';
 import { SearchDropdown } from '../components/ui/SearchDropdown';
 import { matchSearch, sortByRelevance } from '../utils/search';
+import { TodoOutcomeDialog } from '../components/todo/TodoOutcomeDialog';
+import { TodoOutcomeSummary } from '../components/todo/TodoOutcomeSummary';
+import { ESITO_LABEL, ESITO_GRUPPO } from '../lib/todoOutcome';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -434,10 +437,11 @@ interface TodoCardProps {
   onDelete: () => void;
   onUpdate: (updates: Partial<TodoItem>) => void;
   onEdit: () => void;
+  onEditOutcome: () => void;
   onNavigate?: (view: NavView, contactId: string) => void;
 }
 
-const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDelete, onUpdate, onEdit }) => {
+const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDelete, onUpdate, onEdit, onEditOutcome }) => {
   const isDone = todo.status === 'fatto';
   const overdue = !isDone && isOverdue(todo.scadenza);
   const tipo = TIPO_CONFIG[todo.tipo];
@@ -468,7 +472,7 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
   return (
     <div className={`bg-surface dark:bg-surface rounded-panel p-4 border-2 transition-all ${
       isDone
-        ? 'border-line dark:border-line opacity-60'
+        ? 'border-line dark:border-line'
         : overdue
           ? 'border-danger dark:border-danger'
           : 'border-line dark:border-line'
@@ -578,6 +582,25 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, contactName, onToggle, onDele
             <p className="text-xs text-secondary dark:text-muted mt-1.5 leading-relaxed">{todo.note}</p>
           )}
 
+          {/* Esito: com'è andata (solo attività chiuse) */}
+          {isDone && (
+            <button
+              type="button"
+              onClick={onEditOutcome}
+              data-testid="todo-esito"
+              className={`mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold text-left ${
+                todo.esito
+                  ? ESITO_GRUPPO[todo.esito] === 'positivo' ? 'border-success/40 bg-success-soft text-success'
+                    : ESITO_GRUPPO[todo.esito] === 'attesa' ? 'border-warning/40 bg-warning-soft text-warning'
+                    : 'border-danger/40 bg-danger-soft text-danger'
+                  : 'border-dashed border-line text-muted hover:text-accent'
+              }`}
+            >
+              <span className="truncate">{todo.esito ? `Esito: ${ESITO_LABEL[todo.esito]}` : '+ Aggiungi esito'}{todo.esitoNote ? ` · ${todo.esitoNote}` : ''}</span>
+              {todo.esito && <Pencil size={10} className="flex-shrink-0" />}
+            </button>
+          )}
+
           {/* Traccia email inviata */}
           <div className="mt-1.5">
             {editingEmail ? (
@@ -671,6 +694,13 @@ export const TodoView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'lista' | 'cliente'>('cliente');
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set(['__none__']));
   const [searchQuery, setSearchQuery] = useState('');
+  const [outcomeFor, setOutcomeFor] = useState<{ todo: TodoItem; editing: boolean } | null>(null);
+
+  // Chiudere un'attività chiede l'esito; riaprirla la rimette in "Da fare" senza perdere l'esito già scritto.
+  const handleToggle = (todo: TodoItem, status: TodoStatus) => {
+    if (status === 'fatto') setOutcomeFor({ todo, editing: false });
+    else updateTodo(todo.id, { status, completedAt: undefined });
+  };
 
   const allTodos = Object.values(todos);
 
@@ -881,6 +911,9 @@ export const TodoView: React.FC = () => {
         </div>
       )}
 
+      {/* Riepilogo esiti: visibile nella lista delle attività fatte */}
+      {filterStatus === 'fatto' && <TodoOutcomeSummary todos={allTodos} compact />}
+
       {/* Vista per Cliente */}
       {viewMode === 'cliente' && (
         byClient.length === 0 ? (
@@ -923,7 +956,8 @@ export const TodoView: React.FC = () => {
                         <div key={todo.id} className="pt-1.5">
                           <TodoCard
                             todo={todo}
-                            onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
+                            onToggle={status => handleToggle(todo, status)}
+                            onEditOutcome={() => setOutcomeFor({ todo, editing: true })}
                             onDelete={() => deleteTodo(todo.id)}
                             onUpdate={updates => updateTodo(todo.id, updates)}
                             onEdit={() => setEditingTodo(todo)}
@@ -957,7 +991,8 @@ export const TodoView: React.FC = () => {
                 key={todo.id}
                 todo={todo}
                 contactName={todo.contactId ? contacts[todo.contactId]?.company : undefined}
-                onToggle={status => updateTodo(todo.id, { status, completedAt: status === 'fatto' ? Date.now() : undefined })}
+                onToggle={status => handleToggle(todo, status)}
+                            onEditOutcome={() => setOutcomeFor({ todo, editing: true })}
                 onDelete={() => deleteTodo(todo.id)}
                 onUpdate={updates => updateTodo(todo.id, updates)}
                 onEdit={() => setEditingTodo(todo)}
@@ -983,6 +1018,20 @@ export const TodoView: React.FC = () => {
           onClose={() => setEditingTodo(null)}
           onSave={updates => updateTodo(editingTodo.id, updates)}
           contacts={contacts}
+        />
+      )}
+
+      {outcomeFor && (
+        <TodoOutcomeDialog
+          todo={outcomeFor.todo}
+          editing={outcomeFor.editing}
+          onClose={() => setOutcomeFor(null)}
+          onSave={({ esito, esitoNote }) => {
+            const { todo, editing } = outcomeFor;
+            const esitoFields = { esito, esitoNote, esitoAt: esito ? Date.now() : undefined };
+            updateTodo(todo.id, editing ? esitoFields : { status: 'fatto', completedAt: Date.now(), ...esitoFields });
+            setOutcomeFor(null);
+          }}
         />
       )}
     </div>
