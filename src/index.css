@@ -197,8 +197,10 @@ h1 { font-weight: 750; letter-spacing: -.035em; }
 .cockpit-kpi-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; color: rgb(var(--syrio-muted)); font-size: .78rem; font-weight: 600; }
 .cockpit-kpi-icon { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex: none; background: rgb(var(--syrio-accent-soft)); color: rgb(var(--syrio-accent)); border-radius: .7rem; }
 .cockpit-kpi-value { font-family: 'Manrope', sans-serif; font-size: 1.6rem; font-weight: 800; letter-spacing: -.055em; margin-top: 1rem; }
-.syrio-dashboard-actions, .cockpit-dashboard-calendar { align-self: stretch; }
-.syrio-dashboard-actions > .syrio-panel, .cockpit-dashboard-calendar > div { min-height: 100%; }
+.syrio-dashboard-actions { align-self: stretch; }
+.syrio-dashboard-actions > .syrio-panel { min-height: 100%; }
+/* Colonna destra: calendario alto quanto il contenuto, Salute Pipeline subito sotto */
+.cockpit-dashboard-side { display: flex; flex-direction: column; gap: .875rem; align-self: start; min-width: 0; }
 .syrio-dashboard-actions > .syrio-panel { padding: 1.5rem; }
 .syrio-dashboard-secondary { padding-top: .25rem; }
 @media (max-width: 767px) {
@@ -206,7 +208,7 @@ h1 { font-weight: 750; letter-spacing: -.035em; }
   .syrio-dashboard { display: flex; gap: 1rem; }
   .syrio-dashboard .syrio-hero { order: 0; min-height: 0; padding: 1.35rem; }
   .syrio-dashboard-actions { order: 1; }
-  .cockpit-dashboard-calendar { order: 2; }
+  .cockpit-dashboard-side { order: 2; }
   .syrio-dashboard-kpis { order: 3; }
   .syrio-dashboard-secondary { order: 4; }
   .syrio-dashboard .syrio-hero h1 { font-size: 1.6rem; }

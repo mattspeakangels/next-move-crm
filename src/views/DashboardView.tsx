@@ -427,7 +427,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
         {group.deals.map(deal=><div key={deal.id} className="rounded-md border border-line p-3"><div className="flex items-start gap-2"><span className="text-accent mt-0.5">{deal.nextActionType&&ACTION_ICON[deal.nextActionType]}</span><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">{deal.nextAction}</p><p className="text-xs text-muted mt-1">Opportunità · {deal.nextActionDeadline?formatDate(deal.nextActionDeadline):'Senza scadenza'} · {deal.stage}</p></div></div><div className="flex flex-wrap gap-2 mt-3"><button onClick={()=>handleDone(deal)} className="text-xs font-semibold text-accent">Registra esito</button>{SNOOZE_DAYS.map(days=><button key={days} onClick={()=>handleSnooze(deal,days)} className="text-xs text-muted border border-line rounded px-2 py-1">+{days} gg</button>)}</div></div>)}
         </div></details>)}</div>}
       </section>
-      <div className="cockpit-dashboard-calendar"><DealCalendar deals={activeDeals} contacts={contacts} /></div>
+      <aside className="cockpit-dashboard-side">
+        <div className="cockpit-dashboard-calendar"><DealCalendar deals={activeDeals} contacts={contacts} /></div>
+        {/* ── Metriche processo (Vitality / Progression / Win Rate) ── */}
+        <div className="syrio-panel p-4" data-testid="pipeline-health">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity size={14} className="text-accent" />
+            <h2 className="text-xs font-semibold text-muted">Salute Pipeline</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Vitality', value: vitality, target: 10, color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/20', desc: '% nuovi 30gg' },
+              { label: 'Progression', value: progression, target: 20, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft', desc: '% avanzati 30gg' },
+              { label: 'Win Rate', value: winRate, target: 30, color: 'text-warning', bg: 'bg-warning-soft dark:bg-warning-soft', desc: '% vinti totali' },
+            ].map(m => (
+              <div key={m.label} className={`${m.bg} rounded-panel p-2.5 text-center min-w-0`}>
+                <p className={`text-xl font-semibold ${m.color}`}>{m.value}%</p>
+                <p className="text-xs font-semibold uppercase tracking-normal text-muted mt-0.5 truncate">{m.label}</p>
+                <p className="text-xs text-muted">{m.desc}</p>
+                {m.value < m.target && (
+                  <p className={`text-xs font-semibold ${m.color} mt-0.5`}>T.{m.target}%</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
       <div className="syrio-dashboard-secondary space-y-5">
         <div className="grid lg:grid-cols-2 gap-5"><div className="space-y-5 min-w-0">      {/* ── Calendario Deal ── */}
 
@@ -479,30 +504,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
           </div>
         </div>
       )}
-
-      {/* ── Metriche processo (Vitality / Progression / Win Rate) ── */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Activity size={14} className="text-accent" />
-          <h2 className="text-xs font-semibold   text-muted">Salute Pipeline</h2>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Vitality', value: vitality, target: 10, color: 'text-accent', bg: 'bg-accent-soft dark:bg-accent-soft/20', desc: '% nuovi 30gg' },
-            { label: 'Progression', value: progression, target: 20, color: 'text-success', bg: 'bg-success-soft dark:bg-success-soft', desc: '% avanzati 30gg' },
-            { label: 'Win Rate', value: winRate, target: 30, color: 'text-warning', bg: 'bg-warning-soft dark:bg-warning-soft', desc: '% vinti totali' },
-          ].map(m => (
-            <div key={m.label} className={`${m.bg} rounded-panel p-3 text-center`}>
-              <p className={`text-xl font-semibold ${m.color}`}>{m.value}%</p>
-              <p className="text-xs font-semibold uppercase tracking-normal text-muted mt-0.5">{m.label}</p>
-              <p className="text-xs text-muted">{m.desc}</p>
-              {m.value < m.target && (
-                <p className={`text-xs font-semibold ${m.color} mt-0.5`}>T.{m.target}%</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ── KPI chips ── */}
       <div className="grid grid-cols-3 gap-3">
