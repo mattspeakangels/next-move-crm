@@ -15,7 +15,7 @@ export function AgendaFormModal({ v }: { v: AgendaCalendarModel }) {
           <div className="bg-surface dark:bg-surface w-full max-w-md rounded-panel p-8 shadow-panel max-h-[85vh] flex flex-col">
             <div className="flex justify-between items-center mb-6 flex-shrink-0">
               <h2 className="text-xl font-semibold dark:text-foreground">{editingId ? 'Modifica Appuntamento' : 'Nuovo Appuntamento'}</h2>
-              <button onClick={closeModal}><X size={24} className="text-muted" /></button>
+              <button type="button" aria-label="Chiudi dialogo" data-dialog-close onClick={closeModal}><X size={24} className="text-muted" /></button>
             </div>
             <form onSubmit={handleSave} className="flex flex-col min-h-0 flex-1">
               {/* Contact picker - fisso nell'header, nascosto per smart-working/ufficio */}

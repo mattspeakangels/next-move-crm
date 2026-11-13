@@ -100,7 +100,10 @@ await flow('cliente → offerta → salvataggio', async () => {
 });
 await flow('opportunità → esito → prossima azione', async () => {
   await navigate('Dashboard');
-  await page.getByRole('button',{name:'Fatto',exact:true}).click();
+  // Il pulsante «Fatto» si chiama ora «Registra esito», dentro i dettagli del cliente
+  const card = page.locator('main .customer-work-card', { hasText: 'Cliente verifica locale' }).first();
+  if (!(await card.getByRole('button',{name:'Registra esito'}).count())) await card.getByRole('button',{name:/Dettagli/}).first().click();
+  await card.getByRole('button',{name:'Registra esito'}).first().click();
   await page.getByRole('dialog').locator('textarea').fill('Interesse confermato nella verifica locale');
   await page.getByRole('button',{name:'Salva e continua'}).click();
   await page.getByRole('button',{name:/Programma i prossimi passi/}).click();

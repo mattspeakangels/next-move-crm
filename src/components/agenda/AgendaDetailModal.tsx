@@ -26,7 +26,7 @@ export function AgendaDetailModal({ v }: { v: AgendaCalendarModel }) {
                   {viewActivity.endDate && ` – ${new Date(viewActivity.endDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`}
                 </p>
               </div>
-              <button onClick={() => setViewActivity(null)}><X size={24} className="text-muted" /></button>
+              <button type="button" aria-label="Chiudi dialogo" data-dialog-close onClick={() => setViewActivity(null)}><X size={24} className="text-muted" /></button>
             </div>
 
             <div className="flex items-center gap-1.5 mb-6">
