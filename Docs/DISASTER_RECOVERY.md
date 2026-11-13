@@ -335,24 +335,11 @@ service cloud.firestore {
 }
 ```
 
-### API Token Implementation
+### Autenticazione delle API
 
-**Backend** (`api/claude.ts`):
-```typescript
-const token = req.headers.authorization?.split('Bearer ')[1];
-if (token !== process.env.ADMIN_API_TOKEN) {
-  return new Response('Unauthorized', { status: 401 });
-}
-```
-
-**Frontend** (`src/hooks/useClaudeAI.ts`):
-```typescript
-const response = await fetch('/api/claude', {
-  headers: {
-    'Authorization': `Bearer ${import.meta.env.VITE_ADMIN_API_TOKEN}`,
-  },
-});
-```
+Le API verificano l'ID token Firebase dell'utente (`requireUser` in `api/_auth.ts`); il client
+lo invia con `apiAuthHeaders()` (`src/lib/apiAuth.ts`). Non c'è un token condiviso da ripristinare.
+Dettagli in `Docs/API_AUTH_SETUP.md`.
 
 ---
 

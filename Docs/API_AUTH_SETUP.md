@@ -1,218 +1,41 @@
-# API Authentication & Rate Limiting Setup
+# Autenticazione e limiti delle API
 
-## 🔐 Il Tuo Token (SEGRETO!)
+Le API in `/api` non usano più un token condiviso (il vecchio `ADMIN_API_TOKEN` è stato
+eliminato: essendo letto anche dal browser come `VITE_ADMIN_API_TOKEN`, era visibile a chiunque).
 
-```
-sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
+## Come funziona
 
-**⚠️ IMPORTANTE**: 
-- Questo token è **SEGRETO** - non condividere con nessuno
-- Se qualcuno lo scopre, può usare la tua API
-- Se leakato, generamo uno nuovo
+- Ogni richiesta porta l'ID token Firebase dell'utente collegato:
+  `Authorization: Bearer <ID token Firebase>`.
+- Il client lo aggiunge sempre con `apiAuthHeaders()` (`src/lib/apiAuth.ts`):
+  ```ts
+  await fetch('/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await apiAuthHeaders()) }, body });
+  ```
+- Il server lo verifica con `requireUser` / `verifyUser` (`api/_auth.ts`): firma Google, emittente
+  e destinatario uguali al progetto Firebase. Senza token valido risponde 401.
+- CORS: solo le origini in `ALLOWED_ORIGINS` (`api/cors.ts`).
 
----
+## Variabili su Vercel (solo server)
 
-## 📋 Setup Files
+| Variabile | A cosa serve |
+|---|---|
+| `FIREBASE_PROJECT_ID` | progetto Firebase usato per verificare i token (in mancanza si usa `VITE_FIREBASE_PROJECT_ID`) |
+| `GEMINI_API_KEY` | funzioni AI, mai in variabili `VITE_` |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | limiti di frequenza |
+| `ALLOWED_ORIGINS` | origini ammesse da CORS |
 
-### `.env.local` (Local Development)
-```env
-GEMINI_API_KEY=...
-ADMIN_API_TOKEN=sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-NEXT_PUBLIC_APP_URL=https://your-domain.com
-NODE_ENV=production
-```
+Nessun segreto va in variabili `VITE_`: finiscono nel codice scaricato dal browser.
 
-### Vercel Environment Variables
-Vai su: https://vercel.com → Settings → Environment Variables
+## Limiti di frequenza
 
-Aggiungi:
-```
-GEMINI_API_KEY = ...
-ADMIN_API_TOKEN = sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-NEXT_PUBLIC_APP_URL = https://your-production-domain.com
-```
+- Analisi AI (`/api/claude`, tipi `analizza-*`, `verifica-ai`): 60 richieste l'ora per utente.
+- Le altre API hanno limiti per IP definiti nei singoli file.
+- Oltre il limite la risposta è 429.
 
----
+## Verifica rapida
 
-## 🚀 Come Fare Richieste
-
-### Header Richiesto
 ```bash
-Authorization: Bearer sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# senza accesso: deve rispondere 401 (o 403 da un'origine non ammessa)
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://next-move-crm.vercel.app/api/claude
 ```
-
-### Esempio cURL
-
-#### ✅ VALIDO (con token)
-```bash
-curl -X POST http://localhost:3000/api/claude \
-  -H "Authorization: Bearer sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "prepara-visita",
-    "data": {
-      "company": "Acme Corp",
-      "sector": "Manufacturing",
-      "region": "North Italy"
-    }
-  }'
-
-# Response: 200 OK (con result da Claude)
-```
-
-#### ❌ NO TOKEN
-```bash
-curl -X POST http://localhost:3000/api/claude \
-  -H "Content-Type: application/json" \
-  -d '{"type":"prepara-visita","data":{...}}'
-
-# Response: 401 Unauthorized
-# "Unauthorized: Invalid or missing token"
-```
-
-#### ❌ TOKEN SBAGLIATO
-```bash
-curl -X POST http://localhost:3000/api/claude \
-  -H "Authorization: Bearer wrong_token_here" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"prepara-visita","data":{...}}'
-
-# Response: 401 Unauthorized
-```
-
-#### ❌ LIMITE RAGGIUNTO (6+ richieste/giorno)
-```bash
-# Dopo 5 richieste in un giorno, la 6ª fallisce:
-# Response: 429 Too Many Requests
-# "Rate limited: Max 5 requests per day"
-# "resetTime": "2026-04-27T14:30:00.000Z"
-```
-
----
-
-## 📊 Rate Limiting Details
-
-| Parametro | Valore |
-|-----------|--------|
-| Max richieste/giorno | **5** |
-| Finestra temporale | 24 ore |
-| Reset automatico | Ogni 24 ore |
-| Error code | 429 (Too Many Requests) |
-| Cost protezione | ~€0.05 max/giorno |
-
-### Timeline Giornaliero
-```
-00:00 - Limite resetato (5 richieste disponibili)
-08:00 - Richiesta #1 ✅ (4 rimanenti)
-09:15 - Richiesta #2 ✅ (3 rimanenti)
-14:30 - Richiesta #3 ✅ (2 rimanenti)
-16:45 - Richiesta #4 ✅ (1 rimanen​te)
-18:00 - Richiesta #5 ✅ (0 rimanenti)
-19:00 - Richiesta #6 ❌ BLOCCATA (rate limited)
-23:59 - Ancora bloccata
-00:00 - RESET → 5 disponibili di nuovo
-```
-
----
-
-## 🔄 Come Fare Richieste da React
-
-### Hook useClaudeAI (già fatto)
-```typescript
-const { result, loading, error, run } = useClaudeAI();
-
-await run('prepara-visita', {
-  company: 'Acme',
-  sector: 'Tech',
-  region: 'Milano'
-});
-// Hook aggiunge automaticamente il token nell'Authorization header
-```
-
-**Modifica richiesta**: Nel file `src/hooks/useClaudeAI.ts`, aggiungi il token:
-
-```typescript
-const res = await fetch('/api/claude', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.REACT_APP_API_TOKEN}` // Aggiungi questo
-  },
-  body: JSON.stringify({ type, data }),
-});
-```
-
-Poi in `.env.local`:
-```
-REACT_APP_API_TOKEN=sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
-
----
-
-## 🛡️ Security Checklist
-
-- [x] Token authentication obbligatorio
-- [x] Rate limiting 5 req/day (prevenzione DoS)
-- [x] CORS whitelist (solo domini autorizzati)
-- [x] Input validation (Zod schema)
-- [x] Prompt injection prevention (sanitizzazione)
-- [ ] IP whitelist (non usato - VPN cambia IP)
-- [ ] Https only in production (Vercel lo fa automaticamente)
-- [ ] Token rotation policy (cambia ogni 90 giorni)
-- [ ] Audit logging (log chi chiama e quando)
-
----
-
-## 🔄 Se Leakato il Token
-
-Se scopri che il token è stato compromesso:
-
-1. **Genera nuovo token**:
-   ```bash
-   node -e "const crypto = require('crypto'); console.log('sk_live_' + crypto.randomBytes(32).toString('hex'));"
-   ```
-
-2. **Aggiorna `.env` e Vercel**:
-   - Nuova coppia di token
-   - Deploy Vercel (redeploy per attivare)
-
-3. **Revoca vecchio token**:
-   - Non puoi revocarlo direttamente, ma non funzionerà più se aggiorna il env
-
----
-
-## 📞 Support
-
-**Problema**: Token non funziona
-```bash
-# Verifica:
-echo $ADMIN_API_TOKEN
-# Deve mostrare: sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-**Problema**: Rate limit raggiunto
-- Aspetta 24 ore per reset
-- Se urgente, genera nuovo token (ma non per abusare)
-
-**Problema**: CORS bloccato
-- Verifica `NEXT_PUBLIC_APP_URL` nel `.env`
-- Deve essere il dominio da cui stai facendo richieste
-
----
-
-## ✅ Status
-
-- ✅ Autenticazione: ATTIVA (solo token valido)
-- ✅ Rate limiting: ATTIVA (5 req/day)
-- ✅ CORS: ATTIVA (whitelist domains)
-- ✅ Input validation: ATTIVA (Zod schema)
-- ✅ Prompt injection: ATTIVA (sanitizzazione)
-
-**La tua API è blindata!** 🔐
-
----
-
-**Generato**: 2026-04-26  
-**Token**: `sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`  
-**Versione**: 1.0
+I test automatici sono in `tests/api-security.test.mjs` (`npm run test:api`).

@@ -41,11 +41,8 @@ VITE_FIREBASE_STORAGE_BUCKET=next-move---crm---dev.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=865584119053
 VITE_FIREBASE_APP_ID=1:865584119053:web:9121bd89a27d6ae1e70444
 
-# API Token (secret, rotating every 30 days)
-ADMIN_API_TOKEN=sk_live_[random_32_chars]
-
-# Frontend also needs this for build time
-VITE_ADMIN_API_TOKEN=sk_live_[random_32_chars]
+# Le API verificano l'ID token Firebase dell'utente (vedi API_AUTH_SETUP.md):
+# non esiste più un token condiviso da ruotare.
 
 # Chiave Google Gemini (solo server, mai in variabili VITE_)
 GEMINI_API_KEY=[chiave_gemini]
@@ -69,8 +66,6 @@ CLOUD_SCHEDULER_TOKEN=[random_32_chars]
 
 ```bash
 # Using Vercel CLI
-vercel env add ADMIN_API_TOKEN
-vercel env add VITE_ADMIN_API_TOKEN
 vercel env add GEMINI_API_KEY
 vercel env add UPSTASH_REDIS_REST_URL
 vercel env add UPSTASH_REDIS_REST_TOKEN
@@ -87,75 +82,11 @@ vercel env pull
 
 ---
 
-## API Token Rotation (Every 30 Days)
+## Token delle API
 
-### Step 1: Generate New Token
-
-```bash
-# Generate cryptographically secure random token
-TOKEN=$(openssl rand -hex 16 | sed 's/^/sk_live_/')
-echo "New token: $TOKEN"
-
-# Example output: sk_live_EXAMPLE
-```
-
-### Step 2: Update Vercel Environment
-
-```bash
-# Update the primary token
-vercel env add ADMIN_API_TOKEN "$TOKEN"
-
-# Also update frontend token
-vercel env add VITE_ADMIN_API_TOKEN "$TOKEN"
-
-# Redeploy to apply changes
-vercel deploy --prod
-```
-
-### Step 3: Grace Period (Optional, 7 days)
-
-For zero-downtime rotation, support both old and new tokens:
-
-```typescript
-// api/claude.ts
-const validTokens = [
-  process.env.ADMIN_API_TOKEN,
-  process.env.ADMIN_API_TOKEN_PREVIOUS, // deprecated after 7 days
-].filter(Boolean);
-
-if (!token || !validTokens.includes(token)) {
-  res.status(401).json({ error: 'Unauthorized' });
-  return;
-}
-```
-
-### Step 4: Verify Rotation
-
-```bash
-# Check deployment logs for new token acceptance
-vercel logs --prod
-
-# Test with new token
-curl -X POST https://[your-domain]/api/claude \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "email-offerta", "data": {...}}'
-```
-
-### Step 5: Document Rotation
-
-Create an audit log entry:
-
-```json
-{
-  "action": "token_rotation",
-  "timestamp": "2025-05-04T14:30:00Z",
-  "tokenVersion": 2,
-  "newTokenHash": "sha256_[hash]",
-  "previousTokenHash": "sha256_[hash]",
-  "graceEndDate": "2025-05-11"
-}
-```
+Non c'è più un token condiviso: ogni richiesta usa l'ID token Firebase dell'utente, che
+Firebase rinnova da solo ogni ora. Per bloccare un utente basta disattivarlo in Firebase
+Authentication o, nello spazio aziendale, impostarlo come «disattivato».
 
 ---
 
@@ -294,8 +225,8 @@ If a secret is compromised:
 
 1. **Revoke the compromised secret**:
    ```bash
-   # For API Token: Update Vercel env
-   vercel env add ADMIN_API_TOKEN "sk_live_[emergency_new_token]"
+   # Utente compromesso: disattivalo in Firebase Authentication
+   # e revoca le sessioni (firebase auth: revokeRefreshTokens)
    
    # For Claude API: Revoke in Anthropic Console
    
