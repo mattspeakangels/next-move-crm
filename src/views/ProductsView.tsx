@@ -1,3 +1,4 @@
+import { parseItalianNumber } from '../utils/italianFormat';
 import { confirmAction } from '../components/ui/Feedback';
 import { DialogFrame } from '../components/ui/DialogFrame';
 import React, { useState, useMemo, useRef, useCallback } from 'react';
@@ -1201,8 +1202,8 @@ export const ProductsView: React.FC = () => {
         const sep = l.includes(';') ? ';' : ',';
         const v = l.split(sep);
         if (v[0] && v[1]) {
-          const price = parseFloat(v[3]) || 0;
-          const discount = parseFloat(v[5]) || 0;
+          const price = parseItalianNumber(v[3]) || 0;
+          const discount = parseItalianNumber(v[5]) || 0;
           if (price < 0) { console.warn(`Riga ${i + 2}: Prezzo negativo, saltato`); errors++; return; }
           if (discount < 0 || discount > 100) { console.warn(`Riga ${i + 2}: Sconto invalido (${discount}), saltato`); errors++; return; }
           addProduct({

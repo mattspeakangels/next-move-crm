@@ -1,3 +1,4 @@
+import { parseItalianDate } from '../utils/italianFormat';
 import { showNotice } from '../components/ui/Feedback';
 /** Righe di un foglio letto con sheet_to_json({ header: 1 }): celle di tipo vario. */
 export type SheetRows = unknown[][];
@@ -209,12 +210,12 @@ export function parseCSVData(rows: SheetRows): ClienteDettagliato[] {
       const mm = String(jsDate.getUTCMonth() + 1).padStart(2, '0');
       normalizedDate = `${dd}-${mm}-${yearFromDate}`;
     } else {
-      // Stringa: prova DD-MM-YYYY o DD/MM/YYYY
-      const s = String(rawDate || '');
-      const dateParts = s.replace(/\//g, '-').split('-');
-      if (dateParts.length >= 3) {
-        yearFromDate = parseInt(dateParts[2]);
-        normalizedDate = dateParts.join('-');
+      // Stringa: DD-MM-YYYY, DD/MM/YYYY o ISO YYYY-MM-DD (prima l'ISO veniva scartato)
+      const ts = parseItalianDate(rawDate);
+      if (!Number.isNaN(ts)) {
+        const jsDate = new Date(ts);
+        yearFromDate = jsDate.getFullYear();
+        normalizedDate = `${String(jsDate.getDate()).padStart(2, '0')}-${String(jsDate.getMonth() + 1).padStart(2, '0')}-${yearFromDate}`;
       }
     }
 

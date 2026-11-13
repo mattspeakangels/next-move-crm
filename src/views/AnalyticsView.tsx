@@ -1,3 +1,4 @@
+import { parseItalianDate, parseItalianNumber } from '../utils/italianFormat';
 import { UsageTable } from '../components/analytics/UsageTable';
 import type { DealStage } from '../types';
 import React, { useRef, useState } from 'react';
@@ -96,10 +97,11 @@ export const AnalyticsView: React.FC = () => {
           const sep = line.includes(';') ? ';' : ',';
           const [dateStr, quantityStr, unitPriceStr, amountStr, customerName, productName, stage] = line.split(sep).map(s => s.trim());
 
-          const date = new Date(dateStr).getTime();
-          const quantity = parseFloat(quantityStr) || 1;
-          const unitPrice = parseFloat(unitPriceStr) || 0;
-          const totalAmount = parseFloat(amountStr);
+          // Date e importi all'italiana (13/11/2026, 1.234,56)
+          const date = parseItalianDate(dateStr);
+          const quantity = parseItalianNumber(quantityStr) || 1;
+          const unitPrice = parseItalianNumber(unitPriceStr) || 0;
+          const totalAmount = parseItalianNumber(amountStr);
 
           if (!date || !totalAmount || !customerName || isNaN(date)) return;
 

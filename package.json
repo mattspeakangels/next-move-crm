@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-syrio \"node --test --test-concurrency=1 tests/rules.test.mjs tests/personal-customer-data.test.mjs\"",
     "test:api": "node --test tests/api-security.test.mjs",
-    "test": "node --test tests/customer-work.test.mjs tests/agenda-filter.test.mjs tests/storico-parse.test.mjs tests/sync-paths.test.mjs tests/no-any.test.mjs tests/nav-sections.test.mjs tests/usage-counter.test.mjs tests/api-security.test.mjs tests/spreadsheet.test.mjs"
+    "test": "node --test tests/customer-work.test.mjs tests/agenda-filter.test.mjs tests/storico-parse.test.mjs tests/sync-paths.test.mjs tests/no-any.test.mjs tests/nav-sections.test.mjs tests/usage-counter.test.mjs tests/italian-format.test.mjs tests/api-security.test.mjs tests/spreadsheet.test.mjs"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.29.0",
