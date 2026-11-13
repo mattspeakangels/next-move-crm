@@ -14,6 +14,7 @@ import { ContactStakeholders } from './ContactStakeholders';
 import { ContactLocations } from './ContactLocations';
 import { ContactMainFields } from './ContactMainFields';
 import { ContactDetailHeader } from './ContactDetailHeader';
+import { ContactQuickChannels } from './ContactQuickChannels';
 
 export function ContactDetail({ v }: { v: ContactsModel }) {
   const { contacts, deals, editingContact } = v;
@@ -35,6 +36,7 @@ export function ContactDetail({ v }: { v: ContactsModel }) {
           {/* SEZIONE 1B - Persone di Riferimento */}
           <ContactStakeholders v={v} />
 
+          {editingContact?.id && contacts[editingContact.id] && <ContactQuickChannels contact={{ ...contacts[editingContact.id], ...editingContact, id: editingContact.id }} />}
           {editingContact?.id && contacts[editingContact.id] && <CustomerCommunications contactId={editingContact.id} />}
           {editingContact?.id && contacts[editingContact.id] && <CustomerRequestsSection contactId={editingContact.id} />}
 
