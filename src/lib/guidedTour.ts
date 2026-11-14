@@ -9,6 +9,8 @@ export interface TourStep {
   id: string;
   /** Vista da aprire durante il passo (assente = resta dove si trova). */
   view?: NavView;
+  /** Cliente di esempio di cui aprire la scheda (la vista resta 'contacts'). */
+  openContact?: string;
   /** Percorso mostrato sopra il titolo, es. "Oggi › Panoramica". */
   where?: string;
   title: string;
@@ -18,122 +20,133 @@ export interface TourStep {
   target?: string;
 }
 
+// I testi citano i dati dell'azienda di esempio (src/data/demoData.ts) che l'app
+// mostra durante la visita: se cambi uno, aggiorna l'altro.
 export const TOUR_STEPS: TourStep[] = [
   {
     id: 'benvenuto',
     title: 'Benvenuto in Syrio',
-    body: 'In un paio di minuti ti mostriamo come è fatta l’app: apriremo una per una le sezioni del menu e ti diremo a cosa servono. Puoi uscire quando vuoi e rifare la visita da Impostazioni.',
-    tips: ['Usa «Avanti» e «Indietro» per muoverti (sul computer anche le frecce della tastiera)', 'La X in alto chiude la visita in qualsiasi momento'],
+    body: 'Ti mostriamo l’app al lavoro con un’azienda di esempio: clienti, trattative, offerte e appuntamenti inventati, così vedi davvero a cosa serve ogni schermata. I tuoi dati non vengono toccati e tornano appena chiudi la visita.',
+    tips: ['Usa «Avanti» e «Indietro» per muoverti (sul computer anche le frecce della tastiera)', 'Puoi cliccare e provare tutto: niente di quello che fai durante la visita viene salvato'],
   },
   {
     id: 'panoramica',
     view: 'dashboard',
     where: 'Oggi › Panoramica',
     title: 'La tua giornata a colpo d’occhio',
-    body: 'È la schermata da cui partire ogni mattina: cosa devi fare oggi, le trattative in calendario e lo stato di salute della pipeline.',
-    tips: ['Il calendario a destra mostra le scadenze delle trattative', 'Da qui puoi completare un’attività senza cambiare schermata'],
+    body: 'Ogni mattina parti da qui: in alto clienti, opportunità aperte, valore della pipeline e offerte inviate; sotto i clienti da seguire con la prossima cosa da fare; a destra le scadenze delle trattative e la salute della pipeline.',
+    tips: ['In rosso le cose in ritardo: Tecno Servizi aspetta il catalogo da ieri', 'Completi un’attività direttamente da qui, senza cambiare schermata'],
   },
   {
     id: 'da-fare',
     view: 'todo',
     where: 'Oggi › Da fare',
-    title: 'Le attività in ordine di priorità',
-    body: 'Chiamate, visite, email e promemoria raggruppati per tipo e urgenza. Quando chiudi un’attività indichi com’è andata: a fine anno vedi quali attività hanno portato risultati.',
-    tips: ['Spunta un’attività per chiuderla e scegliere l’esito'],
+    title: 'Le cose da fare, in ordine di priorità',
+    body: 'Offerte da preparare, schede tecniche da mandare, richiami e campionature, ognuna legata al suo cliente. Quando ne chiudi una scegli com’è andata (ordine, offerta richiesta, non interessato…).',
+    tips: ['A fine anno, tra le completate, vedi quali attività hanno portato ordini', 'Esempio: il follow-up a Ferramenta Bianchi si è chiuso con un ordine'],
   },
   {
     id: 'clienti',
     view: 'contacts',
     where: 'Clienti',
-    title: 'Tutti i tuoi clienti',
-    body: 'L’anagrafica completa: apri un cliente per vedere contatti, storico delle attività, trattative e offerte collegate.',
-    tips: ['Dalla scheda cliente chiami, scrivi su WhatsApp o mandi un’email con un tocco', 'Puoi creare un’offerta direttamente dalla scheda'],
+    title: 'L’elenco dei clienti',
+    body: 'Clienti e potenziali clienti, con ricerca e filtri per città, settore e tipo (rivenditore o cliente finale). Qui ce ne sono dieci, da Bergamo a Pavia.',
+  },
+  {
+    id: 'scheda-cliente',
+    view: 'contacts',
+    openContact: 'demo-edilrossi',
+    where: 'Clienti › Edil Rossi Costruzioni',
+    title: 'Tutto su un cliente, in una pagina',
+    body: 'Questa è la scheda di Edil Rossi Costruzioni: dati, sedi, referenti e note sempre aggiornati. Con «Storico» vedi ogni contatto avuto, le trattative (qui una da 12.400 € in negoziazione) e le offerte; con «In mappa» lo trovi sul territorio.',
+    tips: ['Chiami, scrivi su WhatsApp o mandi un’email con un tocco, e il contatto finisce nel diario', 'Da qui crei un’offerta già intestata al cliente'],
   },
   {
     id: 'strategia',
     view: 'strategia',
     where: 'Clienti › Gruppi e focus',
     title: 'Dove concentrare le energie',
-    body: 'Raggruppa i clienti per area, settore o potenziale e scegli quelli su cui puntare: ti aiuta a non disperdere tempo.',
+    body: 'Raggruppi i clienti dietro un obiettivo e scegli su chi puntare. Nell’esempio: il gruppo «Imprese edili Bergamo e Como» e il focus su Logistica Nord per chiudere il primo ordine entro il trimestre.',
   },
   {
     id: 'pipeline',
     view: 'deals',
     where: 'Opportunità › Pipeline',
     title: 'Le trattative, fase per fase',
-    body: 'Ogni opportunità ha una fase, un valore e una prossima azione. Aggiorna la fase man mano che la trattativa avanza fino a vinta o persa.',
-    tips: ['Una trattativa senza prossima azione è una trattativa ferma'],
+    body: 'Ogni trattativa ha una fase, un valore, una probabilità e una prossima azione con scadenza. Qui le vedi in colonne: dal primo contatto fino a vinta o persa.',
+    tips: ['Una trattativa senza prossima azione è una trattativa ferma', 'Quando ne perdi una, segni il motivo: Elettro Gamma è persa per il prezzo'],
   },
   {
     id: 'offerte',
     view: 'offers',
     where: 'Opportunità › Offerte',
     title: 'Preventivi e ordini',
-    body: 'Prepara le offerte partendo dal catalogo, scaricale in PDF da inviare al cliente e segui quali sono state accettate.',
+    body: 'Componi l’offerta prendendo gli articoli dal catalogo, con quantità e sconti; la scarichi in PDF per il cliente e ne segui lo stato: bozza, inviata, accettata o rifiutata.',
+    tips: ['Per ogni offerta inviata Syrio ti ricorda quando richiamare'],
   },
   {
     id: 'catalogo',
     view: 'products',
     where: 'Opportunità › Catalogo',
     title: 'Il catalogo prodotti',
-    body: 'Articoli e prezzi che usi nelle offerte. Puoi aggiungerli a mano oppure importarli da un file CSV o Excel.',
+    body: 'Gli articoli con codice, prezzo, taglie e colori che usi nelle offerte. Li aggiungi a mano oppure li importi da un file CSV o Excel.',
   },
   {
     id: 'agenda',
     view: 'agenda',
     where: 'Agenda › Calendario',
-    title: 'Appuntamenti e visite',
-    body: 'Il calendario della settimana con appuntamenti, chiamate e visite. I filtri in alto scelgono cosa mostrare.',
-    tips: ['Da un giorno con visite puoi aprire l’itinerario sulla mappa'],
+    title: 'Il calendario degli appuntamenti',
+    body: 'Visite, chiamate, demo e call in vista mese, settimana o elenco; sotto il calendario gli appuntamenti del giorno scelto. Dopo un appuntamento lo chiudi con l’esito e, se serve, crei subito la cosa da fare successiva.',
+    tips: ['Dai giorni con visite apri l’itinerario sulla mappa'],
   },
   {
     id: 'diario',
     view: 'attivita',
     where: 'Agenda › Diario',
     title: 'Il diario commerciale',
-    body: 'Tutto quello che hai fatto, in ordine di tempo: chiamate, incontri, email. È la memoria del tuo lavoro con ogni cliente.',
+    body: 'Tutto quello che hai fatto, in ordine di tempo e con l’esito: la richiesta di offerta di Edil Rossi, l’ordine firmato da Ferramenta Bianchi, il no di Elettro Gamma. È la memoria del lavoro con ogni cliente.',
   },
   {
     id: 'mappa',
     view: 'map',
     where: 'Mappa',
     title: 'I clienti sul territorio',
-    body: 'Vedi dove si trovano clienti e potenziali clienti e organizza l’itinerario del giorno con le tappe nell’ordine giusto.',
+    body: 'Vedi dove sono clienti e potenziali clienti, così pianifichi i giri per zona, e organizzi l’itinerario del giorno con le tappe nell’ordine giusto.',
   },
   {
     id: 'numeri',
     view: 'analytics',
     where: 'Analisi › Numeri',
     title: 'Come stai andando',
-    body: 'Fatturato, obiettivi, trattative vinte e perse, esito delle attività: i numeri che raccontano il tuo andamento commerciale.',
+    body: 'Andamento mese per mese, pipeline per fase, motivi di perdita, top 10 clienti e prodotti, mix delle attività: i numeri per capire cosa funziona.',
   },
   {
     id: 'storico',
     view: 'storico',
     where: 'Analisi › Storico vendite',
     title: 'Lo storico delle vendite',
-    body: 'Importa le vendite degli anni passati per confrontarle con quelle di oggi e capire chi compra, cosa e quando.',
+    body: 'Importi da Excel le vendite degli anni passati e le confronti con quelle di oggi: chi compra, cosa e quando, per sapere a chi proporre il riordino.',
   },
   {
     id: 'impostazioni',
     view: 'settings',
     where: 'Impostazioni',
     title: 'Il tuo spazio, come lo vuoi tu',
-    body: 'Qui aggiorni l’app, gestisci il team e le mansioni, colleghi la posta e personalizzi colori, testo e voci del menu.',
+    body: 'Qui aggiorni l’app, inviti i colleghi con la loro mansione, colleghi la posta e personalizzi colori, testo e voci del menu.',
     tips: ['Se una novità non compare, premi «Cerca aggiornamenti» in cima a questa pagina', 'Da qui puoi rifare questa visita quando vuoi'],
   },
   {
     id: 'microfono',
     where: 'Sempre a portata di mano',
     title: 'Registra un’attività a voce',
-    body: 'Il pulsante con il microfono è presente in ogni schermata: racconta cosa hai fatto («ho chiamato Rossi, richiamare giovedì») e Syrio lo registra per te.',
+    body: 'Il pulsante con il microfono c’è in ogni schermata: dici cosa hai fatto («ho chiamato Rossi, vuole le taglie entro venerdì, richiamare giovedì») e Syrio lo registra nel diario e crea le cose da fare.',
     target: '[data-tour="quicklog"]',
   },
   {
     id: 'fine',
     view: 'dashboard',
-    title: 'Sei pronto!',
-    body: 'Questa è la tua base di partenza. Buon lavoro: ogni volta che hai un dubbio trovi la visita guidata in Impostazioni.',
+    title: 'Ora tocca a te',
+    body: 'Chiudendo la visita i dati di esempio spariscono e tornano i tuoi. Comincia aggiungendo i tuoi clienti o importandoli da un file: il resto viene da sé. La visita resta sempre disponibile in Impostazioni.',
   },
 ];
 

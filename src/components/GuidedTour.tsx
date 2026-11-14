@@ -3,10 +3,12 @@ import { ChevronLeft, ChevronRight, Compass, X } from 'lucide-react';
 import type { NavView } from '../types';
 import { sectionOf } from '../lib/navSections';
 import { markTourDone, stepsForRole } from '../lib/guidedTour';
+import { enterDemo, exitDemo } from '../lib/demoMode';
 
 interface Props {
   role: string | null;
   onNavigate: (view: NavView) => void;
+  onOpenContact: (contactId: string) => void;
   onClose: () => void;
 }
 
@@ -17,7 +19,7 @@ const HIGHLIGHT = 'data-tour-highlight';
  * Visita guidata: apre una dopo l'altra le schermate dell'app e mostra una scheda
  * che spiega cosa si fa in ognuna. La schermata resta visibile e utilizzabile sotto.
  */
-export function GuidedTour({ role, onNavigate, onClose }: Props) {
+export function GuidedTour({ role, onNavigate, onOpenContact, onClose }: Props) {
   const steps = useMemo(() => stepsForRole(role), [role]);
   const [index, setIndex] = useState(0);
   const step = steps[Math.min(index, steps.length - 1)];
@@ -30,8 +32,14 @@ export function GuidedTour({ role, onNavigate, onClose }: Props) {
   const next = () => (isLast ? finish() : setIndex(i => i + 1));
   const prev = () => setIndex(i => Math.max(0, i - 1));
 
-  // Apre la schermata del passo
-  useEffect(() => { if (step.view) onNavigate(step.view); }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Per tutta la visita l'app mostra l'azienda di esempio; all'uscita tornano i dati veri
+  useEffect(() => { enterDemo(); return () => exitDemo(); }, []);
+
+  // Apre la schermata del passo (o direttamente la scheda di un cliente di esempio)
+  useEffect(() => {
+    if (step.openContact) onOpenContact(step.openContact);
+    else if (step.view) onNavigate(step.view);
+  }, [step.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Evidenzia la voce di menu della schermata (o l'elemento indicato dal passo)
   useEffect(() => {
@@ -69,7 +77,7 @@ export function GuidedTour({ role, onNavigate, onClose }: Props) {
       role="dialog"
       aria-modal={centered ? 'true' : 'false'}
       aria-labelledby="guided-tour-title"
-      className={`tour-card bg-surface text-foreground border border-line rounded-panel shadow-panel p-5 ${centered ? 'w-full max-w-md' : 'w-full md:w-[26rem]'}`}
+      className={`tour-card bg-surface text-foreground border border-line rounded-panel shadow-panel p-4 md:p-5 ${centered ? 'w-full max-w-md' : 'w-full md:w-[26rem]'}`}
     >
       <div className="flex items-center justify-between gap-3 mb-3">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-accent">
@@ -80,23 +88,24 @@ export function GuidedTour({ role, onNavigate, onClose }: Props) {
         </button>
       </div>
 
+      <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-warning bg-warning/10 rounded-full px-2.5 py-0.5 mb-2">Dati di esempio · niente viene salvato</p>
       <h2 id="guided-tour-title" ref={titleRef} tabIndex={-1} className="text-lg font-semibold leading-snug mb-2 outline-none">{step.title}</h2>
       <p className="text-sm text-secondary leading-relaxed">{step.body}</p>
       {step.tips && step.tips.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
+        <ul className={`mt-3 space-y-1.5 ${centered ? '' : 'hidden md:block'}`}>
           {step.tips.map(tip => (
             <li key={tip} className="flex gap-2 text-sm text-secondary"><span aria-hidden="true" className="text-accent">•</span><span>{tip}</span></li>
           ))}
         </ul>
       )}
 
-      <div className="flex items-center gap-1 mt-5" aria-hidden="true">
+      <div className="hidden md:flex items-center gap-1 mt-5" aria-hidden="true">
         {steps.map((s, i) => (
           <span key={s.id} className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-accent' : i < index ? 'w-1.5 bg-accent/50' : 'w-1.5 bg-line'}`} />
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-3 mt-4">
+      <div className="flex items-center justify-between gap-3 mt-3 md:mt-4">
         <span className="text-xs text-muted" aria-live="polite">{index + 1} di {steps.length}</span>
         <div className="flex gap-2">
           {isFirst ? (
@@ -120,6 +129,8 @@ export function GuidedTour({ role, onNavigate, onClose }: Props) {
       </div>
     );
   }
-  // Su telefono sopra il microfono e la barra in basso, su desktop in basso a sinistra del contenuto
-  return <div className="fixed z-[90] left-3 right-3 bottom-[9.5rem] md:bottom-8 md:left-[calc(16rem+2rem)] md:right-auto">{card}</div>;
+  // Su telefono appoggiata sulla barra in basso (sopra il microfono quando è lui il protagonista),
+  // su desktop in basso a sinistra del contenuto
+  const mobileBottom = step.target ? 'bottom-[9.5rem]' : 'bottom-[4.5rem]';
+  return <div className={`fixed z-[90] left-2 right-2 ${mobileBottom} md:bottom-8 md:left-[calc(16rem+2rem)] md:right-auto`}>{card}</div>;
 }

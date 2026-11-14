@@ -18,6 +18,7 @@ import { SelectionAI } from './components/ai/SelectionAI';
 import { QuickLogFAB } from './components/ai/QuickLogFAB';
 import { GuidedTour } from './components/GuidedTour';
 import { isTourDone, START_TOUR_EVENT } from './lib/guidedTour';
+import { useDemoMode } from './lib/demoMode';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
@@ -304,7 +305,7 @@ function AppContent() {
       )}
 
       <QuickLogFAB />
-      {tourOpen && <GuidedTour role={role} onNavigate={goTo} onClose={() => setTourOpen(false)} />}
+      {tourOpen && <GuidedTour role={role} onNavigate={goTo} onOpenContact={navigateToContact} onClose={() => setTourOpen(false)} />}
     </div>
   );
 }
@@ -321,7 +322,9 @@ function FullScreenSpinner({ message }: { message?: string }) {
 function WorkspaceGate() {
   const { status, error, progress, uid, workspace, retry } = useWorkspace();
   const { logout } = useAuth();
-  useFirestoreSync(status === 'ready' && workspace ? { uid, wid: workspace.id } : null);
+  // Durante la visita guidata (dati di esempio) la sincronizzazione col cloud è staccata
+  const demo = useDemoMode();
+  useFirestoreSync(status === 'ready' && workspace && !demo ? { uid, wid: workspace.id } : null);
 
   if (status === 'loading') return <FullScreenSpinner />;
   if (status === 'migrating') {

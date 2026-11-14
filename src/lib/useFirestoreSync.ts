@@ -4,6 +4,7 @@ import { db } from './firebase';
 import { colRef, docRef, isShared, type DataCollection, type DataContext } from './paths';
 import { useStore, type StoreState } from '../store/useStore';
 import { logAuditEvent } from './auditLog';
+import { isDemoActive } from './demoMode';
 import { changedFields, sanitizeForFirestore as sanitize, type DocFields } from './syncDiff';
 
 // Pulizia dei campi prima della scrittura: undefined di primo livello → deleteField()
@@ -101,6 +102,8 @@ export function useFirestoreSync(ctx: DataContext | null) {
       const unsub = onSnapshot(
         colRef(col, dataCtx),
         snapshot => {
+          // Visita guidata con dati di esempio: il cloud non tocca lo store (al ritorno si risincronizza)
+          if (isDemoActive()) return;
           // Eco della nostra stessa scrittura ottimistica (fase cache-locale
           // prima della conferma server): lo stato locale la riflette gia'.
           if (snapshot.metadata.hasPendingWrites) return;
@@ -195,6 +198,8 @@ export function useFirestoreSync(ctx: DataContext | null) {
 
     const unsubscribeStore = useStore.subscribe((state, prevState) => {
       if (isApplyingRemoteRef.current) return;
+      // Dati di esempio della visita guidata: mai scritti nel cloud
+      if (isDemoActive()) return;
 
       for (const col of COLLECTIONS) {
         if (state[col] === prevState[col]) continue;

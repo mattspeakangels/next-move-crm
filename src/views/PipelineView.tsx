@@ -12,6 +12,7 @@ import { MonthlyOrdersView } from '../components/pipeline/MonthlyOrdersView';
 import { SuggestedDealsView } from '../components/pipeline/SuggestedDealsView';
 import { ProspectingView } from './ProspectingView';
 import { uploadOfferPdf } from '../lib/uploadPdf';
+import { isDemoActive } from '../lib/demoMode';
 
 const STAGES: { id: DealStage; name: string; color: string; bar: string }[] = [
   { id: 'lead', name: 'Lead', color: 'bg-action', bar: 'bg-accent' },
@@ -48,7 +49,7 @@ interface PipelineViewProps {
 export const PipelineView: React.FC<PipelineViewProps> = ({ onNavigateToContact, onNavigate }) => {
   const { deals, contacts, offers, updateDeal, removeDeal, addActivity, addTodo } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'prospecting' | 'kanban' | 'mensile' | 'suggeriti'>('prospecting');
+  const [activeTab, setActiveTab] = useState<'prospecting' | 'kanban' | 'mensile' | 'suggeriti'>(() => (isDemoActive() ? 'kanban' : 'prospecting'));
   const [addDealOpen, setAddDealOpen] = useState(false);
   const [editDealId, setEditDealId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
