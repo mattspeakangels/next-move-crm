@@ -15,7 +15,7 @@ const deal = { id: 'syrio-test-deal', contactId: contact.id, title: 'Verifica in
 await context.addInitScript(({ contact, deal }) => {
   const date = new Date(); date.setHours(10,30,0,0);
   localStorage.setItem('next-move-storage', JSON.stringify({ state: { profile: { name: 'Verifica Locale', company: 'Ambiente isolato', role: 'Commerciale', defaultMonthlyTarget: 10000, customProducts: [] }, contacts: { [contact.id]: contact }, deals: { [deal.id]: deal }, activities: { 'syrio-test-visit': { id: 'syrio-test-visit', contactId: contact.id, type: 'visita', date: date.getTime(), outcome: 'da-fare', notes: 'Visita di verifica locale', createdAt: date.getTime() } }, theme: 'dark', products: { 'syrio-test-product': { id: 'syrio-test-product', name: 'Prodotto verifica', code: 'TEST', category: 'accessori', line: 'X1900', price: 25, discount: 0, colors: [], sizes: [] } } }, version: 0 }));
-  localStorage.setItem('nm_last_view', 'dashboard');
+  localStorage.setItem('nm_last_view', 'dashboard'); localStorage.setItem('syrio_tour_done_v1', '1');
 }, { contact, deal });
 await context.route('**/*', async route => {
   const url = new URL(route.request().url());

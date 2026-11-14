@@ -16,6 +16,8 @@ import { ToastProvider } from './components/ui/ToastContext';
 import { UpdateBanner } from './components/UpdateBanner';
 import { SelectionAI } from './components/ai/SelectionAI';
 import { QuickLogFAB } from './components/ai/QuickLogFAB';
+import { GuidedTour } from './components/GuidedTour';
+import { isTourDone, START_TOUR_EVENT } from './lib/guidedTour';
 import { useStore } from './store/useStore';
 import { NavView } from './types';
 import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
@@ -64,6 +66,13 @@ function AppContent() {
   }, [role, currentView]);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Visita guidata: parte da sola al primo accesso e si può rifare da Impostazioni
+  const [tourOpen, setTourOpen] = useState(() => !isTourDone());
+  useEffect(() => {
+    const start = () => setTourOpen(true);
+    window.addEventListener(START_TOUR_EVENT, start);
+    return () => window.removeEventListener(START_TOUR_EVENT, start);
+  }, []);
   const historyRef = useRef<NavView[]>([]);
   const { theme, sectionColors, globalAccent, profile, footerTabs, sidebarOrder, seedSequencesIfEmpty, repairCustomerTypes } = useStore();
 
@@ -194,7 +203,7 @@ function AppContent() {
             </button>
           )}
           {[...navItems, settingsItem].map(({ id, icon: Icon, label }) => (
-            <button key={id} onClick={() => goToSection(id)} aria-current={currentSection === id ? 'page' : undefined} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${id === 'impostazioni' ? '!mt-4 ' : ''}${currentSection === id ? 'bg-accent-soft text-accent border border-accent/25' : 'border border-transparent text-muted hover:bg-raised hover:text-foreground'}`}>
+            <button key={id} onClick={() => goToSection(id)} data-tour-section={id} aria-current={currentSection === id ? 'page' : undefined} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${id === 'impostazioni' ? '!mt-4 ' : ''}${currentSection === id ? 'bg-accent-soft text-accent border border-accent/25' : 'border border-transparent text-muted hover:bg-raised hover:text-foreground'}`}>
               <Icon size={20} />{label}
             </button>
           ))}
@@ -245,7 +254,7 @@ function AppContent() {
         {mobileMain.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => goToSection(id)}
+            onClick={() => goToSection(id)} data-tour-section={id}
             className={`flex flex-col items-center gap-0.5 flex-1 min-w-0 py-2 transition-all ${currentSection === id ? 'text-accent' : 'text-muted'}`}
           >
             <Icon size={22} strokeWidth={currentSection === id ? 2.5 : 1.8} />
@@ -282,7 +291,7 @@ function AppContent() {
               {[...navItems, settingsItem].map(({ id, icon: Icon, label }) => (
                 <button
                   key={id}
-                  onClick={() => goToSection(id)}
+                  onClick={() => goToSection(id)} data-tour-section={id}
                   aria-current={currentSection === id ? 'page' : undefined}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${currentSection === id ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-raised hover:text-foreground'}`}
                 >
@@ -295,6 +304,7 @@ function AppContent() {
       )}
 
       <QuickLogFAB />
+      {tourOpen && <GuidedTour role={role} onNavigate={goTo} onClose={() => setTourOpen(false)} />}
     </div>
   );
 }

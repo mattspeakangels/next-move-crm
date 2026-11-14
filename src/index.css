@@ -476,3 +476,9 @@ body { background: radial-gradient(1200px 600px at 85% -10%, rgb(var(--syrio-acc
 /* Menu ⋯ dei "Clienti da seguire": il riquadro non deve tagliarlo e deve stare sopra i vicini */
 .customer-work-card:has(.customer-work-menu) { overflow: visible; position: relative; z-index: 25; }
 .customer-work-menu { box-shadow: 0 18px 40px -16px rgb(0 0 0 / .45); }
+/* Visita guidata: voce di menu o pulsante evidenziato e comparsa della scheda */
+[data-tour-highlight] { box-shadow: 0 0 0 3px rgb(var(--syrio-accent) / .9), 0 0 0 8px rgb(var(--syrio-accent) / .2); animation: tour-pulse 1.6s ease-in-out infinite; }
+@keyframes tour-pulse { 50% { box-shadow: 0 0 0 3px rgb(var(--syrio-accent) / .9), 0 0 0 12px rgb(var(--syrio-accent) / .05); } }
+.tour-card { animation: tour-in .22s ease-out; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { [data-tour-highlight], .tour-card { animation: none; } }

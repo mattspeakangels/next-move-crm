@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { getSection, primaryView, orderMainSections, footerSections, MAIN_SECTION_IDS, MAX_FOOTER_SECTIONS, type SectionId } from '../lib/navSections';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Calendar, Map, BarChart3, Settings, ChevronUp, ChevronDown, GripVertical, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
+import { Compass, User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Calendar, Map, BarChart3, Settings, ChevronUp, ChevronDown, GripVertical, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
+import { startGuidedTour } from '../lib/guidedTour';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
 import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
 import { DEFAULT_SECTORS, sectorLabel } from '../lib/sectors';
@@ -21,6 +22,24 @@ import { runAiTask } from '../lib/aiTasks';
 import { Download, Upload } from 'lucide-react';
 
 type PendingAction = { title: string; description: string; execute: () => void } | null;
+
+// ── Guida: rifà la visita guidata dell'app ──────────────────────────────────
+
+const GuidedTourSection: React.FC = () => (
+  <div className="bg-surface dark:bg-surface rounded-panel p-6 border border-line dark:border-line space-y-3">
+    <h2 className="text-xs font-semibold text-secondary dark:text-muted flex items-center gap-2">
+      <Compass size={14} /> Visita guidata
+    </h2>
+    <p className="text-sm text-muted">Un giro di tutte le sezioni dell'app, con la spiegazione di cosa si fa in ognuna.</p>
+    <button
+      type="button"
+      onClick={startGuidedTour}
+      className="w-full flex items-center justify-center gap-2 py-3 rounded-panel border border-line text-foreground font-semibold text-sm hover:bg-raised transition-all"
+    >
+      <Compass size={15} /> Avvia la visita guidata
+    </button>
+  </div>
+);
 
 // ── Aggiornamento App Section ─────────────────────────────────────────────────
 
@@ -400,6 +419,7 @@ export const SettingsView: React.FC = () => {
 
       {/* Aggiornamento app in cima: è l'azione più usata dopo un rilascio */}
       <AppUpdateSection />
+      <GuidedTourSection />
 
       {/* ── Team: collaboratori, mansioni, inviti, Outlook aziendale ── */}
       <WorkspaceSection />
