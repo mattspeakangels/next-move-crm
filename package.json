@@ -10,10 +10,12 @@
     "build:lab": "tsc && vite build --mode lab --outDir dist-lab",
     "deploy:rules:lab": "node scripts/lab-deploy-rules.mjs",
     "lab:dataset": "node lab/dataset/generate.mjs",
+    "lab:seed:emulator": "PATH=\"/opt/homebrew/opt/openjdk@21/bin:$PATH\" firebase emulators:exec --only firestore,auth --project demo-syrio-lab \"node scripts/lab-seed.mjs --project demo-syrio-lab --grant persona.reale@example.com && node scripts/lab-seed.mjs --project demo-syrio-lab --reset\"",
+    "lab:seed": "node scripts/lab-seed.mjs --project syrio-lab",
     "preview": "vite preview",
     "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-syrio \"node --test --test-concurrency=1 tests/rules.test.mjs tests/personal-customer-data.test.mjs\"",
     "test:api": "node --test tests/api-security.test.mjs",
-    "test": "node --test tests/customer-work.test.mjs tests/agenda-filter.test.mjs tests/storico-parse.test.mjs tests/sync-paths.test.mjs tests/no-any.test.mjs tests/nav-sections.test.mjs tests/usage-counter.test.mjs tests/italian-format.test.mjs tests/api-security.test.mjs tests/spreadsheet.test.mjs tests/contact-channels.test.mjs tests/todo-outcome.test.mjs tests/guided-tour.test.mjs tests/demo-data.test.mjs tests/app-env.test.mjs tests/lab-guard.test.mjs tests/lab-dataset.test.mjs"
+    "test": "node --test tests/customer-work.test.mjs tests/agenda-filter.test.mjs tests/storico-parse.test.mjs tests/sync-paths.test.mjs tests/no-any.test.mjs tests/nav-sections.test.mjs tests/usage-counter.test.mjs tests/italian-format.test.mjs tests/api-security.test.mjs tests/spreadsheet.test.mjs tests/contact-channels.test.mjs tests/todo-outcome.test.mjs tests/guided-tour.test.mjs tests/demo-data.test.mjs tests/app-env.test.mjs tests/lab-guard.test.mjs tests/lab-dataset.test.mjs tests/lab-seed-guard.test.mjs"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.29.0",
@@ -48,6 +50,7 @@
     "@vitejs/plugin-react": "^6.3.0",
     "autoprefixer": "^10.4.18",
     "esbuild": "^0.28.2",
+    "firebase-admin": "^13.10.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
