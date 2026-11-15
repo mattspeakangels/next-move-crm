@@ -19,6 +19,8 @@ export const SHARED = [
   // Email (laboratorio: simulate da scripts/lab-seed.mjs), risposte giuste per il motore
   // e caselle Outlook collegate dai membri (mailboxes/{uid}, più 'info' = casella generale)
   'emails', 'email_labels', 'mailboxes',
+  // Laboratorio: stato e piano della giornata simulata (src/lib/labSim.ts)
+  'labSim',
 ] as const;
 
 export const PERSONAL = [

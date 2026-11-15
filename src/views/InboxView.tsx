@@ -3,6 +3,7 @@ import { ArrowLeft, Mail, MailOpen, Paperclip, Plug, RefreshCw, UserPlus, Users 
 import { useWorkspace } from '../lib/workspaceContext';
 import { canManage } from '../lib/workspace';
 import { markRead, simulateIncomingEmail, useContactRefs, useLabEmails, useMailboxes } from '../lib/labMail';
+import { useLabSimToday } from '../lib/labSim';
 import { addressesFor, inboxFor, isUnread, matchContact, relativeTime, type LabEmail, type Mailbox } from '../lib/labMailCore';
 import { useToast } from '../components/ui/ToastContext';
 
@@ -20,6 +21,7 @@ export const InboxView: React.FC<{ onNavigateToContact?: (id: string) => void }>
   const { showToast } = useToast();
   const manager = canManage(role);
   const myBox = mailboxes.find(m => m.uid === uid);
+  const simToday = useLabSimToday();
 
   // 'me' = le mie email; 'team' = tutte; altrimenti id di una casella.
   const [scope, setScope] = useState<string>('me');
@@ -176,6 +178,11 @@ export const InboxView: React.FC<{ onNavigateToContact?: (id: string) => void }>
           </div>
         )}
       </div>
+      {simToday.summary && (
+        <p className="text-[11px] text-muted" data-testid="lab-sim-today">
+          Giornata simulata di oggi: {simToday.applied} di {simToday.total} eventi già avvenuti · {simToday.summary.emailIn} email in arrivo, {simToday.summary.emailOut} risposte del team, {simToday.summary.newProspects} nuovi prospect dal sito, {simToday.summary.newDeals} nuove opportunità, {simToday.summary.dealsAdvanced} opportunità avanzate
+        </p>
+      )}
       <p className="text-[11px] text-muted flex items-center gap-1"><Mail size={11} />Laboratorio: caselle e messaggi sono simulati, nessuna email reale viene letta o inviata.</p>
     </div>
   );

@@ -29,6 +29,7 @@ import { FeedbackProvider } from './components/ui/Feedback';
 import { IS_LAB } from './lib/appEnv';
 import { LabPreviewView } from './views/LabPreviewView';
 import { InboxView } from './views/InboxView';
+import { LabSimRunner } from './components/LabSimRunner';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -349,7 +350,7 @@ function WorkspaceGate() {
       </div>
     );
   }
-  return <AppContent />;
+  return <>{IS_LAB && <LabSimRunner />}<AppContent /></>;
 }
 
 function AuthGate() {
