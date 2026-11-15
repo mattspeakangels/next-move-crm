@@ -47,9 +47,18 @@ test('lab: Email e Apprendimento compaiono e si aprono (owner)', () => {
   assert.equal(labNav.canOpenView('apprendimento', 'owner'), true);
 });
 
+test('lab: ogni mansione vede la propria casella Email', () => {
+  for (const role of ['owner', 'sales', 'customer_service', 'graphics', 'accounting', 'marketing']) {
+    assert.equal(labNav.canOpenView('inbox', role), true, role);
+    assert.ok(labNav.sectionsForRole(role).includes('oggi'), role);
+  }
+});
+
 test('le altre voci del menu sono identiche tra lavoro e laboratorio', () => {
-  const strip = (nav) => nav.NAV_SECTIONS.map(s => [s.id, nav.tabsFor(s.id, 'owner').filter(t => !t.feature).map(t => t.view)]);
-  assert.deepEqual(strip(workNav), strip(labNav));
+  for (const role of ['owner', 'customer_service', 'graphics', 'accounting']) {
+    const strip = (nav) => nav.NAV_SECTIONS.map(s => [s.id, nav.tabsFor(s.id, role).filter(t => !t.feature).map(t => t.view)]);
+    assert.deepEqual(strip(workNav), strip(labNav), role);
+  }
 });
 
 test('guardia: il laboratorio accetta solo syrio-lab, il lavoro mai syrio-lab', async () => {

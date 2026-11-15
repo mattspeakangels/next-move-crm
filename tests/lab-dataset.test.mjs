@@ -16,8 +16,8 @@ test('due esecuzioni con lo stesso seed producono lo stesso dataset', () => {
   assert.notEqual(hash(generateDataset(7)), hash(ds), 'un seed diverso deve cambiare il dataset');
 });
 
-test('tra 800 e 1.000 email, in ordine cronologico, su 6 mesi', () => {
-  assert.ok(E.length >= 800 && E.length <= 1000, `email: ${E.length}`);
+test('tra 1.500 e 2.200 email, in ordine cronologico, su 6 mesi', () => {
+  assert.ok(E.length >= 1500 && E.length <= 2200, `email: ${E.length}`);
   for (let i = 1; i < E.length; i++) assert.ok(E[i - 1].date <= E[i].date, `ordine rotto a ${E[i].id}`);
   const first = Date.parse(E[0].date), last = Date.parse(E.at(-1).date);
   assert.ok(first >= START && last < END);
@@ -33,11 +33,30 @@ test('tre aziende fittizie con colleghi nei tre ruoli', () => {
   }
 });
 
-test('15-30 clienti per azienda, tra dealer ed end user', () => {
+test('100 clienti e 1.000 prospect per azienda, tra dealer ed end user, nomi unici', () => {
   for (const c of ds.companies) {
-    const list = ds.customers.filter((x) => x.companyId === c.id);
-    assert.ok(list.length >= 15 && list.length <= 30, `${c.id}: ${list.length} clienti`);
-    assert.ok(list.some((x) => x.type === 'dealer') && list.some((x) => x.type === 'end_user'), c.id);
+    const mine = ds.customers.filter((x) => x.companyId === c.id);
+    const clients = mine.filter((x) => x.status === 'cliente');
+    const prospects = mine.filter((x) => x.status === 'potenziale');
+    assert.equal(clients.length, 100, `${c.id}: clienti`);
+    assert.equal(prospects.length, 1000, `${c.id}: prospect`);
+    for (const list of [clients, prospects]) assert.ok(list.some((x) => x.type === 'dealer') && list.some((x) => x.type === 'end_user'), c.id);
+    assert.ok(clients.every((x) => x.ownerId), 'ogni cliente ha un commerciale');
+    assert.ok(prospects.some((x) => !x.ownerId) && prospects.some((x) => x.ownerId), 'prospect assegnati e da assegnare');
+  }
+  assert.equal(new Set(ds.customers.map((x) => x.name)).size, ds.customers.length, 'ragioni sociali duplicate');
+  assert.equal(new Set(ds.customers.map((x) => x.id)).size, ds.customers.length, 'id duplicati');
+});
+
+test('i prospect scrivono: i primi messaggi senza commerciale arrivano alla casella generale', () => {
+  const cust = new Map(ds.customers.map((c) => [c.id, c]));
+  const fromProspects = business.filter((e) => cust.get(e.labels.customerId).status === 'potenziale');
+  assert.ok(fromProspects.length >= 150, `email di prospect: ${fromProspects.length}`);
+  const firsts = fromProspects.filter((e) => e.direction === 'in' && !e.inReplyTo && !cust.get(e.labels.customerId).ownerId);
+  assert.ok(firsts.length > 0);
+  for (const e of firsts) {
+    const company = ds.companies.find((c) => c.id === e.mailbox);
+    assert.equal(e.to[0].email, company.infoEmail, e.id);
   }
 });
 
@@ -49,7 +68,7 @@ test('circa 40% di rumore (newsletter, notifiche, personali)', () => {
 });
 
 test('tutti i tipi di contenuto sono presenti', () => {
-  for (const t of ['offerta', 'gara', 'personalizzazione', 'ordine', 'sollecito', 'reclamo']) {
+  for (const t of ['offerta', 'gara', 'personalizzazione', 'ordine', 'sollecito', 'reclamo', 'informazioni']) {
     assert.ok(business.filter((e) => e.labels.type === t).length >= 10, `pochi messaggi di tipo ${t}`);
   }
   const gare = ds.deals.filter((d) => d.kind === 'gara');

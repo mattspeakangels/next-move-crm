@@ -28,6 +28,7 @@ import { FeedbackProvider } from './components/ui/Feedback';
 // bundler lo elimina del tutto (un import dinamico lascerebbe comunque un file).
 import { IS_LAB } from './lib/appEnv';
 import { LabPreviewView } from './views/LabPreviewView';
+import { InboxView } from './views/InboxView';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -178,7 +179,7 @@ function AppContent() {
       case 'strategia': return <StrategyView onNavigateToContact={navigateToContact} />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
-      case 'inbox': return IS_LAB ? <LabPreviewView feature="emailInbox" /> : null;
+      case 'inbox': return IS_LAB ? <InboxView onNavigateToContact={navigateToContact} /> : null;
       case 'apprendimento': return IS_LAB ? <LabPreviewView feature="learningEngine" /> : null;
       case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       default: return <Dashboard onNavigate={goTo} onNavigateToContact={navigateToContact} />;

@@ -16,8 +16,9 @@ export const SHARED = [
   'storico', 'storico_dettagliati',
   'offer_pdfs', 'offer_pdf_chunks', 'bi_docs', 'bi_doc_chunks', 'contact_photos', 'contact_photo_chunks',
   'audit_logs', 'usage_counters',
-  // Email (laboratorio: simulate da scripts/lab-seed.mjs) e risposte giuste per il motore
-  'emails', 'email_labels',
+  // Email (laboratorio: simulate da scripts/lab-seed.mjs), risposte giuste per il motore
+  // e caselle Outlook collegate dai membri (mailboxes/{uid}, più 'info' = casella generale)
+  'emails', 'email_labels', 'mailboxes',
 ] as const;
 
 export const PERSONAL = [

@@ -43,12 +43,17 @@ const SEED_TAG = 'lab-seed-v1';
 const pathsSrc = readFileSync(new URL('../src/lib/paths.ts', import.meta.url), 'utf8');
 const sharedBlock = /export const SHARED = \[([\s\S]*?)\] as const/.exec(pathsSrc)?.[1] ?? '';
 const SHARED = new Set([...sharedBlock.matchAll(/'([a-z_A-Z]+)'/g)].map((m) => m[1]));
-for (const c of ['contacts', 'deals', 'emails', 'email_labels']) {
+for (const c of ['contacts', 'deals', 'emails', 'email_labels', 'mailboxes']) {
   if (!SHARED.has(c)) { console.error(`Collezione ${c} non è in SHARED (src/lib/paths.ts)`); process.exit(1); }
 }
 
-const { generateDataset } = await import('../lab/dataset/generate.mjs');
+const { generateDataset, END } = await import('../lab/dataset/generate.mjs');
 const ds = generateDataset();
+// Il dataset è fisso (6 mesi fino al 1° novembre 2026): lo si sposta di giorni interi
+// perché l'ultima email cada nelle ultime 24 ore. Così "Oggi" ha sempre posta recente.
+const DAY_MS = 86400_000;
+const SHIFT = Math.max(0, Math.floor((Date.now() - END) / DAY_MS) * DAY_MS);
+const shifted = (iso) => Date.parse(iso) + SHIFT;
 
 const ROLE_MAP = { commerciale: 'sales', customer_service: 'customer_service', personalizzazione: 'graphics' };
 const SEGMENT = (c) => (c.type === 'dealer' ? 'dealer' : /edilizia|costruzioni|serramenti/.test(c.sector) ? 'edilizia' : /officine|carpenteria|impianti|termoidraulica/.test(c.sector) ? 'industria' : 'end-user');
@@ -139,30 +144,39 @@ async function seed() {
       uidOf[col.id] = uid;
       const role = i === 0 ? 'owner' : ROLE_MAP[col.role];
       credentials.push({ azienda: company.name, nome: col.name, ruolo: role, email });
-      ops.push((b) => b.set(ws.collection('members').doc(uid), { uid, email, displayName: col.name, role, status: 'active', joinedAt: now }));
+      // Outlook simulato: ogni collega ha la sua casella aziendale già collegata.
+      const connectedAt = now - (i + 1) * 3 * DAY_MS;
+      ops.push((b) => b.set(ws.collection('members').doc(uid), { uid, email, displayName: col.name, role, status: 'active', joinedAt: now, outlookConnectedAt: connectedAt }));
+      ops.push((b) => b.set(ws.collection('mailboxes').doc(uid), {
+        uid, address: col.email, displayName: col.name, provider: 'outlook', kind: 'personal', simulated: true, connectedAt, lastSyncAt: now, labSeed: true,
+      }));
       ops.push((b) => b.set(db.doc(`userProfiles/${uid}`), { activeWorkspaceId: wid, workspaceIds: [wid], email, updatedAt: FieldValue.serverTimestamp() }));
     }
     const ownerUid = uidOf[company.colleagues[0].id];
     // legacyMigratedAt: nessun dato "pre-workspace" da migrare per questi utenti.
     ops.unshift((b) => b.set(ws, { name: `${company.name} (LAB)`, ownerUid, createdAt: now, legacyMigratedAt: now, seedTag: SEED_TAG }));
 
+    // Casella generale dell'azienda (info@): riceve i primi contatti dei prospect senza commerciale.
+    ops.push((b) => b.set(ws.collection('mailboxes').doc('info'), {
+      uid: null, address: company.infoEmail, displayName: `${company.name} — casella generale`, provider: 'outlook', kind: 'shared', simulated: true, connectedAt: now - 30 * DAY_MS, lastSyncAt: now, labSeed: true,
+    }));
     const stamp = (createdBy, t) => ({ createdBy, updatedBy: createdBy, createdAt: t, updatedAt: t });
     for (const c of ds.customers.filter((x) => x.companyId === company.id)) {
       const ref = c.contacts[0];
-      const owner = uidOf[c.ownerId];
-      const hasWon = ds.deals.some((d) => d.customerId === c.id && d.stage === 'chiuso-vinto');
+      const owner = c.ownerId ? uidOf[c.ownerId] : null;
+      const creator = owner ?? ownerUid;
       ops.push((b) => b.set(ws.collection('contacts').doc(c.id), {
         id: c.id, company: c.name, customerType: c.type === 'dealer' ? 'dealer' : 'end-user', contactName: ref.name, role: ref.role,
         email: ref.email, phone: ref.phone, city: c.town, country: 'Italia', website: `www.${c.domain}`,
-        status: hasWon ? 'cliente' : 'potenziale', segment: SEGMENT(c), sector: c.sector, region: 'Lombardia',
+        status: c.status, segment: SEGMENT(c), sector: c.sector, region: 'Lombardia',
         stakeholders: c.contacts.slice(1).map((s, k) => ({ id: `${c.id}-st-${k + 1}`, name: s.name, role: s.role, email: s.email, phone: s.phone })),
         notes: c.publicBody ? 'Ente pubblico: acquisti tramite MEPA.' : '',
-        ownerUid: owner, labSeed: true, ...stamp(owner, Date.parse(ds.meta.start)),
+        ownerUid: owner, labSeed: true, ...stamp(creator, shifted(ds.meta.start)),
       }));
     }
     for (const d of ds.deals.filter((x) => x.companyId === company.id)) {
       const owner = uidOf[d.ownerId];
-      const t = Date.parse(d.createdAt);
+      const t = shifted(d.createdAt);
       const closed = d.stage.startsWith('chiuso');
       ops.push((b) => b.set(ws.collection('deals').doc(d.id), {
         id: d.id, contactId: d.customerId, value: d.value, probability: PROB[d.stage], products: d.items.map((it) => `${it.qty} ${it.product}`),
@@ -172,9 +186,10 @@ async function seed() {
       }));
     }
     for (const e of ds.emails.filter((x) => x.mailbox === company.id)) {
-      const t = Date.parse(e.date);
+      const t = shifted(e.date);
       const { labels, meta, ...mail } = e;
-      ops.push((b) => b.set(ws.collection('emails').doc(e.id), { ...mail, dateMs: t, labSeed: true }));
+      // Le email inviate da noi sono già "lette"; quelle in arrivo no.
+      ops.push((b) => b.set(ws.collection('emails').doc(e.id), { ...mail, date: new Date(t).toISOString(), dateMs: t, readBy: {}, labSeed: true }));
       ops.push((b) => b.set(ws.collection('email_labels').doc(e.id), {
         ...labels, actor: labels.actor ? { ...labels.actor, uid: labels.actor.personId ? uidOf[labels.actor.personId] ?? null : null } : null,
         meta, labSeed: true,
@@ -226,12 +241,13 @@ async function verify() {
   for (const c of ds.companies) {
     const ws = db.doc(`workspaces/${wsId(c)}`);
     const counts = {};
-    for (const col of ['members', 'contacts', 'deals', 'emails', 'email_labels']) counts[col] = (await ws.collection(col).count().get()).data().count;
+    for (const col of ['members', 'mailboxes', 'contacts', 'deals', 'emails', 'email_labels']) counts[col] = (await ws.collection(col).count().get()).data().count;
     out[wsId(c)] = counts;
     const expected = {
       contacts: ds.customers.filter((x) => x.companyId === c.id).length,
       deals: ds.deals.filter((x) => x.companyId === c.id).length,
       emails: ds.emails.filter((x) => x.mailbox === c.id).length,
+      mailboxes: c.colleagues.length + 1,
     };
     for (const [k, v] of Object.entries(expected)) {
       if (counts[k] !== v) throw new Error(`${wsId(c)}/${k}: ${counts[k]} invece di ${v}`);

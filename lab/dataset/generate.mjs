@@ -1,7 +1,7 @@
 // Generatore deterministico del dataset del laboratorio Syrio.
 //
-// Produce 3 aziende fittizie (le caselle email "nostre"), i loro clienti, le opportunità
-// e 800-1.000 email in italiano in ordine cronologico su 6 mesi. Ogni email porta la
+// Produce 3 aziende fittizie (le caselle email "nostre"), per ognuna 100 clienti e 1.000
+// prospect, le opportunità e circa 2.000 email in italiano in ordine cronologico su 6 mesi. Ogni email porta la
 // sua "risposta giusta" in `labels` (cliente, opportunità, tipo, richiesta/aggiornamento,
 // chi deve agire): serve a misurare il motore di smistamento e apprendimento.
 //
@@ -15,11 +15,14 @@ import {
   FIRST_NAMES, LAST_NAMES, TOWNS, DEALER_PREFIX, ENDUSER_PREFIX, PUBLIC_PREFIX, LEGAL, PRODUCTS, GENERIC_DOMAINS,
 } from './names.mjs';
 
-export const DATASET_VERSION = 1;
+export const DATASET_VERSION = 2;
 export const DEFAULT_SEED = 20260501;
 export const START = Date.UTC(2026, 4, 1, 0, 0, 0); // 1 maggio 2026
 export const END = Date.UTC(2026, 10, 1, 0, 0, 0); // 1 novembre 2026 (escluso)
-const THREAD_COUNT = 165;
+const THREAD_COUNT = 330;
+export const CLIENTS_PER_COMPANY = 100;
+export const PROSPECTS_PER_COMPANY = 1000;
+const PROSPECT_THREAD_SHARE = 0.25;
 const NOISE_SHARE = 0.4;
 
 const HOUR = 3600_000;
@@ -78,11 +81,12 @@ function addTypos(text, rng) {
 function personFactory(rng) {
   const used = new Set();
   return function person() {
-    for (;;) {
+    // Nomi unici finché possibile; con migliaia di persone gli omonimi sono inevitabili (e realistici).
+    for (let tries = 0; ; tries++) {
       const first = rng.pick(FIRST_NAMES);
       const last = rng.pick(LAST_NAMES);
       const key = `${first} ${last}`;
-      if (!used.has(key)) { used.add(key); return { first, last, name: key }; }
+      if (!used.has(key) || tries >= 12) { used.add(key); return { first, last, name: key }; }
     }
   };
 }
@@ -110,38 +114,42 @@ function buildCompanies(rng, person) {
       const p = person();
       return { id: `${c.id}-col-${i + 1}`, companyId: c.id, name: p.name, first: p.first, last: p.last, role, email: businessEmail(p, c.domain, rng), phone: phone(rng) };
     });
-    return { ...c, colleagues };
+    return { ...c, infoEmail: `info@${c.domain}`, colleagues };
   });
 }
 
-function buildCustomers(rng, company, person, nextId, usedNames) {
-  const n = rng.int(18, 26);
+function companyName(rng, type, isPublic) {
+  const town = rng.pick(TOWNS);
+  if (isPublic) return { name: `${rng.pick(PUBLIC_PREFIX)} ${town}`, sector: 'pubblica amministrazione' };
+  const pre = rng.pick(type === 'dealer' ? DEALER_PREFIX : ENDUSER_PREFIX);
+  const sector = type === 'dealer' ? 'rivendita' : pre.toLowerCase();
+  const pattern = rng.weighted([['cognome', 5], ['soci', 2], ['luogo', 2]]);
+  const who = pattern === 'cognome' ? rng.pick(LAST_NAMES)
+    : pattern === 'soci' ? `${rng.pick(LAST_NAMES)} & ${rng.pick(LAST_NAMES)}`
+    : town;
+  return { name: `${pre} ${who} ${rng.pick(LEGAL)}`, sector };
+}
+
+/** Clienti (status 'cliente') o prospect (status 'potenziale') di un'azienda. */
+function buildCustomers(rng, company, person, nextId, usedNames, { count, status }) {
+  const prospect = status === 'potenziale';
+  const commerciali = company.colleagues.filter((c) => c.role === 'commerciale');
   const list = [];
   let publicCount = 0;
-  for (let i = 0; i < n; i++) {
-    const type = i < Math.round(n * 0.4) ? 'dealer' : 'end_user';
-    const isPublic = type === 'end_user' && (publicCount < 3 || rng.chance(0.2));
-    let name, domain, sector;
-    for (;;) {
-      const town = rng.pick(TOWNS);
-      if (type === 'dealer') {
-        name = `${rng.pick(DEALER_PREFIX)} ${rng.pick(LAST_NAMES)} ${rng.pick(LEGAL)}`;
-        sector = 'rivendita';
-      } else if (isPublic) {
-        name = `${rng.pick(PUBLIC_PREFIX)} ${town}`;
-        sector = 'pubblica amministrazione';
-      } else {
-        const pre = rng.pick(ENDUSER_PREFIX);
-        name = `${pre} ${rng.pick(LAST_NAMES)} ${rng.pick(LEGAL)}`;
-        sector = pre.toLowerCase();
-      }
+  for (let i = 0; i < count; i++) {
+    const type = rng.chance(prospect ? 0.25 : 0.4) ? 'dealer' : 'end_user';
+    let isPublic = type === 'end_user' && (prospect ? rng.chance(0.02) : publicCount < 3 || rng.chance(0.08));
+    let name, sector;
+    for (let tries = 0; ; tries++) {
+      if (tries > 6) isPublic = false; // nomi di enti esauriti: diventa un privato
+      ({ name, sector } = companyName(rng, type, isPublic));
       if (!usedNames.has(name)) { usedNames.add(name); break; }
     }
     if (isPublic) publicCount++;
     const base = slug(name.replace(/ (Srl|Snc|Sas|Spa)$/, ''));
-    domain = isPublic ? `${base}.pa.it` : `${base}.it`;
-    const id = nextId('cust', 3);
-    const contactCount = rng.int(1, 3);
+    const domain = isPublic ? `${base}.pa.it` : `${base}.it`;
+    const id = nextId(prospect ? 'pros' : 'cust', prospect ? 4 : 3);
+    const contactCount = prospect ? (rng.chance(0.15) ? 2 : 1) : rng.int(1, 3);
     const contacts = [];
     for (let k = 0; k < contactCount; k++) {
       const p = person();
@@ -153,10 +161,9 @@ function buildCustomers(rng, company, person, nextId, usedNames) {
         email: generic ? genericEmail(p, rng) : businessEmail(p, domain, rng), phone: phone(rng),
       });
     }
-    list.push({
-      id, companyId: company.id, name, type, publicBody: isPublic, sector, town: rng.pick(TOWNS), domain,
-      ownerId: rng.pick(company.colleagues.filter((c) => c.role === 'commerciale')).id, contacts,
-    });
+    // Metà dei prospect non ha ancora un commerciale: scrivono alla casella generale.
+    const ownerId = prospect && rng.chance(0.5) ? null : rng.pick(commerciali).id;
+    list.push({ id, companyId: company.id, status, name, type, publicBody: isPublic, sector, town: rng.pick(TOWNS), domain, ownerId, contacts });
   }
   return list;
 }
@@ -290,6 +297,22 @@ const TEMPLATES = {
     return { steps, stage: null };
   },
 
+  informazioni(ctx) {
+    const { rng, items, customer } = ctx;
+    const steps = [
+      { side: 'c', kind: 'richiesta', actor: 'commerciale', subject: rng.pick(['Richiesta informazioni', 'Richiesta catalogo', 'Info abbigliamento da lavoro', 'Contatto dal sito', 'Cerchiamo un fornitore']),
+        body: `${rng.pick(['Buongiorno', 'Salve', 'Gentili signori'])},\n${rng.pick([`siamo ${customer.name} e stiamo cercando un nuovo fornitore di ${items[0].product}.`, `abbiamo visto il vostro sito: ci interessano ${items[0].product} per circa ${items[0].qty} dipendenti.`, `un collega ci ha dato il vostro contatto, cerchiamo ${items[0].product}.`])}\n${rng.pick(['Potete mandarci un catalogo?', 'Avete un listino prezzi?', 'Ci può richiamare un vostro commerciale?', 'Fate anche la personalizzazione con il logo?'])}` },
+      { side: 'i', kind: 'aggiornamento', actor: 'cliente', role: 'commerciale', attachments: ['Catalogo_2026.pdf'],
+        body: `Buongiorno,\ngrazie per averci contattato. In allegato il nostro catalogo.\n${rng.pick(['Le propongo una visita la prossima settimana per mostrarle i campioni.', 'Se mi indica quantità e taglie le preparo subito un preventivo.', 'La chiamo domani per capire meglio le vostre esigenze.'])}` },
+    ];
+    const interested = rng.chance(0.55);
+    if (interested) {
+      steps.push({ side: 'c', kind: 'richiesta', actor: 'commerciale',
+        body: `${rng.pick(['Buongiorno', 'Grazie'])},\n${rng.pick(['ci va bene una visita martedì mattina.', 'ci preparate un preventivo per 50 capi?', 'ci mandate anche dei campioni?'])}` });
+    }
+    return { steps, stage: interested ? 'qualificato' : 'lead' };
+  },
+
   reclamo(ctx) {
     const { rng } = ctx;
     const steps = [
@@ -337,8 +360,12 @@ export function generateDataset(seed = DEFAULT_SEED) {
 
   const companies = buildCompanies(rng, person);
   const usedNames = new Set();
-  const customers = companies.flatMap((c) => buildCustomers(rng, c, person, nextId, usedNames));
-  const byCompany = Object.fromEntries(companies.map((c) => [c.id, customers.filter((x) => x.companyId === c.id)]));
+  const customers = companies.flatMap((c) => [
+    ...buildCustomers(rng, c, person, nextId, usedNames, { count: CLIENTS_PER_COMPANY, status: 'cliente' }),
+    ...buildCustomers(rng, c, person, nextId, usedNames, { count: PROSPECTS_PER_COMPANY, status: 'potenziale' }),
+  ]);
+  const byCompany = Object.fromEntries(companies.map((c) => [c.id, customers.filter((x) => x.companyId === c.id && x.status === 'cliente')]));
+  const prospectsOf = Object.fromEntries(companies.map((c) => [c.id, customers.filter((x) => x.companyId === c.id && x.status === 'potenziale')]));
   const colOf = (company, role, rngPick = true) => {
     const list = company.colleagues.filter((c) => c.role === role);
     return rngPick ? rng.pick(list) : list[0];
@@ -353,7 +380,8 @@ export function generateDataset(seed = DEFAULT_SEED) {
 
   for (const [ti, start] of starts.entries()) {
     const company = companies[ti % companies.length];
-    const customer = rng.pick(byCompany[company.id]);
+    const isProspect = rng.chance(PROSPECT_THREAD_SHARE);
+    const customer = rng.pick((isProspect ? prospectsOf : byCompany)[company.id]);
     const st = dealState.get(customer.id) ?? { open: [], won: [] };
     dealState.set(customer.id, st);
 
@@ -365,7 +393,7 @@ export function generateDataset(seed = DEFAULT_SEED) {
       ['sollecito', st.open.length + st.won.length > 0 ? 16 : 0],
       ['reclamo', st.won.length > 0 ? 12 : 3],
     ];
-    const type = rng.weighted(typeWeights);
+    const type = isProspect ? rng.weighted([['informazioni', 65], ['offerta', 35]]) : rng.weighted(typeWeights);
     const items = pickItems(rng);
 
     let deal = null;
@@ -375,7 +403,7 @@ export function generateDataset(seed = DEFAULT_SEED) {
     if (!deal && type !== 'reclamo') {
       deal = {
         id: nextId('deal', 3), code: `${company.id.slice(3, 6).toUpperCase()}-${pad(counters.deal, 3)}`, companyId: company.id, customerId: customer.id,
-        kind: type === 'sollecito' ? 'offerta' : type, title: `${{ offerta: 'Fornitura', gara: 'Gara MEPA', personalizzazione: 'Personalizzazione', ordine: 'Ordine', sollecito: 'Fornitura' }[type]} ${items[0].product} — ${customer.name}`,
+        kind: type === 'sollecito' ? 'offerta' : type, title: `${{ offerta: 'Fornitura', gara: 'Gara MEPA', personalizzazione: 'Personalizzazione', ordine: 'Ordine', sollecito: 'Fornitura', informazioni: 'Primo contatto' }[type]} ${items[0].product} — ${customer.name}`,
         items, value: items.reduce((s, it) => s + it.qty * rng.int(8, 60), 0), stage: 'lead', ownerId: customer.ownerId, createdAt: new Date(start).toISOString(),
       };
       deals.push(deal);
@@ -398,6 +426,8 @@ export function generateDataset(seed = DEFAULT_SEED) {
     let prev = null;
     const responsible = { commerciale: colOf(company, 'commerciale'), customer_service: colOf(company, 'customer_service'), personalizzazione: colOf(company, 'personalizzazione') };
     responsible.commerciale = company.colleagues.find((c) => c.id === customer.ownerId) ?? responsible.commerciale;
+    // Prospect senza commerciale: l'opportunità va a chi risponde dalla casella generale.
+    if (deal && !deal.ownerId) deal.ownerId = responsible.commerciale.id;
     let lastCustomerSender = contact;
 
     for (const [si, step] of steps.entries()) {
@@ -421,7 +451,10 @@ export function generateDataset(seed = DEFAULT_SEED) {
         lastCustomerSender = sender;
         genericDomain = GENERIC_DOMAINS.some((d) => sender.email.endsWith(`@${d}`));
         from = sender;
-        const target = prev?.direction === 'out' ? prev.from : responsible[step.actor] ?? responsible.commerciale;
+        // Il primo messaggio di un prospect senza commerciale arriva alla casella generale.
+        const target = prev?.direction === 'out' ? prev.from
+          : !customer.ownerId && !prev ? { id: null, name: company.name, email: company.infoEmail }
+          : responsible[step.actor] ?? responsible.commerciale;
         to = [target];
         if (step.ccRole && responsible[step.ccRole] !== target) cc.push(responsible[step.ccRole]);
         if (customer.contacts.length > 1 && rng.chance(0.2)) cc.push(customer.contacts.find((c) => c !== sender) ?? customer.contacts[0]);

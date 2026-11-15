@@ -1,5 +1,7 @@
 import { groupCustomerWork, todoDeadline, UNASSIGNED_CUSTOMER } from '../lib/customerWork';
 import { useWorkspace } from '../lib/workspaceContext';
+import { IS_LAB } from '../lib/appEnv';
+import { LabInboxPreview } from '../components/dashboard/LabInboxPreview';
 import { useState } from 'react';
 import { Panel } from '../components/ui/Syrio';
 import { CustomerWorkMenu } from '../components/dashboard/CustomerWorkMenu';
@@ -420,6 +422,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onNavigateToCo
         ].map(({ label, value, icon: Icon }) => <Panel key={label} className="cockpit-kpi"><div className="cockpit-kpi-heading"><span>{label}</span><span className="cockpit-kpi-icon"><Icon size={18} /></span></div><p className="cockpit-kpi-value tabular-nums">{value}</p></Panel>)}
       </section>
       <section className="syrio-dashboard-actions">
+      {IS_LAB && <div className="mb-4"><LabInboxPreview onOpenInbox={()=>onNavigate?.('inbox')} /></div>}
       <div className="flex flex-wrap items-end justify-between gap-3 mb-3"><div><h2 className="text-lg font-semibold text-foreground">Clienti da seguire</h2><p className="text-xs text-muted mt-1">Apri un cliente per vedere insieme richieste e prossime azioni.</p></div><button onClick={()=>onNavigate?.('todo')} className="text-xs font-semibold text-accent">Vedi tutte le attività →</button></div>
       {customerGroups.length===0 ? <Panel className="p-5"><p className="text-sm text-muted">Nessun cliente ha attività aperte o prossime azioni. Aggiungi un’attività per iniziare.</p><button onClick={()=>onNavigate?.('todo')} className="text-accent text-sm mt-3">Apri To Do →</button></Panel> : <div className="space-y-3">{customerGroups.map((group,index)=><details key={group.id} className="customer-work-card bg-surface border border-line rounded-panel overflow-hidden" open={index===0}>
         <summary className="customer-work-heading cursor-pointer p-4 flex items-center gap-3"><span className="customer-work-avatar">{group.id===UNASSIGNED_CUSTOMER?'?':group.name.trim().charAt(0).toUpperCase()}</span><span className="min-w-0 flex-1"><strong className="block text-sm text-foreground">{group.name}</strong><span className="text-xs text-muted">{group.deals.length+group.todos.length+group.requests.length} {group.deals.length+group.todos.length+group.requests.length===1?'cosa da seguire':'cose da seguire'}</span></span><span className="text-xs font-semibold text-accent">Dettagli ▾</span><CustomerWorkMenu group={group} /></summary>
