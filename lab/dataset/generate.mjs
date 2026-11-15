@@ -1,7 +1,8 @@
 // Generatore deterministico del dataset del laboratorio Syrio.
 //
-// Produce 3 aziende fittizie (le caselle email "nostre"), per ognuna 100 clienti e 1.000
-// prospect, le opportunità e circa 2.000 email in italiano in ordine cronologico su 6 mesi. Ogni email porta la
+// Produce UNA azienda fittizia (le caselle email "nostre") organizzata in reparti
+// (commerciale, customer service, ufficio personalizzazione), con 100 clienti e 1.000
+// prospect, le opportunità e circa 1.200 email in italiano in ordine cronologico su 6 mesi. Ogni email porta la
 // sua "risposta giusta" in `labels` (cliente, opportunità, tipo, richiesta/aggiornamento,
 // chi deve agire): serve a misurare il motore di smistamento e apprendimento.
 //
@@ -15,11 +16,11 @@ import {
   FIRST_NAMES, LAST_NAMES, TOWNS, DEALER_PREFIX, ENDUSER_PREFIX, PUBLIC_PREFIX, LEGAL, PRODUCTS, GENERIC_DOMAINS,
 } from './names.mjs';
 
-export const DATASET_VERSION = 2;
+export const DATASET_VERSION = 3;
 export const DEFAULT_SEED = 20260501;
 export const START = Date.UTC(2026, 4, 1, 0, 0, 0); // 1 maggio 2026
 export const END = Date.UTC(2026, 10, 1, 0, 0, 0); // 1 novembre 2026 (escluso)
-const THREAD_COUNT = 330;
+const THREAD_COUNT = 210;
 export const CLIENTS_PER_COMPANY = 100;
 export const PROSPECTS_PER_COMPANY = 1000;
 const PROSPECT_THREAD_SHARE = 0.25;
@@ -99,18 +100,19 @@ function businessEmail(p, domain, rng) {
 const genericEmail = (p, rng) => `${slug(p.first)}${rng.pick(['.', '', '_'])}${slug(p.last)}${rng.int(60, 99)}@${rng.pick(GENERIC_DOMAINS)}`;
 const phone = (rng) => `0${rng.int(30, 39)} 555 ${rng.int(1000, 9999)}`;
 
+// Una sola azienda: distribuisce abbigliamento da lavoro e lo personalizza in casa.
 const OUR_COMPANIES = [
-  { id: 'az-distributore', kind: 'distributore', name: 'Dorsali Distribuzione Srl', domain: 'dorsali-distribuzione.it' },
-  { id: 'az-personalizzatore', kind: 'personalizzatore', name: 'Ricamificio Lumen Snc', domain: 'ricamificiolumen.it' },
-  { id: 'az-agente', kind: 'agente', name: 'Agenzia Ferretti Rappresentanze', domain: 'agenziaferretti.it' },
+  { id: 'az-azienda', kind: 'distributore', name: 'Dorsali Distribuzione Srl', domain: 'dorsali-distribuzione.it' },
 ];
+
+// Reparti dell'azienda: il primo commerciale è il titolare.
+const DEPARTMENTS = ['commerciale', 'commerciale', 'commerciale', 'customer_service', 'customer_service', 'personalizzazione', 'personalizzazione'];
 
 const ROLE_LABEL = { commerciale: 'Area commerciale', customer_service: 'Customer service', personalizzazione: 'Ufficio personalizzazione' };
 
 function buildCompanies(rng, person) {
   return OUR_COMPANIES.map((c) => {
-    const roles = ['commerciale', 'commerciale', 'customer_service', rng.chance(0.5) ? 'customer_service' : 'commerciale', 'personalizzazione'];
-    const colleagues = roles.map((role, i) => {
+    const colleagues = DEPARTMENTS.map((role, i) => {
       const p = person();
       return { id: `${c.id}-col-${i + 1}`, companyId: c.id, name: p.name, first: p.first, last: p.last, role, email: businessEmail(p, c.domain, rng), phone: phone(rng) };
     });
@@ -387,7 +389,7 @@ export function generateDataset(seed = DEFAULT_SEED) {
 
     const typeWeights = [
       ['offerta', 28],
-      ['personalizzazione', company.kind === 'personalizzatore' ? 30 : 12],
+      ['personalizzazione', 20],
       ['gara', customer.publicBody ? 30 : 0],
       ['ordine', 14],
       ['sollecito', st.open.length + st.won.length > 0 ? 16 : 0],

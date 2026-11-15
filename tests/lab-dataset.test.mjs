@@ -16,8 +16,8 @@ test('due esecuzioni con lo stesso seed producono lo stesso dataset', () => {
   assert.notEqual(hash(generateDataset(7)), hash(ds), 'un seed diverso deve cambiare il dataset');
 });
 
-test('tra 1.500 e 2.200 email, in ordine cronologico, su 6 mesi', () => {
-  assert.ok(E.length >= 1500 && E.length <= 2200, `email: ${E.length}`);
+test('tra 1.000 e 1.500 email, in ordine cronologico, su 6 mesi', () => {
+  assert.ok(E.length >= 1000 && E.length <= 1500, `email: ${E.length}`);
   for (let i = 1; i < E.length; i++) assert.ok(E[i - 1].date <= E[i].date, `ordine rotto a ${E[i].id}`);
   const first = Date.parse(E[0].date), last = Date.parse(E.at(-1).date);
   assert.ok(first >= START && last < END);
@@ -26,11 +26,14 @@ test('tra 1.500 e 2.200 email, in ordine cronologico, su 6 mesi', () => {
   assert.equal(new Set(E.map((e) => e.id)).size, E.length, 'id duplicati');
 });
 
-test('tre aziende fittizie con colleghi nei tre ruoli', () => {
-  assert.deepEqual(ds.companies.map((c) => c.kind).sort(), ['agente', 'distributore', 'personalizzatore']);
-  for (const c of ds.companies) {
-    for (const r of ['commerciale', 'customer_service', 'personalizzazione']) assert.ok(c.colleagues.some((x) => x.role === r), `${c.id}: manca ${r}`);
-  }
+test('una sola azienda fittizia, organizzata nei reparti commerciale, customer service e personalizzazione', () => {
+  assert.equal(ds.companies.length, 1);
+  const [c] = ds.companies;
+  const count = (r) => c.colleagues.filter((x) => x.role === r).length;
+  assert.ok(count('commerciale') >= 2, 'commerciali');
+  assert.ok(count('customer_service') >= 2, 'customer service');
+  assert.ok(count('personalizzazione') >= 1, 'ufficio personalizzazione');
+  assert.ok(E.every((e) => e.mailbox === c.id), 'tutte le email nella stessa azienda');
 });
 
 test('100 clienti e 1.000 prospect per azienda, tra dealer ed end user, nomi unici', () => {
@@ -51,7 +54,7 @@ test('100 clienti e 1.000 prospect per azienda, tra dealer ed end user, nomi uni
 test('i prospect scrivono: i primi messaggi senza commerciale arrivano alla casella generale', () => {
   const cust = new Map(ds.customers.map((c) => [c.id, c]));
   const fromProspects = business.filter((e) => cust.get(e.labels.customerId).status === 'potenziale');
-  assert.ok(fromProspects.length >= 150, `email di prospect: ${fromProspects.length}`);
+  assert.ok(fromProspects.length >= 80, `email di prospect: ${fromProspects.length}`);
   const firsts = fromProspects.filter((e) => e.direction === 'in' && !e.inReplyTo && !cust.get(e.labels.customerId).ownerId);
   assert.ok(firsts.length > 0);
   for (const e of firsts) {

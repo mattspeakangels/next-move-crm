@@ -59,6 +59,8 @@ const ROLE_MAP = { commerciale: 'sales', customer_service: 'customer_service', p
 const SEGMENT = (c) => (c.type === 'dealer' ? 'dealer' : /edilizia|costruzioni|serramenti/.test(c.sector) ? 'edilizia' : /officine|carpenteria|impianti|termoidraulica/.test(c.sector) ? 'industria' : 'end-user');
 const PROB = { lead: 10, qualificato: 25, proposta: 40, negoziazione: 60, 'chiuso-vinto': 100, 'chiuso-perso': 0 };
 const wsId = (company) => `lab-${company.id.replace(/^az-/, '')}`;
+// Spazi delle versioni precedenti del laboratorio (tre aziende separate): il reset li toglie.
+const LEGACY_WIDS = ['lab-distributore', 'lab-personalizzatore', 'lab-agente'];
 const fakeEmail = (col) => `${col.email.split('@')[0]}.${col.companyId.replace(/^az-/, '')}@${FAKE_DOMAIN}`;
 
 const plan = {
@@ -91,13 +93,13 @@ async function commitAll(ops) {
 }
 
 async function reset() {
-  for (const c of ds.companies) {
-    const ref = db.doc(`workspaces/${wsId(c)}`);
+  const wids = [...ds.companies.map(wsId), ...LEGACY_WIDS];
+  for (const wid of wids) {
+    const ref = db.doc(`workspaces/${wid}`);
     const snap = await ref.get();
     if (snap.exists && snap.data().seedTag !== SEED_TAG) throw new Error(`${ref.path} non è stato creato dal seed: non lo tocco`);
     if (snap.exists) await db.recursiveDelete(ref);
   }
-  const wids = ds.companies.map(wsId);
   const inv = await db.collection('invites').where('wid', 'in', wids).get();
   for (const d of inv.docs) await d.ref.delete();
   // Profili: si toglie solo il riferimento agli spazi del seed.
@@ -219,7 +221,7 @@ async function grant() {
       // Mai entrato nel laboratorio: invito al primo spazio, accettato al primo accesso con Google.
       const c = ds.companies[0];
       await db.doc(`invites/${email}`).set({ email, wid: wsId(c), workspaceName: `${c.name} (LAB)`, role: 'admin', invitedBy: 'lab-seed', createdAt: Date.now() });
-      console.log(`✉ ${email}: invito come admin in ${wsId(c)}. Dopo il primo accesso rilancia --grant-only per gli altri spazi.`);
+      console.log(`✉ ${email}: invito come admin in ${wsId(c)}. Diventa attivo al primo accesso con Google.`);
       continue;
     }
     const now = Date.now();
