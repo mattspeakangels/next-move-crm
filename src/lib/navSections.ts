@@ -33,6 +33,7 @@ const EXTRA_VIEWS: Partial<Record<NavView, SectionId>> = {
   'map-full': 'mappa',
   prospecting: 'opportunita',
   assets: 'oggi', // non ha una vista propria: App mostra la Dashboard
+  'cliente-attivita': 'oggi', // lavagna "Attività con il cliente" (laboratorio), aperta dalla casella Email
 };
 
 export function getSection(id: SectionId): NavSection {

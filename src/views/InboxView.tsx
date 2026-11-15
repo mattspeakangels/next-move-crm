@@ -13,7 +13,7 @@ import { useToast } from '../components/ui/ToastContext';
 type Filter = 'tutte' | 'da-leggere' | 'clienti' | 'prospect';
 const PAGE = 40;
 
-export const InboxView: React.FC<{ onNavigateToContact?: (id: string) => void }> = ({ onNavigateToContact }) => {
+export const InboxView: React.FC<{ onNavigateToContact?: (id: string) => void; onOpenCustomerBoard?: (id: string) => void }> = ({ onNavigateToContact, onOpenCustomerBoard }) => {
   const { uid, role, members } = useWorkspace();
   const { emails, loading, error } = useLabEmails();
   const mailboxes = useMailboxes();
@@ -163,7 +163,7 @@ export const InboxView: React.FC<{ onNavigateToContact?: (id: string) => void }>
               return c ? (
                 <div className="flex items-center justify-between gap-2 rounded-md border border-line p-2">
                   <span className="text-xs text-foreground">{c.status === 'cliente' ? 'Cliente' : 'Prospect'}: <strong>{c.company}</strong></span>
-                  <button onClick={() => onNavigateToContact?.(c.id)} className="text-xs font-semibold text-accent">Apri scheda →</button>
+                  <span className="flex gap-3"><button onClick={() => onNavigateToContact?.(c.id)} className="text-xs text-muted">Anagrafica</button><button onClick={() => (onOpenCustomerBoard ?? onNavigateToContact)?.(c.id)} className="text-xs font-semibold text-accent">Attività con il cliente →</button></span>
                 </div>
               ) : <p className="text-xs text-muted">Il mittente non è in anagrafica.</p>;
             })()}

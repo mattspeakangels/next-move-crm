@@ -30,6 +30,7 @@ import { IS_LAB } from './lib/appEnv';
 import { LabPreviewView } from './views/LabPreviewView';
 import { InboxView } from './views/InboxView';
 import { LabSimRunner } from './components/LabSimRunner';
+import { CustomerBoardView } from './views/CustomerBoardView';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -136,6 +137,13 @@ function AppContent() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Lavagna "Attività con il cliente" (solo laboratorio)
+  const [boardContactId, setBoardContactId] = useState<string | null>(null);
+  const openCustomerBoard = (contactId: string) => {
+    setBoardContactId(contactId);
+    goTo('cliente-attivita');
+  };
+
   const navigateToContact = (contactId: string) => {
     setSelectedContactId(contactId);
     goTo('contacts');
@@ -180,7 +188,8 @@ function AppContent() {
       case 'strategia': return <StrategyView onNavigateToContact={navigateToContact} />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
-      case 'inbox': return IS_LAB ? <InboxView onNavigateToContact={navigateToContact} /> : null;
+      case 'inbox': return IS_LAB ? <InboxView onNavigateToContact={navigateToContact} onOpenCustomerBoard={openCustomerBoard} /> : null;
+      case 'cliente-attivita': return IS_LAB ? <CustomerBoardView contactId={boardContactId} onBack={() => goTo('inbox')} onOpenContact={navigateToContact} /> : null;
       case 'apprendimento': return IS_LAB ? <LabPreviewView feature="learningEngine" /> : null;
       case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       default: return <Dashboard onNavigate={goTo} onNavigateToContact={navigateToContact} />;

@@ -13,7 +13,7 @@ export type ContactStatus = 'potenziale' | 'cliente';
 export type OfferStatus = 'bozza' | 'inviata' | 'accettata' | 'rifiutata';
 export type Theme = 'light' | 'dark';
 
-export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo' | 'prospecting' | 'strategia' | 'inbox' | 'apprendimento';
+export type NavView = 'dashboard' | 'contacts' | 'deals' | 'offers' | 'agenda' | 'products' | 'settings' | 'map' | 'map-full' | 'attivita' | 'analytics' | 'storico' | 'legal' | 'assets' | 'todo' | 'prospecting' | 'strategia' | 'inbox' | 'apprendimento' | 'cliente-attivita';
 
 export type TodoTipo = 'offerta' | 'scheda-tecnica' | 'email-info' | 'chiamata-follow' | 'campionatura' | 'demo' | 'visita' | 'altro';
 export type TodoPriorita = 'alta' | 'media' | 'bassa';
