@@ -49,3 +49,4 @@ firestore-debug.log
 .env.lab
 .env.work
 lab/env/
+lab/dataset/out/
