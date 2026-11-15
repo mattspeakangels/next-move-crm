@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "next-move---crm---dev"
+    "default": "lab",
+    "lab": "syrio-lab",
+    "work": "next-move---crm"
   }
 }

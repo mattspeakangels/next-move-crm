@@ -5,6 +5,7 @@ yarn-error.log
 
 # Production
 dist/
+dist-lab/
 build/
 
 # Environment
@@ -43,3 +44,8 @@ ANALISI-SALESFORCE-VS-NEXTMOVE.md
 # Log e cache locali degli strumenti
 firestore-debug.log
 .serena/
+
+# Ambienti separati (lavoro / laboratorio): file con valori reali, mai in git
+.env.lab
+.env.work
+lab/env/

@@ -1,4 +1,8 @@
-const DB_NAME = 'next-move-db';
+import { IS_LAB } from './appEnv';
+
+// Il laboratorio usa un database locale suo: dati simulati e reali non si incontrano
+// mai nel browser (oltre a girare già su una porta/origine diversa).
+const DB_NAME = IS_LAB ? 'next-move-db-lab' : 'next-move-db';
 const STORE  = 'zustand';
 
 // Connessione riutilizzata — evita conflitti su write multipli ravvicinati

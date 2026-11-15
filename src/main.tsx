@@ -6,6 +6,8 @@ import App from './App';
 import { AuthProvider } from './lib/authContext';
 import { initSentry } from './config/sentry';
 import './index.css';
+import { IS_LAB } from './lib/appEnv';
+import { LabBanner } from './components/LabBanner';
 
 // Safari exposes pinch as gesture events even when the viewport is locked.
 const preventPageGesture = (event: Event) => event.preventDefault();
@@ -20,6 +22,7 @@ const SentryRoutes = Sentry.withSentryRouting(BrowserRouter);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    {IS_LAB && <LabBanner />}
     <SentryRoutes>
       <AuthProvider>
         <Sentry.ErrorBoundary

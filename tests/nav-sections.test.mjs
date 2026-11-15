@@ -1,11 +1,11 @@
 // Test del menu a voci raggruppate (src/lib/navSections.ts).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { transform } from 'esbuild';
-const source = await readFile(new URL('../src/lib/navSections.ts', import.meta.url), 'utf8');
-const compiled = await transform(source, { loader: 'ts', format: 'esm' });
-const nav = await import(`data:text/javascript;base64,${Buffer.from(compiled.code).toString('base64')}`);
+import { build } from 'esbuild';
+import { fileURLToPath } from 'node:url';
+// Bundle (navSections importa features/appEnv); senza __APP_ENV__ vale l'ambiente di lavoro.
+const out = await build({ entryPoints: [fileURLToPath(new URL('../src/lib/navSections.ts', import.meta.url))], bundle: true, format: 'esm', write: false, platform: 'neutral' });
+const nav = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
 
 const OLD_MENU = ['dashboard', 'deals', 'strategia', 'contacts', 'offers', 'products', 'agenda', 'attivita', 'map', 'todo', 'analytics', 'storico', 'legal', 'settings'];
 

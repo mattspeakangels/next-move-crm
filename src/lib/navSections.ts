@@ -1,4 +1,5 @@
 import type { NavView } from '../types';
+import { isFeatureEnabled, type FeatureFlag } from './features';
 
 // Menu principale a 6 voci + Impostazioni (Blocco 5). Ogni voce raggruppa una o più
 // viste esistenti, mostrate come schede: le viste e i loro identificativi (NavView)
@@ -7,16 +8,17 @@ import type { NavView } from '../types';
 
 export type SectionId = 'oggi' | 'clienti' | 'opportunita' | 'agenda' | 'mappa' | 'analisi' | 'impostazioni';
 
-export interface NavTab { view: NavView; label: string }
+/** `feature`: scheda visibile solo con l'interruttore acceso (src/lib/features.ts). */
+export interface NavTab { view: NavView; label: string; feature?: FeatureFlag }
 export interface NavSection { id: SectionId; label: string; tabs: NavTab[] }
 
 export const NAV_SECTIONS: NavSection[] = [
-  { id: 'oggi', label: 'Oggi', tabs: [{ view: 'dashboard', label: 'Panoramica' }, { view: 'todo', label: 'Da fare' }] },
+  { id: 'oggi', label: 'Oggi', tabs: [{ view: 'dashboard', label: 'Panoramica' }, { view: 'todo', label: 'Da fare' }, { view: 'inbox', label: 'Email', feature: 'emailInbox' }] },
   { id: 'clienti', label: 'Clienti', tabs: [{ view: 'contacts', label: 'Clienti' }, { view: 'strategia', label: 'Gruppi e focus' }] },
   { id: 'opportunita', label: 'Opportunità', tabs: [{ view: 'deals', label: 'Pipeline' }, { view: 'offers', label: 'Offerte' }, { view: 'products', label: 'Catalogo' }] },
   { id: 'agenda', label: 'Agenda', tabs: [{ view: 'agenda', label: 'Calendario' }, { view: 'attivita', label: 'Diario' }] },
   { id: 'mappa', label: 'Mappa', tabs: [{ view: 'map', label: 'Mappa' }] },
-  { id: 'analisi', label: 'Analisi', tabs: [{ view: 'analytics', label: 'Numeri' }, { view: 'storico', label: 'Storico vendite' }] },
+  { id: 'analisi', label: 'Analisi', tabs: [{ view: 'analytics', label: 'Numeri' }, { view: 'storico', label: 'Storico vendite' }, { view: 'apprendimento', label: 'Apprendimento', feature: 'learningEngine' }] },
   { id: 'impostazioni', label: 'Impostazioni', tabs: [{ view: 'settings', label: 'Impostazioni' }, { view: 'legal', label: 'Documenti legali' }] },
 ];
 
@@ -101,7 +103,7 @@ function accessFor(role: string | null | undefined): RoleAccess {
 
 /** Schede visibili di una voce per la mansione (Impostazioni sempre visibile). */
 export function tabsFor(id: SectionId, role: string | null | undefined): NavTab[] {
-  const tabs = getSection(id).tabs;
+  const tabs = getSection(id).tabs.filter(t => isFeatureEnabled(t.feature));
   if (id === 'impostazioni') return tabs;
   const rule = accessFor(role).sections[id];
   if (!rule) return [];

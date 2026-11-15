@@ -24,6 +24,10 @@ import { NavView } from './types';
 import { cssVarsForPalette, FONT_STACKS, ACCENT_SECTION_ALIAS, FontFamilyKey } from './lib/accentPalettes';
 import { Wordmark } from './components/ui/Syrio';
 import { FeedbackProvider } from './components/ui/Feedback';
+// Solo laboratorio: import statico, così nella build di lavoro (IS_LAB = false) il
+// bundler lo elimina del tutto (un import dinamico lascerebbe comunque un file).
+import { IS_LAB } from './lib/appEnv';
+import { LabPreviewView } from './views/LabPreviewView';
 
 const Dashboard      = lazy(() => import('./views/DashboardView').then(m => ({ default: m.Dashboard })));
 const ContactsView   = lazy(() => import('./views/ContactsView').then(m => ({ default: m.ContactsView })));
@@ -40,6 +44,7 @@ const StoricoView    = lazy(() => import('./views/StoricoView').then(m => ({ def
 const TodoView       = lazy(() => import('./views/TodoView').then(m => ({ default: m.TodoView })));
 const LegalView      = lazy(() => import('./views/LegalView').then(m => ({ default: m.LegalView })));
 const StrategyView   = lazy(() => import('./views/StrategyView').then(m => ({ default: m.StrategyView })));
+
 
 // Icone delle voci del menu
 const SECTION_ICONS: Record<SectionId, LucideIcon> = {
@@ -173,6 +178,8 @@ function AppContent() {
       case 'strategia': return <StrategyView onNavigateToContact={navigateToContact} />;
       case 'settings': return <SettingsView />;
       case 'todo': return <TodoView />;
+      case 'inbox': return IS_LAB ? <LabPreviewView feature="emailInbox" /> : null;
+      case 'apprendimento': return IS_LAB ? <LabPreviewView feature="learningEngine" /> : null;
       case 'prospecting': return <PipelineView onNavigateToContact={navigateToContact} onNavigate={goTo} />;
       default: return <Dashboard onNavigate={goTo} onNavigateToContact={navigateToContact} />;
     }
