@@ -1,15 +1,15 @@
 import { DialogFrame } from '../ui/DialogFrame';
-import { MapContainer, Marker, CircleMarker, Popup, Circle, ZoomControl } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Circle, ZoomControl } from 'react-leaflet';
 import { MapPin, Navigation, Phone, ExternalLink, X, SlidersHorizontal, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
 import { SearchDropdown } from '../ui/SearchDropdown';
-import { MarkerShape, shapeDivIcon, priorityStarDivIcon } from '../../lib/markerShapes';
+import { MarkerShape, googlePinIcon } from '../../lib/markerShapes';
 import { sectorLabel } from '../../lib/sectors';
-import { resolveMarkerStyle, contactMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
+import { resolveMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
 import { MapViewModel } from './useMapView';
 
 export function MapFullscreen({ v }: { v: MapViewModel }) {
-  const { onNavigateToContact, onExitFullscreen, updateContact, mapMarkerStyles, markerIconPx, markerRadiusPx, userPos, radius, locatingContactId, searchGeocodeError, mapFilter, setMapFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, showFilters, setShowFilters, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, geoMsg, locateMe, selectSearchContact, nClienti, nProspect, searchResults, availableProvinces, availableSectors, defaultCenter, visibleMarkers, markersCapped } = v;
+  const { onNavigateToContact, onExitFullscreen, updateContact, mapMarkerStyles, markerIconPx, userPos, radius, locatingContactId, searchGeocodeError, mapFilter, setMapFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, showFilters, setShowFilters, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, geoMsg, locateMe, selectSearchContact, nClienti, nProspect, searchResults, availableProvinces, availableSectors, defaultCenter, visibleMarkers, markersCapped } = v;
   return (
     <DialogFrame className="fixed inset-0 z-50 bg-black overflow-hidden">
       <MapContainer
@@ -67,22 +67,11 @@ export function MapFullscreen({ v }: { v: MapViewModel }) {
               </div>
             </Popup>
           );
-          if (c.priorityToVisit) {
-            return (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarDivIcon(markerIconPx + 2)}>
-                {popupContent}
-              </Marker>
-            );
-          }
           const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
-          return style.shape !== 'circle' ? (
-            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color, markerIconPx)}>
+          return (
+            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={googlePinIcon(style.shape as MarkerShape, style.color, markerIconPx, c.priorityToVisit)}>
               {popupContent}
             </Marker>
-          ) : (
-            <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={markerRadiusPx} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
-              {popupContent}
-            </CircleMarker>
           );
         })}
       </MapContainer>

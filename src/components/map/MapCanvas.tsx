@@ -1,12 +1,12 @@
-import { MapContainer, Marker, CircleMarker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Circle } from 'react-leaflet';
 import { MapPin, Navigation, Phone, ExternalLink, Maximize2, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
-import { MarkerShape, DEFAULT_MARKER_STYLE, shapeDivIcon, priorityStarDivIcon } from '../../lib/markerShapes';
-import { resolveMarkerStyle, contactMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
+import { MarkerShape, DEFAULT_MARKER_STYLE, googlePinIcon } from '../../lib/markerShapes';
+import { resolveMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
 import { MapViewModel } from './useMapView';
 
 export function MapCanvas({ v }: { v: MapViewModel }) {
-  const { onNavigateToContact, onGoFullscreen, updateContact, mapMarkerStyles, markerIconPx, markerRadiusPx, userPos, radius, mobileTab, flyToTarget, isLocating, geoMsg, locateMe, defaultCenter, visibleMarkers } = v;
+  const { onNavigateToContact, onGoFullscreen, updateContact, mapMarkerStyles, markerIconPx, userPos, radius, mobileTab, flyToTarget, isLocating, geoMsg, locateMe, defaultCenter, visibleMarkers } = v;
   return (
     <>
       <div className={`rounded-panel overflow-hidden shadow-panel h-[55dvh] min-h-[18rem] flex-none md:h-auto md:min-h-0 md:flex-1 relative z-0 border-4 border-line dark:border-line ${mobileTab === 'lista' ? 'hidden md:block' : 'block'}`}
@@ -67,22 +67,11 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
                 </div>
               </Popup>
             );
-            if (c.priorityToVisit) {
-              return (
-                <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={priorityStarDivIcon(markerIconPx + 2)}>
-                  {popupContent}
-                </Marker>
-              );
-            }
             const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
-            return style.shape !== 'circle' ? (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={shapeDivIcon(style.shape as MarkerShape, style.color, markerIconPx)}>
+            return (
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={googlePinIcon(style.shape as MarkerShape, style.color, markerIconPx, c.priorityToVisit)}>
                 {popupContent}
               </Marker>
-            ) : (
-              <CircleMarker key={c.markerKey} center={[c.lat!, c.lng!]} radius={markerRadiusPx} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)}>
-                {popupContent}
-              </CircleMarker>
             );
           })}
 

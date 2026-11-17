@@ -1,12 +1,12 @@
-import { MapContainer, Marker, CircleMarker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Polyline } from 'react-leaflet';
 import { MapBaseLayer } from '../ui/MapStyleControl';
-import { MarkerShape, shapeDivIcon, priorityStarDivIcon } from '../../lib/markerShapes';
-import { resolveMarkerStyle, contactMarkerStyle, userIcon, FlyToContact } from './mapShared';
+import { MarkerShape, googlePinIcon } from '../../lib/markerShapes';
+import { resolveMarkerStyle, userIcon, FlyToContact } from './mapShared';
 import { HOME, homeIcon, stopIcon, SizeInvalidator } from './itinerarioShared';
 import { ItinerarioModel } from './useItinerario';
 
 export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
-  const { isVisible, mapMarkerStyles, markerIconPx, markerRadiusPx, selectedIds, itinFlyTo, roadRouteCoords, itinUserPos, mapMarkersToShow, toggle, activeRoute } = v;
+  const { isVisible, mapMarkerStyles, markerIconPx, selectedIds, itinFlyTo, roadRouteCoords, itinUserPos, mapMarkersToShow, toggle, activeRoute } = v;
   return (
     <>
       <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false} preferCanvas>
@@ -31,8 +31,7 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
               </div>
             </Popup>
           );
-          // Tappe selezionate: marker DOM numerato (poche unità). Il resto:
-          // CircleMarker su canvas, veloce anche con centinaia di contatti.
+          // Le tappe selezionate mantengono il numero nell'itinerario.
           if (stopIdx >= 0) {
             return (
               <Marker key={c.id} position={[c.lat, c.lng]} icon={stopIcon(stopIdx + 1)} eventHandlers={{ click: () => toggle(c.id) }}>
@@ -40,22 +39,11 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
               </Marker>
             );
           }
-          if (c.priorityToVisit) {
-            return (
-              <Marker key={c.id} position={[c.lat, c.lng]} icon={priorityStarDivIcon(markerIconPx + 2)} eventHandlers={{ click: () => toggle(c.id) }}>
-                {popup}
-              </Marker>
-            );
-          }
           const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
-          return style.shape !== 'circle' ? (
-            <Marker key={c.id} position={[c.lat, c.lng]} icon={shapeDivIcon(style.shape as MarkerShape, style.color, markerIconPx)} eventHandlers={{ click: () => toggle(c.id) }}>
+          return (
+            <Marker key={c.id} position={[c.lat, c.lng]} icon={googlePinIcon(style.shape as MarkerShape, style.color, markerIconPx, c.priorityToVisit)} eventHandlers={{ click: () => toggle(c.id) }}>
               {popup}
             </Marker>
-          ) : (
-            <CircleMarker key={c.id} center={[c.lat, c.lng]} radius={markerRadiusPx} pathOptions={contactMarkerStyle(c.status, c.segment, mapMarkerStyles)} eventHandlers={{ click: () => toggle(c.id) }}>
-              {popup}
-            </CircleMarker>
           );
         })}
         {roadRouteCoords.length > 1 && (
