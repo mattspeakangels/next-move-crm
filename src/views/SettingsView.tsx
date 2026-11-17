@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { getSection, primaryView, orderMainSections, footerSections, MAIN_SECTION_IDS, MAX_FOOTER_SECTIONS, type SectionId } from '../lib/navSections';
 import { useStore } from '../store/useStore';
 import { useStoricoStore } from '../store/storicoStore';
-import { Compass, User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Calendar, Map, BarChart3, Settings, ChevronUp, ChevronDown, GripVertical, Type, CaseSensitive, Palette, Circle, Square, Triangle, Star, Diamond, Pentagon, Hexagon, Factory, type LucideIcon } from 'lucide-react';
+import { Compass, User, Target, Package, Trash2, Moon, Sun, Plus, X, ShieldCheck, Users, LogOut, Mail, KeyRound, Sparkles, CheckCircle2, Mic, MicOff, AlertTriangle, RefreshCw, LayoutDashboard, Calendar, Map, BarChart3, Settings, ChevronUp, ChevronDown, GripVertical, Type, CaseSensitive, Palette, Factory, type LucideIcon } from 'lucide-react';
 import { startGuidedTour } from '../lib/guidedTour';
 import { ACCENT_SECTIONS, FONT_STACKS, FONT_LABELS, representativeColor, type FontFamilyKey } from '../lib/accentPalettes';
-import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
+import { MARKER_SHAPE_LABELS, MARKER_CATEGORY_LABELS, MARKER_SIZE_LABELS, DEFAULT_MARKER_STYLE, googlePinIcon, type MarkerShape, type MarkerCategory, type MarkerSize } from '../lib/markerShapes';
 import { DEFAULT_SECTORS, sectorLabel } from '../lib/sectors';
 import { useToast } from '../components/ui/ToastContext';
 import { useAuth } from '../lib/authContext';
@@ -276,16 +276,6 @@ const SECTION_ICON: Record<SectionId, LucideIcon> = {
   mappa: Map, analisi: BarChart3, impostazioni: Settings,
 };
 
-const SHAPE_ICONS: Record<MarkerShape, LucideIcon> = {
-  circle: Circle,
-  square: Square,
-  triangle: Triangle,
-  diamond: Diamond,
-  star: Star,
-  pentagon: Pentagon,
-  hexagon: Hexagon,
-};
-
 const SidebarOrderSection: React.FC = () => {
   const { sidebarOrder, setSidebarOrder } = useStore();
 
@@ -336,7 +326,7 @@ const SidebarOrderSection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, globalAccent, setGlobalAccent, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, customSectors, addCustomSector, removeCustomSector, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, discountApprovalThreshold, setDiscountApprovalThreshold, footerTabs, setFooterTabs } = useStore();
+  const { profile, theme, textSize, setTextSize, fontFamily, setFontFamily, sectionColors, setSectionColor, globalAccent, setGlobalAccent, mapMarkerStyles, setMapMarkerStyle, mapMarkerSize, setMapMarkerSize, customSectors, addCustomSector, removeCustomSector, contacts, products, salesTransactions, updateProfile, toggleTheme, deleteAllContacts, clearSalesTransactions, clearProducts, footerTabs, setFooterTabs } = useStore();
   const [newSector, setNewSector] = useState('');
   const storicoClienti = useStoricoStore(s => s.clienti);
   const resetStorico = useStoricoStore(s => s.reset);
@@ -685,19 +675,22 @@ export const SettingsView: React.FC = () => {
                     />
                   </label>
                 </div>
+                <span className="text-xs text-muted">Simbolo sul pin</span>
                 <div className="flex gap-1.5 flex-wrap">
                   {(Object.keys(MARKER_SHAPE_LABELS) as MarkerShape[]).map(shape => {
-                    const ShapeIcon = SHAPE_ICONS[shape];
                     const active = currentShape === shape;
+                    const pinHtml = googlePinIcon(shape, currentColor, 24).options.html;
                     return (
                       <button
                         key={shape}
+                        type="button"
                         onClick={() => setMapMarkerStyle(category, { shape })}
+                        aria-label={`Simbolo ${MARKER_SHAPE_LABELS[shape]}`}
+                        aria-pressed={active}
                         title={MARKER_SHAPE_LABELS[shape]}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${active ? 'text-foreground shadow-panel' : 'bg-raised dark:bg-canvas text-muted hover:text-secondary dark:hover:text-muted'}`}
-                        style={active ? { background: currentColor } : undefined}
+                        className={`w-12 h-14 rounded-xl flex items-center justify-center transition-all ${active ? 'bg-accent-soft ring-2 ring-accent' : 'bg-raised dark:bg-canvas'}`}
                       >
-                        <ShapeIcon size={16} fill={active ? 'currentColor' : 'none'} />
+                        <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: typeof pinHtml === 'string' ? pinHtml : '' }} />
                       </button>
                     );
                   })}
@@ -824,29 +817,6 @@ export const SettingsView: React.FC = () => {
           >
             <Plus size={16} /> Aggiungi
           </button>
-        </div>
-      </div>
-
-      {/* Approvazione Sconti */}
-      <div className="bg-surface dark:bg-surface p-6 rounded-panel border border-line dark:border-line shadow-sm">
-        <h3 className="font-bold mb-4 flex items-center gap-2"><ShieldCheck size={18} className="text-accent"/> Soglia Approvazione Sconti</h3>
-        <p className="text-xs text-secondary dark:text-muted mb-3">
-          Le offerte con sconto medio superiore a questa soglia vengono marcate come "Richiede approvazione".
-        </p>
-        <div className="flex items-center gap-4">
-          <input
-            type="range"
-            min={0}
-            max={60}
-            step={5}
-            value={discountApprovalThreshold}
-            onChange={e => setDiscountApprovalThreshold(parseInt(e.target.value))}
-            className="flex-1 accent-indigo-600"
-          />
-          <span className="text-xl font-semibold text-accent min-w-[50px] text-right">{discountApprovalThreshold}%</span>
-        </div>
-        <div className="flex justify-between text-xs text-muted font-bold mt-1">
-          <span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span><span>60%</span>
         </div>
       </div>
 
