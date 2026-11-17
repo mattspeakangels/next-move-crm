@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { isShownInAgenda } from '../../lib/agendaFilter';
+import { isShownInAgenda, isOpenCall } from '../../lib/agendaFilter';
 import { matchSearch, sortByRelevance } from '../../utils/search';
 import { convertToLead, startSequenceForContact } from '../../lib/prospecting';
 import { VISITA_FREDDO_AVVIA_SEQUENZA, activityOccursOnDay } from './agendaShared';
@@ -111,6 +111,12 @@ export function useAgendaClose(prev: AgendaAiModel) {
   // Attività visibili in Agenda secondo le categorie scelte (mai quelle archiviate)
   const allActivities = Object.values(activities).filter(a => isShownInAgenda(a, categories));
 
+  // Telefonate ancora da fare: sezione a parte, sempre visibile, dalla più vecchia (in ritardo) alla più lontana
+  const openCalls = useMemo(
+    () => Object.values(activities).filter(isOpenCall).sort((a, b) => a.date - b.date),
+    [activities],
+  );
+
   // Filtered contacts for picker — computed outside JSX for reliability
   const filteredContacts = useMemo(() => {
     return sortByRelevance(contactSearch, Object.values(contacts)
@@ -133,7 +139,7 @@ export function useAgendaClose(prev: AgendaAiModel) {
     (a.type === 'visita' || a.type === 'sopralluogo') &&
     contacts[a.contactId]?.lat && contacts[a.contactId]?.lng
   );
-  return { ...prev, handleCloseActivity, allActivities, filteredContacts, activitiesForDay, listActivities, dayHasMappedVisits };
+  return { ...prev, handleCloseActivity, allActivities, openCalls, filteredContacts, activitiesForDay, listActivities, dayHasMappedVisits };
 }
 
 export type AgendaCloseModel = ReturnType<typeof useAgendaClose>;
