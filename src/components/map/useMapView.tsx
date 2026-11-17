@@ -206,8 +206,8 @@ export function useMapView(props: MapViewProps) {
     }
   };
 
-  const allContacts  = Object.values(contacts);
-  const allMapped    = allContacts.filter(hasCoords);
+  const allContacts = useMemo(() => Object.values(contacts), [contacts]);
+  const allMapped = useMemo(() => allContacts.filter(hasCoords), [allContacts]);
   const nClienti     = allMapped.filter(c => c.status === 'cliente').length;
   const nProspect    = allMapped.filter(c => c.status === 'potenziale').length;
 
@@ -218,7 +218,7 @@ export function useMapView(props: MapViewProps) {
         .slice(0, 7)
     : [];
 
-  const filtered = allMapped.filter(c => {
+  const filtered = useMemo(() => allMapped.filter(c => {
     if (mapFilter === 'clienti')  return c.status === 'cliente';
     if (mapFilter === 'prospect') return c.status === 'potenziale';
     return true;
@@ -226,7 +226,8 @@ export function useMapView(props: MapViewProps) {
     .filter(c => !mapProvinceFilter || c.province === mapProvinceFilter)
     .filter(c => !mapSectorFilter || c.sector === mapSectorFilter)
     .filter(c => !mapPriorityOnly || c.priorityToVisit === true)
-    .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]));
+    .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email])),
+    [allMapped, mapFilter, mapSegmentFilter, mapProvinceFilter, mapSectorFilter, mapPriorityOnly, searchNorm]);
 
   // Province disponibili nei contatti geocodificati
   const availableProvinces = useMemo(() =>
@@ -236,14 +237,14 @@ export function useMapView(props: MapViewProps) {
     [...new Set(allMapped.map(c => c.sector).filter(Boolean))].sort() as string[]
   , [allMapped]);
 
-  const nearby = userPos
+  const nearby = useMemo(() => userPos
     ? filtered.filter(c => calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius)
-    : [];
+    : [], [filtered, userPos, radius]);
 
-  const listContacts = filtered.map(c => ({
+  const listContacts = useMemo(() => filtered.map(c => ({
     ...c,
     distKm: userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null,
-  })).sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
+  })).sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999)), [filtered, userPos]);
 
   const unmappedWithAddress = allContacts.filter(c => !c.lat && (c.city || c.province));
   const defaultCenter: [number, number] = userPos ?? [45.5, 9.2]; // default: Milano

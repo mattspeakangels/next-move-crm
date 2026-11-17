@@ -3,6 +3,7 @@ import { MapContainer, Marker, Popup, Circle, ZoomControl } from 'react-leaflet'
 import { MapPin, Navigation, Phone, ExternalLink, X, SlidersHorizontal, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
 import { PinColorControl } from './PinColorControl';
+import { GroupedMapMarkers } from './GroupedMapMarkers';
 import { SearchDropdown } from '../ui/SearchDropdown';
 import { MarkerShape, googlePinIcon } from '../../lib/markerShapes';
 import { sectorLabel } from '../../lib/sectors';
@@ -28,7 +29,7 @@ export function MapFullscreen({ v }: { v: MapViewModel }) {
         {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#c08d62', fillOpacity: 0.06, dashArray: '6 4' }} />}
         <DoubleClickHandler onDoubleClick={() => onExitFullscreen?.()} />
         <FlyToContact position={flyToTarget} />
-        {visibleMarkers.map(c => {
+        <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => resolveMarkerStyle(c.status, c.segment, mapMarkerStyles).color} renderSingle={c => {
           const isCliente = c.status === 'cliente';
           const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
           const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
@@ -75,7 +76,7 @@ export function MapFullscreen({ v }: { v: MapViewModel }) {
               {popupContent}
             </Marker>
           );
-        })}
+        }} />
       </MapContainer>
 
       <MapStyleButton className="bottom-20 left-4" />

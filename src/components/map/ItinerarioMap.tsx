@@ -1,5 +1,6 @@
 import { MapContainer, Marker, Popup, Polyline } from 'react-leaflet';
 import { MapBaseLayer } from '../ui/MapStyleControl';
+import { GroupedMapMarkers } from './GroupedMapMarkers';
 import { MarkerShape, googlePinIcon } from '../../lib/markerShapes';
 import { resolveMarkerStyle, userIcon, FlyToContact } from './mapShared';
 import { HOME, homeIcon, stopIcon, SizeInvalidator } from './itinerarioShared';
@@ -17,7 +18,7 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
           <Popup><strong>Partenza — {HOME.label}</strong></Popup>
         </Marker>
         {itinUserPos && <Marker position={itinUserPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
-        {mapMarkersToShow.map((c) => {
+        <GroupedMapMarkers items={mapMarkersToShow} onSelect={c => toggle(c.id)} getCategoryColor={c => resolveMarkerStyle(c.status, c.segment, mapMarkerStyles).color} actionLabel="Aggiungi o rimuovi" renderSingle={c => {
           const selected = selectedIds.includes(c.id);
           const stopIdx = activeRoute.findIndex((s) => s.id === c.id);
           const popup = (
@@ -45,7 +46,7 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
               {popup}
             </Marker>
           );
-        })}
+        }} />
         {roadRouteCoords.length > 1 && (
           <Polyline positions={roadRouteCoords} pathOptions={{ color: '#176f77', weight: 5, opacity: 0.85 }} />
         )}

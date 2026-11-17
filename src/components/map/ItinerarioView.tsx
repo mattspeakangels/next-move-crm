@@ -34,7 +34,7 @@ export const ItinerarioView: React.FC<ItinerarioViewProps> = (props) => {
         <ItinerarioTopBar v={v} />
 
         {/* Mappa */}
-        <ItinerarioMap v={v} />
+        {isVisible && <ItinerarioMap v={v} />}
         <MapStyleButton className="bottom-20 left-4 lg:bottom-4" />
 
         {/* Geolocalizzazione */}

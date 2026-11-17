@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { MapPin, Navigation, Phone, Building2, Star } from 'lucide-react';
 import { MapViewModel } from './useMapView';
 
 export function MapContactList({ v }: { v: MapViewModel }) {
   const { onNavigateToContact, mobileTab, listContacts } = v;
+  const [visibleCount, setVisibleCount] = useState(50);
+  if (mobileTab !== 'lista') return null;
   return (
     <>
-      <div className={`flex-1 overflow-y-auto space-y-2 ${mobileTab === 'mappa' ? 'hidden md:hidden' : 'block'} md:hidden`}
+      <div className="flex-1 overflow-y-auto space-y-2 block md:hidden"
         style={{ minHeight: 0 }}
       >
         {listContacts.length === 0 ? (
@@ -14,7 +17,7 @@ export function MapContactList({ v }: { v: MapViewModel }) {
             <p className="text-sm font-bold text-muted uppercase tracking-normal">Nessun contatto mappato</p>
             <p className="text-xs text-muted mt-1">Apri i filtri e clicca "Trova Coordinate"</p>
           </div>
-        ) : listContacts.map(c => {
+        ) : listContacts.slice(0, visibleCount).map(c => {
           const isCliente = c.status === 'cliente';
           return (
             <div
@@ -69,6 +72,11 @@ export function MapContactList({ v }: { v: MapViewModel }) {
             </div>
           );
         })}
+        {visibleCount < listContacts.length && (
+          <button type="button" onClick={() => setVisibleCount(count => count + 50)} className="w-full rounded-panel bg-raised text-foreground py-3 font-semibold">
+            Mostra altri ({listContacts.length - visibleCount} rimanenti)
+          </button>
+        )}
       </div>
     </>
   );

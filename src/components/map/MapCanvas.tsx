@@ -2,6 +2,7 @@ import { MapContainer, Marker, Popup, Circle } from 'react-leaflet';
 import { MapPin, Navigation, Phone, ExternalLink, Maximize2, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
 import { PinColorControl } from './PinColorControl';
+import { GroupedMapMarkers } from './GroupedMapMarkers';
 import { MarkerShape, DEFAULT_MARKER_STYLE, googlePinIcon } from '../../lib/markerShapes';
 import { resolveMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
 import { MapViewModel } from './useMapView';
@@ -26,7 +27,7 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
           {onGoFullscreen && <DoubleClickHandler onDoubleClick={onGoFullscreen} />}
           <FlyToContact position={flyToTarget} />
 
-          {visibleMarkers.map(c => {
+          <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => resolveMarkerStyle(c.status, c.segment, mapMarkerStyles).color} renderSingle={c => {
             const isCliente = c.status === 'cliente';
             const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
@@ -75,7 +76,7 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
                 {popupContent}
               </Marker>
             );
-          })}
+          }} />
 
         </MapContainer>
 
