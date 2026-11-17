@@ -5,7 +5,7 @@ import { Layers } from 'lucide-react';
 // Stili mappa Esri (gratuiti, senza chiave API). Lo stile scelto è condiviso da tutte le mappe e ricordato.
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 export const MAP_STYLES = {
-  strade: { label: 'Strade', url: `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}` },
+  strade: { label: 'Strade', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
   topo: { label: 'Topografica', url: `${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}` },
   satellite: { label: 'Satellite', url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}` },
 } as const;
@@ -36,7 +36,7 @@ export function MapBaseLayer() {
     <TileLayer
       key={style}
       url={MAP_STYLES[style].url}
-      attribution="Tiles © Esri"
+      attribution={style === 'strade' ? '&copy; OpenStreetMap contributors &copy; CARTO' : 'Tiles &copy; Esri'}
       maxZoom={19}
     />
   );

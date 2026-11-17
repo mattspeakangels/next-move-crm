@@ -482,3 +482,27 @@ body { background: radial-gradient(1200px 600px at 85% -10%, rgb(var(--syrio-acc
 .tour-card { animation: tour-in .22s ease-out; }
 @keyframes tour-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { [data-tour-highlight], .tour-card { animation: none; } }
+
+
+/* Life360-inspired visual refresh: the existing navigation and workflows stay intact. */
+:root {
+  --syrio-canvas: 247 246 249; --syrio-surface: 255 255 255; --syrio-raised: 239 237 242;
+  --syrio-line: 229 226 234; --syrio-foreground: 29 13 48; --syrio-secondary: 76 65 90; --syrio-muted: 108 96 120;
+  --syrio-accent: 120 69 255; --syrio-accent-soft: 239 231 255; --syrio-action: 120 69 255; --syrio-action-hover: 102 50 225; --syrio-action-foreground: 255 255 255;
+  --syrio-radius: 1.25rem; --syrio-radius-control: .875rem; --syrio-shadow: 0 6px 20px rgb(43 26 61 / .08);
+}
+.dark {
+  --syrio-canvas: 24 19 30; --syrio-surface: 36 30 44; --syrio-raised: 48 40 58; --syrio-line: 71 61 82;
+  --syrio-foreground: 248 245 252; --syrio-secondary: 221 212 230; --syrio-muted: 182 169 195;
+  --syrio-accent: 184 157 255; --syrio-accent-soft: 65 46 91; --syrio-action: 120 69 255; --syrio-action-hover: 143 100 255; --syrio-action-foreground: 255 255 255;
+}
+body { background: rgb(var(--syrio-canvas)); }
+.cockpit-sidebar { background: rgb(var(--syrio-surface)); border-color: rgb(var(--syrio-line)); box-shadow: 0 8px 30px rgb(43 26 61 / .08); }
+.cockpit-sidebar .syrio-wordmark, .cockpit-sidebar nav button { color: rgb(var(--syrio-secondary)); }
+.cockpit-sidebar nav button:hover { background: rgb(var(--syrio-raised)); color: rgb(var(--syrio-foreground)); }
+.cockpit-sidebar nav button[aria-current='page'] { background: rgb(var(--syrio-accent-soft)); color: rgb(var(--syrio-accent)); }
+.cockpit-sidebar nav button[aria-current='page'] svg { color: rgb(var(--syrio-accent)); }
+.cockpit-content :where(.rounded-panel) { border-radius: 1.25rem; }
+.cockpit-content :where(.shadow-sm, .shadow-panel) { box-shadow: 0 6px 20px rgb(43 26 61 / .08); }
+.cockpit-content :where(input:not([type='checkbox']):not([type='radio']), select, textarea) { border-radius: .875rem; }
+.cockpit-content h1, .cockpit-content h2, .cockpit-content h3 { letter-spacing: -.025em; }
