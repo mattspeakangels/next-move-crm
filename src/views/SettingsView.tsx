@@ -644,7 +644,7 @@ export const SettingsView: React.FC = () => {
         <div className="flex items-center gap-2 font-bold mb-1">
           <Map size={18} /> Icone clienti sulla mappa
         </div>
-        <p className="text-xs text-muted mb-4">Scegli forma e colore del marker per ogni categoria di cliente/prospect nella sezione Mappa (i prioritari restano sempre una stellina oro/fucsia).</p>
+        <p className="text-xs text-muted mb-4">Scegli il colore dei pin per ogni categoria. Per cambiare un singolo cliente, tocca il suo pin sulla mappa e scegli «Colore pin». La stella indica le priorità.</p>
 
         <div className="flex justify-between items-center mb-5 pb-5 border-b border-line dark:border-line">
           <span className="text-sm font-bold text-secondary dark:text-muted">Dimensione icone</span>
@@ -672,12 +672,13 @@ export const SettingsView: React.FC = () => {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-bold text-secondary dark:text-muted">{MARKER_CATEGORY_LABELS[category]}</span>
                   <label
-                    className="relative w-7 h-7 rounded-full ring-1 ring-black/10 dark:ring-line/20 overflow-hidden cursor-pointer shadow-sm flex-shrink-0"
+                    className="relative w-11 h-11 rounded-full ring-1 ring-black/10 dark:ring-line/20 overflow-hidden cursor-pointer shadow-sm flex-shrink-0"
                     style={{ background: currentColor }}
                     title="Scegli un colore"
                   >
                     <input
                       type="color"
+                      aria-label={`Colore pin ${MARKER_CATEGORY_LABELS[category]}`}
                       value={currentColor}
                       onChange={e => setMapMarkerStyle(category, { color: e.target.value })}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

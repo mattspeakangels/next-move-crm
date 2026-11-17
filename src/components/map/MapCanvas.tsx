@@ -1,6 +1,7 @@
 import { MapContainer, Marker, Popup, Circle } from 'react-leaflet';
 import { MapPin, Navigation, Phone, ExternalLink, Maximize2, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
+import { PinColorControl } from './PinColorControl';
 import { MarkerShape, DEFAULT_MARKER_STYLE, googlePinIcon } from '../../lib/markerShapes';
 import { resolveMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
 import { MapViewModel } from './useMapView';
@@ -27,6 +28,7 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
 
           {visibleMarkers.map(c => {
             const isCliente = c.status === 'cliente';
+            const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
             const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
             const popupContent = (
               <Popup minWidth={220}>
@@ -41,6 +43,7 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
                   <h4 className="font-semibold uppercase text-foreground text-sm mb-1">{c.company}</h4>
                   {c.address && <p className="text-xs text-secondary flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
                   {c.phone   && <p className="text-xs text-secondary flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
+                  <PinColorControl contactId={c.id} categoryColor={style.color} />
                   <div className="flex flex-col gap-1.5 pt-2 mt-2 border-t border-line">
                     <button
                       onClick={() => onNavigateToContact(c.id)}
@@ -67,9 +70,8 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
                 </div>
               </Popup>
             );
-            const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
             return (
-              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={googlePinIcon(style.shape as MarkerShape, style.color, markerIconPx, c.priorityToVisit)}>
+              <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={googlePinIcon(style.shape as MarkerShape, mapMarkerStyles[`contact:${c.id}`]?.color || style.color, markerIconPx, c.priorityToVisit)}>
                 {popupContent}
               </Marker>
             );

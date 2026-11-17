@@ -147,7 +147,7 @@ export function googlePinIcon(shape: MarkerShape, color: string, size = 22, prio
     : `<path d="${shapePath(badgeShape, 24)}" fill="${priority ? '#f6bf26' : safeColor}"/>`;
   const icon = L.divIcon({
     className: '',
-    html: `<div style="position:relative;width:${width}px;height:${height}px"><img alt="" draggable="false" src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png" style="display:block;width:100%;height:100%"><svg aria-hidden="true" viewBox="0 0 24 24" width="${badgeSize}" height="${badgeSize}" style="position:absolute;right:-${Math.round(badgeSize / 4)}px;top:0;background:white;border-radius:50%;box-shadow:0 1px 3px #0004">${badge}</svg></div>`,
+    html: `<div style="position:relative;isolation:isolate;width:${width}px;height:${height}px"><img alt="" draggable="false" src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png" style="display:block;width:100%;height:100%"><span style="position:absolute;inset:0;background:${safeColor};opacity:.84;-webkit-mask:url(https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png) center / 100% 100% no-repeat;mask:url(https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png) center / 100% 100% no-repeat;pointer-events:none"></span><svg aria-hidden="true" viewBox="0 0 24 24" width="${badgeSize}" height="${badgeSize}" style="position:absolute;right:-${Math.round(badgeSize / 4)}px;top:0;background:white;border-radius:50%;box-shadow:0 1px 3px #0004">${badge}</svg></div>`,
     iconSize: [width, height],
     iconAnchor: [width / 2, height],
     popupAnchor: [0, -height],

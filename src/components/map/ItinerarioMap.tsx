@@ -41,7 +41,7 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
           }
           const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
           return (
-            <Marker key={c.id} position={[c.lat, c.lng]} icon={googlePinIcon(style.shape as MarkerShape, style.color, markerIconPx, c.priorityToVisit)} eventHandlers={{ click: () => toggle(c.id) }}>
+            <Marker key={c.id} position={[c.lat, c.lng]} icon={googlePinIcon(style.shape as MarkerShape, mapMarkerStyles[`contact:${c.id}`]?.color || style.color, markerIconPx, c.priorityToVisit)} eventHandlers={{ click: () => toggle(c.id) }}>
               {popup}
             </Marker>
           );
