@@ -17,6 +17,7 @@ export interface ItinerarioViewProps {
   // Data richiesta dall'esterno (es. dall'Agenda, "Vedi itinerario" per un giorno specifico).
   // `nonce` cambia ad ogni richiesta cosi' da poter ri-applicare anche la stessa data.
   requestedDate?: { date: string; nonce: number } | null;
+  suggestedRoute?: { ids: string[]; nonce: number } | null;
 }
 
 export const ItinerarioView: React.FC<ItinerarioViewProps> = (props) => {

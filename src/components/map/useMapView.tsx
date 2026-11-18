@@ -40,6 +40,7 @@ export function useMapView(props: MapViewProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [showItinerario, setShowItinerario] = useState(false);
+  const [suggestedRoute, setSuggestedRoute] = useState<{ ids: string[]; nonce: number } | null>(null);
   const [itinerarioEverOpened, setItinerarioEverOpened] = useState(false);
   const [itinRequestedDate, setItinRequestedDate] = useState<{ date: string; nonce: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -270,7 +271,7 @@ export function useMapView(props: MapViewProps) {
   const markersCapped = false;
 
   // ── FULLSCREEN MODE ─────────────────────────────────────────────────────────
-  return { onNavigateToContact, isFullscreen, onGoFullscreen, onExitFullscreen, initialItineraryDate, onItineraryDateConsumed, contacts, updateContact, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, userPos, setUserPos, radius, setRadius, isGeocoding, setIsGeocoding, debugMsg, setDebugMsg, locatingContactId, setLocatingContactId, searchGeocodeError, setSearchGeocodeError, mapFilter, setMapFilter, mapSegmentFilter, setMapSegmentFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, mobileTab, setMobileTab, showFilters, setShowFilters, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, itinerarioEverOpened, setItinerarioEverOpened, itinRequestedDate, setItinRequestedDate, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, setIsLocating, geoMsg, setGeoMsg, saveUserPos, locateMe, applyAISuggestions, geocodeContacts, selectSearchContact, allContacts, allMapped, nClienti, nProspect, searchNorm, searchResults, filtered, availableProvinces, availableSectors, nearby, listContacts, unmappedWithAddress, defaultCenter, visibleMarkers, markersCapped };
+  return { onNavigateToContact, isFullscreen, onGoFullscreen, onExitFullscreen, initialItineraryDate, onItineraryDateConsumed, contacts, updateContact, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, userPos, setUserPos, radius, setRadius, isGeocoding, setIsGeocoding, debugMsg, setDebugMsg, locatingContactId, setLocatingContactId, searchGeocodeError, setSearchGeocodeError, mapFilter, setMapFilter, mapSegmentFilter, setMapSegmentFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, mobileTab, setMobileTab, showFilters, setShowFilters, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, suggestedRoute, setSuggestedRoute, itinerarioEverOpened, setItinerarioEverOpened, itinRequestedDate, setItinRequestedDate, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, setIsLocating, geoMsg, setGeoMsg, saveUserPos, locateMe, applyAISuggestions, geocodeContacts, selectSearchContact, allContacts, allMapped, nClienti, nProspect, searchNorm, searchResults, filtered, availableProvinces, availableSectors, nearby, listContacts, unmappedWithAddress, defaultCenter, visibleMarkers, markersCapped };
 }
 
 export type MapViewModel = ReturnType<typeof useMapView>;

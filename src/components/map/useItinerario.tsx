@@ -11,7 +11,7 @@ import { ItinerarioViewProps } from './ItinerarioView';
 
 // Stato e azioni dell'itinerario: tappe, ordine, orari, posizione e salvataggio in Agenda.
 export function useItinerario(props: ItinerarioViewProps) {
-  const { contacts, onClose, isVisible, requestedDate } = props;
+  const { contacts, onClose, isVisible, requestedDate, suggestedRoute } = props;
   const { addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize } = useStore();
   const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
   const markerRadiusPx = MARKER_CIRCLE_RADIUS[mapMarkerSize];
@@ -163,8 +163,8 @@ export function useItinerario(props: ItinerarioViewProps) {
     if (saved.length === 0) return; // magari Firestore non ha ancora sincronizzato: riprova al prossimo update
 
     const ids = saved.map((a) => a.contactId as string);
-    setSelectedIds(ids);
-    setManualOrder(ids);
+    setSelectedIds(prev => [...new Set([...ids, ...prev])]);
+    setManualOrder(prev => [...new Set([...ids, ...(prev || [])])]);
     const times: Record<string, string> = {};
     saved.forEach((a) => {
       const d = new Date(a.date);
@@ -174,6 +174,15 @@ export function useItinerario(props: ItinerarioViewProps) {
     setSheetOpen(true);
     loadedItinDateRef.current = date;
   }, [date, activities]);
+
+  // Aggiunge le tappe suggerite a quelle già presenti, senza sostituire l'itinerario.
+  const appliedSuggestionRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!suggestedRoute || suggestedRoute.nonce === appliedSuggestionRef.current) return;
+    appliedSuggestionRef.current = suggestedRoute.nonce;
+    setSelectedIds(prev => [...new Set([...prev, ...suggestedRoute.ids.filter(id => contacts[id] && hasCoords(contacts[id]))])]);
+    setSheetOpen(true);
+  }, [suggestedRoute, contacts]);
 
   // Route attiva: manuale (drag) oppure auto-ottimizzata
   const activeRoute = useMemo(() => {

@@ -149,6 +149,8 @@ export interface Contact {
 
   // Segnalato manualmente come prioritario da visitare (mappa)
   priorityToVisit?: boolean;
+  mapSuggestionHidden?: boolean;
+  mapSuggestionSnoozeUntil?: number;
 
   createdAt: number;
   updatedAt: number;
