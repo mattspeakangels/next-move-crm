@@ -5,17 +5,14 @@ import { MapViewModel } from './useMapView';
 import { MapHeader } from './MapHeader';
 import { MapCanvas } from './MapCanvas';
 import { MapContactList } from './MapContactList';
-import { VisitSuggestions } from './VisitSuggestions';
 
 export function MapNormal({ v }: { v: MapViewModel }) {
-  const { contacts, userPos, radius, mobileTab, setMobileTab, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, itinerarioEverOpened, setItinerarioEverOpened, itinRequestedDate, setSuggestedRoute, suggestedRoute, applyAISuggestions, filtered, nearby } = v;
+  const { contacts, userPos, radius, mobileTab, setMobileTab, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, itinerarioEverOpened, itinRequestedDate, suggestedRoute, applyAISuggestions, filtered, nearby } = v;
   return (
     <div className="flex min-w-0 flex-col min-h-[calc(100dvh-140px)] md:h-[calc(100dvh-88px)] md:min-h-[38rem]">
 
       {/* ── Header compatto ── */}
       <MapHeader v={v} />
-
-      <VisitSuggestions contacts={filtered} userPos={userPos} radius={radius} onOpenContact={v.onNavigateToContact} onShowMap={contact => { if (contact.lat != null && contact.lng != null) { v.setFlyToTarget([contact.lat, contact.lng]); setMobileTab('mappa'); } }} onCreateRoute={ids => { setSuggestedRoute({ ids, nonce: Date.now() }); setItinerarioEverOpened(true); setShowItinerario(true); }} />
 
       {/* ── Tab Mappa / Lista (mobile only) ── */}
       <div className="flex gap-1 bg-raised dark:bg-surface p-1 rounded-panel w-full mb-3 md:hidden flex-shrink-0">

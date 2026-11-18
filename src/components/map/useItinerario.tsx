@@ -6,13 +6,14 @@ import { MARKER_ICON_PX, MARKER_CIRCLE_RADIUS } from '../../lib/markerShapes';
 import { PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { requestPosition, calculateDistance, hasCoords } from './mapShared';
+import { buildMapInsights } from './commercialMap';
 import { HOME, AVG_SPEED_KMH, dateKey, nearestNeighbor } from './itinerarioShared';
 import { ItinerarioViewProps } from './ItinerarioView';
 
 // Stato e azioni dell'itinerario: tappe, ordine, orari, posizione e salvataggio in Agenda.
 export function useItinerario(props: ItinerarioViewProps) {
   const { contacts, onClose, isVisible, requestedDate, suggestedRoute } = props;
-  const { addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize } = useStore();
+  const { addActivity, deleteActivity, activities, deals, todos, mapMarkerStyles, mapMarkerSize } = useStore();
   const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
   const markerRadiusPx = MARKER_CIRCLE_RADIUS[mapMarkerSize];
   const today = new Date().toISOString().slice(0, 10);
@@ -65,6 +66,7 @@ export function useItinerario(props: ItinerarioViewProps) {
   };
 
   const allContactsList = useMemo(() => Object.values(contacts), [contacts]);
+  const mapInsights = useMemo(() => buildMapInsights(allContactsList, Object.values(activities), Object.values(deals), Object.values(todos), Date.now()), [allContactsList, activities, deals, todos]);
 
   const searchItinNorm = useMemo(() => searchItinQuery.trim(), [searchItinQuery]);
   const itinSearchResults = useMemo(() =>
@@ -305,7 +307,7 @@ export function useItinerario(props: ItinerarioViewProps) {
     setSavedToAgenda(true);
     setTimeout(() => setSavedToAgenda(false), 3000);
   };
-  return { contacts, onClose, isVisible, requestedDate, addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, today, date, setDate, onlyRouteOnMap, setOnlyRouteOnMap, lastRequestNonceRef, selectedIds, setSelectedIds, sheetOpen, setSheetOpen, filterStatus, setFilterStatus, filterSegment, setFilterSegment, filterPriorityOnly, setFilterPriorityOnly, filterProvince, setFilterProvince, filterSector, setFilterSector, showFiltersBar, setShowFiltersBar, startTime, setStartTime, visitDuration, setVisitDuration, savedToAgenda, setSavedToAgenda, customTimes, setCustomTimes, searchItinQuery, setSearchItinQuery, itinFlyTo, setItinFlyTo, manualOrder, setManualOrder, roadRouteCoords, setRoadRouteCoords, loadedItinDateRef, itinUserPos, setItinUserPos, itinLocating, setItinLocating, itinGeoMsg, setItinGeoMsg, locateItin, allContactsList, searchItinNorm, itinSearchResults, mapped, availableProvinces, availableSectors, visible, itinActiveFilterCount, mapMarkersToShow, toggle, optimizedRoute, activeRoute, dndSensors, handleDragEnd, legs, totalKm, effectiveTimes, routeCoords, googleMapsUrl, addToAgenda };
+  return { contacts, onClose, isVisible, requestedDate, mapInsights, addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, today, date, setDate, onlyRouteOnMap, setOnlyRouteOnMap, lastRequestNonceRef, selectedIds, setSelectedIds, sheetOpen, setSheetOpen, filterStatus, setFilterStatus, filterSegment, setFilterSegment, filterPriorityOnly, setFilterPriorityOnly, filterProvince, setFilterProvince, filterSector, setFilterSector, showFiltersBar, setShowFiltersBar, startTime, setStartTime, visitDuration, setVisitDuration, savedToAgenda, setSavedToAgenda, customTimes, setCustomTimes, searchItinQuery, setSearchItinQuery, itinFlyTo, setItinFlyTo, manualOrder, setManualOrder, roadRouteCoords, setRoadRouteCoords, loadedItinDateRef, itinUserPos, setItinUserPos, itinLocating, setItinLocating, itinGeoMsg, setItinGeoMsg, locateItin, allContactsList, searchItinNorm, itinSearchResults, mapped, availableProvinces, availableSectors, visible, itinActiveFilterCount, mapMarkersToShow, toggle, optimizedRoute, activeRoute, dndSensors, handleDragEnd, legs, totalKm, effectiveTimes, routeCoords, googleMapsUrl, addToAgenda };
 }
 
 export type ItinerarioModel = ReturnType<typeof useItinerario>;

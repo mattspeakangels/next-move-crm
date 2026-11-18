@@ -1,17 +1,18 @@
 import { DialogFrame } from '../ui/DialogFrame';
+import { ItinerarioView } from './ItinerarioView';
 import { MapContainer, Marker, Popup, Circle, ZoomControl } from 'react-leaflet';
-import { MapPin, Navigation, Phone, ExternalLink, X, SlidersHorizontal, Star } from 'lucide-react';
+import { X, SlidersHorizontal, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
-import { PinColorControl } from './PinColorControl';
+import { CommercialContact, CommercialMapControls, commercialGroupColor, commercialIcon } from './CommercialMapControls';
+import { HEAT_COLORS } from './commercialMap';
 import { GroupedMapMarkers } from './GroupedMapMarkers';
 import { SearchDropdown } from '../ui/SearchDropdown';
-import { MarkerShape, googlePinIcon } from '../../lib/markerShapes';
 import { sectorLabel } from '../../lib/sectors';
-import { resolveMarkerStyle, userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton, calculateDistance } from './mapShared';
+import { userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton } from './mapShared';
 import { MapViewModel } from './useMapView';
 
 export function MapFullscreen({ v }: { v: MapViewModel }) {
-  const { onNavigateToContact, onExitFullscreen, updateContact, mapMarkerStyles, markerIconPx, userPos, radius, locatingContactId, searchGeocodeError, mapFilter, setMapFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, showFilters, setShowFilters, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, geoMsg, locateMe, selectSearchContact, nClienti, nProspect, searchResults, availableProvinces, availableSectors, defaultCenter, visibleMarkers, markersCapped } = v;
+  const { onNavigateToContact, onExitFullscreen, markerIconPx, userPos, radius, locatingContactId, searchGeocodeError, mapFilter, setMapFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, showFilters, setShowFilters, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, geoMsg, locateMe, selectSearchContact, nClienti, nProspect, searchResults, availableProvinces, availableSectors, defaultCenter, visibleMarkers, markersCapped } = v;
   return (
     <DialogFrame className="fixed inset-0 z-50 bg-black overflow-hidden">
       <MapContainer
@@ -29,55 +30,13 @@ export function MapFullscreen({ v }: { v: MapViewModel }) {
         {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#c08d62', fillOpacity: 0.06, dashArray: '6 4' }} />}
         <DoubleClickHandler onDoubleClick={() => onExitFullscreen?.()} />
         <FlyToContact position={flyToTarget} />
-        <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => resolveMarkerStyle(c.status, c.segment, mapMarkerStyles).color} renderSingle={c => {
-          const isCliente = c.status === 'cliente';
-          const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
-          const distKm = userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null;
-          const popupContent = (
-            <Popup minWidth={220}>
-              <div className="p-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-xs font-semibold uppercase px-2 py-0.5 rounded-full ${isCliente ? 'bg-accent-soft text-accent' : 'bg-warning-soft text-warning'}`}>
-                    {isCliente ? '● Cliente' : '◆ Prospect'}
-                  </span>
-                  {c.sedeLabel && <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded-full bg-raised text-secondary">{c.sedeLabel}</span>}
-                  {distKm !== null && <span className="text-xs text-muted font-bold">{distKm.toFixed(0)} km</span>}
-                </div>
-                <h4 className="font-semibold uppercase text-foreground text-sm mb-1">{c.company}</h4>
-                {c.address && <p className="text-xs text-secondary flex items-center gap-1"><MapPin size={10} />{c.address}, {c.city}</p>}
-                {c.phone   && <p className="text-xs text-secondary flex items-center gap-1 mt-0.5"><Phone size={10} />{c.phone}</p>}
-                  <PinColorControl contactId={c.id} categoryColor={style.color} />
-                <button
-                  onClick={() => onNavigateToContact(c.id)}
-                  className="mt-2 w-full bg-action text-action-foreground py-1.5 rounded-lg font-semibold uppercase text-xs tracking-normal flex items-center justify-center gap-1.5"
-                >
-                  <ExternalLink size={10} /> {isCliente ? 'Apri Cliente' : 'Apri Prospect'}
-                </button>
-                <button
-                  onClick={() => updateContact(c.id, { priorityToVisit: !c.priorityToVisit })}
-                  className={`mt-1 w-full py-1.5 rounded-lg font-semibold uppercase text-xs tracking-normal flex items-center justify-center gap-1.5 ${c.priorityToVisit ? 'bg-warning text-status-foreground' : 'bg-warning-soft text-warning'}`}
-                >
-                  <Star size={10} fill={c.priorityToVisit ? 'currentColor' : 'none'} /> {c.priorityToVisit ? 'Prioritario' : 'Segna prioritario'}
-                </button>
-                {c.lat && c.lng && (
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`}
-                    target="_blank" rel="noreferrer"
-                    className="mt-1 w-full bg-raised text-foreground py-1.5 rounded-lg font-semibold uppercase text-xs tracking-normal flex items-center justify-center gap-1.5"
-                  >
-                    <Navigation size={10} /> Naviga
-                  </a>
-                )}
-              </div>
-            </Popup>
-          );
-          return (
-            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={googlePinIcon(style.shape as MarkerShape, mapMarkerStyles[`contact:${c.id}`]?.color || style.color, markerIconPx, c.priorityToVisit)}>
-              {popupContent}
+        <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => HEAT_COLORS[v.mapInsights.get(c.id)?.heat || 'unknown']} getGroupColor={items => commercialGroupColor(items, v.mapInsights)} renderGroupItem={c => <CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} />} renderSingle={c => (
+            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={commercialIcon(v.mapInsights.get(c.id)?.heat || 'unknown', markerIconPx, v.routeSelection.includes(c.id))}>
+              <Popup minWidth={230} maxWidth={290}><CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} /></Popup>
             </Marker>
-          );
-        }} />
+          )} />
       </MapContainer>
+      <CommercialMapControls v={v} fullscreen />
 
       <MapStyleButton className="bottom-20 left-4" />
 
@@ -209,6 +168,7 @@ export function MapFullscreen({ v }: { v: MapViewModel }) {
         )}
         <p className="text-xs text-muted font-bold mt-0.5">Doppio click per uscire</p>
       </div>
+      {v.itinerarioEverOpened && <ItinerarioView contacts={v.contacts} onClose={() => v.setShowItinerario(false)} isVisible={v.showItinerario} requestedDate={v.itinRequestedDate} suggestedRoute={v.suggestedRoute} />}
     </DialogFrame>
   );
 }

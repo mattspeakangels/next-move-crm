@@ -29,3 +29,15 @@ test('ignores planned visits and respects active prospecting pauses', () => {
   const result = buildVisitSuggestions(cs, [{ contactId: 'b', type: 'visita', date: now - 1, outcome: 'da-fare', outcomeType: 'riuscita' }], [{ contactId: 'a', stage: 'lead' }], [], now, () => null);
   assert.equal(result.length, 0);
 });
+
+test('map colors reflect urgency, refusals, unknown outcomes and suppressed suggestions', async () => {
+  const mapBundle = await build({ entryPoints: [fileURLToPath(new URL('../src/components/map/commercialMap.ts', import.meta.url))], bundle: true, write: false, format: 'esm', platform: 'node' });
+  const source = Buffer.from(mapBundle.outputFiles[0].text).toString('base64');
+  const { buildMapInsights } = await import('data:text/javascript;base64,' + source);
+  const cs = contacts.map(c => c.id === 'hidden' ? { ...c, mapSuggestionHidden: true } : c);
+  const result = buildMapInsights(cs, visits, [{ contactId: 'hidden', stage: 'lead' }], [], now);
+  assert.equal(result.get('hot').heat, 'hot');
+  assert.equal(result.get('cold').heat, 'cold');
+  assert.equal(result.get('unknown').heat, 'unknown');
+  assert.equal(result.get('hidden').suppressed, true);
+});

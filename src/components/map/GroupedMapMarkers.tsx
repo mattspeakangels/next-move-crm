@@ -6,25 +6,27 @@ import { PinColorControl } from './PinColorControl';
 
 type ContactMarker = PositionedMarker & { id: string; company: string; markerKey?: string };
 const PAGE_SIZE = 20;
-const clusterIcons = new Map<number, L.DivIcon>();
+const clusterIcons = new Map<string, L.DivIcon>();
 
-function clusterIcon(count: number): L.DivIcon {
-  const previous = clusterIcons.get(count);
+function clusterIcon(count: number, color = '#7044db'): L.DivIcon {
+  const key = `${count}-${color}`;
+  const previous = clusterIcons.get(key);
   if (previous) return previous;
   const icon = L.divIcon({
     className: '',
-    html: `<div style="width:42px;height:42px;border-radius:50%;background:#7044db;color:white;border:3px solid white;box-shadow:0 2px 8px #0006;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${count}</div>`,
+    html: `<div style="width:42px;height:42px;border-radius:50%;background:${color};color:white;border:3px solid white;box-shadow:0 2px 8px #0006;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${count}</div>`,
     iconSize: [42, 42], iconAnchor: [21, 21],
   });
-  clusterIcons.set(count, icon);
+  clusterIcons.set(key, icon);
   return icon;
 }
 
-function GroupPopup<T extends ContactMarker>({ items, onSelect, getCategoryColor, actionLabel }: {
+function GroupPopup<T extends ContactMarker>({ items, onSelect, getCategoryColor, actionLabel, renderGroupItem }: {
   items: T[];
   onSelect: (item: T) => void;
   getCategoryColor: (item: T) => string;
   actionLabel?: string;
+  renderGroupItem?: (item: T) => ReactNode;
 }) {
   const [page, setPage] = useState(0);
   const pageCount = Math.ceil(items.length / PAGE_SIZE);
@@ -35,8 +37,7 @@ function GroupPopup<T extends ContactMarker>({ items, onSelect, getCategoryColor
       <div className="max-h-56 overflow-y-auto space-y-2">
         {items.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE).map((item, index) => (
           <div key={item.markerKey || `${item.id}-${index}`} className="border-b border-line pb-2">
-            <button type="button" className="text-left text-sm font-semibold text-accent w-full" onClick={() => onSelect(item)}>{item.company}{actionLabel && <span className="block text-xs text-muted">{actionLabel}</span>}</button>
-            <PinColorControl contactId={item.id} categoryColor={getCategoryColor(item)} />
+            {renderGroupItem ? renderGroupItem(item) : <><button type="button" className="text-left text-sm font-semibold text-accent w-full" onClick={() => onSelect(item)}>{item.company}{actionLabel && <span className="block text-xs text-muted">{actionLabel}</span>}</button><PinColorControl contactId={item.id} categoryColor={getCategoryColor(item)} /></>}
           </div>
         ))}
       </div>
@@ -50,12 +51,14 @@ function GroupPopup<T extends ContactMarker>({ items, onSelect, getCategoryColor
 }
 
 /** Keep only on-screen markers mounted; nearby contacts remain accessible in groups. */
-export function GroupedMapMarkers<T extends ContactMarker>({ items, renderSingle, onSelect, getCategoryColor, actionLabel }: {
+export function GroupedMapMarkers<T extends ContactMarker>({ items, renderSingle, onSelect, getCategoryColor, actionLabel, renderGroupItem, getGroupColor }: {
   items: T[];
   renderSingle: (item: T) => ReactNode;
   onSelect: (item: T) => void;
   getCategoryColor: (item: T) => string;
   actionLabel?: string;
+  renderGroupItem?: (item: T) => ReactNode;
+  getGroupColor?: (items: T[]) => string;
 }) {
   const map = useMap();
   const [viewRevision, setViewRevision] = useState(0);
@@ -72,9 +75,9 @@ export function GroupedMapMarkers<T extends ContactMarker>({ items, renderSingle
     const sameLocation = group.items.every(item => item.lat === group.items[0].lat && item.lng === group.items[0].lng);
     const showList = zoom >= 16 || sameLocation;
     return (
-      <Marker key={`group-${group.key}`} position={[group.lat, group.lng]} icon={clusterIcon(group.items.length)}
+      <Marker key={`group-${group.key}`} position={[group.lat, group.lng]} icon={clusterIcon(group.items.length, getGroupColor?.(group.items))}
         eventHandlers={showList ? undefined : { click: () => map.setView([group.lat, group.lng], Math.min(zoom + 3, 16)) }}>
-        {showList && <GroupPopup items={group.items} onSelect={onSelect} getCategoryColor={getCategoryColor} actionLabel={actionLabel} />}
+        {showList && <GroupPopup items={group.items} onSelect={onSelect} getCategoryColor={getCategoryColor} actionLabel={actionLabel} renderGroupItem={renderGroupItem} />}
       </Marker>
     );
   })}</>;

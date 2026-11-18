@@ -1,13 +1,14 @@
 import { MapContainer, Marker, Popup, Polyline } from 'react-leaflet';
 import { MapBaseLayer } from '../ui/MapStyleControl';
 import { GroupedMapMarkers } from './GroupedMapMarkers';
-import { MarkerShape, googlePinIcon } from '../../lib/markerShapes';
-import { resolveMarkerStyle, userIcon, FlyToContact } from './mapShared';
+import { commercialIcon, commercialGroupColor } from './CommercialMapControls';
+import { HEAT_COLORS } from './commercialMap';
+import { userIcon, FlyToContact } from './mapShared';
 import { HOME, homeIcon, stopIcon, SizeInvalidator } from './itinerarioShared';
 import { ItinerarioModel } from './useItinerario';
 
 export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
-  const { isVisible, mapMarkerStyles, markerIconPx, selectedIds, itinFlyTo, roadRouteCoords, itinUserPos, mapMarkersToShow, toggle, activeRoute } = v;
+  const { isVisible, mapInsights, markerIconPx, selectedIds, itinFlyTo, roadRouteCoords, itinUserPos, mapMarkersToShow, toggle, activeRoute } = v;
   return (
     <>
       <MapContainer center={[HOME.lat, HOME.lng]} zoom={9} style={{ height: '100%', width: '100%' }} zoomControl={false} preferCanvas>
@@ -18,7 +19,7 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
           <Popup><strong>Partenza — {HOME.label}</strong></Popup>
         </Marker>
         {itinUserPos && <Marker position={itinUserPos} icon={userIcon}><Popup><strong>Tu sei qui</strong></Popup></Marker>}
-        <GroupedMapMarkers items={mapMarkersToShow} onSelect={c => toggle(c.id)} getCategoryColor={c => resolveMarkerStyle(c.status, c.segment, mapMarkerStyles).color} actionLabel="Aggiungi o rimuovi" renderSingle={c => {
+        <GroupedMapMarkers items={mapMarkersToShow} onSelect={c => toggle(c.id)} getCategoryColor={c => HEAT_COLORS[mapInsights.get(c.id)?.heat || 'unknown']} getGroupColor={items => commercialGroupColor(items, mapInsights)} actionLabel="Aggiungi o rimuovi" renderSingle={c => {
           const selected = selectedIds.includes(c.id);
           const stopIdx = activeRoute.findIndex((s) => s.id === c.id);
           const popup = (
@@ -40,9 +41,8 @@ export function ItinerarioMap({ v }: { v: ItinerarioModel }) {
               </Marker>
             );
           }
-          const style = resolveMarkerStyle(c.status, c.segment, mapMarkerStyles);
           return (
-            <Marker key={c.id} position={[c.lat, c.lng]} icon={googlePinIcon(style.shape as MarkerShape, mapMarkerStyles[`contact:${c.id}`]?.color || style.color, markerIconPx, c.priorityToVisit)} eventHandlers={{ click: () => toggle(c.id) }}>
+            <Marker key={c.id} position={[c.lat, c.lng]} icon={commercialIcon(mapInsights.get(c.id)?.heat || 'unknown', markerIconPx, false)} eventHandlers={{ click: () => toggle(c.id) }}>
               {popup}
             </Marker>
           );
