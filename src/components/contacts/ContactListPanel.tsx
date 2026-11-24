@@ -59,10 +59,11 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
         const btnCls = 'bg-action text-action-foreground hover:bg-action-hover';
 
         const list = rankedFilteredList;
+        // Ricerca attiva: la lista contiene sia clienti che prospect
+        const searching = searchTerm.trim() !== '';
 
         const searchPreview = searchTerm.trim()
           ? sortByRelevance(searchTerm, Object.values(contacts)
-              .filter(c => c.status === statusFilter)
               .filter(c => matchSearch(searchTerm, [
                 c.company, c.contactName, c.city, c.province, c.email, c.phone, c.vatNumber, c.address,
               ])), c => [c.company, c.contactName]).slice(0, 8)
@@ -76,7 +77,7 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                 value={searchTerm}
                 onChange={setSearchTerm}
                 onSelect={c => setSearchTerm(c.company || c.contactName)}
-                placeholder={`Cerca ${isProspect ? 'prospect' : 'cliente'} per nome, azienda, città, email, telefono…`}
+                placeholder="Cerca clienti e prospect per nome, azienda, città, email, telefono…"
                 inputWrapperClassName={() => 'flex items-center gap-2 pl-4 pr-4 py-3.5 bg-surface dark:bg-surface border-2 border-line dark:border-line rounded-panel font-bold outline-none focus-within:border-accent transition-all shadow-sm text-sm'}
                 results={searchPreview.map(c => ({
                   key: c.id,
@@ -213,11 +214,13 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                 <div className="col-span-3 bg-surface dark:bg-surface rounded-panel py-20 text-center border-2 border-dashed border-line dark:border-line">
                   {isProspect ? <UserPlus size={44} className="mx-auto mb-4 text-warning" /> : <Users size={44} className="mx-auto mb-4 text-accent" />}
                   <p className="text-muted font-bold uppercase tracking-normal text-sm">
-                    Nessun {isProspect ? 'prospect' : 'cliente'} trovato
+                    {searching ? 'Nessun cliente o prospect trovato' : `Nessun ${isProspect ? 'prospect' : 'cliente'} trovato`}
                   </p>
-                  <p className="text-muted text-xs mt-1">Importa un CSV o aggiungi manualmente</p>
+                  <p className="text-muted text-xs mt-1">{searching ? 'Prova con un altro termine di ricerca' : 'Importa un CSV o aggiungi manualmente'}</p>
                 </div>
-              ) : list.slice(0, visibleCount).map(contact => (
+              ) : list.slice(0, visibleCount).map(contact => {
+                const isProspect = contact.status === 'potenziale';
+                return (
                 <div key={contact.id} onClick={() => openDetail(contact)}
                   className={`bg-surface dark:bg-surface p-6 rounded-panel shadow-sm border-2 transition-all cursor-pointer ${
                     isProspect
@@ -237,6 +240,11 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                         }`}>
                           {contact.customerType === 'dealer' ? 'Dealer' : 'End User'}
                         </span>
+                        {searching && (
+                          <span className={`ml-1 text-xs font-semibold uppercase tracking-normal px-2 py-0.5 rounded-full ${isProspect ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'}`}>
+                            {isProspect ? 'Prospect' : 'Cliente'}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -293,7 +301,8 @@ export function ContactListPanel({ v }: { v: ContactsModel }) {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Paginazione */}
