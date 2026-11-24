@@ -183,8 +183,24 @@ export function useItinerario(props: ItinerarioViewProps) {
     if (!suggestedRoute || suggestedRoute.nonce === appliedSuggestionRef.current) return;
     appliedSuggestionRef.current = suggestedRoute.nonce;
     setSelectedIds(prev => [...new Set([...prev, ...suggestedRoute.ids.filter(id => contacts[id] && hasCoords(contacts[id]))])]);
+    pendingRouteRef.current = true;
     setSheetOpen(true);
   }, [suggestedRoute, contacts]);
+
+  // Giro creato dalla mappa e non ancora salvato: cambiando giorno le tappe si spostano sul nuovo
+  // giorno invece di essere azzerate. Altrimenti si carica l'itinerario già salvato per quel giorno.
+  const pendingRouteRef = useRef(false);
+  const changeDate = (newDate: string) => {
+    if (!newDate || newDate === date) return;
+    const keepStops = pendingRouteRef.current && selectedIds.length > 0;
+    setDate(newDate);
+    setCustomTimes({});
+    if (!keepStops) {
+      setSelectedIds([]);
+      setManualOrder(null);
+    }
+    loadedItinDateRef.current = null;
+  };
 
   // Route attiva: manuale (drag) oppure auto-ottimizzata
   const activeRoute = useMemo(() => {
@@ -304,10 +320,11 @@ export function useItinerario(props: ItinerarioViewProps) {
         createdAt: Date.now(),
       });
     });
+    pendingRouteRef.current = false;
     setSavedToAgenda(true);
     setTimeout(() => setSavedToAgenda(false), 3000);
   };
-  return { contacts, onClose, isVisible, requestedDate, mapInsights, addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, today, date, setDate, onlyRouteOnMap, setOnlyRouteOnMap, lastRequestNonceRef, selectedIds, setSelectedIds, sheetOpen, setSheetOpen, filterStatus, setFilterStatus, filterSegment, setFilterSegment, filterPriorityOnly, setFilterPriorityOnly, filterProvince, setFilterProvince, filterSector, setFilterSector, showFiltersBar, setShowFiltersBar, startTime, setStartTime, visitDuration, setVisitDuration, savedToAgenda, setSavedToAgenda, customTimes, setCustomTimes, searchItinQuery, setSearchItinQuery, itinFlyTo, setItinFlyTo, manualOrder, setManualOrder, roadRouteCoords, setRoadRouteCoords, loadedItinDateRef, itinUserPos, setItinUserPos, itinLocating, setItinLocating, itinGeoMsg, setItinGeoMsg, locateItin, allContactsList, searchItinNorm, itinSearchResults, mapped, availableProvinces, availableSectors, visible, itinActiveFilterCount, mapMarkersToShow, toggle, optimizedRoute, activeRoute, dndSensors, handleDragEnd, legs, totalKm, effectiveTimes, routeCoords, googleMapsUrl, addToAgenda };
+  return { contacts, onClose, isVisible, requestedDate, mapInsights, addActivity, deleteActivity, activities, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, today, date, setDate, changeDate, onlyRouteOnMap, setOnlyRouteOnMap, lastRequestNonceRef, selectedIds, setSelectedIds, sheetOpen, setSheetOpen, filterStatus, setFilterStatus, filterSegment, setFilterSegment, filterPriorityOnly, setFilterPriorityOnly, filterProvince, setFilterProvince, filterSector, setFilterSector, showFiltersBar, setShowFiltersBar, startTime, setStartTime, visitDuration, setVisitDuration, savedToAgenda, setSavedToAgenda, customTimes, setCustomTimes, searchItinQuery, setSearchItinQuery, itinFlyTo, setItinFlyTo, manualOrder, setManualOrder, roadRouteCoords, setRoadRouteCoords, loadedItinDateRef, itinUserPos, setItinUserPos, itinLocating, setItinLocating, itinGeoMsg, setItinGeoMsg, locateItin, allContactsList, searchItinNorm, itinSearchResults, mapped, availableProvinces, availableSectors, visible, itinActiveFilterCount, mapMarkersToShow, toggle, optimizedRoute, activeRoute, dndSensors, handleDragEnd, legs, totalKm, effectiveTimes, routeCoords, googleMapsUrl, addToAgenda };
 }
 
 export type ItinerarioModel = ReturnType<typeof useItinerario>;
