@@ -1,23 +1,26 @@
 import L from 'leaflet';
 import type { Contact, ActivityOutcome } from '../../types';
-import { HEAT_COLORS, HEAT_LABELS, type MapHeat, type MapInsight } from './commercialMap';
+import { HEAT_COLORS, HEAT_LABELS, CLIENT_COLOR, type MapHeat, type MapInsight } from './commercialMap';
 import type { MapViewModel } from './useMapView';
 
 const icons = new Map<string, L.DivIcon>();
-export function commercialIcon(heat: MapHeat, size: number, selected: boolean): L.DivIcon {
+export function commercialIcon(heat: MapHeat, size: number, selected: boolean, isClient = false): L.DivIcon {
   const width = Math.max(28, size + 6);
-  const key = `${heat}-${width}-${selected}`;
+  const key = `${heat}-${width}-${selected}-${isClient}`;
   const cached = icons.get(key);
   if (cached) return cached;
   const symbol = selected ? '✓' : heat === 'hot' ? '!' : heat === 'warm' ? '•' : heat === 'cold' ? '−' : '?';
-  const icon = L.divIcon({ className: '', html: `<div style="width:${width}px;height:${width}px;border-radius:50%;background:${HEAT_COLORS[heat]};border:3px solid white;box-shadow:0 2px 7px #0007;display:flex;align-items:center;justify-content:center;color:white;font:bold ${Math.round(width * .55)}px/1 sans-serif">${symbol}</div>`, iconSize: [width, width], iconAnchor: [width / 2, width / 2], popupAnchor: [0, -width / 2] });
+  const icon = L.divIcon({ className: '', html: `<div style="width:${width}px;height:${width}px;border-radius:50%;background:${isClient ? CLIENT_COLOR : HEAT_COLORS[heat]};border:${isClient && heat === 'hot' ? `4px solid ${HEAT_COLORS.hot}` : '3px solid white'};box-shadow:0 2px 7px #0007;display:flex;align-items:center;justify-content:center;color:white;font:bold ${Math.round(width * .55)}px/1 sans-serif">${symbol}</div>`, iconSize: [width, width], iconAnchor: [width / 2, width / 2], popupAnchor: [0, -width / 2] });
   icons.set(key, icon);
   return icon;
 }
 
-export function commercialGroupColor(items: { id: string }[], insights: Map<string, MapInsight>): string {
+export function commercialGroupColor(items: { id: string; status?: string }[], insights: Map<string, MapInsight>): string {
   const heats = new Set(items.map(item => insights.get(item.id)?.heat || 'unknown'));
-  const heat = (['hot', 'warm', 'cold', 'unknown'] as const).find(item => heats.has(item)) || 'unknown';
+  if (heats.has('hot')) return HEAT_COLORS.hot;
+  if (items.length > 0 && items.every(item => item.status === 'cliente')) return CLIENT_COLOR;
+  const prospectHeats = new Set(items.filter(item => item.status !== 'cliente').map(item => insights.get(item.id)?.heat || 'unknown'));
+  const heat = (['warm', 'cold', 'unknown'] as const).find(item => prospectHeats.has(item)) || 'unknown';
   return HEAT_COLORS[heat];
 }
 
@@ -50,6 +53,8 @@ export function CommercialMapControls({ v, fullscreen = false }: { v: MapViewMod
       {v.routeSelection.length > 0 && <button type="button" onClick={v.createSuggestedRoute} className="rounded-full bg-action px-3 py-2 text-xs font-semibold text-action-foreground shadow-panel">Crea giro · {v.routeSelection.length}</button>}
     </div>
     <div aria-label="Legenda priorità commerciali" className={`absolute z-[400] flex flex-wrap gap-x-2 gap-y-1 rounded-md bg-surface/95 px-2.5 py-2 shadow-panel pointer-events-none ${fullscreen ? 'bottom-24 left-28 right-14' : 'bottom-16 left-3 right-16'}`}>
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-foreground"><span style={{ background: CLIENT_COLOR }} className="h-2 w-2 rounded-full" />Clienti</span>
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-foreground"><span style={{ background: CLIENT_COLOR, boxShadow: `0 0 0 2px ${HEAT_COLORS.hot}` }} className="h-2 w-2 rounded-full" />Cliente presto</span>
       {(['hot', 'warm', 'cold', 'unknown'] as const).map(heat => <span key={heat} className="inline-flex items-center gap-1 text-[10px] font-semibold text-foreground"><span style={{ background: HEAT_COLORS[heat] }} className="h-2 w-2 rounded-full" />{heat === 'hot' ? 'Presto' : heat === 'warm' ? 'Coltivare' : heat === 'cold' ? 'Freddi' : 'Da valutare'}</span>)}
     </div>
   </>;

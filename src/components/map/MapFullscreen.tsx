@@ -4,7 +4,7 @@ import { MapContainer, Marker, Popup, Circle, ZoomControl } from 'react-leaflet'
 import { X, SlidersHorizontal, Star } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
 import { CommercialContact, CommercialMapControls, commercialGroupColor, commercialIcon } from './CommercialMapControls';
-import { HEAT_COLORS } from './commercialMap';
+import { markerColor } from './commercialMap';
 import { GroupedMapMarkers } from './GroupedMapMarkers';
 import { SearchDropdown } from '../ui/SearchDropdown';
 import { sectorLabel } from '../../lib/sectors';
@@ -30,8 +30,8 @@ export function MapFullscreen({ v }: { v: MapViewModel }) {
         {userPos && <Circle center={userPos} radius={radius * 1000} pathOptions={{ color: '#c08d62', fillOpacity: 0.06, dashArray: '6 4' }} />}
         <DoubleClickHandler onDoubleClick={() => onExitFullscreen?.()} />
         <FlyToContact position={flyToTarget} />
-        <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => HEAT_COLORS[v.mapInsights.get(c.id)?.heat || 'unknown']} getGroupColor={items => commercialGroupColor(items, v.mapInsights)} renderGroupItem={c => <CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} />} renderSingle={c => (
-            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={commercialIcon(v.mapInsights.get(c.id)?.heat || 'unknown', markerIconPx, v.routeSelection.includes(c.id))}>
+        <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => markerColor(c, v.mapInsights)} getGroupColor={items => commercialGroupColor(items, v.mapInsights)} renderGroupItem={c => <CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} />} renderSingle={c => (
+            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={commercialIcon(v.mapInsights.get(c.id)?.heat || 'unknown', markerIconPx, v.routeSelection.includes(c.id), c.status === 'cliente')}>
               <Popup minWidth={230} maxWidth={290}><CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} /></Popup>
             </Marker>
           )} />

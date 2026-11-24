@@ -2,7 +2,7 @@ import { MapContainer, Marker, Popup, Circle } from 'react-leaflet';
 import { Maximize2 } from 'lucide-react';
 import { MapBaseLayer, MapStyleButton } from '../ui/MapStyleControl';
 import { CommercialContact, CommercialMapControls, commercialGroupColor, commercialIcon } from './CommercialMapControls';
-import { HEAT_COLORS } from './commercialMap';
+import { markerColor } from './commercialMap';
 import { GroupedMapMarkers } from './GroupedMapMarkers';
 import { userIcon, ChangeView, DoubleClickHandler, FlyToContact, LocateButton } from './mapShared';
 import { MapViewModel } from './useMapView';
@@ -27,8 +27,8 @@ export function MapCanvas({ v }: { v: MapViewModel }) {
           {onGoFullscreen && <DoubleClickHandler onDoubleClick={onGoFullscreen} />}
           <FlyToContact position={flyToTarget} />
 
-          <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => HEAT_COLORS[v.mapInsights.get(c.id)?.heat || 'unknown']} getGroupColor={items => commercialGroupColor(items, v.mapInsights)} renderGroupItem={c => <CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} />} renderSingle={c => (
-            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={commercialIcon(v.mapInsights.get(c.id)?.heat || 'unknown', markerIconPx, v.routeSelection.includes(c.id))}>
+          <GroupedMapMarkers items={visibleMarkers} onSelect={c => onNavigateToContact(c.id)} getCategoryColor={c => markerColor(c, v.mapInsights)} getGroupColor={items => commercialGroupColor(items, v.mapInsights)} renderGroupItem={c => <CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} />} renderSingle={c => (
+            <Marker key={c.markerKey} position={[c.lat!, c.lng!]} icon={commercialIcon(v.mapInsights.get(c.id)?.heat || 'unknown', markerIconPx, v.routeSelection.includes(c.id), c.status === 'cliente')}>
               <Popup minWidth={230} maxWidth={290}><CommercialContact contact={c} insight={v.mapInsights.get(c.id)} v={v} /></Popup>
             </Marker>
           )} />

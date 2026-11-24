@@ -4,6 +4,11 @@ import { buildVisitSuggestions } from './commercialPriority';
 export type MapHeat = 'hot' | 'warm' | 'cold' | 'unknown';
 export type MapInsight = { heat: MapHeat; reason: string; visit?: Activity; suppressed: boolean };
 export const HEAT_COLORS: Record<MapHeat, string> = { hot: '#d83d35', warm: '#e28a21', cold: '#5080a6', unknown: '#89949e' };
+/** I clienti (già acquisiti) sono sempre verdi; se sono anche "da visitare presto" hanno il bordo rosso. */
+export const CLIENT_COLOR = '#2e9e4f';
+export function markerColor(c: { id: string; status?: string }, insights: Map<string, MapInsight>): string {
+  return c.status === 'cliente' ? CLIENT_COLOR : HEAT_COLORS[insights.get(c.id)?.heat || 'unknown'];
+}
 export const HEAT_LABELS: Record<MapHeat, string> = { hot: 'Da visitare presto', warm: 'Da coltivare', cold: 'Bassa priorità', unknown: 'Da valutare' };
 
 export function buildMapInsights(contacts: Contact[], activities: Activity[], deals: Deal[], todos: TodoItem[], now: number): Map<string, MapInsight> {
