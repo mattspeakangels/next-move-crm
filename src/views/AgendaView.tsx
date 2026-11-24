@@ -15,6 +15,7 @@ import { AgendaDetailModal } from '../components/agenda/AgendaDetailModal';
 import { AgendaFormModal } from '../components/agenda/AgendaFormModal';
 import { AgendaHeader } from '../components/agenda/AgendaHeader';
 import { AgendaPstModal } from '../components/agenda/AgendaPstModal';
+import { AgendaNearbyModal } from '../components/agenda/AgendaNearbyModal';
 import { AgendaRecorderPanel } from '../components/agenda/AgendaRecorderPanel';
 import { AgendaVoicePanel } from '../components/agenda/AgendaVoicePanel';
 
@@ -57,6 +58,9 @@ export const AgendaView: React.FC<AgendaViewProps> = (props) => {
 
       {/* ── Add / Edit Modal ── */}
       <AgendaFormModal v={v} />
+
+      {/* ── Prospect vicini dopo un nuovo appuntamento ── */}
+      <AgendaNearbyModal v={v} />
 
       {/* ── Confirm Delete ── */}
       {confirmDeleteId && (
