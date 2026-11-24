@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Activity } from '../../types';
+import { findNearbyProspects, NearbyProspect } from './nearbyProspects';
 import { defaultForm, addMinutesToTime, TYPE_LABELS, NO_CONTACT_TYPES, MULTI_CONTACT_TYPES, MULTI_DAY_TYPES, isSameDay } from './agendaShared';
 import { AgendaCloseModel } from './useAgendaClose';
 
 // Agenda: finestra nuovo/modifica appuntamento ed esportazione singola.
 export function useAgendaForm(prev: AgendaCloseModel) {
-  const { addActivity, updateActivity, deleteActivity, contacts, showToast, setShowModal, editingId, setEditingId, setConfirmDeleteId, formData, setFormData, setContactSearch, voiceNotes } = prev;
+  const { activities, addActivity, updateActivity, deleteActivity, contacts, showToast, setShowModal, editingId, setEditingId, setConfirmDeleteId, formData, setFormData, setContactSearch, voiceNotes } = prev;
+  // Dopo un nuovo appuntamento: prospect entro 10 km da proporre nella stessa giornata
+  const [nearby, setNearby] = useState<{ originName: string; date: string; nextTime: string; items: NearbyProspect[]; added: string[] } | null>(null);
   // ── Modal helpers ──
 
   const toLocalDateStr = (d: Date) =>
@@ -65,8 +68,32 @@ export function useAgendaForm(prev: AgendaCloseModel) {
     } else {
       addActivity({ id: `act_${Date.now()}`, contactId, contactIds, type: formData.type, date: dateTime, endDate: endDateTime, allDay: formData.allDay, outcome: 'da-fare', notes: formData.notes, createdAt: Date.now() });
       showToast('Attività salvata!', 'success');
+      const origin = contacts[contactId];
+      if (origin && endDay === formData.date) {
+        const sameDay = new Set<string>(contactIds);
+        for (const a of Object.values(activities)) {
+          if (toLocalDateStr(new Date(a.date)) !== formData.date) continue;
+          if (a.contactId) sameDay.add(a.contactId);
+          for (const id of a.contactIds ?? []) sameDay.add(id);
+        }
+        const items = findNearbyProspects(origin, contacts, sameDay);
+        if (items.length > 0) {
+          const after = formData.allDay ? '09:00' : (formData.endTime || addMinutesToTime(formData.time, 60));
+          setNearby({ originName: origin.company || origin.contactName, date: formData.date, nextTime: addMinutesToTime(after, 30), items, added: [] });
+        }
+      }
     }
     closeModal();
+  };
+
+  // Aggiunge una visita al prospect vicino nello stesso giorno, in coda alle precedenti (1h + 30 min di spostamento)
+  const addNearbyVisit = (prospectId: string) => {
+    if (!nearby || nearby.added.includes(prospectId)) return;
+    const start = new Date(`${nearby.date}T${nearby.nextTime}`).getTime();
+    const endTime = addMinutesToTime(nearby.nextTime, 60);
+    addActivity({ id: `act_${Date.now()}_${prospectId}`, contactId: prospectId, contactIds: [prospectId], type: 'visita', date: start, endDate: new Date(`${nearby.date}T${endTime}`).getTime(), allDay: false, outcome: 'da-fare', notes: '', createdAt: Date.now() });
+    showToast(`Visita a ${contacts[prospectId]?.company || 'prospect'} alle ${nearby.nextTime}`, 'success');
+    setNearby({ ...nearby, nextTime: addMinutesToTime(endTime, 30), added: [...nearby.added, prospectId] });
   };
 
   const handleDelete = (id: string) => {
@@ -94,7 +121,7 @@ export function useAgendaForm(prev: AgendaCloseModel) {
       '_blank'
     );
   };
-  return { ...prev, toLocalDateStr, openNew, openEdit, closeModal, handleSave, handleDelete, handleExport };
+  return { ...prev, nearby, setNearby, addNearbyVisit, toLocalDateStr, openNew, openEdit, closeModal, handleSave, handleDelete, handleExport };
 }
 
 export type AgendaFormModel = ReturnType<typeof useAgendaForm>;
