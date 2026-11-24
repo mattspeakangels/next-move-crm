@@ -53,8 +53,10 @@ export function useContactsView({ initialSearch = '', onClearFilter, selectedCon
   // Lista filtrata completa — memoizzata
   const filteredList = useMemo(() => {
     const statusFilter = activeTab === 'prospect' ? 'potenziale' : 'cliente';
+    // Con un termine di ricerca si cerca tra clienti E prospect, a prescindere dalla scheda.
+    const searching = debouncedSearch.trim() !== '';
     return Object.values(contacts)
-      .filter(c => c.status === statusFilter)
+      .filter(c => searching || c.status === statusFilter)
       .filter(c => {
         if (!topFilter) return true;
         if (topFilter === 'dealer') return c.segment === 'dealer';
