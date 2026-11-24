@@ -4,7 +4,7 @@ import { sectorLabel } from '../../lib/sectors';
 import { ItinerarioModel } from './useItinerario';
 
 export function ItinerarioTopBar({ v }: { v: ItinerarioModel }) {
-  const { onClose, date, setDate, onlyRouteOnMap, setOnlyRouteOnMap, selectedIds, setSelectedIds, setSheetOpen, filterStatus, setFilterStatus, filterSegment, setFilterSegment, filterPriorityOnly, setFilterPriorityOnly, filterProvince, setFilterProvince, filterSector, setFilterSector, showFiltersBar, setShowFiltersBar, setCustomTimes, searchItinQuery, setSearchItinQuery, setItinFlyTo, setManualOrder, loadedItinDateRef, itinSearchResults, availableProvinces, availableSectors, itinActiveFilterCount } = v;
+  const { onClose, date, changeDate, onlyRouteOnMap, setOnlyRouteOnMap, selectedIds, setSelectedIds, setSheetOpen, filterStatus, setFilterStatus, filterSegment, setFilterSegment, filterPriorityOnly, setFilterPriorityOnly, filterProvince, setFilterProvince, filterSector, setFilterSector, showFiltersBar, setShowFiltersBar, searchItinQuery, setSearchItinQuery, setItinFlyTo, itinSearchResults, availableProvinces, availableSectors, itinActiveFilterCount } = v;
   return (
     <>
       <div className="absolute top-0 left-0 right-0 z-[900] px-4 pt-4 flex flex-col gap-2">
@@ -16,14 +16,7 @@ export function ItinerarioTopBar({ v }: { v: ItinerarioModel }) {
 
           <div className="min-w-0 flex-1 flex items-center gap-2 bg-surface/95 dark:bg-surface/95 backdrop-blur-sm rounded-panel px-4 py-2 shadow-panel">
             <Route size={14} className="text-warning flex-shrink-0" />
-            <input type="date" value={date} onChange={e => {
-            const newDate = e.target.value;
-            setDate(newDate);
-            setSelectedIds([]);
-            setManualOrder(null);
-            setCustomTimes({});
-            loadedItinDateRef.current = null;
-          }}
+            <input type="date" aria-label="Giorno del giro" value={date} onChange={e => changeDate(e.target.value)}
               className="min-w-0 w-full flex-1 bg-transparent text-sm font-semibold text-foreground dark:text-foreground outline-none" />
           </div>
 

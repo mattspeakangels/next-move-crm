@@ -1,11 +1,11 @@
-import { Navigation, X, RotateCcw, Home, CalendarCheck } from 'lucide-react';
+import { Navigation, X, RotateCcw, Home, CalendarCheck, CalendarDays } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { HOME, SortableTappa } from './itinerarioShared';
 import { ItinerarioModel } from './useItinerario';
 
 export function ItinerarioPanel({ v }: { v: ItinerarioModel }) {
-  const { contacts, selectedIds, setSelectedIds, startTime, setStartTime, visitDuration, setVisitDuration, savedToAgenda, setCustomTimes, manualOrder, setManualOrder, toggle, dndSensors, handleDragEnd, legs, effectiveTimes, googleMapsUrl, addToAgenda } = v;
+  const { date, today, changeDate, contacts, selectedIds, setSelectedIds, startTime, setStartTime, visitDuration, setVisitDuration, savedToAgenda, setCustomTimes, manualOrder, setManualOrder, toggle, dndSensors, handleDragEnd, legs, effectiveTimes, googleMapsUrl, addToAgenda } = v;
   return (
     <>
       <div className="flex flex-col flex-1 min-h-0">
@@ -118,13 +118,18 @@ export function ItinerarioPanel({ v }: { v: ItinerarioModel }) {
 
         {/* Footer sticky con CTA */}
         {selectedIds.length > 0 && (
-          <div className="flex-shrink-0 px-4 py-3 border-t border-line dark:border-line">
+          <div className="flex-shrink-0 px-4 py-3 border-t border-line dark:border-line space-y-2">
+            <label className="flex items-center justify-between gap-3 text-xs font-semibold text-secondary">
+              <span className="flex items-center gap-1.5"><CalendarDays size={14} className="text-warning" /> Giorno della visita</span>
+              <input type="date" value={date} min={today} onChange={e => changeDate(e.target.value)}
+                className="rounded-md border-2 border-line bg-surface px-3 py-2 text-sm font-semibold text-foreground outline-none focus:border-accent" />
+            </label>
             <button onClick={addToAgenda}
               className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-panel font-semibold text-sm uppercase tracking-wide transition-all shadow-panel ${
                 savedToAgenda ? 'bg-success text-status-foreground' : 'bg-action active:bg-action text-action-foreground'
               }`}>
               <CalendarCheck size={17} />
-              {savedToAgenda ? '✓ Salvato in Agenda!' : "Aggiungi all'Agenda"}
+              {savedToAgenda ? '✓ Salvato in Agenda!' : `Aggiungi all'Agenda · ${new Date(`${date}T12:00`).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}`}
             </button>
           </div>
         )}
