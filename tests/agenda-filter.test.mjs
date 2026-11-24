@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { transform } from 'esbuild';
 const source = await readFile(new URL('../src/lib/agendaFilter.ts', import.meta.url), 'utf8');
 const compiled = await transform(source, { loader: 'ts', format: 'esm' });
-const { isShownInAgenda, AGENDA_CATEGORIES, DEFAULT_AGENDA_CATEGORIES, loadAgendaCategories } = await import(`data:text/javascript;base64,${Buffer.from(compiled.code).toString('base64')}`);
+const { isShownInAgenda, isOpenCall, AGENDA_CATEGORIES, DEFAULT_AGENDA_CATEGORIES, loadAgendaCategories } = await import(`data:text/javascript;base64,${Buffer.from(compiled.code).toString('base64')}`);
 
 test('di base l\'Agenda mostra solo gli appuntamenti', () => {
   assert.equal(isShownInAgenda({ type: 'visita', outcome: 'da-fare' }, DEFAULT_AGENDA_CATEGORIES), true);
@@ -34,4 +34,15 @@ test('ogni tipo di attività appartiene a una sola categoria', () => {
 
 test('senza localStorage si parte dai soli appuntamenti', () => {
   assert.deepEqual(loadAgendaCategories(), ['appuntamenti']);
+});
+
+test('le chiamate da fare non finiscono tra gli appuntamenti: hanno la loro sezione', () => {
+  const tutte = AGENDA_CATEGORIES.map(c => c.id);
+  assert.equal(isOpenCall({ type: 'chiamata', outcome: 'da-fare' }), true);
+  assert.equal(isShownInAgenda({ type: 'chiamata', outcome: 'da-fare' }, tutte), false);
+  assert.equal(isShownInAgenda({ type: 'chiamata', outcome: 'da-fare' }, DEFAULT_AGENDA_CATEGORIES), false);
+  // fatte restano nello storico filtrabile, le videocall restano appuntamenti
+  assert.equal(isOpenCall({ type: 'chiamata', outcome: 'fatto' }), false);
+  assert.equal(isOpenCall({ type: 'call-remota', outcome: 'da-fare' }), false);
+  assert.equal(isShownInAgenda({ type: 'call-remota', outcome: 'da-fare' }, DEFAULT_AGENDA_CATEGORIES), true);
 });

@@ -27,7 +27,7 @@ function collectionPatch(col: SyncedCollection, docs: DocMap): Partial<StoreStat
 
 // Campi singoli (non mappe id->doc) sincronizzati come un unico documento impostazioni,
 // cosi' profilo/tema/soglie/tab restano coerenti su tutti i device.
-const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder'] as const satisfies readonly (keyof StoreState)[];
+const SETTINGS_FIELDS = ['profile', 'theme', 'discountApprovalThreshold', 'footerTabs', 'sidebarOrder', 'mapMarkerStyles'] as const satisfies readonly (keyof StoreState)[];
 
 function readSettings(state: StoreState): DocFields {
   const out: DocFields = {};

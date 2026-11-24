@@ -1,3 +1,4 @@
+import { buildMapInsights } from './commercialMap';
 import { apiAuthHeaders } from '../../lib/apiAuth';
 import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
@@ -14,7 +15,7 @@ type MobileTab = 'mappa' | 'lista';
 // Stato, posizione, filtri e geocodifica della vista Mappa.
 export function useMapView(props: MapViewProps) {
   const { onNavigateToContact, isFullscreen, onGoFullscreen, onExitFullscreen, initialItineraryDate, onItineraryDateConsumed } = props;
-  const { contacts, updateContact, mapMarkerStyles, mapMarkerSize } = useStore();
+  const { contacts, updateContact, updateActivity, activities, deals, todos, mapMarkerStyles, mapMarkerSize } = useStore();
   const markerIconPx = MARKER_ICON_PX[mapMarkerSize];
   const markerRadiusPx = MARKER_CIRCLE_RADIUS[mapMarkerSize];
   const [userPos, setUserPos]     = useState<[number, number] | null>(() => {
@@ -36,10 +37,13 @@ export function useMapView(props: MapViewProps) {
   const [mapProvinceFilter, setMapProvinceFilter] = useState<string>('');
   const [mapSectorFilter, setMapSectorFilter] = useState<string>('');
   const [mapPriorityOnly, setMapPriorityOnly] = useState(false);
+  const [suggestedOnly, setSuggestedOnly] = useState(false);
+  const [routeSelection, setRouteSelection] = useState<string[]>([]);
   const [mobileTab, setMobileTab] = useState<MobileTab>('mappa');
   const [showFilters, setShowFilters] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [showItinerario, setShowItinerario] = useState(false);
+  const [suggestedRoute, setSuggestedRoute] = useState<{ ids: string[]; nonce: number } | null>(null);
   const [itinerarioEverOpened, setItinerarioEverOpened] = useState(false);
   const [itinRequestedDate, setItinRequestedDate] = useState<{ date: string; nonce: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -206,8 +210,9 @@ export function useMapView(props: MapViewProps) {
     }
   };
 
-  const allContacts  = Object.values(contacts);
-  const allMapped    = allContacts.filter(hasCoords);
+  const allContacts = useMemo(() => Object.values(contacts), [contacts]);
+  const allMapped = useMemo(() => allContacts.filter(hasCoords), [allContacts]);
+  const mapInsights = useMemo(() => buildMapInsights(allMapped, Object.values(activities), Object.values(deals), Object.values(todos), Date.now()), [allMapped, activities, deals, todos]);
   const nClienti     = allMapped.filter(c => c.status === 'cliente').length;
   const nProspect    = allMapped.filter(c => c.status === 'potenziale').length;
 
@@ -218,7 +223,7 @@ export function useMapView(props: MapViewProps) {
         .slice(0, 7)
     : [];
 
-  const filtered = allMapped.filter(c => {
+  const filtered = useMemo(() => allMapped.filter(c => {
     if (mapFilter === 'clienti')  return c.status === 'cliente';
     if (mapFilter === 'prospect') return c.status === 'potenziale';
     return true;
@@ -226,7 +231,9 @@ export function useMapView(props: MapViewProps) {
     .filter(c => !mapProvinceFilter || c.province === mapProvinceFilter)
     .filter(c => !mapSectorFilter || c.sector === mapSectorFilter)
     .filter(c => !mapPriorityOnly || c.priorityToVisit === true)
-    .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email]));
+    .filter(c => !suggestedOnly || ['hot', 'warm'].includes(mapInsights.get(c.id)?.heat || ''))
+    .filter(c => matchSearch(searchNorm, [c.company, c.contactName, c.city, c.province, c.phone, c.email])),
+    [allMapped, mapFilter, mapSegmentFilter, mapProvinceFilter, mapSectorFilter, mapPriorityOnly, suggestedOnly, mapInsights, searchNorm]);
 
   // Province disponibili nei contatti geocodificati
   const availableProvinces = useMemo(() =>
@@ -236,14 +243,14 @@ export function useMapView(props: MapViewProps) {
     [...new Set(allMapped.map(c => c.sector).filter(Boolean))].sort() as string[]
   , [allMapped]);
 
-  const nearby = userPos
+  const nearby = useMemo(() => userPos
     ? filtered.filter(c => calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) <= radius)
-    : [];
+    : [], [filtered, userPos, radius]);
 
-  const listContacts = filtered.map(c => ({
+  const listContacts = useMemo(() => filtered.map(c => ({
     ...c,
     distKm: userPos ? calculateDistance(userPos[0], userPos[1], c.lat!, c.lng!) : null,
-  })).sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
+  })).sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999)), [filtered, userPos]);
 
   const unmappedWithAddress = allContacts.filter(c => !c.lat && (c.city || c.province));
   const defaultCenter: [number, number] = userPos ?? [45.5, 9.2]; // default: Milano
@@ -268,8 +275,17 @@ export function useMapView(props: MapViewProps) {
   }, [filtered]);
   const markersCapped = false;
 
+  const toggleRouteContact = (id: string) => setRouteSelection(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  const createSuggestedRoute = () => {
+    if (!routeSelection.length) return;
+    setSuggestedRoute({ ids: routeSelection, nonce: Date.now() });
+    setRouteSelection([]);
+    setItinerarioEverOpened(true);
+    setShowItinerario(true);
+  };
+
   // ── FULLSCREEN MODE ─────────────────────────────────────────────────────────
-  return { onNavigateToContact, isFullscreen, onGoFullscreen, onExitFullscreen, initialItineraryDate, onItineraryDateConsumed, contacts, updateContact, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, userPos, setUserPos, radius, setRadius, isGeocoding, setIsGeocoding, debugMsg, setDebugMsg, locatingContactId, setLocatingContactId, searchGeocodeError, setSearchGeocodeError, mapFilter, setMapFilter, mapSegmentFilter, setMapSegmentFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, mobileTab, setMobileTab, showFilters, setShowFilters, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, itinerarioEverOpened, setItinerarioEverOpened, itinRequestedDate, setItinRequestedDate, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, setIsLocating, geoMsg, setGeoMsg, saveUserPos, locateMe, applyAISuggestions, geocodeContacts, selectSearchContact, allContacts, allMapped, nClienti, nProspect, searchNorm, searchResults, filtered, availableProvinces, availableSectors, nearby, listContacts, unmappedWithAddress, defaultCenter, visibleMarkers, markersCapped };
+  return { onNavigateToContact, isFullscreen, onGoFullscreen, onExitFullscreen, initialItineraryDate, onItineraryDateConsumed, contacts, updateContact, updateActivity, mapInsights, suggestedOnly, setSuggestedOnly, routeSelection, toggleRouteContact, createSuggestedRoute, mapMarkerStyles, mapMarkerSize, markerIconPx, markerRadiusPx, userPos, setUserPos, radius, setRadius, isGeocoding, setIsGeocoding, debugMsg, setDebugMsg, locatingContactId, setLocatingContactId, searchGeocodeError, setSearchGeocodeError, mapFilter, setMapFilter, mapSegmentFilter, setMapSegmentFilter, mapProvinceFilter, setMapProvinceFilter, mapSectorFilter, setMapSectorFilter, mapPriorityOnly, setMapPriorityOnly, mobileTab, setMobileTab, showFilters, setShowFilters, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, suggestedRoute, setSuggestedRoute, itinerarioEverOpened, setItinerarioEverOpened, itinRequestedDate, setItinRequestedDate, searchQuery, setSearchQuery, flyToTarget, setFlyToTarget, isLocating, setIsLocating, geoMsg, setGeoMsg, saveUserPos, locateMe, applyAISuggestions, geocodeContacts, selectSearchContact, allContacts, allMapped, nClienti, nProspect, searchNorm, searchResults, filtered, availableProvinces, availableSectors, nearby, listContacts, unmappedWithAddress, defaultCenter, visibleMarkers, markersCapped };
 }
 
 export type MapViewModel = ReturnType<typeof useMapView>;

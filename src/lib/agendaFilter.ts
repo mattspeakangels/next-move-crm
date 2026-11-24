@@ -27,7 +27,16 @@ export function categoryOf(type: ActivityType): AgendaCategory {
  */
 export function isShownInAgenda(activity: Pick<Activity, 'type' | 'outcome'>, categories: readonly AgendaCategory[]): boolean {
   if (activity.outcome === 'archiviata') return false;
+  if (isOpenCall(activity)) return false; // hanno la loro sezione "Chiamate da fare"
   return categories.includes(categoryOf(activity.type));
+}
+
+/**
+ * True per una telefonata ancora da fare (es. creata dall'analisi AI delle visite).
+ * Non è un appuntamento: in Agenda sta nella sezione "Chiamate da fare", non nel calendario.
+ */
+export function isOpenCall(activity: Pick<Activity, 'type' | 'outcome'>): boolean {
+  return activity.type === 'chiamata' && activity.outcome === 'da-fare';
 }
 
 const STORAGE_KEY = 'syrio-agenda-categorie';

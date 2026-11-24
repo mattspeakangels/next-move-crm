@@ -7,6 +7,7 @@ import { useAgendaForm } from '../components/agenda/useAgendaForm';
 import { useAgendaImport } from '../components/agenda/useAgendaImport';
 import { useAgendaCalendar } from '../components/agenda/useAgendaCalendar';
 import { AgendaActivityList } from '../components/agenda/AgendaActivityList';
+import { AgendaCallsSection } from '../components/agenda/AgendaCallsSection';
 import { AgendaBatchModal } from '../components/agenda/AgendaBatchModal';
 import { AgendaCalendarCard } from '../components/agenda/AgendaCalendarCard';
 import { AgendaCloseModal } from '../components/agenda/AgendaCloseModal';
@@ -45,6 +46,9 @@ export const AgendaView: React.FC<AgendaViewProps> = (props) => {
 
       {/* Calendar card */}
       <AgendaCalendarCard v={v} />
+
+      {/* Chiamate da fare: separate dagli appuntamenti */}
+      <AgendaCallsSection v={v} />
 
       {/* Activity list */}
       <AgendaActivityList v={v} />

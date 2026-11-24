@@ -7,7 +7,7 @@ import { MapCanvas } from './MapCanvas';
 import { MapContactList } from './MapContactList';
 
 export function MapNormal({ v }: { v: MapViewModel }) {
-  const { contacts, userPos, radius, mobileTab, setMobileTab, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, itinerarioEverOpened, itinRequestedDate, applyAISuggestions, filtered, nearby } = v;
+  const { contacts, userPos, radius, mobileTab, setMobileTab, showAIPanel, setShowAIPanel, showItinerario, setShowItinerario, itinerarioEverOpened, itinRequestedDate, suggestedRoute, applyAISuggestions, filtered, nearby } = v;
   return (
     <div className="flex min-w-0 flex-col min-h-[calc(100dvh-140px)] md:h-[calc(100dvh-88px)] md:min-h-[38rem]">
 
@@ -56,6 +56,7 @@ export function MapNormal({ v }: { v: MapViewModel }) {
           onClose={() => setShowItinerario(false)}
           isVisible={showItinerario}
           requestedDate={itinRequestedDate}
+          suggestedRoute={suggestedRoute}
         />
       )}
 

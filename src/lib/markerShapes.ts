@@ -130,6 +130,32 @@ export function shapeDivIcon(shape: MarkerShape, color: string, size = 22): L.Di
   return icon;
 }
 
+const googlePinCache = new Map<string, L.DivIcon>();
+
+/** Google Maps' default pin, with the CRM category retained in a small badge. */
+export function googlePinIcon(shape: MarkerShape, color: string, size = 22, priority = false): L.DivIcon {
+  const safeColor = /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(color) ? color : '#6b7280';
+  const width = Math.max(24, size);
+  const height = Math.round(width * 43 / 27);
+  const badgeSize = Math.max(10, Math.round(width * .52));
+  const key = `${shape}-${safeColor}-${width}-${priority}`;
+  const cached = googlePinCache.get(key);
+  if (cached) return cached;
+  const badgeShape = priority ? 'star' : shape;
+  const badge = badgeShape === 'circle'
+    ? `<circle cx="12" cy="12" r="9" fill="${safeColor}"/>`
+    : `<path d="${shapePath(badgeShape, 24)}" fill="${priority ? '#f6bf26' : safeColor}"/>`;
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="position:relative;isolation:isolate;width:${width}px;height:${height}px"><img alt="" draggable="false" src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png" style="display:block;width:100%;height:100%"><span style="position:absolute;inset:0;background:${safeColor};opacity:.84;-webkit-mask:url(https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png) center / 100% 100% no-repeat;mask:url(https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png) center / 100% 100% no-repeat;pointer-events:none"></span><svg aria-hidden="true" viewBox="0 0 24 24" width="${badgeSize}" height="${badgeSize}" style="position:absolute;right:-${Math.round(badgeSize / 4)}px;top:0;background:white;border-radius:50%;box-shadow:0 1px 3px #0004">${badge}</svg></div>`,
+    iconSize: [width, height],
+    iconAnchor: [width / 2, height],
+    popupAnchor: [0, -height],
+  });
+  googlePinCache.set(key, icon);
+  return icon;
+}
+
 const starIconCache = new Map<number, L.DivIcon>();
 
 // Marker "prioritario" (contorno oro, interno fucsia), dimensione variabile
